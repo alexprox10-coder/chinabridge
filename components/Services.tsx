@@ -26,7 +26,7 @@ export default function Services() {
   return (
     <section id="services" className="relative py-20 md:py-28 border-t border-[#243a5e] overflow-hidden" ref={ref}>
       <div className="absolute inset-0">
-        <Image src="/images/bg-services.jpg" alt="" fill className="object-cover" priority/>
+        <Image src="/images/bg-services.jpg" alt="" fill className="object-cover"/>
         <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F3A]/90 via-[#0B1F3A]/78 to-[#0B1F3A]/90"/>
       </div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

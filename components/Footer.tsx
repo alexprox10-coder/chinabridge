@@ -29,7 +29,7 @@ export default function Footer() {
                 China<span className="text-accent">Bridge</span>
               </span>
             </div>
-            <p className="text-sm text-gray-600 leading-relaxed mb-4 max-w-xs">
+            <p className="text-sm text-[#8899aa] leading-relaxed mb-4 max-w-xs">
               Ваш представитель в Китае. Находим производителей, проверяем
               фабрики и доставляем товары в Казахстан и Россию.
             </p>
@@ -38,7 +38,7 @@ export default function Footer() {
                 href="https://t.me/chinabridge"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-gray-600 hover:text-accent"
+                className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-[#8899aa] hover:text-accent"
                 aria-label="Telegram"
               >
                 <Send className="w-4 h-4" />
@@ -47,14 +47,14 @@ export default function Footer() {
                 href="https://wa.me/79000000000"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-gray-600 hover:text-accent"
+                className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-[#8899aa] hover:text-accent"
                 aria-label="WhatsApp"
               >
                 <MessageCircle className="w-4 h-4" />
               </a>
               <a
                 href="mailto:info@chinabridge.ru"
-                className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-gray-600 hover:text-accent"
+                className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-[#8899aa] hover:text-accent"
                 aria-label="Email"
               >
                 <Mail className="w-4 h-4" />
@@ -64,7 +64,7 @@ export default function Footer() {
 
           {/* Navigation */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-4">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#8899aa] mb-4">
               Навигация
             </h4>
             <ul className="flex flex-col gap-2">
@@ -72,7 +72,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <button
                     onClick={() => scrollTo(link.href)}
-                    className="text-sm text-gray-600 hover:text-white transition-colors"
+                    className="text-sm text-[#8899aa] hover:text-white transition-colors"
                   >
                     {link.label}
                   </button>
@@ -83,23 +83,23 @@ export default function Footer() {
 
           {/* Contacts */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-gray-600 mb-4">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#8899aa] mb-4">
               Контакты
             </h4>
             <ul className="flex flex-col gap-3">
-              <li className="flex items-start gap-2.5 text-sm text-gray-600">
+              <li className="flex items-start gap-2.5 text-sm text-[#8899aa]">
                 <MapPin className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                 <span>Россия, Благовещенск</span>
               </li>
-              <li className="flex items-start gap-2.5 text-sm text-gray-600">
+              <li className="flex items-start gap-2.5 text-sm text-[#8899aa]">
                 <MapPin className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
-                <span>Китай, Пекин (представительство)</span>
+                <span>Китай (представительство)</span>
               </li>
               <li className="flex items-center gap-2.5 text-sm">
                 <Send className="w-4 h-4 text-accent flex-shrink-0" />
                 <a
                   href="https://t.me/chinabridge"
-                  className="text-gray-600 hover:text-accent transition-colors"
+                  className="text-[#8899aa] hover:text-accent transition-colors"
                 >
                   @chinabridge
                 </a>
@@ -108,7 +108,7 @@ export default function Footer() {
                 <Mail className="w-4 h-4 text-accent flex-shrink-0" />
                 <a
                   href="mailto:info@chinabridge.ru"
-                  className="text-gray-600 hover:text-accent transition-colors"
+                  className="text-[#8899aa] hover:text-accent transition-colors"
                 >
                   info@chinabridge.ru
                 </a>
@@ -119,10 +119,10 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-[#8899aa]">
             © {new Date().getFullYear()} ChinaBridge. Все права защищены.
           </p>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-[#8899aa]">
             Закупки из Китая в Казахстан и Россию
           </p>
         </div>

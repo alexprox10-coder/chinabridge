@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-inter",
+});
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://chinabridge.ru"),
   title: "ChinaBridge — поиск товаров и доставка из Китая",
   description: "Помогаем предпринимателям находить производителей в Китае, проверять фабрики и доставлять товары в Казахстан и Россию",
   keywords: "доставка из Китая, поиск поставщика Китай, закупки Китай Казахстан, проверка фабрики Китай",
@@ -11,15 +20,17 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ru_RU",
     siteName: "ChinaBridge",
+    url: "https://chinabridge.ru",
   },
   twitter: {
     card: "summary_large_image",
     title: "ChinaBridge — поиск товаров и доставка из Китая",
-    description: "Представитель в Пекине. Проверка фабрик. Сборные грузы от 50 кг.",
+    description: "Представитель в Китае. Проверка фабрик. Сборные грузы от 50 кг.",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: { index: true, follow: true },
   },
 };
 
@@ -29,16 +40,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="bg-background text-foreground antialiased">
+    <html lang="ru" suppressHydrationWarning className={inter.variable}>
+      <body className="bg-background text-foreground antialiased font-sans">
         {children}
       </body>
     </html>
