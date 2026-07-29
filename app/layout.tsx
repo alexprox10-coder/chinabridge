@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chinabridge.ru"),
+  metadataBase: new URL("https://chinabridge.pro"),
   title: "ChinaBridge — поиск товаров и доставка из Китая",
   description: "Помогаем предпринимателям находить производителей в Китае, проверять фабрики и доставлять товары в Казахстан и Россию",
   keywords: "доставка из Китая, поиск поставщика Китай, закупки Китай Казахстан, проверка фабрики Китай",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ru_RU",
     siteName: "ChinaBridge",
-    url: "https://chinabridge.ru",
+    url: "https://chinabridge.pro",
   },
   twitter: {
     card: "summary_large_image",

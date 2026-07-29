@@ -164,7 +164,7 @@ chinabridge/
 
 | Ресурс              | URL                                                                 |
 |---------------------|---------------------------------------------------------------------|
-| Production          | https://chinabridge-weld.vercel.app                                 |
+| Production          | https://chinabridge.pro / chinabridge-weld.vercel.app                |
 | Vercel Dashboard    | https://vercel.com/china-bridge/chinabridge                         |
 | GitHub Repo         | https://github.com/alexprox10-coder/chinabridge                     |
 | GitHub Pull Requests| https://github.com/alexprox10-coder/chinabridge/pulls               |

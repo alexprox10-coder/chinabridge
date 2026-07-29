@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://chinabridge.ru/sitemap.xml
+Sitemap: https://chinabridge.pro/sitemap.xml
