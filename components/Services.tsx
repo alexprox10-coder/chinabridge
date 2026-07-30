@@ -6,19 +6,21 @@ import { Search, Eye, ShoppingCart, Package, ClipboardCheck, Star } from "lucide
 import { analytics } from "@/lib/analytics";
 
 const services = [
-  { icon: Search, title: "Поиск поставщика", desc: "3–5 проверенных производителей, сравнительная таблица цен.", price: "от 15 000 ₽", hot: false },
-  { icon: Eye, title: "Проверка фабрики", desc: "Выезд на производство, видеоотчёт, сертификаты, мощности.", price: "от 25 000 ₽", hot: false },
-  { icon: ShoppingCart, title: "Выкуп товара", desc: "Переводим платёж, контролируем производство. Работаем в юанях.", price: "комиссия 5–8%", hot: false },
-  { icon: Package, title: "Сборные грузы", desc: "Консолидация от 50 кг. Еженедельные отправления.", price: "от 50 кг", hot: true },
-  { icon: ClipboardCheck, title: "Контроль качества", desc: "Инспекция на складе, замеры, комплектность, фотоотчёт.", price: "от 12 000 ₽", hot: false },
-  { icon: Star, title: "Под ключ", desc: "Поиск → проверка → выкуп → доставка. Один менеджер.", price: "по запросу", hot: false },
+  { icon: Search, title: "Поиск поставщика", desc: "3–5 проверенных производителей, сравнительная таблица цен.", price: "от 15 000 ₽", hot: false, track: "sourcing" },
+  { icon: Eye, title: "Проверка фабрики", desc: "Выезд на производство, видеоотчёт, сертификаты, мощности.", price: "от 25 000 ₽", hot: false, track: null },
+  { icon: ShoppingCart, title: "Выкуп товара", desc: "Переводим платёж, контролируем производство. Работаем в юанях.", price: "комиссия 5–8%", hot: false, track: null },
+  { icon: Package, title: "Сборные грузы", desc: "Консолидация от 50 кг. Еженедельные отправления.", price: "от 50 кг", hot: true, track: "consolidation" },
+  { icon: ClipboardCheck, title: "Контроль качества", desc: "Инспекция на складе, замеры, комплектность, фотоотчёт.", price: "от 12 000 ₽", hot: false, track: null },
+  { icon: Star, title: "Под ключ", desc: "Поиск → проверка → выкуп → доставка. Один менеджер.", price: "по запросу", hot: false, track: null },
 ];
 
 export default function Services() {
   const ref = useRef<HTMLDivElement>(null);
   const trackedRef = useRef(false);
+  const cardTracked = useRef<Record<string, boolean>>({});
+
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
+    const fadeObserver = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) {
           e.target.classList.add("visible");
@@ -26,8 +28,21 @@ export default function Services() {
         }
       });
     }, { threshold: 0.1 });
-    ref.current?.querySelectorAll(".fade-up").forEach(el => observer.observe(el));
-    return () => observer.disconnect();
+
+    const cardObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const key = (e.target as HTMLElement).dataset.track;
+        if (!key || cardTracked.current[key]) return;
+        cardTracked.current[key] = true;
+        if (key === "sourcing")      analytics.serviceSourcingView();
+        if (key === "consolidation") analytics.serviceConsolidationView();
+      });
+    }, { threshold: 0.5 });
+
+    ref.current?.querySelectorAll(".fade-up").forEach(el => fadeObserver.observe(el));
+    ref.current?.querySelectorAll("[data-track]").forEach(el => cardObserver.observe(el));
+    return () => { fadeObserver.disconnect(); cardObserver.disconnect(); };
   }, []);
 
   return (
@@ -43,7 +58,9 @@ export default function Services() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {services.map((s, i) => (
-            <div key={s.title} className={`fade-up relative rounded-2xl p-6 hover:-translate-y-1 transition-all duration-200 ${
+            <div key={s.title}
+              data-track={s.track ?? undefined}
+              className={`fade-up relative rounded-2xl p-6 hover:-translate-y-1 transition-all duration-200 ${
               s.hot ? "bg-[#00A86B]/10 border border-[#00A86B]/40 glow-green" : "card-glass hover:border-[#00A86B]/30"
             }`} style={{ transitionDelay: `${i * 80}ms` }}>
               {s.hot && (

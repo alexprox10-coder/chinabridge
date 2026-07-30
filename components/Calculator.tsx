@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
@@ -31,17 +31,24 @@ const inp = (err: boolean) =>
 export default function Calculator() {
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const formStarted = useRef(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<LeadFormData>({
     resolver: zodResolver(leadSchema),
     defaultValues: { country: "Казахстан" },
   });
 
+  const onFormFocus = () => {
+    if (formStarted.current) return;
+    formStarted.current = true;
+    analytics.leadFormStart();
+  };
+
   const onSubmit = async (data: LeadFormData) => {
     setServerError(null);
-    analytics.formSubmit();
     try {
       await saveLead(data);
+      analytics.leadFormSubmit();
       setSubmitted(true);
       fireworks();
       reset();
@@ -143,7 +150,7 @@ export default function Calculator() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit(onSubmit)} className="card-glass rounded-2xl p-6 md:p-8 flex flex-col gap-4">
+              <form onSubmit={handleSubmit(onSubmit)} onFocus={onFormFocus} className="card-glass rounded-2xl p-6 md:p-8 flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Имя *</label>
