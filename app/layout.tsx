@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
+import ChatWidgetLoader from "@/components/chat/ChatWidgetLoader";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body className="bg-background text-foreground antialiased font-sans">
         <AnalyticsProvider />
         {children}
+        <ChatWidgetLoader />
       </body>
     </html>
   );
