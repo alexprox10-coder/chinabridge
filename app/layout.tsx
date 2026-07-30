@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -42,6 +43,7 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning className={inter.variable}>
       <body className="bg-background text-foreground antialiased font-sans">
+        <AnalyticsProvider />
         {children}
       </body>
     </html>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Send, MessageCircle, Mail, MapPin } from "lucide-react";
+import { analytics } from "@/lib/analytics";
 
 const navLinks = [
   { label: "Услуги", href: "#services" },
@@ -38,6 +39,7 @@ export default function Footer() {
                 href="https://t.me/chinabridge"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => analytics.telegramClick()}
                 className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-[#8899aa] hover:text-accent"
                 aria-label="Telegram"
               >
@@ -47,13 +49,15 @@ export default function Footer() {
                 href="https://wa.me/79000000000"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => analytics.whatsappClick()}
                 className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-[#8899aa] hover:text-accent"
                 aria-label="WhatsApp"
               >
                 <MessageCircle className="w-4 h-4" />
               </a>
               <a
-                href="mailto:info@chinabridge.ru"
+                href="mailto:info@chinabridge.pro"
+                onClick={() => analytics.phoneClick()}
                 className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-[#8899aa] hover:text-accent"
                 aria-label="Email"
               >

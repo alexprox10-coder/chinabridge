@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { TrendingUp, Clock, ShieldCheck } from "lucide-react";
+import { analytics } from "@/lib/analytics";
 
 const cases = [
   { icon: TrendingUp, tag: "Казахстан · Kaspi", title: "Поставщик велосипедов",
@@ -21,9 +22,15 @@ const cases = [
 
 export default function Cases() {
   const ref = useRef<HTMLDivElement>(null);
+  const trackedRef = useRef(false);
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+          if (!trackedRef.current) { trackedRef.current = true; analytics.casesView(); }
+        }
+      });
     }, { threshold: 0.1 });
     ref.current?.querySelectorAll(".fade-up").forEach(el => observer.observe(el));
     return () => observer.disconnect();

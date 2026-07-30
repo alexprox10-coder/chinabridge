@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import { leadSchema, LeadFormData } from "@/lib/validation";
 import { saveLead } from "@/lib/supabase";
+import { analytics } from "@/lib/analytics";
 
 function fireworks() {
   if (typeof window === "undefined") return;
@@ -38,6 +39,7 @@ export default function Calculator() {
 
   const onSubmit = async (data: LeadFormData) => {
     setServerError(null);
+    analytics.formSubmit();
     try {
       await saveLead(data);
       setSubmitted(true);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Menu, X, ChevronRight } from "lucide-react";
+import { analytics } from "@/lib/analytics";
 
 const navLinks = [
   { label: "Услуги", href: "#services" },
@@ -51,7 +52,7 @@ export default function Header() {
           </nav>
 
           <div className="hidden md:flex items-center">
-            <button onClick={() => scrollTo("#calculator")}
+            <button onClick={() => { analytics.calculatorClick(); scrollTo("#calculator"); }}
               className="flex items-center gap-1.5 px-5 py-2.5 bg-[#00A86B] hover:bg-[#008f59] text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-lg">
               Получить расчёт <ChevronRight className="w-4 h-4" />
             </button>
@@ -73,7 +74,7 @@ export default function Header() {
                 {link.label}
               </button>
             ))}
-            <button onClick={() => scrollTo("#calculator")}
+            <button onClick={() => { analytics.calculatorClick(); scrollTo("#calculator"); }}
               className="mt-2 px-4 py-3 bg-[#00A86B] text-white text-sm font-semibold rounded-xl text-center hover:bg-[#008f59] transition-colors">
               Получить расчёт
             </button>
