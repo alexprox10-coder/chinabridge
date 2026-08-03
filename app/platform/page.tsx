@@ -272,7 +272,7 @@ export default function PlatformPage() {
               <div
                 key={i}
                 className={`card-glass rounded-2xl p-7 flex flex-col ${f.highlight ? "ring-2" : ""}`}
-                style={f.highlight ? { ringColor: `${GREEN}50` } : {}}
+                style={f.highlight ? { outline: `2px solid ${GREEN}50` } : {}}
               >
                 {f.highlight && (
                   <div className="mb-3">
