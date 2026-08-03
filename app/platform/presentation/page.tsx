@@ -1,3 +1,5 @@
+import PrintButton from "./PrintButton";
+
 export const metadata = {
   title: "ChinaBridge Platform — Презентация для партнёров",
   description: "Готовая платформа управления импортом из Китая. White Label от 99 000 ₽/мес.",
@@ -77,12 +79,7 @@ export default function PlatformPresentation() {
           <a href="/demo" className="px-4 py-1.5 bg-amber-500 text-white text-xs font-semibold rounded-lg">
             Смотреть демо
           </a>
-          <button
-            onClick={() => window.print()}
-            className="px-4 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg"
-          >
-            🖨️ Скачать PDF
-          </button>
+          <PrintButton />
         </div>
       </div>
 
