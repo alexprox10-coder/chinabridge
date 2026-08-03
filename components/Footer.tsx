@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Send, MessageCircle, Mail, MapPin } from "lucide-react";
 import { analytics } from "@/lib/analytics";
 
@@ -11,6 +12,20 @@ const navLinks = [
   { label: "Контакты", href: "#calculator" },
 ];
 
+const pageLinks = [
+  { label: "Блог", href: "/blog" },
+  { label: "Доставка", href: "/delivery" },
+  { label: "Услуги", href: "/services" },
+  { label: "FAQ", href: "/faq" },
+];
+
+const companyLinks = [
+  { label: "О компании", href: "/requisites" },
+  { label: "Реквизиты", href: "/requisites" },
+  { label: "Контакты", href: "/#calculator" },
+  { label: "Политика конфиденциальности", href: "/privacy" },
+];
+
 export default function Footer() {
   const scrollTo = (href: string) => {
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
@@ -19,9 +34,10 @@ export default function Footer() {
   return (
     <footer id="contacts" className="border-t border-border pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+
           {/* Brand */}
-          <div>
+          <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-sm">
                 CB
@@ -34,9 +50,13 @@ export default function Footer() {
               Ваш представитель в Китае. Находим производителей, проверяем
               фабрики и доставляем товары в Казахстан и Россию.
             </p>
+            <p className="text-xs text-[#8899aa]/60 mb-4">
+              ИП Попков Виталий Михайлович<br />
+              ИНН 280114439648
+            </p>
             <div className="flex gap-3">
               <a
-                href="https://t.me/chinabridge"
+                href="https://t.me/ChinaBridgeLID_bot"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => analytics.telegramClick()}
@@ -82,6 +102,30 @@ export default function Footer() {
                   </button>
                 </li>
               ))}
+              <li className="pt-1 border-t border-[#243a5e] mt-1" />
+              {pageLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm text-[#8899aa] hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#8899aa] mb-4">
+              Компания
+            </h4>
+            <ul className="flex flex-col gap-2">
+              {companyLinks.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-sm text-[#8899aa] hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -102,33 +146,44 @@ export default function Footer() {
               <li className="flex items-center gap-2.5 text-sm">
                 <Send className="w-4 h-4 text-accent flex-shrink-0" />
                 <a
-                  href="https://t.me/chinabridge"
+                  href="https://t.me/ChinaBridgeLID_bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-[#8899aa] hover:text-accent transition-colors"
                 >
-                  @chinabridge
+                  @ChinaBridgeLID_bot
                 </a>
               </li>
               <li className="flex items-center gap-2.5 text-sm">
                 <Mail className="w-4 h-4 text-accent flex-shrink-0" />
                 <a
-                  href="mailto:info@chinabridge.ru"
+                  href="mailto:info@chinabridge.pro"
                   className="text-[#8899aa] hover:text-accent transition-colors"
                 >
-                  info@chinabridge.ru
+                  info@chinabridge.pro
                 </a>
               </li>
             </ul>
           </div>
+
         </div>
 
         {/* Bottom */}
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-[#8899aa]">
-            © {new Date().getFullYear()} ChinaBridge. Все права защищены.
+            © {new Date().getFullYear()} ChinaBridge. Все права защищены. ИП Попков Виталий Михайлович
           </p>
-          <p className="text-xs text-[#8899aa]">
-            Закупки из Китая в Казахстан и Россию
-          </p>
+          <div className="flex items-center gap-4">
+            <Link href="/client/login" className="text-xs text-[#8899aa] hover:text-white transition-colors">
+              Личный кабинет
+            </Link>
+            <Link href="/partner/login" className="text-xs text-[#8899aa] hover:text-white transition-colors">
+              合作伙伴入口
+            </Link>
+            <Link href="/requisites" className="text-xs text-[#8899aa] hover:text-white transition-colors">
+              Реквизиты
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

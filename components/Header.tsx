@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { analytics } from "@/lib/analytics";
 
 const navLinks = [
@@ -10,6 +12,11 @@ const navLinks = [
   { label: "Кейсы", href: "#cases" },
   { label: "FAQ", href: "#faq" },
   { label: "Контакты", href: "#calculator" },
+];
+
+const pageLinks = [
+  { label: "Блог", href: "/blog" },
+  { label: "Доставка", href: "/delivery" },
 ];
 
 export default function Header() {
@@ -22,9 +29,16 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
   const scrollTo = (href: string) => {
     setIsOpen(false);
-    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    if (isHome) {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.href = "/" + href;
+    }
   };
 
   return (
@@ -33,14 +47,14 @@ export default function Header() {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          <a href="#" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-lg bg-[#00A86B] flex items-center justify-center text-white font-bold text-sm group-hover:bg-[#008f59] transition-colors">
               CB
             </div>
             <span className="font-bold text-lg tracking-tight">
               China<span className="text-[#00A86B]">Bridge</span>
             </span>
-          </a>
+          </Link>
 
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
@@ -49,13 +63,19 @@ export default function Header() {
                 {link.label}
               </button>
             ))}
+            {pageLinks.map((link) => (
+              <Link key={link.href} href={link.href}
+                className="px-4 py-2 text-sm text-[#8899aa] hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
           <div className="hidden md:flex items-center">
-            <button onClick={() => { analytics.clickQuote(); scrollTo("#calculator"); }}
+            <Link href="/client/login"
               className="flex items-center gap-1.5 px-5 py-2.5 bg-[#00A86B] hover:bg-[#008f59] text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-lg">
-              Получить расчёт <ChevronRight className="w-4 h-4" />
-            </button>
+              <User className="w-4 h-4" /> Личный кабинет
+            </Link>
           </div>
 
           <button className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -74,10 +94,16 @@ export default function Header() {
                 {link.label}
               </button>
             ))}
-            <button onClick={() => { analytics.clickQuote(); scrollTo("#calculator"); }}
-              className="mt-2 px-4 py-3 bg-[#00A86B] text-white text-sm font-semibold rounded-xl text-center hover:bg-[#008f59] transition-colors">
-              Получить расчёт
-            </button>
+            {pageLinks.map((link) => (
+              <Link key={link.href} href={link.href} onClick={() => setIsOpen(false)}
+                className="text-left px-4 py-3 text-sm text-[#8899aa] hover:text-white hover:bg-white/5 rounded-lg transition-colors block">
+                {link.label}
+              </Link>
+            ))}
+            <Link href="/client/login" onClick={() => setIsOpen(false)}
+              className="mt-2 flex items-center justify-center gap-2 px-4 py-3 bg-[#00A86B] text-white text-sm font-semibold rounded-xl text-center hover:bg-[#008f59] transition-colors">
+              <User className="w-4 h-4" /> Личный кабинет
+            </Link>
           </nav>
         </div>
       )}

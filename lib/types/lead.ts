@@ -1,4 +1,4 @@
-export type LeadSource = "website_form" | "website_chat" | "api";
+export type LeadSource = "website_form" | "website_chat" | "api" | "LEAD_MAGNET_FREE";
 
 export interface Lead {
   id: string;

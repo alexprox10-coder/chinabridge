@@ -43,5 +43,7 @@ export async function callLLM(
   }
 
   const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? "";
+  const content: string = data.choices?.[0]?.message?.content ?? "";
+  // Strip markdown code fences that some models wrap around JSON output
+  return content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
 }

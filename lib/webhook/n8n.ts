@@ -3,6 +3,14 @@ import { LeadData } from "@/lib/ai/types";
 
 const TIMEOUT_MS = 8000;
 
+// Escape all non-ASCII characters as \uXXXX so the JSON body is pure ASCII.
+// This prevents encoding issues when Vercel serverless sends to n8n.
+function escapeNonAscii(json: string): string {
+  return json.replace(/[^\x00-\x7F]/g, (c) =>
+    "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"),
+  );
+}
+
 async function post(url: string, payload: unknown): Promise<void> {
   const secret = process.env.N8N_WEBHOOK_SECRET ?? "";
 
@@ -16,7 +24,7 @@ async function post(url: string, payload: unknown): Promise<void> {
         "Content-Type": "application/json",
         ...(secret ? { "x-webhook-secret": secret } : {}),
       },
-      body: JSON.stringify(payload),
+      body: escapeNonAscii(JSON.stringify(payload)),
       signal: controller.signal,
     });
 
@@ -53,7 +61,6 @@ export async function sendLeadToWebhook(
     session_id: sessionId,
     lead: leadData,
   }).catch(() => {
-    // fire-and-forget: log only, never throws
     console.error("[n8n] chat lead webhook failed, session:", sessionId);
   });
 }

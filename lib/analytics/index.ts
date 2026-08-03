@@ -14,6 +14,15 @@ export const analytics = {
   leadFormStart:  () => fire("lead_form_start",  "lead_form_start",  { category: "lead" }),
   leadFormSubmit: () => fire("lead_form_submit",  "lead_form_submit", { category: "lead" }),
 
+  // ── Калькулятор ───────────────────────────────────────────────────────────
+  calculatorStart: () => fire("calculator_start", "calculator_start", { category: "calculator" }),
+  calculatorComplete: (params?: { route?: string; cost?: number; margin?: number }) =>
+    fire("calculator_complete", "calculator_complete", { category: "calculator", ...params }),
+  proposalDownload: (params?: { lead_id?: string }) =>
+    fire("proposal_download", "proposal_download", { category: "calculator", ...params }),
+  formSubmit: (params?: { form_id?: string }) =>
+    fire("form_submit", "form_submit", { category: "lead", ...params }),
+
   // ── CTA-кнопки ────────────────────────────────────────────────────────────
   clickQuote:     () => fire("click_quote",       "click_quote",      { category: "engagement" }),
 
