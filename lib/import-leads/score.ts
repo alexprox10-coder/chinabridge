@@ -2,7 +2,8 @@ import type { AnalysisResult, ScoreResult, LeadScore } from "./types";
 import type { ImportLeadsConfig } from "./config";
 import { applyMessageTemplate } from "./config";
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? "";
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
+const OR_MODEL = "anthropic/claude-haiku-4-5-20251001";
 
 const STARS: Record<LeadScore, string> = {
   5: "⭐⭐⭐⭐⭐",
@@ -17,7 +18,7 @@ async function claudeScore(
   website: string,
   config: ImportLeadsConfig
 ): Promise<ScoreResult | null> {
-  if (!ANTHROPIC_KEY) return null;
+  if (!OPENROUTER_KEY) return null;
   try {
     const prompt = `Ты эксперт по B2B продажам услуг импорта из Китая.
 
@@ -46,15 +47,16 @@ async function claudeScore(
 2 — маленькая компания или не подходит по категории
 1 — услуги без товаров, производство в России, неинтересно`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://chinabridge.pro",
+        "X-Title": "ChinaBridge Import Finder",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: OR_MODEL,
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -63,7 +65,7 @@ async function claudeScore(
 
     if (!res.ok) return null;
     const data = await res.json();
-    const text = data.content?.[0]?.text ?? "";
+    const text = data.choices?.[0]?.message?.content ?? "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     const result = JSON.parse(jsonMatch[0]) as ScoreResult;

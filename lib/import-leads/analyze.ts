@@ -1,7 +1,8 @@
 import type { AnalysisResult } from "./types";
 
 const FIRECRAWL_KEY = process.env.FIRECRAWL_API_KEY ?? "";
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? "";
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
+const OR_MODEL = "anthropic/claude-haiku-4-5-20251001";
 
 async function scrapeWebsite(url: string): Promise<{ markdown: string; title: string } | null> {
   if (!FIRECRAWL_KEY) return null;
@@ -31,8 +32,8 @@ async function scrapeWebsite(url: string): Promise<{ markdown: string; title: st
   }
 }
 
-async function claudeAnalyze(url: string, content: string, title: string): Promise<AnalysisResult | null> {
-  if (!ANTHROPIC_KEY) return null;
+async function orAnalyze(url: string, content: string, title: string): Promise<AnalysisResult | null> {
+  if (!OPENROUTER_KEY) return null;
   try {
     const prompt = `Ты аналитик B2B продаж. Изучи сайт компании и верни JSON-ответ (ТОЛЬКО JSON без markdown).
 
@@ -60,15 +61,16 @@ ${content}
 - no: компания производит сама или это услуги без товаров
 - likely: продают товары, вероятно закупают (маркетплейсы, магазины, оптовики)`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://chinabridge.pro",
+        "X-Title": "ChinaBridge Import Finder",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: OR_MODEL,
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -77,7 +79,7 @@ ${content}
 
     if (!res.ok) return null;
     const data = await res.json();
-    const text = data.content?.[0]?.text ?? "";
+    const text = data.choices?.[0]?.message?.content ?? "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     return JSON.parse(jsonMatch[0]) as AnalysisResult;
@@ -89,5 +91,5 @@ ${content}
 export async function analyzeWebsite(url: string): Promise<AnalysisResult | null> {
   const scraped = await scrapeWebsite(url);
   if (!scraped) return null;
-  return claudeAnalyze(url, scraped.markdown, scraped.title);
+  return orAnalyze(url, scraped.markdown, scraped.title);
 }
