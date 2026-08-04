@@ -60,7 +60,7 @@ async function claudeScore(
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
       }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) return null;

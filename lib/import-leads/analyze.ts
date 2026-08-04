@@ -17,9 +17,9 @@ async function scrapeWebsite(url: string): Promise<{ markdown: string; title: st
         url,
         formats: ["markdown"],
         onlyMainContent: true,
-        timeout: 15000,
+        timeout: 8000,
       }),
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(12000),
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -74,7 +74,7 @@ ${content}
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
       }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) return null;

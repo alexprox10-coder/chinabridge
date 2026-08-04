@@ -95,11 +95,7 @@ export async function runPipeline(config: ImportLeadsConfig): Promise<PipelineRe
       // Telegram notification
       await notifyTelegramLead({ ...lead, id: (saved_lead as { id?: number }).id });
       trackEvent("telegramLeadSent", { score: scored.score });
-
       trackEvent("proposalGenerated", { category: analysis.category });
-
-      // Small delay between sites to avoid rate limits
-      await new Promise((r) => setTimeout(r, 2000));
     } catch (err) {
       result.errors.push(`pipeline_error: ${sr.url}: ${String(err)}`);
     }
