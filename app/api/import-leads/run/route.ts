@@ -7,13 +7,9 @@ export const maxDuration = 60;
 
 const CRON_SECRET = process.env.CRON_SECRET ?? "";
 
-// UI quick-run: 1 query, 5 results, stop after 3 saves → fits in ~45s
+// UI quick-run: stop after 3 saves → fits in ~45s (uses default query list with rotation)
 const QUICK_OVERRIDES = {
   dailyLimit: 3,
-  searchQueries: [
-    "мебель оптовый поставщик импорт Китай",
-    "электроника оптом поставщик Wildberries",
-  ],
   minScore: 2,
 };
 

@@ -29,8 +29,10 @@ export async function runPipeline(config: ImportLeadsConfig): Promise<PipelineRe
   const result: PipelineResult = { found: 0, analyzed: 0, saved: 0, errors: [] };
   const today = new Date().toISOString().split("T")[0];
 
-  const queriesPerRun = Math.ceil(config.dailyLimit / 5);
-  const queries = config.searchQueries.slice(0, queriesPerRun);
+  // Use at least 3 queries, rotate randomly each run so results differ
+  const queriesPerRun = Math.max(3, Math.ceil(config.dailyLimit / 5));
+  const shuffled = [...config.searchQueries].sort(() => Math.random() - 0.5);
+  const queries = shuffled.slice(0, queriesPerRun);
 
   const searchResults = await searchCompanies(queries, 5);
   result.found = searchResults.length;
