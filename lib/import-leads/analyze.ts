@@ -2,7 +2,7 @@ import type { AnalysisResult } from "./types";
 
 const FIRECRAWL_KEY = process.env.FIRECRAWL_API_KEY ?? "";
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
-const OR_MODEL = "anthropic/claude-haiku-4-5-20251001";
+const OR_MODEL = "anthropic/claude-haiku-4.5";
 
 async function scrapeWebsite(url: string): Promise<{ markdown: string; title: string } | null> {
   if (!FIRECRAWL_KEY) return null;

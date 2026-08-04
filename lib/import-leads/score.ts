@@ -3,7 +3,7 @@ import type { ImportLeadsConfig } from "./config";
 import { applyMessageTemplate } from "./config";
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
-const OR_MODEL = "anthropic/claude-haiku-4-5-20251001";
+const OR_MODEL = "anthropic/claude-haiku-4.5";
 
 const STARS: Record<LeadScore, string> = {
   5: "⭐⭐⭐⭐⭐",

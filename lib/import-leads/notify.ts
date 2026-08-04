@@ -1,10 +1,11 @@
 import type { ImportLead } from "./types";
 
-const N8N_URL = process.env.N8N_WEBHOOK_URL ?? "";
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "";
+const CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? "";
 const ADMIN_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://chinabridge.pro";
 
 export async function notifyTelegramLead(lead: ImportLead): Promise<void> {
-  if (!N8N_URL) return;
+  if (!BOT_TOKEN || !CHAT_ID) return;
 
   const crmUrl = `${ADMIN_URL}/admin/import-leads`;
 
@@ -32,16 +33,14 @@ ${lead.message}
 📋 CRM: ${crmUrl}`;
 
   try {
-    await fetch(N8N_URL, {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        event: "import_lead.found",
-        lead: {
-          ...lead,
-          telegram_text: text,
-          crm_url: crmUrl,
-        },
+        chat_id: CHAT_ID,
+        text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
       }),
       signal: AbortSignal.timeout(8000),
     });
