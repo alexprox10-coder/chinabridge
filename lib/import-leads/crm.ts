@@ -13,8 +13,8 @@ async function dtQuery(filters: { key: string; value: string }[] = []): Promise<
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return [];
-    const data = await res.json().catch(() => []);
-    let rows: ImportLead[] = Array.isArray(data) ? data : (data.rows ?? data.data ?? []);
+    const json = await res.json().catch(() => ({}));
+    let rows: ImportLead[] = Array.isArray(json) ? json : (json.data ?? json.rows ?? []);
 
     for (const f of filters) {
       rows = rows.filter((r) => String((r as unknown as Record<string, unknown>)[f.key] ?? "") === f.value);
@@ -33,12 +33,14 @@ async function dtInsert(fields: Record<string, unknown>): Promise<ImportLead | n
     const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`, {
       method: "POST",
       headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ fields }),
+      body: JSON.stringify({ data: [fields] }),
       cache: "no-store",
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return null;
-    return res.json().catch(() => null);
+    const json = await res.json().catch(() => null);
+    // Response: { success: true, insertedRows: 1 } — return fields with fake id
+    return json?.success ? { ...fields, id: Date.now() } as unknown as ImportLead : null;
   } catch {
     return null;
   }
@@ -50,7 +52,7 @@ async function dtPatch(rowId: number, fields: Record<string, unknown>): Promise<
     const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows/${rowId}`, {
       method: "PATCH",
       headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ fields }),
+      body: JSON.stringify({ data: fields }),
       cache: "no-store",
       signal: AbortSignal.timeout(10000),
     });
