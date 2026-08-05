@@ -15,7 +15,8 @@ export default async function LeadsPage({
   searchParams: Promise<{ status?: string; priority?: string }>;
 }) {
   const sp = await searchParams;
-  const leads = await getLeads({ status: sp.status, priority: sp.priority });
+  let leads: Awaited<ReturnType<typeof getLeads>> = [];
+  try { leads = await getLeads({ status: sp.status, priority: sp.priority }); } catch {}
 
   return (
     <div className="min-h-screen bg-slate-950">
