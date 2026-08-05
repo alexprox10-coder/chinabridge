@@ -21,6 +21,7 @@ export default function OnboardingWizard() {
   const [companyName, setCompanyName] = useState("Ваша компания");
   const [logoError,   setLogoError]   = useState("");
   const [dragging,    setDragging]    = useState(false);
+  const [seedState,   setSeedState]   = useState<"idle" | "loading" | "done" | "error">("idle");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm]               = useState({
     logo:         "",
@@ -306,12 +307,28 @@ export default function OnboardingWizard() {
             </div>
             <div>
               <label className="text-slate-400 text-xs block mb-1">Хотите загрузить демо-данные?</label>
-              <button onClick={async () => {
-                await fetch("/api/demo/seed", { method: "POST" });
-              }}
-                className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-sm">
-                🌱 Загрузить демо-данные (лиды, сделки, KPI)
-              </button>
+              {seedState === "done" ? (
+                <div className="w-full py-2.5 bg-emerald-900/40 border border-emerald-700/60 text-emerald-300 rounded-xl text-sm text-center">
+                  ✅ Демо-данные загружены — 6 лидов в CRM
+                </div>
+              ) : (
+                <button
+                  disabled={seedState === "loading"}
+                  onClick={async () => {
+                    setSeedState("loading");
+                    try {
+                      const res = await fetch("/api/demo/seed", { method: "POST" });
+                      if (res.ok) setSeedState("done");
+                      else setSeedState("error");
+                    } catch {
+                      setSeedState("error");
+                    }
+                  }}
+                  className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-wait text-slate-200 rounded-xl text-sm transition-colors"
+                >
+                  {seedState === "loading" ? "⏳ Загружаем..." : seedState === "error" ? "⚠️ Ошибка — попробуйте ещё раз" : "🌱 Загрузить демо-данные (лиды, сделки, KPI)"}
+                </button>
+              )}
             </div>
           </>
         )}

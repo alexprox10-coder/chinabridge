@@ -1,44 +1,114 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { getDb } from "@/lib/db";
+import { crmLeads } from "@/lib/db/schema";
+import { ensureSchema } from "@/lib/db/ensure-schema";
 
 export const runtime     = "nodejs";
 export const maxDuration = 30;
 
-const DEMO_LEADS = [
-  { id: "dl-1", name: "ООО ТехноТрейд", contact: "Иван Петров", phone: "+7 (903) 123-45-67", status: "new",        route: "Шанхай → Москва",    cargo: "Электроника", weight: 500,  value: 2800000 },
-  { id: "dl-2", name: "АО АзияЛогист",  contact: "Мария Сидорова", phone: "+7 (916) 234-56-78", status: "qualified", route: "Гуанчжоу → Алматы", cargo: "Одежда",      weight: 1200, value: 1200000 },
-  { id: "dl-3", name: "ИП Громов",       contact: "Алексей Громов", phone: "+7 (999) 345-67-89", status: "proposal",  route: "Иу → Екатеринбург", cargo: "Игрушки",     weight: 800,  value: 650000 },
-  { id: "dl-4", name: "ООО СилкРоуд",   contact: "Дарья Козлова",  phone: "+7 (925) 456-78-90", status: "closed",    route: "Шэньчжэнь → СПб",  cargo: "Запчасти",    weight: 350,  value: 4100000 },
-  { id: "dl-5", name: "ЗАО ВостокТорг", contact: "Сергей Новиков", phone: "+7 (903) 567-89-01", status: "new",        route: "Пекин → Ташкент",  cargo: "Химия",       weight: 2000, value: 890000 },
-];
+function makeId() {
+  return `lead-demo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
 
-const DEMO_DOCS = [
-  { id: "dd-1", name: "Коносамент BL-2026-001",   type: "bill_of_lading", status: "active", date: "2026-07-15" },
-  { id: "dd-2", name: "CMR накладная №4521",        type: "cmr",            status: "active", date: "2026-07-20" },
-  { id: "dd-3", name: "Инвойс INV-2026-0087",      type: "invoice",        status: "paid",   date: "2026-07-18" },
-  { id: "dd-4", name: "Таможенная декларация 145",  type: "customs",        status: "draft",  date: "2026-07-22" },
-];
+const now = () => new Date().toISOString();
 
-const DEMO_TASKS = [
-  { id: "dt-1", title: "Оформить таможенную декларацию для груза ТехноТрейд", priority: "high",   status: "pending" },
-  { id: "dt-2", title: "Подготовить коммерческое предложение для АзияЛогист", priority: "medium", status: "pending" },
-  { id: "dt-3", title: "Проверить статус прохождения границы — груз Громова",  priority: "high",   status: "in_progress" },
-  { id: "dt-4", title: "Выставить счёт ООО СилкРоуд за доставку",             priority: "medium", status: "done" },
-];
+export async function POST(_req: NextRequest) {
+  const cookieStore = await cookies();
+  const tenantId = cookieStore.get("cb_tenant_id")?.value;
 
-export async function POST() {
-  // Seed to localStorage via response (client-side seeding through API)
-  return NextResponse.json({
-    ok: true,
-    seeded: {
-      leads:     DEMO_LEADS.length,
-      documents: DEMO_DOCS.length,
-      tasks:     DEMO_TASKS.length,
-    },
-    data: {
-      leads:     DEMO_LEADS,
-      documents: DEMO_DOCS,
-      tasks:     DEMO_TASKS,
-    },
-    message: `Демо-данные загружены: ${DEMO_LEADS.length} лидов, ${DEMO_DOCS.length} документов, ${DEMO_TASKS.length} задач`,
-  });
+  if (!tenantId) {
+    return NextResponse.json({ ok: false, error: "Нет сессии тенанта" }, { status: 401 });
+  }
+
+  try {
+    await ensureSchema();
+    const db = getDb();
+
+    const demoLeads = [
+      {
+        leadId: makeId(), tenantId,
+        createdAt: now(), updatedAt: now(),
+        name: "Иван Петров", phone: "+7 (903) 123-45-67", telegram: "@ivanpetrov",
+        email: "petrov@technotrade.ru", company: "ООО ТехноТрейд",
+        product: "Электроника", category: "electronics", quantity: "500 кг", weight: "500", volume: "3",
+        countryDestination: "Россия", cityDestination: "Москва",
+        deliveryType: "авиа", serviceType: "под ключ",
+        status: "NEW", priority: "HOT", estimatedValue: "2800000",
+        manager: "Менеджер AI", source: "website",
+        comment: "Крупный клиент, нужна быстрая доставка",
+      },
+      {
+        leadId: makeId(), tenantId,
+        createdAt: now(), updatedAt: now(),
+        name: "Мария Сидорова", phone: "+7 (916) 234-56-78", telegram: "@mariasid",
+        email: "maria@azialogist.kz", company: "АО АзияЛогист",
+        product: "Одежда и текстиль", category: "textile", quantity: "1200 кг", weight: "1200", volume: "8",
+        countryDestination: "Казахстан", cityDestination: "Алматы",
+        deliveryType: "авто", serviceType: "карго",
+        status: "QUALIFIED", priority: "WARM", estimatedValue: "1200000",
+        manager: "Менеджер AI", source: "telegram",
+        comment: "Регулярные поставки раз в месяц",
+      },
+      {
+        leadId: makeId(), tenantId,
+        createdAt: now(), updatedAt: now(),
+        name: "Алексей Громов", phone: "+7 (999) 345-67-89", telegram: "@agromov",
+        email: "gromov@mail.ru", company: "ИП Громов",
+        product: "Детские игрушки", category: "toys", quantity: "800 кг", weight: "800", volume: "12",
+        countryDestination: "Россия", cityDestination: "Екатеринбург",
+        deliveryType: "ж/д", serviceType: "карго",
+        status: "PROPOSAL", priority: "WARM", estimatedValue: "650000",
+        manager: "Менеджер AI", source: "referral",
+        comment: "Запрошено КП, ждёт ответа",
+      },
+      {
+        leadId: makeId(), tenantId,
+        createdAt: now(), updatedAt: now(),
+        name: "Дарья Козлова", phone: "+7 (925) 456-78-90", telegram: "@darykoz",
+        email: "kozlova@silkroad.ru", company: "ООО СилкРоуд",
+        product: "Автозапчасти", category: "auto_parts", quantity: "350 кг", weight: "350", volume: "2",
+        countryDestination: "Россия", cityDestination: "Санкт-Петербург",
+        deliveryType: "море", serviceType: "под ключ",
+        status: "WON", priority: "HOT", estimatedValue: "4100000",
+        manager: "Менеджер AI", source: "website",
+        comment: "Сделка закрыта. Постоянный клиент",
+      },
+      {
+        leadId: makeId(), tenantId,
+        createdAt: now(), updatedAt: now(),
+        name: "Сергей Новиков", phone: "+7 (903) 567-89-01", telegram: "@sergnovikov",
+        email: "novikov@vostoktorg.uz", company: "ЗАО ВостокТорг",
+        product: "Химическое сырьё", category: "chemicals", quantity: "2000 кг", weight: "2000", volume: "5",
+        countryDestination: "Узбекистан", cityDestination: "Ташкент",
+        deliveryType: "авто", serviceType: "карго",
+        status: "NEW", priority: "COLD", estimatedValue: "890000",
+        manager: "Менеджер AI", source: "cold_call",
+        comment: "Первый контакт, требует прогрева",
+      },
+      {
+        leadId: makeId(), tenantId,
+        createdAt: now(), updatedAt: now(),
+        name: "Олег Захаров", phone: "+7 (911) 678-90-12", telegram: "@olzakh",
+        email: "zakharov@import-pro.ru", company: "ООО ИмпортПро",
+        product: "Промышленное оборудование", category: "equipment", quantity: "1500 кг", weight: "1500", volume: "6",
+        countryDestination: "Россия", cityDestination: "Новосибирск",
+        deliveryType: "авто", serviceType: "под ключ",
+        status: "NEGOTIATION", priority: "HOT", estimatedValue: "7200000",
+        manager: "Менеджер AI", source: "exhibition",
+        comment: "Переговоры по цене, высокий потенциал",
+      },
+    ];
+
+    await db.insert(crmLeads).values(demoLeads).onConflictDoNothing();
+
+    return NextResponse.json({
+      ok: true,
+      seeded: demoLeads.length,
+      message: `Загружено ${demoLeads.length} демо-лидов в CRM`,
+    });
+  } catch (e) {
+    console.error("[demo/seed] error:", e);
+    return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
+  }
 }
