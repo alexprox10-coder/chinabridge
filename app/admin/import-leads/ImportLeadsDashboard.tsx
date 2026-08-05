@@ -49,6 +49,7 @@ export default function ImportLeadsDashboard({ initialLeads, isTableConfigured }
   const [runResult, setRunResult] = useState<string>("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
 
   const categories = useMemo(() => {
     const set = new Set(leads.map((l) => l.category).filter(Boolean));
@@ -101,16 +102,40 @@ export default function ImportLeadsDashboard({ initialLeads, isTableConfigured }
     }
   }
 
+  function showToast(msg: string, type: "ok" | "err") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  }
+
   async function updateStatus(lead: ImportLead, status: LeadStatus) {
-    if (!lead.id) return;
+    if (!lead.id) { showToast("Ошибка: нет ID у лида", "err"); return; }
     setUpdating(lead.id);
     try {
-      await fetch("/api/import-leads/leads", {
+      const res = await fetch("/api/import-leads/leads", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lead.id, status }),
+        body: JSON.stringify({ id: lead.id, status, lead }),
       });
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (!data.ok) {
+        showToast(`Ошибка сохранения: ${data.error ?? res.status}`, "err");
+        return;
+      }
       setLeads((prev) => prev.map((l) => l.id === lead.id ? { ...l, status } : l));
+      if (status === "approved") {
+        showToast(
+          data.crmLeadId
+            ? "✅ Одобрен и перенесён в CRM → Лиды"
+            : "✅ Одобрен (CRM-перенос недоступен)",
+          "ok"
+        );
+      } else if (status === "rejected") {
+        showToast("Лид отклонён", "ok");
+      } else {
+        showToast(`Статус обновлён: ${STATUS_LABELS[status]}`, "ok");
+      }
+    } catch {
+      showToast("Сетевая ошибка при сохранении", "err");
     } finally {
       setUpdating(null);
     }
@@ -132,6 +157,17 @@ export default function ImportLeadsDashboard({ initialLeads, isTableConfigured }
           {running ? "⏳ Поиск..." : "🚀 Запустить поиск"}
         </button>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-xl border transition-all ${
+          toast.type === "ok"
+            ? "bg-green-900/90 border-green-700 text-green-200"
+            : "bg-red-900/90 border-red-700 text-red-200"
+        }`}>
+          {toast.msg}
+        </div>
+      )}
 
       {runResult && (
         <div className="p-4 bg-slate-800 border border-slate-700 rounded-xl text-sm font-medium text-slate-200">
