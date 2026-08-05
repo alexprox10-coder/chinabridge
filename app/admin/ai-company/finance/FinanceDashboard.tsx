@@ -422,8 +422,8 @@ function UnitEcoTab({ report }: { report: FinanceDirectorReport }) {
           { label: "LTV",            value: `${fmt(unitEconomics.ltv)}₽`,       sub: "ценность клиента" },
           { label: "LTV/CAC",        value: `${unitEconomics.ltvToCac}x`,       sub: "норма > 3x" },
           { label: "ARPU",           value: `${fmt(unitEconomics.arpu)}₽`,      sub: "ср. доход на клиента" },
-          { label: "Payback",        value: `${unitEconomics.paybackDays} дн.`, sub: "окупаемость CAC" },
-          { label: "Churn",          value: `${unitEconomics.churn}%`,          sub: "отток клиентов" },
+          { label: "Окупаемость",    value: `${unitEconomics.paybackDays} дн.`, sub: "окупаемость CAC" },
+          { label: "Отток",          value: `${unitEconomics.churn}%`,          sub: "отток клиентов" },
         ].map(m => (
           <div key={m.label} className="bg-slate-900 border border-slate-700 rounded-xl p-4 text-center">
             <p className="text-xl font-bold text-white">{m.value}</p>
@@ -477,13 +477,13 @@ function SaasTab({ report }: { report: FinanceDirectorReport }) {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Компаний всего",   value: saas.activeCompanies },
-          { label: "Trials",           value: saas.trials },
+          { label: "Пробных",          value: saas.trials },
           { label: "Платных",          value: saas.paidCustomers },
           { label: "MRR",              value: `${fmtM(saas.mrr)}₽` },
           { label: "ARR",              value: `${fmtM(saas.arr)}₽` },
-          { label: "Churn",            value: `${saas.churn}%` },
+          { label: "Отток",            value: `${saas.churn}%` },
           { label: "NPS",              value: saas.nps },
-          { label: "Expansion Rev.",   value: `${fmtM(saas.expansionRevenue)}₽` },
+          { label: "Расширение",       value: `${fmtM(saas.expansionRevenue)}₽` },
         ].map(m => (
           <div key={m.label} className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-center">
             <p className="text-lg font-bold text-white">{m.value}</p>
@@ -584,13 +584,13 @@ function DirectorTab({
 
 const TABS = [
   { id: "overview",  label: "Обзор",           icon: "📊" },
-  { id: "revenue",   label: "Revenue AI",       icon: "💰" },
-  { id: "costs",     label: "Cost AI",          icon: "💸" },
-  { id: "profit",    label: "Profit AI",        icon: "📈" },
-  { id: "forecast",  label: "Forecast AI",      icon: "🔮" },
-  { id: "uniteco",   label: "Unit Economics",   icon: "📐" },
-  { id: "saas",      label: "SaaS Metrics",     icon: "🚀" },
-  { id: "director",  label: "Finance Director", icon: "🤖" },
+  { id: "revenue",   label: "Выручка",          icon: "💰" },
+  { id: "costs",     label: "Расходы",          icon: "💸" },
+  { id: "profit",    label: "Прибыль",          icon: "📈" },
+  { id: "forecast",  label: "Прогноз",          icon: "🔮" },
+  { id: "uniteco",   label: "Юнит-экономика",   icon: "📐" },
+  { id: "saas",      label: "SaaS",             icon: "🚀" },
+  { id: "director",  label: "AI Директор",      icon: "🤖" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];

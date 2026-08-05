@@ -460,9 +460,9 @@ export default function SalesDashboard({ initialReport }: { initialReport: Sales
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview",  label: "📊 Обзор" },
-    { id: "import",    label: `🎯 Import Leads${report ? ` (${report.importLeads.length})` : ""}` },
-    { id: "platform",  label: `🏢 Platform Leads${platformLeads.length > 0 ? ` (${platformLeads.length})` : ""}` },
-    { id: "followup",  label: `⏰ Follow-ups${report ? ` (${report.followupQueue.length})` : ""}` },
+    { id: "import",    label: `🎯 Импорт лиды${report ? ` (${report.importLeads.length})` : ""}` },
+    { id: "platform",  label: `🏢 Платформа${platformLeads.length > 0 ? ` (${platformLeads.length})` : ""}` },
+    { id: "followup",  label: `⏰ Дожим${report ? ` (${report.followupQueue.length})` : ""}` },
     { id: "recs",      label: "🤖 AI Директор" },
   ];
 

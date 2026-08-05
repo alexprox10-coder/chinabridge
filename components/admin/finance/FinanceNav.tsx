@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/admin/finance",          label: "📊 Dashboard",  exact: true },
+  { href: "/admin/finance",          label: "📊 Обзор",  exact: true },
   { href: "/admin/finance/orders",   label: "📋 Сделки" },
   { href: "/admin/finance/payments", label: "💳 Платежи" },
   { href: "/admin/finance/expenses", label: "💸 Расходы" },

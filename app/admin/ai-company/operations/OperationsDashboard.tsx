@@ -510,12 +510,12 @@ function DirectorTab({
 
 const TABS = [
   { id: "overview",  label: "Обзор",           icon: "📊" },
-  { id: "partners",  label: "China Partner AI", icon: "🇨🇳" },
-  { id: "logistics", label: "Logistics AI",     icon: "🚚" },
-  { id: "documents", label: "Documents AI",     icon: "📄" },
-  { id: "clients",   label: "Client Success",   icon: "👥" },
-  { id: "risks",     label: "Risk Monitor",     icon: "⚠️" },
-  { id: "director",  label: "AI Director",      icon: "🤖" },
+  { id: "partners",  label: "Партнёры КНР",    icon: "🇨🇳" },
+  { id: "logistics", label: "Логистика",        icon: "🚚" },
+  { id: "documents", label: "Документы",        icon: "📄" },
+  { id: "clients",   label: "Клиенты",          icon: "👥" },
+  { id: "risks",     label: "Риски",            icon: "⚠️" },
+  { id: "director",  label: "AI Директор",      icon: "🤖" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];

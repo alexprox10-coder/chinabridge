@@ -5,14 +5,14 @@ import type { StrategyDirectorReport, MarketPotential, CompetitorThreat, Strateg
 interface Props { initialReport: StrategyDirectorReport | null }
 
 const TABS = [
-  { id: "overview",     label: "Overview",          icon: "📊" },
-  { id: "markets",      label: "Market Research",   icon: "🌎" },
-  { id: "competitors",  label: "Competitor AI",     icon: "🏢" },
-  { id: "opportunities",label: "Opportunity AI",    icon: "🚀" },
-  { id: "products",     label: "Product Innovation",icon: "💡" },
-  { id: "growth",       label: "Growth Strategy",   icon: "📈" },
-  { id: "trends",       label: "Trend Monitor",     icon: "⚠️" },
-  { id: "director",     label: "Strategy Director", icon: "🤖" },
+  { id: "overview",     label: "Обзор",             icon: "📊" },
+  { id: "markets",      label: "Рынки",             icon: "🌎" },
+  { id: "competitors",  label: "Конкуренты",        icon: "🏢" },
+  { id: "opportunities",label: "Возможности",       icon: "🚀" },
+  { id: "products",     label: "Продукт",           icon: "💡" },
+  { id: "growth",       label: "Рост",              icon: "📈" },
+  { id: "trends",       label: "Тренды",            icon: "⚠️" },
+  { id: "director",     label: "AI Директор",       icon: "🤖" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -30,9 +30,9 @@ const THREAT_CFG: Record<CompetitorThreat, { label: string; cls: string }> = {
 };
 
 const PRIORITY_CFG: Record<StrategyPriority, { label: string; cls: string }> = {
-  HIGH:   { label: "HIGH",   cls: "bg-red-900/40 text-red-300 border-red-700" },
-  MEDIUM: { label: "MEDIUM", cls: "bg-amber-900/40 text-amber-300 border-amber-700" },
-  LOW:    { label: "LOW",    cls: "bg-slate-800 text-slate-400 border-slate-600" },
+  HIGH:   { label: "ВЫСОКИЙ", cls: "bg-red-900/40 text-red-300 border-red-700" },
+  MEDIUM: { label: "СРЕДНИЙ", cls: "bg-amber-900/40 text-amber-300 border-amber-700" },
+  LOW:    { label: "НИЗКИЙ",  cls: "bg-slate-800 text-slate-400 border-slate-600" },
 };
 
 const IMPACT_CFG: Record<string, string> = {

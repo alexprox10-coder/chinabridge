@@ -9,17 +9,17 @@ import type {
 interface Props { initialReport: MarketingDirectorReport | null }
 
 const TABS = [
-  { id: "overview",  label: "📊 Обзор"         },
-  { id: "ads",       label: "📢 Ads AI"         },
-  { id: "seo",       label: "🔎 SEO AI"         },
+  { id: "overview",  label: "📊 Обзор"          },
+  { id: "ads",       label: "📢 Реклама"         },
+  { id: "seo",       label: "🔎 SEO"             },
   { id: "channels",  label: "📱 Каналы"          },
-  { id: "director",  label: "🤖 Marketing Director AI" },
+  { id: "director",  label: "🤖 AI Директор"     },
 ];
 
 const STATUS_STYLE: Record<MarketingStatus, { badge: string; dot: string; label: string }> = {
-  GOOD:     { badge: "bg-emerald-900/40 text-emerald-300 border-emerald-700", dot: "bg-emerald-400",              label: "GOOD"     },
-  WARNING:  { badge: "bg-amber-900/40 text-amber-300 border-amber-700",       dot: "bg-amber-400",                label: "WARNING"  },
-  CRITICAL: { badge: "bg-red-900/40 text-red-300 border-red-700",             dot: "bg-red-400 animate-pulse",    label: "CRITICAL" },
+  GOOD:     { badge: "bg-emerald-900/40 text-emerald-300 border-emerald-700", dot: "bg-emerald-400",              label: "ХОРОШО"   },
+  WARNING:  { badge: "bg-amber-900/40 text-amber-300 border-amber-700",       dot: "bg-amber-400",                label: "ВНИМАНИЕ" },
+  CRITICAL: { badge: "bg-red-900/40 text-red-300 border-red-700",             dot: "bg-red-400 animate-pulse",    label: "КРИТИЧНО" },
 };
 
 const PRIORITY_STYLE: Record<MarketingPriority, { cls: string; icon: string; label: string }> = {

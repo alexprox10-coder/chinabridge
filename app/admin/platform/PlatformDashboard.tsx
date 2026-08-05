@@ -78,9 +78,9 @@ export default function PlatformDashboard() {
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
             <a href="/admin" className="hover:text-slate-200">Admin</a>
             <span>›</span>
-            <span className="text-slate-200">Platform Dashboard</span>
+            <span className="text-slate-200">Платформа</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">🚀 Platform SaaS Dashboard</h1>
+          <h1 className="text-2xl font-bold text-white">🚀 Платформа SaaS</h1>
           <p className="text-slate-400 text-sm mt-1">Super Admin · Управление всеми компаниями</p>
         </div>
         <div className="flex gap-2">

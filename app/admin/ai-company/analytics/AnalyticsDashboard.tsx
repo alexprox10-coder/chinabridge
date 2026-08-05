@@ -471,8 +471,8 @@ const TABS = [
   { id: "marketing",   label: "Маркетинг",  icon: "📣" },
   { id: "content",     label: "Контент",    icon: "🎬" },
   { id: "finance",     label: "Финансы",    icon: "💰" },
-  { id: "bi",          label: "BI Insights", icon: "🔍" },
-  { id: "director",    label: "AI Director", icon: "📊" },
+  { id: "bi",          label: "BI Аналитика", icon: "🔍" },
+  { id: "director",    label: "AI Директор",  icon: "📊" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];

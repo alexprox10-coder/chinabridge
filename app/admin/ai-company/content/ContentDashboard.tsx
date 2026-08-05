@@ -19,9 +19,9 @@ const TABS = [
 ];
 
 const STATUS_STYLE: Record<ContentStatus, { badge: string; dot: string; label: string }> = {
-  GOOD:     { badge: "bg-emerald-900/40 text-emerald-300 border-emerald-700", dot: "bg-emerald-400",           label: "GOOD"     },
-  WARNING:  { badge: "bg-amber-900/40 text-amber-300 border-amber-700",       dot: "bg-amber-400",             label: "WARNING"  },
-  CRITICAL: { badge: "bg-red-900/40 text-red-300 border-red-700",             dot: "bg-red-400 animate-pulse", label: "CRITICAL" },
+  GOOD:     { badge: "bg-emerald-900/40 text-emerald-300 border-emerald-700", dot: "bg-emerald-400",           label: "ХОРОШО"   },
+  WARNING:  { badge: "bg-amber-900/40 text-amber-300 border-amber-700",       dot: "bg-amber-400",             label: "ВНИМАНИЕ" },
+  CRITICAL: { badge: "bg-red-900/40 text-red-300 border-red-700",             dot: "bg-red-400 animate-pulse", label: "КРИТИЧНО" },
 };
 
 const PRI: Record<ContentPriority, { cls: string; icon: string; label: string }> = {
@@ -40,7 +40,7 @@ const TYPE_ICONS: Record<string, string> = {
 };
 
 const SOURCE_LABEL: Record<string, string> = {
-  director: "Content Director", marketing: "Marketing AI", seo: "SEO AI", sales: "Sales AI",
+  director: "Контент-директор", marketing: "Маркетинг AI", seo: "SEO AI", sales: "Продажи AI",
 };
 
 // ── Shared components ──────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ function HealthBar({ health }: { health: ContentHealth }) {
     <div className="bg-slate-900 border border-slate-700 rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Content Health Score</div>
+          <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Оценка здоровья контента</div>
           <div className="flex items-center gap-2">
             <span className={`w-2.5 h-2.5 rounded-full ${sc.dot}`} />
             <span className="text-white font-bold text-lg">{sc.label}</span>
@@ -619,8 +619,8 @@ export default function ContentDashboard({ initialReport }: Props) {
             <span>→</span>
             <span className="text-slate-300">🎬 Контент</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Content Department AI</h1>
-          <p className="text-slate-400 text-sm mt-1">Content Director · SEO AI · Telegram AI · YouTube AI · Shorts AI · Image AI</p>
+          <h1 className="text-2xl font-bold text-white">Отдел контента</h1>
+          <p className="text-slate-400 text-sm mt-1">AI Директор · SEO · Telegram · YouTube · Shorts · Изображения</p>
         </div>
         <button
           onClick={generateReport}

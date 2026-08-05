@@ -3,8 +3,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const NAV = [
-  { href: "/admin/dashboard", label: "Dashboard" },
-  { href: "/admin/pipeline",  label: "Pipeline" },
+  { href: "/admin/dashboard", label: "📊 Дашборд" },
+  { href: "/admin/pipeline",  label: "🗂 Воронка" },
   { href: "/admin/leads", label: "Лиды" },
   { href: "/admin/proposals", label: "Расчеты" },
   { href: "/admin/rates", label: "Тарифы" },
@@ -13,9 +13,9 @@ const NAV = [
   { href: "/admin/pricing", label: "Наценки" },
   { href: "/admin/finance",     label: "💰 Финансы" },
   { href: "/admin/import-leads", label: "🎯 Лид-поиск" },
-  { href: "/admin/ai-company",   label: "🤖 AI OS" },
+  { href: "/admin/ai-company",   label: "🤖 AI Кабинет" },
   { href: "/admin/tenants",      label: "🏢 Клиенты" },
-  { href: "/admin/platform",     label: "🚀 Platform" },
+  { href: "/admin/platform",     label: "🚀 Платформа" },
   { href: "/admin/settings",     label: "⚙️ Настройки" },
   { href: "/admin/blog",         label: "Блог" },
 ];

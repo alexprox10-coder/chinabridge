@@ -103,7 +103,19 @@ function FunnelBar({ by_status }: { by_status: Record<string, number> }) {
 }
 
 export default async function DashboardPage() {
-  const [stats, leads] = await Promise.all([getDashboardStats(), getLeads()]);
+  let stats: Awaited<ReturnType<typeof getDashboardStats>> | null = null;
+  let leads: CRMLead[] = [];
+  try {
+    [stats, leads] = await Promise.all([getDashboardStats(), getLeads()]);
+  } catch {}
+  if (!stats) stats = {
+    total: 0, today: 0, today_new: 0, today_unanswered: 0,
+    today_calculations: 0, today_proposals: 0, today_paid: 0, today_completed: 0,
+    hot: 0, open: 0, closed_success: 0, closed_lost: 0,
+    potential_value: 0, total_revenue: 0, conversion: 0,
+    unanswered_count: 0, stale3d_count: 0, sleeping_count: 0,
+    by_status: {} as Record<string, number>,
+  };
   const hotLeads    = leads.filter((l) => l.priority === "HOT");
   const recentLeads = leads.slice(0, 15);
   const conversionColor = stats.conversion >= 20 ? "text-green-400" : stats.conversion >= 10 ? "text-yellow-400" : "text-slate-400";
@@ -114,7 +126,7 @@ export default async function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 py-8">
 
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white">Sales Dashboard</h1>
+          <h1 className="text-2xl font-bold text-white">Дашборд продаж</h1>
           <Link href="/admin/pipeline" className="text-sm text-red-400 hover:text-red-300 transition flex items-center gap-1">
             Открыть Pipeline →
           </Link>

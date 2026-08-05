@@ -7,10 +7,10 @@ interface Props {
 }
 
 const STATUS_CONFIG: Record<DeptStatus, { label: string; dot: string; badge: string }> = {
-  GOOD:     { label: "GOOD",     dot: "bg-emerald-400", badge: "bg-emerald-900/40 text-emerald-300 border-emerald-700" },
-  WARNING:  { label: "WARNING",  dot: "bg-amber-400",   badge: "bg-amber-900/40 text-amber-300 border-amber-700" },
-  CRITICAL: { label: "CRITICAL", dot: "bg-red-400 animate-pulse", badge: "bg-red-900/40 text-red-300 border-red-700" },
-  IDLE:     { label: "IDLE",     dot: "bg-slate-500",   badge: "bg-slate-800 text-slate-400 border-slate-600" },
+  GOOD:     { label: "ХОРОШО",   dot: "bg-emerald-400", badge: "bg-emerald-900/40 text-emerald-300 border-emerald-700" },
+  WARNING:  { label: "ВНИМАНИЕ", dot: "bg-amber-400",   badge: "bg-amber-900/40 text-amber-300 border-amber-700" },
+  CRITICAL: { label: "КРИТИЧНО", dot: "bg-red-400 animate-pulse", badge: "bg-red-900/40 text-red-300 border-red-700" },
+  IDLE:     { label: "ОЖИДАНИЕ", dot: "bg-slate-500",   badge: "bg-slate-800 text-slate-400 border-slate-600" },
 };
 
 const PRIORITY_CONFIG: Record<Priority, { label: string; cls: string; icon: string }> = {

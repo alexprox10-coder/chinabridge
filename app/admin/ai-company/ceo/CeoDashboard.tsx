@@ -8,13 +8,13 @@ import type {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: "exec",      label: "Executive",       icon: "📊" },
-  { id: "decisions", label: "Decision Center", icon: "📝" },
-  { id: "tasks",     label: "Task Manager",    icon: "✅" },
-  { id: "depts",     label: "Departments",     icon: "🏢" },
-  { id: "notifs",    label: "Notifications",   icon: "🔔" },
-  { id: "kpi",       label: "KPI Control",     icon: "📈" },
-  { id: "history",   label: "History",         icon: "📚" },
+  { id: "exec",      label: "Сводка",          icon: "📊" },
+  { id: "decisions", label: "Решения",         icon: "📝" },
+  { id: "tasks",     label: "Задачи",          icon: "✅" },
+  { id: "depts",     label: "Отделы",          icon: "🏢" },
+  { id: "notifs",    label: "Уведомления",     icon: "🔔" },
+  { id: "kpi",       label: "KPI",             icon: "📈" },
+  { id: "history",   label: "История",         icon: "📚" },
   { id: "ceo-ai",    label: "CEO AI",          icon: "🤖" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];

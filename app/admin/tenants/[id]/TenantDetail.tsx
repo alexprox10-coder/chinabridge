@@ -4,14 +4,14 @@ import type { Tenant } from "@/lib/multitenant/types";
 import { PLAN_CONFIG } from "@/lib/multitenant/types";
 
 const AI_LINKS = [
-  { id: "sales",      icon: "💼", label: "Sales AI",      href: "/admin/ai-company/sales" },
-  { id: "marketing",  icon: "📢", label: "Marketing AI",  href: "/admin/ai-company/marketing" },
-  { id: "content",    icon: "✍️", label: "Content AI",    href: "/admin/ai-company/content" },
-  { id: "analytics",  icon: "📊", label: "Analytics AI",  href: "/admin/ai-company/analytics" },
-  { id: "operations", icon: "⚙️", label: "Operations AI", href: "/admin/ai-company/operations" },
-  { id: "finance",    icon: "💰", label: "Finance AI",    href: "/admin/ai-company/finance" },
-  { id: "strategy",   icon: "🎯", label: "Strategy AI",   href: "/admin/ai-company/strategy" },
-  { id: "ceo",        icon: "👑", label: "CEO Command",   href: "/admin/ai-company/ceo" },
+  { id: "sales",      icon: "💼", label: "Продажи AI",    href: "/admin/ai-company/sales" },
+  { id: "marketing",  icon: "📢", label: "Маркетинг AI",  href: "/admin/ai-company/marketing" },
+  { id: "content",    icon: "✍️", label: "Контент AI",    href: "/admin/ai-company/content" },
+  { id: "analytics",  icon: "📊", label: "Аналитика AI",  href: "/admin/ai-company/analytics" },
+  { id: "operations", icon: "⚙️", label: "Операции AI",   href: "/admin/ai-company/operations" },
+  { id: "finance",    icon: "💰", label: "Финансы AI",    href: "/admin/ai-company/finance" },
+  { id: "strategy",   icon: "🎯", label: "Стратегия AI",  href: "/admin/ai-company/strategy" },
+  { id: "ceo",        icon: "👑", label: "CEO Центр",     href: "/admin/ai-company/ceo" },
 ];
 
 export default function TenantDetail({ initialTenant, tenantId }: { initialTenant: Tenant | null; tenantId: string }) {

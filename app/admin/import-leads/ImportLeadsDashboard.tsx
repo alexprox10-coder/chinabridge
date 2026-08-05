@@ -121,7 +121,7 @@ export default function ImportLeadsDashboard({ initialLeads, isTableConfigured }
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Import Client Finder</h1>
+          <h1 className="text-2xl font-bold text-white">Поиск клиентов на импорт</h1>
           <p className="text-slate-400 text-sm mt-0.5">AI-агент поиска потенциальных клиентов на импорт из Китая</p>
         </div>
         <button
