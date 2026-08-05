@@ -12,6 +12,7 @@ const NAV = [
   { href: "/admin/services", label: "Услуги" },
   { href: "/admin/pricing", label: "Наценки" },
   { href: "/admin/finance",     label: "💰 Финансы" },
+  { href: "/admin/market-intelligence", label: "🧠 Intelligence" },
   { href: "/admin/import-leads", label: "🎯 Лид-поиск" },
   { href: "/admin/ai-company",   label: "🤖 AI Кабинет" },
   { href: "/admin/tenants",      label: "🏢 Клиенты" },
