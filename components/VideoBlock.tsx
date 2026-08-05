@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { trackGAEvent } from "@/lib/analytics/ga";
+import { useEffect, useRef } from "react";
 
 export default function VideoBlock() {
-  const [playing, setPlaying] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,11 +17,6 @@ export default function VideoBlock() {
     return () => obs.disconnect();
   }, []);
 
-  function handlePlay() {
-    trackGAEvent("video_start", { block: "main_page" });
-    setPlaying(true);
-  }
-
   return (
     <section className="py-20 bg-[#060f1e]" ref={ref}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,52 +30,20 @@ export default function VideoBlock() {
           </p>
         </div>
 
+        {/* Video placeholder — пусто, видео будет добавлено позже */}
         <div className="fade-up relative rounded-2xl overflow-hidden bg-[#0B1F3A] border border-[#243a5e] aspect-video shadow-2xl shadow-[#00A86B]/5">
-          {playing ? (
-            <iframe
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-              title="ChinaBridge — как работает AI-платформа импорта"
-              className="w-full h-full"
-              allow="autoplay; fullscreen"
-              allowFullScreen
-            />
-          ) : (
-            <>
-              {/* Placeholder bg */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0f2644] via-[#0B1F3A] to-[#071628]" />
-
-              {/* Grid overlay */}
-              <div className="absolute inset-0 pointer-events-none" style={{
-                backgroundImage: "radial-gradient(circle, rgba(0,168,107,0.08) 1px, transparent 1px)",
-                backgroundSize: "32px 32px",
-              }} />
-
-              {/* Glow */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-[#00A86B]/10 blur-3xl pointer-events-none" />
-
-              {/* Play button */}
-              <button
-                onClick={handlePlay}
-                className="absolute inset-0 flex flex-col items-center justify-center group"
-                aria-label="Воспроизвести видео"
-              >
-                <div className="w-20 h-20 rounded-full bg-[#00A86B] flex items-center justify-center shadow-xl shadow-[#00A86B]/30 group-hover:scale-110 group-hover:bg-[#009060] transition-all mb-4">
-                  <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-                <span className="text-white font-semibold text-base group-hover:text-[#00A86B] transition-colors">
-                  Смотреть видео
-                </span>
-                <span className="text-[#8899aa] text-sm mt-1">2 минуты · без воды</span>
-              </button>
-
-              {/* Duration badge */}
-              <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white text-xs font-mono px-2.5 py-1 rounded-lg">
-                2:14
-              </div>
-            </>
-          )}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0f2644] via-[#0B1F3A] to-[#071628]" />
+          <div className="absolute inset-0 pointer-events-none" style={{
+            backgroundImage: "radial-gradient(circle, rgba(0,168,107,0.08) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }} />
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-[#8899aa]">
+            <svg className="w-12 h-12 mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+            </svg>
+            <span className="text-sm opacity-40">Видео скоро появится</span>
+          </div>
         </div>
       </div>
     </section>
