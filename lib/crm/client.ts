@@ -1,9 +1,20 @@
 import { getDb } from "../db";
 import { crmLeads } from "../db/schema";
-import { eq, and, desc, like, or } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import type { CRMLead, LeadUpdate } from "./types";
 
-const TENANT_ID = "tenant-chinabridge";
+const OWNER_TENANT_ID = "tenant-chinabridge";
+
+async function resolveTenantId(override?: string): Promise<string> {
+  if (override) return override;
+  try {
+    const { cookies } = await import("next/headers");
+    const store = await cookies();
+    return store.get("cb_tenant_id")?.value || OWNER_TENANT_ID;
+  } catch {
+    return OWNER_TENANT_ID;
+  }
+}
 
 // ─── Row → Domain mapper ──────────────────────────────────────────────────────
 
@@ -52,13 +63,15 @@ export type LeadFilters = {
   priority?: string;
   search?: string;
   lead_id?: string;
+  tenantId?: string;
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export async function getLeads(filters: LeadFilters = {}): Promise<CRMLead[]> {
+  const tenantId = await resolveTenantId(filters.tenantId);
   const db = getDb();
-  const conditions = [eq(crmLeads.tenantId, TENANT_ID)];
+  const conditions = [eq(crmLeads.tenantId, tenantId)];
 
   if (filters.status)   conditions.push(eq(crmLeads.status, filters.status));
   if (filters.priority) conditions.push(eq(crmLeads.priority, filters.priority));
@@ -73,27 +86,33 @@ export async function getLeads(filters: LeadFilters = {}): Promise<CRMLead[]> {
   return rows.map(rowToLead);
 }
 
-export async function getLeadByLeadId(leadId: string): Promise<CRMLead | null> {
+export async function getLeadByLeadId(leadId: string, tenantIdOverride?: string): Promise<CRMLead | null> {
+  const tenantId = await resolveTenantId(tenantIdOverride);
   const db = getDb();
   const rows = await db
     .select()
     .from(crmLeads)
-    .where(and(eq(crmLeads.tenantId, TENANT_ID), eq(crmLeads.leadId, leadId)));
+    .where(and(eq(crmLeads.tenantId, tenantId), eq(crmLeads.leadId, leadId)));
   return rows[0] ? rowToLead(rows[0]) : null;
 }
 
-export async function getLead(id: number): Promise<CRMLead | null> {
+export async function getLead(id: number, tenantIdOverride?: string): Promise<CRMLead | null> {
+  const tenantId = await resolveTenantId(tenantIdOverride);
   const db = getDb();
-  const rows = await db.select().from(crmLeads).where(eq(crmLeads.id, id));
+  const rows = await db
+    .select()
+    .from(crmLeads)
+    .where(and(eq(crmLeads.id, id), eq(crmLeads.tenantId, tenantId)));
   return rows[0] ? rowToLead(rows[0]) : null;
 }
 
-export async function createLead(data: Omit<CRMLead, "id">): Promise<CRMLead> {
+export async function createLead(data: Omit<CRMLead, "id">, tenantIdOverride?: string): Promise<CRMLead> {
+  const tenantId = await resolveTenantId(tenantIdOverride);
   const db = getDb();
   const now = new Date().toISOString();
   const [row] = await db.insert(crmLeads).values({
     leadId:             data.lead_id || `lead-${Date.now()}`,
-    tenantId:           TENANT_ID,
+    tenantId,
     createdAt:          data.created_at || now,
     updatedAt:          data.updated_at || now,
     name:               data.name,
@@ -129,8 +148,9 @@ export async function createLead(data: Omit<CRMLead, "id">): Promise<CRMLead> {
   return rowToLead(row);
 }
 
-export async function updateLead(id: number, update: LeadUpdate): Promise<boolean> {
+export async function updateLead(id: number, update: LeadUpdate, tenantIdOverride?: string): Promise<boolean> {
   try {
+    const tenantId = await resolveTenantId(tenantIdOverride);
     const db = getDb();
     await db
       .update(crmLeads)
@@ -142,27 +162,28 @@ export async function updateLead(id: number, update: LeadUpdate): Promise<boolea
         ...(update.estimated_value !== undefined && { estimatedValue: String(update.estimated_value) }),
         updatedAt: new Date().toISOString(),
       })
-      .where(and(eq(crmLeads.id, id), eq(crmLeads.tenantId, TENANT_ID)));
+      .where(and(eq(crmLeads.id, id), eq(crmLeads.tenantId, tenantId)));
     return true;
   } catch {
     return false;
   }
 }
 
-export async function deleteLead(id: number): Promise<boolean> {
+export async function deleteLead(id: number, tenantIdOverride?: string): Promise<boolean> {
   try {
+    const tenantId = await resolveTenantId(tenantIdOverride);
     const db = getDb();
     await db
       .delete(crmLeads)
-      .where(and(eq(crmLeads.id, id), eq(crmLeads.tenantId, TENANT_ID)));
+      .where(and(eq(crmLeads.id, id), eq(crmLeads.tenantId, tenantId)));
     return true;
   } catch {
     return false;
   }
 }
 
-export async function getDashboardStats() {
-  const leads = await getLeads();
+export async function getDashboardStats(tenantIdOverride?: string) {
+  const leads = await getLeads({ tenantId: tenantIdOverride });
   const today = new Date().toISOString().slice(0, 10);
   const now = Date.now();
   const h24 = 24 * 60 * 60 * 1000;
