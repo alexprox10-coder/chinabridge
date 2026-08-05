@@ -4,6 +4,7 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { getMILeadStats, getLatestReport } from "@/lib/market-intelligence/db";
 import { getLeads } from "@/lib/crm/client";
 import { analyzeDealIntelligence } from "@/lib/market-intelligence/deal-intelligence";
+import type { DealIntelligenceResult } from "@/lib/market-intelligence/types";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export default async function MarketIntelligencePage() {
   const tenantId = store.get("cb_tenant_id")?.value ?? "tenant-chinabridge";
 
   let leadStats = { total: 0, hot: 0, warm: 0, cold: 0, google: 0, telegram: 0, vk: 0, clients: 0, avg_score: 0 };
-  let dealResult = { deals: [], topDeals: [], urgentDeals: [], staleDeals: [], forecast: { d7: 0, d30: 0, d90: 0 }, totalPipeline: 0, avgScore: 0 };
+  let dealResult: DealIntelligenceResult = { deals: [], topDeals: [], urgentDeals: [], staleDeals: [], forecast: { d7: 0, d30: 0, d90: 0 }, totalPipeline: 0, avgScore: 0 };
   let report = null;
 
   try {
