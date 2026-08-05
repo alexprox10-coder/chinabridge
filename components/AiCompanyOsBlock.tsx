@@ -4,13 +4,13 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 
 const DEPARTMENTS = [
-  { icon: "💰", name: "Финансы AI", desc: "P&L, unit-экономика, прогнозы", href: "/admin/ai-company/finance" },
-  { icon: "📊", name: "Аналитика AI", desc: "Дашборды, тренды, инсайты", href: "/admin/ai-company/analytics" },
-  { icon: "🎯", name: "Маркетинг AI", desc: "Каналы, CPL, воронка", href: "/admin/ai-company/marketing" },
-  { icon: "🤝", name: "Продажи AI", desc: "CRM, пайплайн, KPI", href: "/admin/ai-company/sales" },
-  { icon: "✍️", name: "Контент AI", desc: "SEO, статьи, соцсети", href: "/admin/ai-company/content" },
-  { icon: "⚙️", name: "Операции AI", desc: "Логистика, процессы, партнёры", href: "/admin/ai-company/operations" },
-  { icon: "🗺️", name: "Стратегия AI", desc: "Рынок, конкуренты, цели", href: "/admin/ai-company/strategy" },
+  { icon: "💰", name: "Финансы AI", desc: "P&L, unit-экономика, прогнозы" },
+  { icon: "📊", name: "Аналитика AI", desc: "Дашборды, тренды, инсайты" },
+  { icon: "🎯", name: "Маркетинг AI", desc: "Каналы, CPL, воронка" },
+  { icon: "🤝", name: "Продажи AI", desc: "CRM, пайплайн, KPI" },
+  { icon: "✍️", name: "Контент AI", desc: "SEO, статьи, соцсети" },
+  { icon: "⚙️", name: "Операции AI", desc: "Логистика, процессы, партнёры" },
+  { icon: "🗺️", name: "Стратегия AI", desc: "Рынок, конкуренты, цели" },
 ];
 
 export default function AiCompanyOsBlock() {
@@ -57,30 +57,26 @@ export default function AiCompanyOsBlock() {
           </div>
         </div>
 
-        {/* Departments grid */}
+        {/* Departments grid — decorative, not clickable */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
           {DEPARTMENTS.map((dept, i) => (
-            <Link
+            <div
               key={dept.name}
-              href={dept.href}
-              className="fade-up card-glass rounded-2xl p-4 flex flex-col items-center text-center hover:border-[#00A86B]/40 hover:-translate-y-1 transition-all group"
+              className="fade-up card-glass rounded-2xl p-4 flex flex-col items-center text-center"
               style={{ transitionDelay: `${i * 60}ms` }}
             >
-              <div className="w-12 h-12 rounded-xl bg-[#0B1F3A] border border-[#243a5e] group-hover:border-[#00A86B]/40 flex items-center justify-center mb-3 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-[#0B1F3A] border border-[#243a5e] flex items-center justify-center mb-3">
                 <span className="text-2xl">{dept.icon}</span>
               </div>
               <span className="text-white text-xs font-bold mb-1 leading-tight">{dept.name}</span>
               <span className="text-[#8899aa] text-[11px] leading-tight">{dept.desc}</span>
-            </Link>
+            </div>
           ))}
         </div>
 
         <div className="fade-up flex justify-center mt-10">
-          <Link
-            href="/admin/ai-company"
-            className="btn-primary"
-          >
-            Открыть AI Кабинет →
+          <Link href="/platform" className="btn-primary">
+            Попробовать платформу →
           </Link>
         </div>
       </div>
