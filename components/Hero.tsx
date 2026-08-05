@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, CheckCircle2, ChevronDown, MapPin } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { trackGAEvent } from "@/lib/analytics/ga";
 
 const checks = ["Представитель в Китае", "Проверка фабрик", "Сборные грузы", "Под ключ"];
 
@@ -209,12 +211,12 @@ export default function Hero() {
             </div>
 
             <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-5">
-              Ваш представитель<br/>
-              <span className="text-gradient">в Китае</span>
+              Импорт из Китая<br/>
+              <span className="text-gradient">под ключ — с AI</span>
             </h1>
 
             <p className="fade-up text-lg text-[#8899aa] leading-relaxed mb-7 max-w-lg">
-              Найдём производителя, проверим фабрику, выкупим товар и доставим в Казахстан и Россию — без лишних посредников.
+              AI-платформа + представитель в Китае: найдём фабрику, проверим товар, оформим таможню и доставим в Россию или Казахстан. Белый импорт без серых схем.
             </p>
 
             <ul className="fade-up flex flex-col gap-2.5 mb-9">
@@ -227,12 +229,20 @@ export default function Hero() {
             </ul>
 
             <div className="fade-up flex flex-col sm:flex-row gap-3">
-              <button onClick={() => scrollTo("#calculator")} className="btn-primary">
-                Получить расчёт <ArrowRight className="w-4 h-4"/>
-              </button>
-              <button onClick={() => scrollTo("#process")} className="btn-outline">
-                Как мы работаем
-              </button>
+              <Link
+                href="/free"
+                className="btn-primary"
+                onClick={() => trackGAEvent("hero_import_click")}
+              >
+                Начать импорт <ArrowRight className="w-4 h-4"/>
+              </Link>
+              <Link
+                href="/platform"
+                className="btn-outline"
+                onClick={() => trackGAEvent("hero_platform_click")}
+              >
+                Для карго-компаний
+              </Link>
             </div>
 
             <div className="fade-up flex gap-8 mt-10 pt-8 border-t border-[#243a5e]">
