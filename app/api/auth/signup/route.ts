@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createTenant } from "@/lib/multitenant/store";
+import { ensureSchema } from "@/lib/db/ensure-schema";
 import type { TenantCountry } from "@/lib/multitenant/types";
 
 export const runtime     = "nodejs";
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
   const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
   try {
+    await ensureSchema();
     const tenant = await createTenant({
       companyName:  String(companyName),
       slug,
@@ -55,6 +57,12 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (e) {
-    return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
+    const msg = e instanceof Error ? e.message : String(e);
+    // Log full error to Vercel logs for debugging
+    console.error("[signup] createTenant error:", e);
+    const userMsg = msg.includes("unique") || msg.includes("duplicate")
+      ? "Такой email или компания уже зарегистрированы"
+      : "Ошибка создания аккаунта. Попробуйте ещё раз";
+    return NextResponse.json({ ok: false, error: userMsg }, { status: 500 });
   }
 }
