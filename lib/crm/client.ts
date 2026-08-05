@@ -1,25 +1,51 @@
+import { getDb } from "../db";
+import { crmLeads } from "../db/schema";
+import { eq, and, desc, like, or } from "drizzle-orm";
 import type { CRMLead, LeadUpdate } from "./types";
 
-const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
-const TABLE_ID = process.env.N8N_TABLE_ID ?? "DrRONX1C3uf4Igx4";
-const N8N_KEY = process.env.N8N_API_KEY ?? "";
+const TENANT_ID = "tenant-chinabridge";
 
-async function n8nFetch(path: string, init?: RequestInit) {
-  const res = await fetch(`${N8N_BASE}${path}`, {
-    ...init,
-    headers: {
-      "X-N8N-API-KEY": N8N_KEY,
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`n8n ${path} → ${res.status}: ${text}`);
-  }
-  return res.json();
+// ─── Row → Domain mapper ──────────────────────────────────────────────────────
+
+function rowToLead(r: typeof crmLeads.$inferSelect): CRMLead {
+  return {
+    id:                 r.id,
+    lead_id:            r.leadId,
+    created_at:         r.createdAt,
+    updated_at:         r.updatedAt,
+    name:               r.name,
+    phone:              r.phone,
+    telegram:           r.telegram,
+    email:              r.email,
+    company:            r.company,
+    product:            r.product,
+    product_link:       r.productLink,
+    category:           r.category,
+    quantity:           r.quantity,
+    weight:             r.weight,
+    volume:             r.volume,
+    country_destination: r.countryDestination,
+    city_destination:   r.cityDestination,
+    delivery_type:      r.deliveryType,
+    service_type:       r.serviceType,
+    status:             r.status as CRMLead["status"],
+    priority:           r.priority as CRMLead["priority"],
+    estimated_value:    Number(r.estimatedValue),
+    manager:            r.manager,
+    comment:            r.comment,
+    source:             r.source,
+    utm_source:         r.utmSource,
+    utm_campaign:       r.utmCampaign,
+    delivery_cost:      r.deliveryCost != null ? Number(r.deliveryCost) : undefined,
+    carrier_cost:       r.carrierCost != null ? Number(r.carrierCost) : undefined,
+    markup_percent:     r.markupPercent != null ? Number(r.markupPercent) : undefined,
+    profit:             r.profit != null ? Number(r.profit) : undefined,
+    margin_percent:     r.marginPercent != null ? Number(r.marginPercent) : undefined,
+    pricing_rule:       r.pricingRule ?? undefined,
+  };
 }
+
+// ─── Filter type ──────────────────────────────────────────────────────────────
 
 export type LeadFilters = {
   status?: string;
@@ -28,79 +54,96 @@ export type LeadFilters = {
   lead_id?: string;
 };
 
+// ─── Queries ──────────────────────────────────────────────────────────────────
+
 export async function getLeads(filters: LeadFilters = {}): Promise<CRMLead[]> {
-  // Build filter conditions
-  const conditions: object[] = [];
-  if (filters.status) {
-    conditions.push({ keyName: "status", condition: "eq", keyValue: filters.status });
-  }
-  if (filters.priority) {
-    conditions.push({ keyName: "priority", condition: "eq", keyValue: filters.priority });
-  }
-  if (filters.lead_id) {
-    conditions.push({ keyName: "lead_id", condition: "eq", keyValue: filters.lead_id });
-  }
+  const db = getDb();
+  const conditions = [eq(crmLeads.tenantId, TENANT_ID)];
 
-  const payload = {
-    dataTableId: TABLE_ID,
-    returnAll: true,
-    orderBy: "created_at",
-    orderByDirection: "DESC",
-    filters: conditions.length ? { conditions } : {},
-  };
+  if (filters.status)   conditions.push(eq(crmLeads.status, filters.status));
+  if (filters.priority) conditions.push(eq(crmLeads.priority, filters.priority));
+  if (filters.lead_id)  conditions.push(eq(crmLeads.leadId, filters.lead_id));
 
-  // Use n8n CRM query webhook
-  const res = await fetch(`${N8N_BASE}/webhook/crm-leads`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!res.ok) return [];
-  const data = await res.json().catch(() => []);
-  const all: CRMLead[] = Array.isArray(data) ? data : (data.rows ?? []);
-  return all.filter((l) => {
-    if (filters.status && l.status !== filters.status) return false;
-    if (filters.priority && l.priority !== filters.priority) return false;
-    return true;
-  });
+  const rows = await db
+    .select()
+    .from(crmLeads)
+    .where(and(...conditions))
+    .orderBy(desc(crmLeads.createdAt));
+
+  return rows.map(rowToLead);
 }
 
-// Find by UUID string field (when n8n row ID is not available)
 export async function getLeadByLeadId(leadId: string): Promise<CRMLead | null> {
-  const leads = await getLeads({ lead_id: leadId });
-  return leads[0] ?? null;
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(crmLeads)
+    .where(and(eq(crmLeads.tenantId, TENANT_ID), eq(crmLeads.leadId, leadId)));
+  return rows[0] ? rowToLead(rows[0]) : null;
 }
 
 export async function getLead(id: number): Promise<CRMLead | null> {
-  const res = await fetch(`${N8N_BASE}/webhook/crm-get-lead`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ rowId: id }),
-    cache: "no-store",
-    signal: AbortSignal.timeout(8000),
-  });
-  if (!res.ok) return null;
-  const data = await res.json().catch(() => null);
-  if (!data) return null;
-  const rows = Array.isArray(data) ? data : (data.rows ?? [data]);
-  return rows[0] ?? null;
+  const db = getDb();
+  const rows = await db.select().from(crmLeads).where(eq(crmLeads.id, id));
+  return rows[0] ? rowToLead(rows[0]) : null;
+}
+
+export async function createLead(data: Omit<CRMLead, "id">): Promise<CRMLead> {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const [row] = await db.insert(crmLeads).values({
+    leadId:             data.lead_id || `lead-${Date.now()}`,
+    tenantId:           TENANT_ID,
+    createdAt:          data.created_at || now,
+    updatedAt:          data.updated_at || now,
+    name:               data.name,
+    phone:              data.phone,
+    telegram:           data.telegram,
+    email:              data.email,
+    company:            data.company,
+    product:            data.product,
+    productLink:        data.product_link,
+    category:           data.category,
+    quantity:           data.quantity,
+    weight:             data.weight,
+    volume:             data.volume,
+    countryDestination: data.country_destination,
+    cityDestination:    data.city_destination,
+    deliveryType:       data.delivery_type,
+    serviceType:        data.service_type,
+    status:             data.status,
+    priority:           data.priority,
+    estimatedValue:     String(data.estimated_value ?? 0),
+    manager:            data.manager,
+    comment:            data.comment,
+    source:             data.source,
+    utmSource:          data.utm_source,
+    utmCampaign:        data.utm_campaign,
+    deliveryCost:       data.delivery_cost != null ? String(data.delivery_cost) : null,
+    carrierCost:        data.carrier_cost != null ? String(data.carrier_cost) : null,
+    markupPercent:      data.markup_percent != null ? String(data.markup_percent) : null,
+    profit:             data.profit != null ? String(data.profit) : null,
+    marginPercent:      data.margin_percent != null ? String(data.margin_percent) : null,
+    pricingRule:        data.pricing_rule ?? null,
+  }).returning();
+  return rowToLead(row);
 }
 
 export async function updateLead(id: number, update: LeadUpdate): Promise<boolean> {
   try {
-    const res = await fetch(`${N8N_BASE}/webhook/crm-update-lead`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        dataTableId: TABLE_ID,
-        rowId: id,
-        fields: { ...update, updated_at: new Date().toISOString() },
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
-    return res.ok;
+    const db = getDb();
+    await db
+      .update(crmLeads)
+      .set({
+        ...(update.status    !== undefined && { status:         update.status }),
+        ...(update.priority  !== undefined && { priority:       update.priority }),
+        ...(update.manager   !== undefined && { manager:        update.manager }),
+        ...(update.comment   !== undefined && { comment:        update.comment }),
+        ...(update.estimated_value !== undefined && { estimatedValue: String(update.estimated_value) }),
+        updatedAt: new Date().toISOString(),
+      })
+      .where(and(eq(crmLeads.id, id), eq(crmLeads.tenantId, TENANT_ID)));
+    return true;
   } catch {
     return false;
   }
@@ -108,19 +151,16 @@ export async function updateLead(id: number, update: LeadUpdate): Promise<boolea
 
 export async function deleteLead(id: number): Promise<boolean> {
   try {
-    const res = await fetch(`${N8N_BASE}/webhook/crm-delete-lead`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rowId: id }),
-      signal: AbortSignal.timeout(8000),
-    });
-    return res.ok;
+    const db = getDb();
+    await db
+      .delete(crmLeads)
+      .where(and(eq(crmLeads.id, id), eq(crmLeads.tenantId, TENANT_ID)));
+    return true;
   } catch {
     return false;
   }
 }
 
-// Dashboard stats computed from all leads
 export async function getDashboardStats() {
   const leads = await getLeads();
   const today = new Date().toISOString().slice(0, 10);
@@ -133,13 +173,12 @@ export async function getDashboardStats() {
   const successLeads  = leads.filter((l) => l.status === "SUCCESS");
   const openLeads     = leads.filter((l) => !["SUCCESS", "LOST"].includes(l.status ?? ""));
 
-  const totalRevenue  = successLeads.reduce((s, l) => s + (Number(l.estimated_value) || 0), 0);
+  const totalRevenue   = successLeads.reduce((s, l) => s + (Number(l.estimated_value) || 0), 0);
   const potentialValue = openLeads.reduce((s, l) => s + (Number(l.estimated_value) || 0), 0);
-  const conversion    = leads.length > 0 ? Math.round((successLeads.length / leads.length) * 100) : 0;
+  const conversion     = leads.length > 0 ? Math.round((successLeads.length / leads.length) * 100) : 0;
 
-  // Stale lead detection
-  const msAgo = (iso: string) => now - new Date(iso || 0).getTime();
-  const newLeads = leads.filter((l) => l.status === "NEW");
+  const msAgo      = (iso: string) => now - new Date(iso || 0).getTime();
+  const newLeads   = leads.filter((l) => l.status === "NEW");
   const unanswered = newLeads.filter((l) => msAgo(l.created_at) > h24);
   const stale3d    = openLeads.filter((l) => msAgo(l.updated_at || l.created_at) > d3);
   const sleeping   = openLeads.filter((l) => msAgo(l.updated_at || l.created_at) > d7);
@@ -147,22 +186,22 @@ export async function getDashboardStats() {
   return {
     total: leads.length,
     today: todayLeads.length,
-    today_new:         todayLeads.filter((l) => l.status === "NEW").length,
-    today_unanswered:  unanswered.length,
+    today_new:          todayLeads.filter((l) => l.status === "NEW").length,
+    today_unanswered:   unanswered.length,
     today_calculations: leads.filter((l) => l.status === "CALCULATION").length,
-    today_proposals:   leads.filter((l) => l.status === "OFFER_SENT").length,
-    today_paid:        leads.filter((l) => l.status === "PAYMENT").length,
-    today_completed:   leads.filter((l) => l.status === "SUCCESS").length,
-    hot:          leads.filter((l) => l.priority === "HOT").length,
-    open:         openLeads.length,
-    closed_success: successLeads.length,
-    closed_lost:  leads.filter((l) => l.status === "LOST").length,
-    potential_value: potentialValue,
-    total_revenue: totalRevenue,
+    today_proposals:    leads.filter((l) => l.status === "OFFER_SENT").length,
+    today_paid:         leads.filter((l) => l.status === "PAYMENT").length,
+    today_completed:    leads.filter((l) => l.status === "SUCCESS").length,
+    hot:                leads.filter((l) => l.priority === "HOT").length,
+    open:               openLeads.length,
+    closed_success:     successLeads.length,
+    closed_lost:        leads.filter((l) => l.status === "LOST").length,
+    potential_value:    potentialValue,
+    total_revenue:      totalRevenue,
     conversion,
-    unanswered_count: unanswered.length,
-    stale3d_count:    stale3d.length,
-    sleeping_count:   sleeping.length,
+    unanswered_count:   unanswered.length,
+    stale3d_count:      stale3d.length,
+    sleeping_count:     sleeping.length,
     by_status: Object.fromEntries(
       ["NEW","CONTACTED","QUALIFICATION","CALCULATION","OFFER_SENT","NEGOTIATION","PAYMENT","DELIVERY","SUCCESS","LOST"]
         .map((s) => [s, leads.filter((l) => l.status === s).length])

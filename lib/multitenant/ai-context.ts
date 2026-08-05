@@ -1,8 +1,8 @@
 import type { Tenant, TenantSettings, TenantAiContext } from "./types";
 import { getTenantSettings } from "./store";
 
-export function buildAiContext(tenant: Tenant): TenantAiContext {
-  const settings = getTenantSettings(tenant.id);
+export async function buildAiContext(tenant: Tenant): Promise<TenantAiContext> {
+  const settings = await getTenantSettings(tenant.id);
   return {
     tenantId: tenant.id,
     companyName: tenant.companyName,
@@ -17,8 +17,8 @@ export function buildAiContext(tenant: Tenant): TenantAiContext {
   };
 }
 
-export function buildAiSystemPrompt(tenant: Tenant): string {
-  const ctx = buildAiContext(tenant);
+export async function buildAiSystemPrompt(tenant: Tenant): Promise<string> {
+  const ctx = await buildAiContext(tenant);
   return `Ты AI-директор компании «${ctx.companyName}».
 Отрасль: ${ctx.industry}. Страна: ${ctx.country}. Валюта: ${ctx.currency}.
 Описание: ${ctx.description}
@@ -29,18 +29,18 @@ export function buildAiSystemPrompt(tenant: Tenant): string {
 Отвечай строго в контексте этой компании. Не смешивай данные с другими организациями.`;
 }
 
-export function injectTenantContext(basePrompt: string, tenant: Tenant): string {
-  const ctx = buildAiContext(tenant);
+export async function injectTenantContext(basePrompt: string, tenant: Tenant): Promise<string> {
+  const ctx = await buildAiContext(tenant);
   const header = `[Контекст компании: ${ctx.companyName} | ${ctx.country} | ${ctx.plan}]\n\n`;
   return header + basePrompt;
 }
 
-export function buildDeptAiPrompt(
+export async function buildDeptAiPrompt(
   deptName: string,
   deptData: string,
   tenant: Tenant
-): string {
-  const ctx = buildAiContext(tenant);
+): Promise<string> {
+  const ctx = await buildAiContext(tenant);
   return `Ты AI-директор отдела "${deptName}" компании «${ctx.companyName}».
 ${ctx.description}
 Страна: ${ctx.country}, Валюта: ${ctx.currency}, Рынки: ${ctx.markets.join(", ")}.

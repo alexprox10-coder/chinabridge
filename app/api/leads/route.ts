@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Lead, LeadInput, LeadApiResponse, LeadApiError } from "@/lib/types/lead";
 import { sendLead } from "@/lib/webhook/n8n";
+import { createLead } from "@/lib/crm/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,17 +87,44 @@ export async function POST(req: NextRequest) {
     created_at: new Date().toISOString(),
   };
 
-  // Send to n8n
+  // Save to Neon
   try {
-    await sendLead(lead);
+    await createLead({
+      lead_id:            lead.id,
+      created_at:         lead.created_at,
+      updated_at:         lead.created_at,
+      name:               lead.name,
+      phone:              lead.phone,
+      telegram:           lead.telegram ?? "",
+      email:              "",
+      company:            "",
+      product:            lead.product,
+      product_link:       lead.link ?? "",
+      category:           "",
+      quantity:           "",
+      weight:             lead.weight ?? "",
+      volume:             lead.volume ?? "",
+      country_destination: "",
+      city_destination:   lead.to_city ?? "",
+      delivery_type:      lead.service ?? "",
+      service_type:       "",
+      status:             "NEW",
+      priority:           "WARM",
+      estimated_value:    0,
+      manager:            "",
+      comment:            "",
+      source:             lead.source,
+      utm_source:         "",
+      utm_campaign:       "",
+    });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "webhook_error";
-    console.error("[POST /api/leads] n8n webhook failed:", message);
-    return NextResponse.json<LeadApiError>(
-      { ok: false, error: "webhook_failed", details: { reason: message } },
-      { status: 502 },
-    );
+    console.error("[POST /api/leads] Neon save failed:", err);
   }
+
+  // Fire-and-forget: Telegram notification via n8n
+  sendLead(lead).catch((err) =>
+    console.error("[POST /api/leads] n8n webhook failed:", err)
+  );
 
   return NextResponse.json<LeadApiResponse>({ ok: true, id: lead.id }, { status: 201 });
 }
