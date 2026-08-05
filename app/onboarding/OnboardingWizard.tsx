@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const STEPS = [
   { id: "logo",     icon: "🖼️",  label: "Логотип" },
@@ -19,6 +19,9 @@ export default function OnboardingWizard() {
   const [step,        setStep]        = useState(0);
   const [saving,      setSaving]      = useState(false);
   const [companyName, setCompanyName] = useState("Ваша компания");
+  const [logoError,   setLogoError]   = useState("");
+  const [dragging,    setDragging]    = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm]               = useState({
     logo:         "",
     brandColor:   "#2563eb",
@@ -36,6 +39,21 @@ export default function OnboardingWizard() {
   }, []);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  function handleLogoFile(file: File) {
+    setLogoError("");
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Только изображения (JPEG, PNG, SVG)");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError("Файл слишком большой. Максимум 2 МБ");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => set("logo", e.target?.result as string);
+    reader.readAsDataURL(file);
+  }
 
   const isLast = step === STEPS.length - 1;
 
@@ -90,18 +108,62 @@ export default function OnboardingWizard() {
         {step === 0 && (
           <>
             <div className="text-white font-semibold">🖼️ Логотип компании</div>
-            <div className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center">
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoFile(f); }}
+            />
+
+            {/* Drop zone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={e => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={e => {
+                e.preventDefault();
+                setDragging(false);
+                const f = e.dataTransfer.files[0];
+                if (f) handleLogoFile(f);
+              }}
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                dragging
+                  ? "border-emerald-500 bg-emerald-900/20"
+                  : "border-slate-600 hover:border-emerald-600 hover:bg-slate-800/50"
+              }`}
+            >
               {form.logo ? (
-                <img src={form.logo} alt="logo" className="h-16 mx-auto rounded" />
+                <div className="space-y-2">
+                  <img
+                    src={form.logo}
+                    alt="logo"
+                    className="h-16 mx-auto rounded object-contain"
+                    onError={() => set("logo", "")}
+                  />
+                  <div className="text-emerald-400 text-xs">✓ Логотип загружен · нажмите чтобы заменить</div>
+                </div>
               ) : (
-                <div className="text-slate-500 text-sm">Загрузите логотип (JPEG, PNG) или пропустите</div>
+                <div className="space-y-2">
+                  <div className="text-3xl">📁</div>
+                  <div className="text-slate-300 text-sm font-medium">Нажмите или перетащите файл</div>
+                  <div className="text-slate-500 text-xs">JPEG, PNG, SVG · до 2 МБ</div>
+                </div>
               )}
             </div>
+
+            {logoError && <div className="text-red-400 text-xs">{logoError}</div>}
+
             <div>
               <label className="text-slate-400 text-xs block mb-1">Или укажите URL логотипа</label>
-              <input value={form.logo} onChange={e => set("logo", e.target.value)}
+              <input
+                value={form.logo.startsWith("data:") ? "" : form.logo}
+                onChange={e => { setLogoError(""); set("logo", e.target.value); }}
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-emerald-500"
-                placeholder="https://example.com/logo.png" />
+                placeholder="https://example.com/logo.png"
+              />
             </div>
           </>
         )}
