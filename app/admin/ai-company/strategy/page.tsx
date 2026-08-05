@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 async function loadReport() {
   try {
     const data = fetchStrategyData();
-    return generateStrategyDirectorReport(data);
+    return await generateStrategyDirectorReport(data);
   } catch {
     return null;
   }

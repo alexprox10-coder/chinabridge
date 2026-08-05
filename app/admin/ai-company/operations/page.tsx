@@ -11,7 +11,7 @@ async function loadReport() {
   try {
     const { deals, partners, cargos, documents, clients, kpis, health, risks } =
       await fetchOperationsData();
-    return generateOperationsDirectorReport(
+    return await generateOperationsDirectorReport(
       health, kpis, deals, partners, cargos, documents, clients, risks,
     );
   } catch {

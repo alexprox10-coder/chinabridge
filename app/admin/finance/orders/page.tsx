@@ -2,7 +2,7 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { FinanceNav } from "@/components/admin/finance/FinanceNav";
 import { getAllFinanceOrders } from "@/lib/finance/api";
 import { CURRENCY_SYMBOLS } from "@/lib/finance/types";
-import type { FinanceCurrency } from "@/lib/finance/types";
+import type { FinanceCurrency, FinanceOrder } from "@/lib/finance/types";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,8 @@ function fmtDate(dt: string) {
 }
 
 export default async function FinanceOrdersPage() {
-  const orders = await getAllFinanceOrders();
+  let orders: FinanceOrder[] = [];
+  try { orders = await getAllFinanceOrders(); } catch {}
   const sym = (cur: FinanceCurrency) => CURRENCY_SYMBOLS[cur] ?? "$";
 
   return (

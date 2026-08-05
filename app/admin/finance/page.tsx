@@ -2,7 +2,7 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { FinanceNav } from "@/components/admin/finance/FinanceNav";
 import { getAllFinanceOrders, getAllPayments, getAllCashFlow } from "@/lib/finance/api";
 import { ACCOUNT_LABELS, CURRENCY_SYMBOLS } from "@/lib/finance/types";
-import type { FinanceCurrency } from "@/lib/finance/types";
+import type { FinanceCurrency, FinanceOrder, FinancePayment, CashFlowEntry } from "@/lib/finance/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -37,11 +37,16 @@ function Bar({ label, value, max, color = "bg-emerald-500" }: {
 }
 
 export default async function FinanceDashboardPage() {
-  const [orders, payments, cashflow] = await Promise.all([
-    getAllFinanceOrders(),
-    getAllPayments(),
-    getAllCashFlow(),
-  ]);
+  let orders: FinanceOrder[] = [];
+  let payments: FinancePayment[] = [];
+  let cashflow: CashFlowEntry[] = [];
+  try {
+    [orders, payments, cashflow] = await Promise.all([
+      getAllFinanceOrders(),
+      getAllPayments(),
+      getAllCashFlow(),
+    ]);
+  } catch {}
 
   const today = new Date().toISOString().slice(0, 10);
   const thisMonth = new Date().toISOString().slice(0, 7);

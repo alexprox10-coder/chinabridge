@@ -12,7 +12,7 @@ export const metadata = { title: "Marketing Department AI — ChinaBridge" };
 async function loadReport(): Promise<MarketingDirectorReport | null> {
   try {
     const { kpis, funnel, health, ads, seo, channels } = await fetchMarketingData();
-    return generateMarketingDirectorReport(kpis, funnel, health, ads, seo, channels);
+    return await generateMarketingDirectorReport(kpis, funnel, health, ads, seo, channels);
   } catch {
     return null;
   }

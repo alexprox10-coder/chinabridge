@@ -2,7 +2,7 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { FinanceNav } from "@/components/admin/finance/FinanceNav";
 import { getAllExpenses } from "@/lib/finance/api";
 import { CURRENCY_SYMBOLS } from "@/lib/finance/types";
-import type { FinanceCurrency } from "@/lib/finance/types";
+import type { FinanceCurrency, FinanceExpense } from "@/lib/finance/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,7 +12,8 @@ function fmtDate(dt: string) {
 }
 
 export default async function FinanceExpensesPage() {
-  const expenses = await getAllExpenses();
+  let expenses: FinanceExpense[] = [];
+  try { expenses = await getAllExpenses(); } catch {}
   const sym = (cur: string) => CURRENCY_SYMBOLS[cur as FinanceCurrency] ?? "$";
 
   const totalByCategory: Record<string, number> = {};

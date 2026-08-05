@@ -12,7 +12,7 @@ export const metadata = { title: "Content Department AI — ChinaBridge" };
 async function loadReport(): Promise<ContentDirectorReport | null> {
   try {
     const { kpis, health, seo, telegram, youtube, shorts, imageAI } = await fetchContentData();
-    return generateContentDirectorReport(kpis, health, seo, telegram, youtube, shorts, imageAI);
+    return await generateContentDirectorReport(kpis, health, seo, telegram, youtube, shorts, imageAI);
   } catch {
     return null;
   }

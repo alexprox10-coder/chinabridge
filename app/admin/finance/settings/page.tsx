@@ -2,12 +2,14 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { FinanceNav } from "@/components/admin/finance/FinanceNav";
 import { getFinanceSettings } from "@/lib/finance/api";
 import { FinanceSettingsForm } from "@/components/admin/finance/FinanceSettingsForm";
+import type { FinanceSetting } from "@/lib/finance/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function FinanceSettingsPage() {
-  const settings = await getFinanceSettings();
+  let settings: FinanceSetting[] = [];
+  try { settings = await getFinanceSettings(); } catch {}
   return (
     <div className="min-h-screen bg-slate-950">
       <AdminNav />

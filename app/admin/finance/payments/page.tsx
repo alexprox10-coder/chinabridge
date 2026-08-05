@@ -2,7 +2,7 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { FinanceNav } from "@/components/admin/finance/FinanceNav";
 import { getAllPayments } from "@/lib/finance/api";
 import { CURRENCY_SYMBOLS, PAYMENT_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/finance/types";
-import type { FinanceCurrency } from "@/lib/finance/types";
+import type { FinanceCurrency, FinancePayment } from "@/lib/finance/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -18,7 +18,8 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default async function FinancePaymentsPage() {
-  const payments = await getAllPayments();
+  let payments: FinancePayment[] = [];
+  try { payments = await getAllPayments(); } catch {}
   const sym = (cur: string) => CURRENCY_SYMBOLS[cur as FinanceCurrency] ?? "$";
 
   const totalPaid    = payments.filter((p) => p.status === "paid").reduce((s, p) => s + (p.amount ?? 0), 0);

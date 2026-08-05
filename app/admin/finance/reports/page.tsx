@@ -1,6 +1,8 @@
 import { AdminNav } from "@/components/admin/AdminNav";
 import { FinanceNav } from "@/components/admin/finance/FinanceNav";
 import { getFinanceReport, getAllFinanceOrders } from "@/lib/finance/api";
+import type { FinanceReport } from "@/lib/finance/api";
+import type { FinanceOrder } from "@/lib/finance/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,8 +24,18 @@ function Bar({ label, value, max, color = "bg-emerald-500" }: {
   );
 }
 
+const EMPTY_REPORT: FinanceReport = {
+  total_revenue: 0, total_cost: 0, total_profit: 0, avg_margin: 0,
+  order_count: 0, paid_count: 0, pending_payments: 0,
+  by_manager: {}, by_month: {}, top_clients: [], cashflow_balance: {},
+};
+
 export default async function FinanceReportsPage() {
-  const [report, orders] = await Promise.all([getFinanceReport(), getAllFinanceOrders()]);
+  let report: FinanceReport = EMPTY_REPORT;
+  let orders: FinanceOrder[] = [];
+  try {
+    [report, orders] = await Promise.all([getFinanceReport(), getAllFinanceOrders()]);
+  } catch {}
 
   // By month (last 12 months)
   const monthlyRevenue: Array<{ month: string; revenue: number; profit: number; margin: number }> = [];
