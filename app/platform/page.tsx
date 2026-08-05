@@ -35,6 +35,22 @@ const AUDIENCE = [
   { icon: Package, title: "Импортёры", desc: "Прозрачный контроль каждой поставки из Китая" },
 ];
 
+const SAAS_PLANS = [
+  { id: "trial",      name: "Trial",      price: 0,     period: "14 дней",  color: "#8899aa", popular: false, features: ["3 AI-отдела", "CRM", "Калькулятор", "до 3 пользователей", "до 100 лидов"] },
+  { id: "starter",    name: "Starter",    price: 9900,  period: "/мес",     color: "#3b82f6", popular: false, features: ["5 AI-отделов", "Полный CRM", "Кабинет клиента", "до 5 пользователей", "до 500 лидов"] },
+  { id: "pro",        name: "Pro",        price: 24900, period: "/мес",     color: GREEN,     popular: true,  features: ["7 AI-отделов", "CEO AI Command", "White Label", "до 20 пользователей", "до 5000 лидов"] },
+  { id: "enterprise", name: "Enterprise", price: 59900, period: "/мес",     color: GOLD,      popular: false, features: ["Всё включено", "Кастомный домен", "API доступ", "SLA 99.9%", "Безлимит"] },
+];
+
+const FAQ = [
+  { q: "Нужны ли технические знания?", a: "Нет. Регистрация и настройка занимают 10 минут. Мастер настройки проведёт вас по каждому шагу." },
+  { q: "Что происходит после Trial?", a: "После 14 дней система переходит в режим чтения. Вы выбираете тариф и продолжаете работу без потери данных." },
+  { q: "Могу я использовать свой домен?", a: "Да, начиная с тарифа Pro. Также доступны поддомены вида company.chinabridge.pro." },
+  { q: "Как работает White Label?", a: "Ваш бренд, логотип и цвета — везде. Клиенты видят только вашу компанию." },
+  { q: "Есть ли API?", a: "Да, на тарифе Enterprise. Полный REST API для интеграции с вашими системами." },
+  { q: "Как перенести существующие данные?", a: "Мастер импорта поддерживает загрузку клиентской базы из Excel/CSV и JSON-бэкап от других систем." },
+];
+
 const FORMATS = [
   {
     name: "White Label",
@@ -116,12 +132,13 @@ export default function PlatformPage() {
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/demo" className="text-sm text-[#8899aa] hover:text-white transition-colors">Демо →</Link>
+          <Link href="/signup" className="px-4 py-2 text-sm font-semibold rounded-xl border" style={{ borderColor: `${GREEN}40`, color: GREEN }}>Попробовать →</Link>
           <button
             onClick={scrollToForm}
             className="px-4 py-2 text-sm font-semibold rounded-xl text-[#0B1F3A]"
             style={{ background: GREEN }}
           >
-            Запросить демо
+            Демо
           </button>
         </div>
       </nav>
@@ -144,21 +161,22 @@ export default function PlatformPage() {
             CRM, калькулятор, кабинет клиента, документы и контроль сделок — в одной системе. Под вашим брендом.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={scrollToForm}
+            <Link
+              href="/signup"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-[#0B1F3A] text-lg"
               style={{ background: GREEN }}
             >
-              Запросить демонстрацию <ArrowRight className="w-5 h-5" />
-            </button>
-            <Link
-              href="/demo"
+              Попробовать бесплатно <ArrowRight className="w-5 h-5" />
+            </Link>
+            <button
+              onClick={scrollToForm}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold border"
               style={{ borderColor: `${GREEN}40`, color: GREEN }}
             >
-              Смотреть демо →
-            </Link>
+              Запросить демо →
+            </button>
           </div>
+          <p className="text-[#8899aa] text-sm mt-4">14 дней бесплатно · Без карты · Запуск за 2 минуты</p>
         </div>
       </section>
 
@@ -298,6 +316,78 @@ export default function PlatformPage() {
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SaaS Pricing ── */}
+      <section className="py-20 px-6 border-t border-[#243a5e]" id="pricing">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: GREEN }}>Тарифы</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">Простые и прозрачные цены</h2>
+            <p className="text-[#8899aa]">14 дней бесплатно на любом тарифе · Без скрытых платежей</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {SAAS_PLANS.map(plan => (
+              <div key={plan.id}
+                className={`card-glass rounded-2xl p-6 flex flex-col relative ${plan.popular ? "ring-2" : ""}`}
+                style={plan.popular ? { outlineOffset: "2px", outline: `2px solid ${GREEN}60` } : {}}>
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="text-xs font-bold px-3 py-1 rounded-full text-[#0B1F3A]" style={{ background: GREEN }}>⭐ Популярный</span>
+                  </div>
+                )}
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold mb-1" style={{ color: plan.color }}>{plan.name}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold text-white">{plan.price === 0 ? "0₽" : `${plan.price.toLocaleString("ru")}₽`}</span>
+                    <span className="text-[#8899aa] text-sm">{plan.period}</span>
+                  </div>
+                </div>
+                <ul className="space-y-2 flex-1 mb-6">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-[#8899aa]">
+                      <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: plan.color }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/signup"
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-center block transition-colors"
+                  style={plan.popular ? { background: GREEN, color: "#0B1F3A" } : { border: `1px solid ${plan.color}40`, color: plan.color }}>
+                  {plan.id === "trial" ? "Начать бесплатно" : "Попробовать 14 дней"}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="py-20 px-6 border-t border-[#243a5e]">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: GOLD }}>FAQ</p>
+            <h2 className="text-3xl font-bold">Часто задаваемые вопросы</h2>
+          </div>
+          <div className="space-y-3">
+            {FAQ.map((item, i) => (
+              <details key={i} className="card-glass rounded-2xl overflow-hidden group">
+                <summary className="px-6 py-4 cursor-pointer flex items-center justify-between text-white font-medium text-sm list-none">
+                  {item.q}
+                  <span className="text-[#8899aa] group-open:rotate-45 transition-transform duration-200 flex-shrink-0 ml-2">+</span>
+                </summary>
+                <div className="px-6 pb-4 text-[#8899aa] text-sm leading-relaxed">{item.a}</div>
+              </details>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Link href="/signup"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-[#0B1F3A] text-lg"
+              style={{ background: GREEN }}>
+              Попробовать бесплатно 14 дней <ArrowRight className="w-5 h-5" />
+            </Link>
           </div>
         </div>
       </section>

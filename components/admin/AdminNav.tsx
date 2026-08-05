@@ -11,9 +11,13 @@ const NAV = [
   { href: "/admin/routes", label: "Маршруты" },
   { href: "/admin/services", label: "Услуги" },
   { href: "/admin/pricing", label: "Наценки" },
-  { href: "/admin/finance",   label: "💰 Финансы" },
-  { href: "/admin/settings",  label: "⚙️ Настройки" },
-  { href: "/admin/blog",      label: "Блог" },
+  { href: "/admin/finance",     label: "💰 Финансы" },
+  { href: "/admin/import-leads", label: "🎯 Лид-поиск" },
+  { href: "/admin/ai-company",   label: "🤖 AI OS" },
+  { href: "/admin/tenants",      label: "🏢 Клиенты" },
+  { href: "/admin/platform",     label: "🚀 Platform" },
+  { href: "/admin/settings",     label: "⚙️ Настройки" },
+  { href: "/admin/blog",         label: "Блог" },
 ];
 
 export function AdminNav() {
