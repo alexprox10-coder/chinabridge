@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// ── Admin auth ───────────────────────────────────────────
+// ── Admin auth (owner) ───────────────────────────────────
 const ADMIN_COOKIE = "cb_admin";
 
 async function verifyAdminToken(token: string): Promise<boolean> {
@@ -17,6 +17,24 @@ async function verifyAdminToken(token: string): Promise<boolean> {
     );
     const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(password));
     return token === Buffer.from(sig).toString("base64url");
+  } catch {
+    return false;
+  }
+}
+
+// ── Tenant session auth (registered companies) ───────────
+async function verifyTenantSession(sessionToken: string, tenantId: string): Promise<boolean> {
+  try {
+    const secret = process.env.TENANT_SESSION_SECRET ?? "chinabridge-tenant-secret-2026";
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(tenantId));
+    return sessionToken === Buffer.from(sig).toString("base64url");
   } catch {
     return false;
   }
@@ -75,8 +93,14 @@ export async function middleware(request: NextRequest) {
 
   // Protect /admin/* (except /admin/login)
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    const token = request.cookies.get(ADMIN_COOKIE)?.value ?? "";
-    if (!token || !(await verifyAdminToken(token))) {
+    const adminToken  = request.cookies.get(ADMIN_COOKIE)?.value ?? "";
+    const tenantToken = request.cookies.get("cb_tenant_session")?.value ?? "";
+    const tenantId    = request.cookies.get("cb_tenant_id")?.value ?? "";
+
+    const ownerOk  = adminToken  && (await verifyAdminToken(adminToken));
+    const tenantOk = tenantToken && tenantId && (await verifyTenantSession(tenantToken, tenantId));
+
+    if (!ownerOk && !tenantOk) {
       const url = new URL("/admin/login", request.url);
       url.searchParams.set("from", pathname);
       return NextResponse.redirect(url);

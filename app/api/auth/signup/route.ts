@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createTenant } from "@/lib/multitenant/store";
 import { ensureSchema } from "@/lib/db/ensure-schema";
+import { createTenantSessionToken } from "@/lib/crm/auth";
 import type { TenantCountry } from "@/lib/multitenant/types";
 
 export const runtime     = "nodejs";
@@ -46,9 +47,10 @@ export async function POST(req: NextRequest) {
     });
 
     // Set auth cookies
+    const tenantSessionToken = await createTenantSessionToken(tenant.id);
     const response = NextResponse.json({ ok: true, tenant });
-    response.cookies.set("cb_admin",           "1",          { path: "/", httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
-    response.cookies.set("cb_tenant_id",       tenant.id,    { path: "/", httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
+    response.cookies.set("cb_tenant_session",  tenantSessionToken, { path: "/", httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
+    response.cookies.set("cb_tenant_id",       tenant.id,          { path: "/", httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
     response.cookies.set("cb_onboarding",      "pending",    { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 });
     response.cookies.set("cb_trial_start",     new Date().toISOString(), { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
     response.cookies.set("cb_tenant_email",    String(email), { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });

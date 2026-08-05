@@ -1,4 +1,5 @@
 const SESSION_COOKIE = "cb_admin";
+const TENANT_SESSION_COOKIE = "cb_tenant_session";
 
 async function getKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.importKey(
@@ -32,4 +33,20 @@ export async function verifySessionToken(token: string): Promise<boolean> {
   }
 }
 
-export { SESSION_COOKIE };
+export async function createTenantSessionToken(tenantId: string): Promise<string> {
+  const secret = process.env.TENANT_SESSION_SECRET ?? "chinabridge-tenant-secret-2026";
+  const key = await getKey(secret);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(tenantId));
+  return Buffer.from(sig).toString("base64url");
+}
+
+export async function verifyTenantSessionToken(token: string, tenantId: string): Promise<boolean> {
+  try {
+    const expected = await createTenantSessionToken(tenantId);
+    return token === expected;
+  } catch {
+    return false;
+  }
+}
+
+export { SESSION_COOKIE, TENANT_SESSION_COOKIE };
