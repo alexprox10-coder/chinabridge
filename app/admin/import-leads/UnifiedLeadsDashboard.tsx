@@ -157,6 +157,7 @@ export default function UnifiedLeadsDashboard() {
   const [runResult,   setRunResult]   = useState("");
   const [expanded,    setExpanded]    = useState<string | null>(null);
   const [updating,    setUpdating]    = useState<string | null>(null);
+  const [deleting,    setDeleting]    = useState<string | null>(null);
   const [toast,       setToast]       = useState<{ msg: string; type: "ok" | "err" } | null>(null);
 
   const [filterTemp,   setFilterTemp]   = useState<Temperature | "all">("all");
@@ -209,6 +210,33 @@ export default function UnifiedLeadsDashboard() {
       await loadAll();
     } catch { setRunResult("⚠️ Ошибка поиска"); }
     setRunning(false);
+  }
+
+  // ─── Delete handler ──────────────────────────────────────────────────────────
+
+  async function handleDelete(lead: UnifiedLead) {
+    if (deleting) return;
+    setDeleting(lead.uid);
+    try {
+      let url = "";
+      if (lead.system === "mi" && lead.mi_data?.id) {
+        url = `/api/admin/leads?system=mi&id=${lead.mi_data.id}`;
+      } else if (lead.system === "import" && lead.import_data) {
+        const params = new URLSearchParams({ system: "import" });
+        if (lead.import_data.lead_id) params.set("lead_id", lead.import_data.lead_id);
+        if (lead.import_data.id)      params.set("n8n_id", String(lead.import_data.id));
+        url = `/api/admin/leads?${params}`;
+      }
+      if (!url) { showToast("Не удалось удалить: нет ID", "err"); return; }
+      const res  = await fetch(url, { method: "DELETE" });
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (data.ok) {
+        setAllLeads(prev => prev.filter(l => l.uid !== lead.uid));
+        showToast("Лид удалён", "ok");
+      } else {
+        showToast(`Ошибка: ${data.error ?? "unknown"}`, "err");
+      }
+    } finally { setDeleting(null); }
   }
 
   // ─── Unified action handler ─────────────────────────────────────────────────
@@ -398,6 +426,13 @@ export default function UnifiedLeadsDashboard() {
                     )}
                   </div>
                   <ScoreBar score={lead.score_pct} />
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDelete(lead); }}
+                    disabled={deleting === lead.uid}
+                    title="Удалить лид"
+                    className="ml-1 p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition disabled:opacity-40 flex-shrink-0">
+                    {deleting === lead.uid ? "⏳" : "🗑"}
+                  </button>
                 </div>
               </div>
 
