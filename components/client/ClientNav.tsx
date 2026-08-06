@@ -64,6 +64,18 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
           })}
         </nav>
 
+        {/* Support */}
+        <div className="px-3 pb-2">
+          <a
+            href="https://t.me/Chinabridge_HELP_24_bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+          >
+            <span>✈️</span> Поддержка
+          </a>
+        </div>
+
         {/* Logout */}
         <div className="px-3 pb-4">
           <button
@@ -89,7 +101,7 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
 
       {/* ── Mobile bottom bar ─────────────────────────────── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex">
-        {NAV.slice(0, 4).map(({ href, label, icon }) => {
+        {NAV.slice(0, 3).map(({ href, label, icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
@@ -104,6 +116,15 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
             </Link>
           );
         })}
+        <a
+          href="https://t.me/Chinabridge_HELP_24_bot"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 flex flex-col items-center justify-center py-2 text-xs text-blue-500"
+        >
+          <span className="text-lg">✈️</span>
+          <span className="mt-0.5">Поддержка</span>
+        </a>
         <button
           onClick={logout}
           className="flex-1 flex flex-col items-center justify-center py-2 text-xs text-slate-400"

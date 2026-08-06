@@ -3,12 +3,12 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import type { ImportLead, LeadStatus } from "@/lib/import-leads/types";
 import type { MILead, MILeadPipeline } from "@/lib/market-intelligence/types";
-import { MI_PIPELINE_LABELS } from "@/lib/market-intelligence/types";
 
 // ─── Unified model ─────────────────────────────────────────────────────────
 
 type LeadSystem = "import" | "mi";
 type Temperature = "HOT" | "WARM" | "COLD";
+type UnifiedStatus = "new" | "reviewed" | "contacted" | "approved" | "rejected";
 
 interface UnifiedLead {
   uid: string;
@@ -23,15 +23,16 @@ interface UnifiedLead {
   source: string;
   score_pct: number;
   temperature: Temperature;
-  status_key: string;
-  status_label: string;
-  status_color: string;
+  status: UnifiedStatus;
   description: string;
   next_action?: string;
+  message?: string;
   created_at: string;
   import_data?: ImportLead;
   mi_data?: MILead;
 }
+
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const TEMP_COLORS: Record<Temperature, string> = {
   HOT:  "bg-red-900/40 text-red-300 border-red-700",
@@ -39,83 +40,101 @@ const TEMP_COLORS: Record<Temperature, string> = {
   COLD: "bg-slate-700/40 text-slate-400 border-slate-600",
 };
 
-const IMPORT_STATUS_COLORS: Record<string, string> = {
+const STATUS_LABELS: Record<UnifiedStatus, string> = {
+  new:       "Новый",
+  reviewed:  "Просмотрен",
+  contacted: "Контактировали",
+  approved:  "Одобрен",
+  rejected:  "Отклонён",
+};
+
+const STATUS_COLORS: Record<UnifiedStatus, string> = {
   new:       "bg-blue-900/40 text-blue-300 border-blue-700",
   reviewed:  "bg-slate-700/40 text-slate-300 border-slate-600",
+  contacted: "bg-purple-900/40 text-purple-300 border-purple-700",
   approved:  "bg-green-900/40 text-green-300 border-green-700",
   rejected:  "bg-red-900/20 text-red-400 border-red-900",
-  contacted: "bg-purple-900/40 text-purple-300 border-purple-700",
-};
-const IMPORT_STATUS_LABELS: Record<string, string> = {
-  new: "Новый", reviewed: "Просмотрен", approved: "Одобрен",
-  rejected: "Отклонён", contacted: "Контактировали",
 };
 
-const MI_PIPE_COLORS: Record<string, string> = {
-  NEW:         "bg-blue-900/40 text-blue-300 border-blue-700",
-  REVIEW:      "bg-slate-700/40 text-slate-300 border-slate-600",
-  CONTACT:     "bg-purple-900/40 text-purple-300 border-purple-700",
-  NEGOTIATION: "bg-amber-900/40 text-amber-300 border-amber-700",
-  CLIENT:      "bg-green-900/40 text-green-300 border-green-700",
-  LOST:        "bg-red-900/20 text-red-400 border-red-900",
+// MI pipeline → unified status
+const MI_TO_UNIFIED: Record<MILeadPipeline, UnifiedStatus> = {
+  NEW:         "new",
+  REVIEW:      "reviewed",
+  CONTACT:     "contacted",
+  NEGOTIATION: "contacted",
+  CLIENT:      "approved",
+  LOST:        "rejected",
 };
 
-// ─── Normalizers ────────────────────────────────────────────────────────────
+// Unified action → MI pipeline
+const UNIFIED_TO_MI: Record<UnifiedStatus, MILeadPipeline> = {
+  new:       "NEW",
+  reviewed:  "REVIEW",
+  contacted: "CONTACT",
+  approved:  "CLIENT",
+  rejected:  "LOST",
+};
+
+// The 4 action buttons shown for every lead
+const ACTION_BUTTONS: UnifiedStatus[] = ["reviewed", "contacted", "approved", "rejected"];
+
+const SOURCE_ICON: Record<string, string> = {
+  google: "🔍", telegram: "✈️", vk: "💬", search: "🌐", manual: "✏️",
+};
+
+// ─── Normalizers ─────────────────────────────────────────────────────────────
 
 function normalizeImport(l: ImportLead): UnifiedLead {
   const imports = l.imports ?? "likely";
   const temp: Temperature = imports === "yes" ? "HOT" : imports === "likely" ? "WARM" : "COLD";
-  const score_pct = Math.round((l.score ?? 1) * 20);
-  const status = l.status ?? "new";
+  const status = (l.status ?? "new") as UnifiedStatus;
   return {
-    uid: `import:${l.lead_id}`,
-    system: "import",
-    company: l.company,
-    website: l.website,
-    city: l.city,
-    country: l.country,
-    phone: l.phone,
-    email: l.email,
-    telegram: l.telegram,
-    source: l.source ?? "search",
-    score_pct,
+    uid:         `import:${l.lead_id}`,
+    system:      "import",
+    company:     l.company,
+    website:     l.website,
+    city:        l.city,
+    country:     l.country,
+    phone:       l.phone,
+    email:       l.email,
+    telegram:    l.telegram,
+    source:      l.source ?? "search",
+    score_pct:   Math.round((l.score ?? 1) * 20),
     temperature: temp,
-    status_key: status,
-    status_label: IMPORT_STATUS_LABELS[status] ?? status,
-    status_color: IMPORT_STATUS_COLORS[status] ?? IMPORT_STATUS_COLORS.new,
-    description: l.why ?? l.offer ?? "",
+    status,
+    description: l.why ?? "",
     next_action: l.offer,
-    created_at: l.created_at,
+    message:     l.message,
+    created_at:  l.created_at,
     import_data: l,
   };
 }
 
 function normalizeMI(l: MILead): UnifiedLead {
-  const pipeline = l.pipeline ?? "NEW";
+  const pipeline = (l.pipeline ?? "NEW") as MILeadPipeline;
+  const status: UnifiedStatus = MI_TO_UNIFIED[pipeline] ?? "new";
   return {
-    uid: `mi:${l.leadId}`,
-    system: "mi",
-    company: l.company,
-    website: l.website,
-    city: l.city,
-    country: l.country,
-    phone: l.phone,
-    email: l.email,
-    telegram: l.telegram,
-    source: l.source,
-    score_pct: l.score,
+    uid:         `mi:${l.leadId}`,
+    system:      "mi",
+    company:     l.company,
+    website:     l.website,
+    city:        l.city,
+    country:     l.country,
+    phone:       l.phone,
+    email:       l.email,
+    telegram:    l.telegram,
+    source:      l.source,
+    score_pct:   l.score,
     temperature: l.temperature,
-    status_key: pipeline,
-    status_label: MI_PIPELINE_LABELS[pipeline as MILeadPipeline] ?? pipeline,
-    status_color: MI_PIPE_COLORS[pipeline] ?? MI_PIPE_COLORS.NEW,
+    status,
     description: l.description ?? l.scoreReason ?? "",
     next_action: l.nextAction,
-    created_at: l.createdAt,
-    mi_data: l,
+    created_at:  l.createdAt,
+    mi_data:     l,
   };
 }
 
-// ─── ScoreBar ────────────────────────────────────────────────────────────────
+// ─── ScoreBar ─────────────────────────────────────────────────────────────────
 
 function ScoreBar({ score }: { score: number }) {
   const color = score >= 80 ? "bg-green-500" : score >= 60 ? "bg-yellow-500" : score >= 40 ? "bg-orange-500" : "bg-slate-600";
@@ -129,11 +148,7 @@ function ScoreBar({ score }: { score: number }) {
   );
 }
 
-const SOURCE_ICON: Record<string, string> = {
-  google: "🔍", telegram: "✈️", vk: "💬", search: "🌐", manual: "✏️",
-};
-
-// ─── Main component ──────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function UnifiedLeadsDashboard() {
   const [allLeads,    setAllLeads]    = useState<UnifiedLead[]>([]);
@@ -144,10 +159,9 @@ export default function UnifiedLeadsDashboard() {
   const [updating,    setUpdating]    = useState<string | null>(null);
   const [toast,       setToast]       = useState<{ msg: string; type: "ok" | "err" } | null>(null);
 
-  // Filters
   const [filterTemp,   setFilterTemp]   = useState<Temperature | "all">("all");
   const [filterSource, setFilterSource] = useState<"all" | "import" | "mi">("all");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterStatus, setFilterStatus] = useState<UnifiedStatus | "all">("all");
   const [searchQ,      setSearchQ]      = useState("");
 
   function showToast(msg: string, type: "ok" | "err") {
@@ -162,10 +176,9 @@ export default function UnifiedLeadsDashboard() {
         fetch("/api/import-leads/leads").then(r => r.json()).catch(() => ({ ok: false, leads: [] })),
         fetch("/api/market-intelligence/leads").then(r => r.json()).catch(() => []),
       ]);
-      const importLeads: UnifiedLead[] = (r1.leads ?? []).map(normalizeImport);
-      const miLeads: UnifiedLead[] = (Array.isArray(r2) ? r2 : []).map(normalizeMI);
+      const importLeads = (r1.leads ?? []).map(normalizeImport);
+      const miLeads     = (Array.isArray(r2) ? r2 : []).map(normalizeMI);
 
-      // Deduplicate by company name (prefer import version if same company)
       const seen = new Set<string>();
       const combined: UnifiedLead[] = [];
       for (const l of [...importLeads, ...miLeads]) {
@@ -198,59 +211,46 @@ export default function UnifiedLeadsDashboard() {
     setRunning(false);
   }
 
-  // ─── Status update for import leads ────────────────────────────────────────
+  // ─── Unified action handler ─────────────────────────────────────────────────
 
-  async function updateImportStatus(lead: UnifiedLead, status: LeadStatus) {
-    if (!lead.import_data) return;
+  async function handleAction(lead: UnifiedLead, action: UnifiedStatus) {
+    if (updating) return;
     setUpdating(lead.uid);
+
+    const isCRM = action === "approved";
+
     try {
-      const res = await fetch("/api/import-leads/leads", {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId: lead.import_data.lead_id, status, lead: lead.import_data }),
-      });
-      const data = await res.json().catch(() => ({ ok: false }));
-      if (!data.ok) { showToast(`Ошибка: ${data.error ?? "unknown"}`, "err"); return; }
-      setAllLeads(prev => prev.map(l => l.uid === lead.uid
-        ? { ...l, status_key: status, status_label: IMPORT_STATUS_LABELS[status] ?? status, status_color: IMPORT_STATUS_COLORS[status] }
-        : l
-      ));
-      if (status === "approved") {
-        showToast(data.crmLeadId ? "✅ Одобрен и добавлен в CRM → /admin/leads" : "✅ Одобрен", "ok");
-      } else {
-        showToast(`Статус: ${IMPORT_STATUS_LABELS[status]}`, "ok");
+      if (lead.system === "import" && lead.import_data) {
+        const res = await fetch("/api/import-leads/leads", {
+          method: "PATCH", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId: lead.import_data.lead_id, status: action as LeadStatus, lead: lead.import_data }),
+        });
+        const data = await res.json().catch(() => ({ ok: false }));
+        if (!data.ok) { showToast(`Ошибка: ${data.error ?? "unknown"}`, "err"); return; }
+        if (isCRM) showToast(data.crmLeadId ? "✅ Одобрен и добавлен в CRM" : "✅ Одобрен", "ok");
+        else showToast(`Статус: ${STATUS_LABELS[action]}`, "ok");
+
+      } else if (lead.system === "mi" && lead.mi_data?.id) {
+        const pipeline = UNIFIED_TO_MI[action];
+        const res = await fetch("/api/market-intelligence/leads", {
+          method: "PATCH", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: lead.mi_data.id, pipeline, lead: isCRM ? lead.mi_data : undefined }),
+        });
+        const data = await res.json().catch(() => ({ ok: false }));
+        if (isCRM) showToast(data.crmLeadId ? "✅ Одобрен и добавлен в CRM" : "✅ Одобрен", "ok");
+        else showToast(`Статус: ${STATUS_LABELS[action]}`, "ok");
       }
+
+      setAllLeads(prev => prev.map(l => l.uid === lead.uid ? { ...l, status: action } : l));
     } finally { setUpdating(null); }
   }
 
-  // ─── Pipeline update for MI leads ──────────────────────────────────────────
-
-  async function updateMIPipeline(lead: UnifiedLead, pipeline: MILeadPipeline) {
-    if (!lead.mi_data?.id) return;
-    setUpdating(lead.uid);
-    try {
-      const res = await fetch("/api/market-intelligence/leads", {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lead.mi_data.id, pipeline, lead: pipeline === "CONTACT" ? lead.mi_data : undefined }),
-      });
-      const data = await res.json().catch(() => ({ ok: false }));
-      setAllLeads(prev => prev.map(l => l.uid === lead.uid
-        ? { ...l, status_key: pipeline, status_label: MI_PIPELINE_LABELS[pipeline], status_color: MI_PIPE_COLORS[pipeline] }
-        : l
-      ));
-      if (pipeline === "CONTACT") {
-        showToast(data.crmLeadId ? "✅ Добавлен в CRM → /admin/leads" : "⚠️ Статус обновлён, перенос не удался", data.crmLeadId ? "ok" : "err");
-      } else {
-        showToast(`Статус: ${MI_PIPELINE_LABELS[pipeline]}`, "ok");
-      }
-    } finally { setUpdating(null); }
-  }
-
-  // ─── Filters ────────────────────────────────────────────────────────────────
+  // ─── Filters ─────────────────────────────────────────────────────────────────
 
   const filtered = useMemo(() => allLeads.filter(l => {
     if (filterTemp !== "all" && l.temperature !== filterTemp) return false;
     if (filterSource !== "all" && l.system !== filterSource) return false;
-    if (filterStatus && l.status_key !== filterStatus) return false;
+    if (filterStatus !== "all" && l.status !== filterStatus) return false;
     if (searchQ) {
       const q = searchQ.toLowerCase();
       if (!l.company.toLowerCase().includes(q) && !(l.website ?? "").toLowerCase().includes(q)) return false;
@@ -259,19 +259,16 @@ export default function UnifiedLeadsDashboard() {
   }), [allLeads, filterTemp, filterSource, filterStatus, searchQ]);
 
   const stats = useMemo(() => ({
-    total: allLeads.length,
-    hot:   allLeads.filter(l => l.temperature === "HOT").length,
-    warm:  allLeads.filter(l => l.temperature === "WARM").length,
+    total:        allLeads.length,
+    hot:          allLeads.filter(l => l.temperature === "HOT").length,
+    warm:         allLeads.filter(l => l.temperature === "WARM").length,
     import_count: allLeads.filter(l => l.system === "import").length,
     mi_count:     allLeads.filter(l => l.system === "mi").length,
-    in_crm: allLeads.filter(l =>
-      (l.system === "import" && l.status_key === "approved") ||
-      (l.system === "mi" && ["CONTACT","NEGOTIATION","CLIENT"].includes(l.status_key))
-    ).length,
+    in_crm:       allLeads.filter(l => l.status === "approved").length,
   }), [allLeads]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <div className="space-y-6">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-xl border ${
@@ -282,7 +279,7 @@ export default function UnifiedLeadsDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">🎯 Поиск клиентов</h1>
+          <h2 className="text-xl font-bold text-white">🎯 Поиск лидов</h2>
           <p className="text-slate-400 text-sm mt-0.5">AI-поиск через Google, Telegram, VK + анализ импортёров</p>
         </div>
         <button onClick={runSearch} disabled={running}
@@ -330,10 +327,10 @@ export default function UnifiedLeadsDashboard() {
         <div className="w-px h-5 bg-slate-700 mx-1" />
 
         {([
-          { key: "all",    label: "Все источники" },
-          { key: "import", label: "🌐 Импорт-поиск" },
-          { key: "mi",     label: "🔍 Lead Finder" },
-        ] as const).map(s => (
+          { key: "all" as const,    label: "Все источники" },
+          { key: "import" as const, label: "🌐 Импорт" },
+          { key: "mi" as const,     label: "🔍 Lead Finder" },
+        ]).map(s => (
           <button key={s.key} onClick={() => setFilterSource(s.key)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
               filterSource === s.key ? "bg-slate-700 border-slate-500 text-white" : "border-slate-800 text-slate-500 hover:border-slate-600"
@@ -342,14 +339,24 @@ export default function UnifiedLeadsDashboard() {
           </button>
         ))}
 
+        <div className="w-px h-5 bg-slate-700 mx-1" />
+
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as UnifiedStatus | "all")}
+          className="bg-slate-900 border border-slate-800 text-slate-400 text-xs rounded-lg px-2 py-1.5 focus:outline-none">
+          <option value="all">Все статусы</option>
+          {(Object.entries(STATUS_LABELS) as [UnifiedStatus, string][]).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+
         <span className="ml-auto text-slate-500 text-xs">Найдено: {filtered.length} из {allLeads.length}</span>
       </div>
 
-      {/* Leads list */}
+      {/* Lead cards */}
       {loading ? (
         <div className="text-center py-16 text-slate-600">Загрузка...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16">
+        <div className="text-center py-12">
           <div className="text-4xl mb-3">🎯</div>
           <p className="text-slate-500">Лидов нет. Нажмите «Запустить поиск»</p>
         </div>
@@ -360,12 +367,12 @@ export default function UnifiedLeadsDashboard() {
               className={`bg-slate-900 border rounded-xl overflow-hidden transition ${
                 lead.temperature === "HOT" ? "border-red-700/40" : "border-slate-800"
               }`}>
-              {/* Card header */}
+
+              {/* Header row */}
               <div className="p-4 cursor-pointer hover:bg-slate-800/40 transition"
                 onClick={() => setExpanded(expanded === lead.uid ? null : lead.uid)}>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-lg">{SOURCE_ICON[lead.source] ?? "📋"}</span>
-
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-white text-sm">{lead.company}</span>
@@ -373,11 +380,10 @@ export default function UnifiedLeadsDashboard() {
                       <span className={`text-xs px-2 py-0.5 rounded-full border ${TEMP_COLORS[lead.temperature]}`}>
                         {lead.temperature}
                       </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${lead.status_color}`}>
-                        {lead.status_label}
+                      <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[lead.status]}`}>
+                        {STATUS_LABELS[lead.status]}
                       </span>
-                      {/* Source badge */}
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-500 border border-slate-700">
                         {lead.system === "import" ? "Импорт-поиск" : "Lead Finder"}
                       </span>
                     </div>
@@ -385,14 +391,15 @@ export default function UnifiedLeadsDashboard() {
                       <p className="text-slate-400 text-xs mt-1 line-clamp-1">{lead.description}</p>
                     )}
                   </div>
-
                   <ScoreBar score={lead.score_pct} />
                 </div>
               </div>
 
-              {/* Expanded */}
+              {/* Expanded panel */}
               {expanded === lead.uid && (
                 <div className="border-t border-slate-800 p-4 space-y-4 bg-slate-900/60">
+
+                  {/* Contacts */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     {lead.website && (
                       <div>
@@ -402,7 +409,10 @@ export default function UnifiedLeadsDashboard() {
                           className="text-blue-400 hover:underline truncate block">{lead.website}</a>
                       </div>
                     )}
-                    {lead.phone && <div><p className="text-slate-500 mb-1">Телефон</p><p className="text-white">{lead.phone}</p></div>}
+                    {lead.phone && (
+                      <div><p className="text-slate-500 mb-1">Телефон</p>
+                        <a href={`tel:${lead.phone}`} className="text-white hover:text-green-400">{lead.phone}</a></div>
+                    )}
                     {lead.email && <div><p className="text-slate-500 mb-1">Email</p><p className="text-white">{lead.email}</p></div>}
                     {lead.telegram && (
                       <div>
@@ -413,6 +423,7 @@ export default function UnifiedLeadsDashboard() {
                     )}
                   </div>
 
+                  {/* Why */}
                   {lead.description && (
                     <div>
                       <p className="text-slate-500 text-xs mb-1">Почему интересны</p>
@@ -420,6 +431,7 @@ export default function UnifiedLeadsDashboard() {
                     </div>
                   )}
 
+                  {/* Next action */}
                   {lead.next_action && (
                     <div className="px-3 py-2 bg-slate-800/60 rounded-lg border border-slate-700">
                       <p className="text-slate-500 text-xs mb-1">Что предложить / Следующий шаг</p>
@@ -427,58 +439,34 @@ export default function UnifiedLeadsDashboard() {
                     </div>
                   )}
 
-                  {/* Message for import leads */}
-                  {lead.system === "import" && lead.import_data?.message && (
+                  {/* Message */}
+                  {lead.message && (
                     <div className="px-3 py-2 bg-slate-800/60 rounded-lg border border-slate-700">
                       <p className="text-slate-500 text-xs mb-1">Готовое сообщение</p>
-                      <p className="text-slate-300 text-xs leading-relaxed">{lead.import_data.message}</p>
+                      <p className="text-slate-300 text-xs leading-relaxed">{lead.message}</p>
                     </div>
                   )}
 
-                  {/* Action buttons */}
+                  {/* ─── Action buttons — same for BOTH systems ─── */}
                   <div>
                     <p className="text-slate-500 text-xs mb-2">Действия:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {lead.system === "import" && (
-                        <>
-                          {(["reviewed","contacted","approved","rejected"] as LeadStatus[]).map(s => (
-                            <button key={s}
-                              disabled={updating === lead.uid || lead.status_key === s}
-                              onClick={() => updateImportStatus(lead, s)}
-                              className={`px-3 py-1.5 rounded-lg text-xs border transition disabled:opacity-40 ${
-                                lead.status_key === s
-                                  ? IMPORT_STATUS_COLORS[s]
-                                  : "border-slate-700 text-slate-400 hover:border-slate-500"
-                              }`}>
-                              {IMPORT_STATUS_LABELS[s]}
-                            </button>
-                          ))}
-                          <span className="text-slate-600 text-xs self-center ml-1">
-                            «Одобрить» → добавить в CRM
-                          </span>
-                        </>
-                      )}
-                      {lead.system === "mi" && (
-                        <>
-                          {(Object.keys(MI_PIPELINE_LABELS) as MILeadPipeline[]).map(p => (
-                            <button key={p}
-                              disabled={updating === lead.uid || lead.status_key === p}
-                              onClick={() => updateMIPipeline(lead, p)}
-                              className={`px-3 py-1.5 rounded-lg text-xs border transition disabled:opacity-40 ${
-                                lead.status_key === p
-                                  ? MI_PIPE_COLORS[p]
-                                  : "border-slate-700 text-slate-400 hover:border-slate-500"
-                              }`}>
-                              {MI_PIPELINE_LABELS[p]}
-                            </button>
-                          ))}
-                          <span className="text-slate-600 text-xs self-center ml-1">
-                            «Контакт» → добавить в CRM
-                          </span>
-                        </>
-                      )}
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {ACTION_BUTTONS.map(action => (
+                        <button key={action}
+                          disabled={updating === lead.uid || lead.status === action}
+                          onClick={() => handleAction(lead, action)}
+                          className={`px-3 py-1.5 rounded-lg text-xs border transition disabled:opacity-40 ${
+                            lead.status === action
+                              ? STATUS_COLORS[action]
+                              : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+                          }`}>
+                          {STATUS_LABELS[action]}
+                        </button>
+                      ))}
+                      <span className="text-slate-600 text-xs ml-1">«Одобрить» → добавить в CRM</span>
                     </div>
                   </div>
+
                 </div>
               )}
             </div>
