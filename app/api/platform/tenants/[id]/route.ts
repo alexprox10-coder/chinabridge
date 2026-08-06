@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getTenantById, updateTenant } from "@/lib/multitenant/store";
+import { getTenantById, updateTenant, deleteTenant } from "@/lib/multitenant/store";
 
 export const runtime     = "nodejs";
 export const maxDuration = 30;
@@ -17,6 +17,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const tenant = await getTenantById(id);
   if (!tenant) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
   return NextResponse.json({ ok: true, tenant });
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!await isSuperAdmin()) return NextResponse.json({ ok: false }, { status: 401 });
+  const { id } = await params;
+  const ok = await deleteTenant(id);
+  return NextResponse.json({ ok });
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

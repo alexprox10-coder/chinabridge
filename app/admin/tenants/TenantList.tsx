@@ -18,6 +18,8 @@ export default function TenantList() {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
   const [search,  setSearch]  = useState("");
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [deleting,  setDeleting]  = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -31,6 +33,15 @@ export default function TenantList() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleDelete = async (id: string) => {
+    setDeleting(id);
+    try {
+      const res  = await fetch(`/api/platform/tenants/${id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (data.ok) setTenants(prev => prev.filter(t => t.id !== id));
+    } finally { setDeleting(null); setConfirmId(null); }
+  };
 
   const filtered = tenants.filter(t => {
     const q = search.toLowerCase();
@@ -117,18 +128,43 @@ export default function TenantList() {
               </div>
             )}
 
-            <div className="flex items-center gap-2 border-t border-slate-800 pt-3">
-              <a href={`/admin/tenants/${t.id}`}
-                className="flex-1 text-center py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition-colors">
-                Управление
-              </a>
-              {t.aiEnabled && (
-                <a href={`/admin/ai-company?tenant=${t.id}`}
-                  className="flex-1 text-center py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded text-xs transition-colors">
-                  AI Company →
+            {confirmId === t.id ? (
+              <div className="border-t border-slate-800 pt-3 space-y-2">
+                <p className="text-xs text-red-300 text-center">Удалить компанию без возможности восстановления?</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleDelete(t.id)}
+                    disabled={deleting === t.id}
+                    className="flex-1 py-1.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white rounded text-xs transition-colors">
+                    {deleting === t.id ? "⏳ Удаление..." : "✓ Да, удалить"}
+                  </button>
+                  <button
+                    onClick={() => setConfirmId(null)}
+                    className="flex-1 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-xs transition-colors">
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 border-t border-slate-800 pt-3">
+                <a href={`/admin/tenants/${t.id}`}
+                  className="flex-1 text-center py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition-colors">
+                  Управление
                 </a>
-              )}
-            </div>
+                {t.aiEnabled && (
+                  <a href={`/admin/ai-company?tenant=${t.id}`}
+                    className="flex-1 text-center py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded text-xs transition-colors">
+                    AI Company →
+                  </a>
+                )}
+                <button
+                  onClick={() => setConfirmId(t.id)}
+                  title="Удалить компанию"
+                  className="p-1.5 rounded text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition-colors">
+                  🗑
+                </button>
+              </div>
+            )}
           </div>
         ))}
 

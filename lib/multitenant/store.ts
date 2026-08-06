@@ -205,6 +205,17 @@ export async function createTenant(data: {
   return rowToTenant(inserted);
 }
 
+export async function deleteTenant(id: string): Promise<boolean> {
+  try {
+    const db = getDb();
+    await db.delete(settingsTable).where(eq(settingsTable.tenantId, id));
+    const rows = await db.delete(tenantsTable).where(eq(tenantsTable.id, id)).returning();
+    return rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function updateTenant(id: string, patch: Partial<Tenant>): Promise<Tenant | null> {
   try {
     const db = getDb();
