@@ -45,18 +45,33 @@ export async function DELETE(req: NextRequest) {
 
   if (system === "import") {
     const leadId = searchParams.get("lead_id");
-    const n8nId  = searchParams.get("n8n_id");
 
+    // 1. Delete status from Neon
     if (leadId) {
       await db`DELETE FROM import_lead_statuses WHERE lead_id = ${leadId}`.catch(() => {});
     }
 
-    if (n8nId && TABLE_ID && N8N_KEY) {
-      await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows/${n8nId}`, {
-        method:  "DELETE",
-        headers: { "X-N8N-API-KEY": N8N_KEY },
-        signal:  AbortSignal.timeout(5000),
-      }).catch(() => {});
+    // 2. Find and delete n8n row by lead_id (more reliable than passing row id from client)
+    if (TABLE_ID && N8N_KEY) {
+      try {
+        const rowsRes = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`, {
+          headers: { "X-N8N-API-KEY": N8N_KEY },
+          signal:  AbortSignal.timeout(10000),
+        });
+        if (rowsRes.ok) {
+          const json = await rowsRes.json().catch(() => ({}));
+          const rows: Array<{ id?: number; lead_id?: string }> =
+            Array.isArray(json) ? json : (json.data ?? json.rows ?? []);
+          const row = rows.find(r => r.lead_id === leadId);
+          if (row?.id) {
+            await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows/${row.id}`, {
+              method:  "DELETE",
+              headers: { "X-N8N-API-KEY": N8N_KEY },
+              signal:  AbortSignal.timeout(5000),
+            });
+          }
+        }
+      } catch { /* best effort */ }
     }
 
     return NextResponse.json({ ok: true });
