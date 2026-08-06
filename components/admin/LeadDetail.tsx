@@ -200,6 +200,17 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
             <Field label="UTM source" value={lead.utm_source} />
             <Field label="UTM campaign" value={lead.utm_campaign} />
           </Section>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Аналитика и комментарий</h3>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={16}
+              className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 text-sm focus:outline-none focus:border-red-500 resize-y font-mono leading-relaxed"
+              placeholder="Аналитика по компании, что предложить, следующие шаги..."
+            />
+          </div>
         </div>
 
         {/* Right column: CRM controls */}
@@ -258,17 +269,6 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
                 onChange={(e) => setEstimatedValue(Number(e.target.value))}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500"
                 placeholder="0"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-slate-500 mb-1.5 block">Комментарий</label>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={3}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500 resize-none"
-                placeholder="Добавить комментарий..."
               />
             </div>
 

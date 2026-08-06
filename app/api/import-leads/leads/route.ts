@@ -3,6 +3,45 @@ import { getAllLeads, updateLeadStatus } from "@/lib/import-leads/crm";
 import { createLead } from "@/lib/crm/client";
 import type { LeadStatus, ImportLead } from "@/lib/import-leads/types";
 
+function buildImportComment(il: ImportLead): string {
+  const lines: string[] = [];
+
+  lines.push("🏢 АНАЛИТИКА КОМПАНИИ");
+  lines.push(`${il.company} — ${il.category || "—"} | ${il.city || ""}${il.city && il.country ? ", " : ""}${il.country || ""}`);
+  if (il.website) lines.push(`Сайт: ${il.website}`);
+  if (il.phone)   lines.push(`Телефон: ${il.phone}`);
+  if (il.email)   lines.push(`Email: ${il.email}`);
+  if (il.telegram) lines.push(`Telegram: ${il.telegram}`);
+  lines.push("");
+
+  if (il.why) {
+    lines.push("📊 ПОЧЕМУ ИНТЕРЕСНЫ");
+    lines.push(il.why);
+    lines.push("");
+  }
+
+  if (il.offer) {
+    lines.push("💡 ЧТО ПРЕДЛОЖИТЬ");
+    lines.push(il.offer);
+    lines.push("");
+  }
+
+  if (il.message) {
+    lines.push("📩 ГОТОВОЕ СООБЩЕНИЕ ДЛЯ КЛИЕНТА");
+    lines.push(il.message);
+    lines.push("");
+  }
+
+  lines.push("✅ СЛЕДУЮЩИЕ ШАГИ");
+  lines.push("1. Изучить сайт компании и понять текущую схему импорта");
+  lines.push("2. Позвонить или написать в Telegram — использовать готовое сообщение выше");
+  lines.push("3. Уточнить объёмы, товарные категории и сроки");
+  lines.push("4. Подготовить расчёт стоимости логистики");
+  lines.push("5. Отправить КП с конкретными цифрами экономии vs текущая схема");
+
+  return lines.join("\n");
+}
+
 export const runtime = "nodejs";
 
 function isAuthorized(req: NextRequest): boolean {
@@ -62,7 +101,7 @@ export async function PATCH(req: NextRequest) {
         priority:            "WARM",
         estimated_value:     0,
         manager:             "",
-        comment:             `Импорт-лид: ${il.why ?? ""}`,
+        comment:             buildImportComment(il),
         source:              `import:${il.source ?? "search"}`,
         utm_source:          "import-leads",
         utm_campaign:        "",
