@@ -5,6 +5,7 @@ import { getMILeadStats, getLatestReport } from "@/lib/market-intelligence/db";
 import { getLeads } from "@/lib/crm/client";
 import { analyzeDealIntelligence } from "@/lib/market-intelligence/deal-intelligence";
 import type { DealIntelligenceResult } from "@/lib/market-intelligence/types";
+import UnifiedLeadsDashboard from "@/app/admin/import-leads/UnifiedLeadsDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -27,104 +28,81 @@ export default async function MarketIntelligencePage() {
     report     = r;
   } catch {}
 
-  const modules = [
-    {
-      href:  "/admin/market-intelligence/leads",
-      icon:  "🎯",
-      title: "Lead Finder AI",
-      desc:  "Поиск клиентов в Google, Telegram, VK по сигналам интереса к импорту",
-      color: "from-blue-600/20 to-blue-800/10",
-      border:"border-blue-600/30",
-      stats: [
-        { label: "Всего лидов",    value: leadStats.total },
-        { label: "HOT",            value: leadStats.hot,      color: "text-red-400" },
-        { label: "Средний Score",  value: `${leadStats.avg_score ?? 0}/100` },
-      ],
-    },
-    {
-      href:  "/admin/market-intelligence/radar",
-      icon:  "📡",
-      title: "Market Radar AI",
-      desc:  "Мониторинг рынка: конкуренты, тренды, Telegram-каналы, VK-сообщества",
-      color: "from-purple-600/20 to-purple-800/10",
-      border:"border-purple-600/30",
-      stats: [
-        { label: "Каналы Telegram", value: leadStats.telegram },
-        { label: "Конкуренты",     value: "5" },
-        { label: "Трендов",        value: "8" },
-      ],
-    },
-    {
-      href:  "/admin/market-intelligence/deals",
-      icon:  "💡",
-      title: "Deal Intelligence AI",
-      desc:  "AI-скоринг сделок, вероятность закрытия, прогноз выручки на 7/30/90 дней",
-      color: "from-emerald-600/20 to-emerald-800/10",
-      border:"border-emerald-600/30",
-      stats: [
-        { label: "В воронке",       value: dealResult.deals.length },
-        { label: "Средний Score",   value: `${dealResult.avgScore}/100` },
-        { label: "Прогноз 30 дней", value: dealResult.forecast.d30 > 0 ? `${(dealResult.forecast.d30 / 1000).toFixed(0)}K ₽` : "—" },
-      ],
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-slate-950">
       <AdminNav />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-10">
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-3xl">🧠</span>
-            <h1 className="text-3xl font-bold text-white">Market Intelligence Platform</h1>
-          </div>
-          <p className="text-slate-400 ml-12">Система поиска рынков, клиентов и возможностей — стратегический модуль AI Company OS</p>
-        </div>
-
-        {/* KPI bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: "Лидов в базе",    value: leadStats.total,          color: "text-white" },
-            { label: "HOT лиды",        value: leadStats.hot,            color: "text-red-400" },
-            { label: "Пайплайн",        value: dealResult.totalPipeline > 0 ? `${(dealResult.totalPipeline/1000000).toFixed(1)}M ₽` : "—", color: "text-green-400" },
-            { label: "Прогноз 7 дн.",   value: dealResult.forecast.d7 > 0 ? `${(dealResult.forecast.d7/1000).toFixed(0)}K ₽` : "—", color: "text-emerald-400" },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-              <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">{label}</p>
-              <p className={`text-2xl font-bold ${color}`}>{value}</p>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🎯</span>
+              <h1 className="text-3xl font-bold text-white">Лид поиск и аналитика</h1>
             </div>
-          ))}
+            <p className="text-slate-400 ml-12 mt-1">AI-поиск клиентов + мониторинг рынка + скоринг сделок</p>
+          </div>
         </div>
 
-        {/* 3 modules */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {modules.map((m) => (
-            <Link key={m.href} href={m.href}
-              className={`bg-gradient-to-br ${m.color} border ${m.border} rounded-2xl p-6 hover:scale-[1.02] transition-transform block`}>
+        {/* ═══ UNIFIED LEADS SEARCH ═══ */}
+        <UnifiedLeadsDashboard />
+
+        {/* ═══ ANALYTICS MODULES ═══ */}
+        <div>
+          <h2 className="text-slate-400 text-xs uppercase tracking-widest mb-4 font-semibold">Аналитические модули</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            {/* Market Radar */}
+            <Link href="/admin/market-intelligence/radar"
+              className="bg-gradient-to-br from-purple-600/20 to-purple-800/10 border border-purple-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-3xl">{m.icon}</span>
-                <h2 className="text-white font-bold text-lg">{m.title}</h2>
+                <span className="text-2xl">📡</span>
+                <h3 className="text-white font-bold text-base">Market Radar AI</h3>
               </div>
-              <p className="text-slate-400 text-sm mb-5">{m.desc}</p>
-              <div className="space-y-2">
-                {m.stats.map(s => (
+              <p className="text-slate-400 text-sm mb-4">Мониторинг рынка: конкуренты, тренды, Telegram-каналы, VK-сообщества</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: "Каналы Telegram", value: leadStats.telegram },
+                  { label: "Конкуренты",      value: 5 },
+                  { label: "Трендов",         value: 8 },
+                ].map(s => (
                   <div key={s.label} className="flex justify-between text-sm">
                     <span className="text-slate-500">{s.label}</span>
-                    <span className={`font-semibold ${("color" in s && s.color) ? s.color : "text-white"}`}>{s.value}</span>
+                    <span className="text-white font-semibold">{s.value}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 text-right text-xs text-slate-500 group-hover:text-slate-400">Открыть →</div>
+              <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
             </Link>
-          ))}
+
+            {/* Deal Intelligence */}
+            <Link href="/admin/market-intelligence/deals"
+              className="bg-gradient-to-br from-emerald-600/20 to-emerald-800/10 border border-emerald-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">💡</span>
+                <h3 className="text-white font-bold text-base">Deal Intelligence AI</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-4">AI-скоринг сделок, вероятность закрытия, прогноз выручки на 7/30/90 дней</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: "В воронке",       value: dealResult.deals.length },
+                  { label: "Средний Score",   value: `${dealResult.avgScore}/100` },
+                  { label: "Прогноз 30 дней", value: dealResult.forecast.d30 > 0 ? `${(dealResult.forecast.d30 / 1000).toFixed(0)}K ₽` : "—" },
+                ].map(s => (
+                  <div key={s.label} className="flex justify-between text-sm">
+                    <span className="text-slate-500">{s.label}</span>
+                    <span className="text-white font-semibold">{s.value}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
+            </Link>
+          </div>
         </div>
 
-        {/* Top deals + Daily report */}
+        {/* ═══ TOP DEALS + DAILY REPORT ═══ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* Top deals */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-semibold">🏆 Топ сделок по AI Score</h3>
@@ -152,7 +130,6 @@ export default async function MarketIntelligencePage() {
             )}
           </div>
 
-          {/* Daily report */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-semibold">📋 Ежедневный отчёт CEO</h3>
@@ -171,12 +148,12 @@ export default async function MarketIntelligencePage() {
             ) : (
               <div className="space-y-3">
                 {[
-                  { label: "Лидов найдено",   value: report.leadsFound },
-                  { label: "HOT лиды",         value: report.hotLeads,  color: "text-red-400" },
-                  { label: "Тренд недели",     value: report.trendOfWeek ?? "—" },
-                  { label: "Рост интереса",    value: report.trendGrowth ? `+${report.trendGrowth}%` : "—", color: "text-green-400" },
-                  { label: "Топ сделка",       value: report.topDealCompany ?? "—" },
-                  { label: "Вероятность",      value: report.topDealProbability ? `${report.topDealProbability}%` : "—" },
+                  { label: "Лидов найдено",  value: report.leadsFound },
+                  { label: "HOT лиды",        value: report.hotLeads,        color: "text-red-400" },
+                  { label: "Тренд недели",    value: report.trendOfWeek ?? "—" },
+                  { label: "Рост интереса",   value: report.trendGrowth ? `+${report.trendGrowth}%` : "—", color: "text-green-400" },
+                  { label: "Топ сделка",      value: report.topDealCompany ?? "—" },
+                  { label: "Вероятность",     value: report.topDealProbability ? `${report.topDealProbability}%` : "—" },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="flex justify-between text-sm">
                     <span className="text-slate-500">{label}</span>
@@ -197,6 +174,7 @@ export default async function MarketIntelligencePage() {
             )}
           </div>
         </div>
+
       </main>
     </div>
   );
