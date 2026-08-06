@@ -38,7 +38,7 @@ export default async function MarketIntelligencePage() {
       stats: [
         { label: "Всего лидов",    value: leadStats.total },
         { label: "HOT",            value: leadStats.hot,      color: "text-red-400" },
-        { label: "Средний Score",  value: `${leadStats.avg_score}/100` },
+        { label: "Средний Score",  value: `${leadStats.avg_score ?? 0}/100` },
       ],
     },
     {
