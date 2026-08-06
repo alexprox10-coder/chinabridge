@@ -124,7 +124,9 @@ export async function PATCH(req: NextRequest) {
         utm_campaign:        lead.source,
       }, "tenant-chinabridge");
       crmLeadId = newLead.lead_id;
-    } catch { /* best-effort */ }
+    } catch (e) {
+      console.error("[MI→CRM] createLead failed:", e);
+    }
   }
 
   return NextResponse.json({ ok: true, crmLeadId });

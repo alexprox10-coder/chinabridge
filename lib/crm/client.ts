@@ -5,35 +5,106 @@ import type { CRMLead, LeadUpdate } from "./types";
 
 const OWNER_TENANT_ID = "tenant-chinabridge";
 
-// Auto-seed owner tenant row so FK constraint never fails for admin CRM ops
+// Bootstrap owner tenant + required tables via raw SQL (no Drizzle schema drift risk)
 let ownerTenantReady = false;
 async function ensureOwnerTenant(): Promise<void> {
   if (ownerTenantReady) return;
-  ownerTenantReady = true; // Optimistic — don't retry on error
   try {
-    const db = getDb();
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL!);
     const now = new Date().toISOString();
-    await db.insert(tenants).values({
-      id:          OWNER_TENANT_ID,
-      slug:        "chinabridge",
-      companyName: "ChinaBridge",
-      domain:      "chinabridge.pro",
-      subdomain:   "chinabridge",
-      country:     "RU",
-      timezone:    "Europe/Moscow",
-      currency:    "RUB",
-      language:    "ru",
-      plan:        "enterprise",
-      status:      "active",
-      createdAt:   "2024-01-15T00:00:00.000Z",
-      updatedAt:   now,
-      owner:       "admin@chinabridge.pro",
-      brandColor:  "#2563eb",
-      description: "Логистика и ВЭД из Китая",
-      industry:    "cargo",
-      aiEnabled:   true,
-    }).onConflictDoNothing();
-  } catch { /* already exists or DB unavailable */ }
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS "tenants" (
+        "id" text PRIMARY KEY NOT NULL,
+        "slug" text NOT NULL UNIQUE,
+        "company_name" text NOT NULL,
+        "domain" text,
+        "subdomain" text NOT NULL DEFAULT '',
+        "country" text DEFAULT 'RU' NOT NULL,
+        "timezone" text DEFAULT 'Europe/Moscow' NOT NULL,
+        "currency" text DEFAULT 'RUB' NOT NULL,
+        "language" text DEFAULT 'ru' NOT NULL,
+        "plan" text DEFAULT 'trial' NOT NULL,
+        "status" text DEFAULT 'trial' NOT NULL,
+        "trial_ends" text,
+        "created_at" text NOT NULL,
+        "updated_at" text NOT NULL,
+        "owner" text NOT NULL,
+        "brand_color" text DEFAULT '#2563eb' NOT NULL,
+        "logo" text,
+        "description" text DEFAULT '' NOT NULL,
+        "industry" text DEFAULT 'cargo' NOT NULL,
+        "ai_enabled" boolean DEFAULT true NOT NULL,
+        "contact_email" text,
+        "contact_phone" text,
+        "contact_telegram" text,
+        "contact_whatsapp" text,
+        "website" text,
+        "mrr" integer DEFAULT 0 NOT NULL,
+        "users_count" integer DEFAULT 1 NOT NULL,
+        "last_active_at" text
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS "crm_leads" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "lead_id" text NOT NULL UNIQUE,
+        "tenant_id" text NOT NULL REFERENCES "tenants"("id") ON DELETE CASCADE,
+        "created_at" text NOT NULL,
+        "updated_at" text NOT NULL,
+        "name" text DEFAULT '' NOT NULL,
+        "phone" text DEFAULT '' NOT NULL,
+        "telegram" text DEFAULT '' NOT NULL,
+        "email" text DEFAULT '' NOT NULL,
+        "company" text DEFAULT '' NOT NULL,
+        "product" text DEFAULT '' NOT NULL,
+        "product_link" text DEFAULT '' NOT NULL,
+        "category" text DEFAULT '' NOT NULL,
+        "quantity" text DEFAULT '' NOT NULL,
+        "weight" text DEFAULT '' NOT NULL,
+        "volume" text DEFAULT '' NOT NULL,
+        "country_destination" text DEFAULT '' NOT NULL,
+        "city_destination" text DEFAULT '' NOT NULL,
+        "delivery_type" text DEFAULT '' NOT NULL,
+        "service_type" text DEFAULT '' NOT NULL,
+        "status" text DEFAULT 'NEW' NOT NULL,
+        "priority" text DEFAULT 'WARM' NOT NULL,
+        "estimated_value" numeric DEFAULT '0' NOT NULL,
+        "manager" text DEFAULT '' NOT NULL,
+        "comment" text DEFAULT '' NOT NULL,
+        "source" text DEFAULT '' NOT NULL,
+        "utm_source" text DEFAULT '' NOT NULL,
+        "utm_campaign" text DEFAULT '' NOT NULL,
+        "delivery_cost" numeric,
+        "carrier_cost" numeric,
+        "markup_percent" numeric,
+        "profit" numeric,
+        "margin_percent" numeric,
+        "pricing_rule" text
+      )
+    `;
+
+    await sql`
+      INSERT INTO "tenants" (
+        id, slug, company_name, domain, subdomain, country, timezone, currency, language,
+        plan, status, created_at, updated_at, owner, brand_color, description, industry, ai_enabled,
+        mrr, users_count
+      ) VALUES (
+        ${OWNER_TENANT_ID}, 'chinabridge', 'ChinaBridge', 'chinabridge.pro', 'chinabridge',
+        'RU', 'Europe/Moscow', 'RUB', 'ru', 'enterprise', 'active',
+        '2024-01-15T00:00:00.000Z', ${now},
+        'admin@chinabridge.pro', '#2563eb', 'Логистика и ВЭД из Китая', 'cargo', true,
+        0, 1
+      )
+      ON CONFLICT (id) DO NOTHING
+    `;
+
+    ownerTenantReady = true; // Set AFTER success so retries work on failure
+  } catch (e) {
+    console.error("[CRM] ensureOwnerTenant failed:", e);
+  }
 }
 
 async function resolveTenantId(override?: string): Promise<string> {
@@ -178,12 +249,11 @@ export async function createLead(data: Omit<CRMLead, "id">, tenantIdOverride?: s
     pricingRule:        data.pricing_rule ?? null,
   }).onConflictDoNothing().returning();
   if (!row) {
-    // Lead with this lead_id already exists — return the existing one
     const existing = await db.select().from(crmLeads)
       .where(eq(crmLeads.leadId, data.lead_id || ""))
       .limit(1);
     if (existing[0]) return rowToLead(existing[0]);
-    throw new Error("Lead insert failed and no existing record found");
+    throw new Error(`Lead insert returned no row and no existing record found for lead_id="${data.lead_id}"`);
   }
   return rowToLead(row);
 }
