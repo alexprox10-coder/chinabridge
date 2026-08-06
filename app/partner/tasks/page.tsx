@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/partner-portal/i18n";
 import type { PartnerTask, TaskStatus } from "@/lib/partner-portal/types";
@@ -26,14 +26,14 @@ export default function PartnerTasksPage() {
   const [filter, setFilter] = useState<TaskStatus | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const deletedIds = useRef<Set<string>>(new Set());
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/partner/tasks")
       .then((r) => r.json())
       .then((data) => {
         const all: PartnerTask[] = Array.isArray(data) ? data : [];
-        setTasks(all.filter(t => !deletedIds.current.has(t.task_id)));
+        setTasks(all);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -48,7 +48,7 @@ export default function PartnerTasksPage() {
       const res = await fetch(`/api/partner/tasks/${task.task_id}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({ ok: false }));
       if (data.ok) {
-        deletedIds.current.add(task.task_id);
+        setDeletedIds(prev => new Set([...prev, task.task_id]));
         setTasks(prev => prev.filter(t => t.task_id !== task.task_id));
       }
     } finally {
@@ -56,7 +56,8 @@ export default function PartnerTasksPage() {
     }
   }
 
-  const visible = filter === "ALL" ? tasks : tasks.filter((t) => t.status === filter);
+  const activeTasks = tasks.filter(t => !deletedIds.has(t.task_id));
+  const visible = filter === "ALL" ? activeTasks : activeTasks.filter((t) => t.status === filter);
 
   return (
     <div className="space-y-5">
@@ -74,7 +75,7 @@ export default function PartnerTasksPage() {
             {t(key)}
             {value !== "ALL" && (
               <span className="ml-1.5 text-xs opacity-75">
-                {tasks.filter((t) => t.status === value).length}
+                {activeTasks.filter((t) => t.status === value).length}
               </span>
             )}
           </button>

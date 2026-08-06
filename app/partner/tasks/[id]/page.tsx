@@ -79,14 +79,16 @@ export default function TaskDetailPage() {
         response_video_url: videoUrl,
       }),
     });
+    const data = await res.json().catch(() => ({ ok: false }));
     setSaving(false);
-    if (res.ok) {
-      setSavedMsg(t("saved"));
+    if (data.ok) {
       if (complete) {
-        setTimeout(() => router.push("/partner/tasks"), 1000);
+        const msg = data.crmLeadId ? t("saved") + " — отчёт передан в CRM" : t("saved");
+        setSavedMsg(msg);
+        setTimeout(() => router.push("/partner/tasks"), 1200);
       } else {
+        setSavedMsg(t("saved"));
         setTimeout(() => setSavedMsg(""), 3000);
-        // Refresh task status
         fetch(`/api/partner/tasks/${id}`)
           .then((r) => r.json())
           .then((data: PartnerTask) => setTask(data));
