@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { ImportLead, LeadStatus } from "@/lib/import-leads/types";
 import type { MILead, MILeadPipeline } from "@/lib/market-intelligence/types";
 
@@ -159,6 +159,7 @@ export default function UnifiedLeadsDashboard() {
   const [updating,    setUpdating]    = useState<string | null>(null);
   const [deleting,    setDeleting]    = useState<string | null>(null);
   const [toast,       setToast]       = useState<{ msg: string; type: "ok" | "err" } | null>(null);
+  const deletedUids   = useRef<Set<string>>(new Set());
 
   const [filterTemp,   setFilterTemp]   = useState<Temperature | "all">("all");
   const [filterSource, setFilterSource] = useState<"all" | "import" | "mi">("all");
@@ -187,7 +188,7 @@ export default function UnifiedLeadsDashboard() {
         if (!seen.has(key)) { seen.add(key); combined.push(l); }
       }
       combined.sort((a, b) => b.score_pct - a.score_pct);
-      setAllLeads(combined);
+      setAllLeads(combined.filter(l => !deletedUids.current.has(l.uid)));
     } catch { setAllLeads([]); }
     setLoading(false);
   }, []);
@@ -231,6 +232,7 @@ export default function UnifiedLeadsDashboard() {
       const res  = await fetch(url, { method: "DELETE" });
       const data = await res.json().catch(() => ({ ok: false }));
       if (data.ok) {
+        deletedUids.current.add(lead.uid);
         setAllLeads(prev => prev.filter(l => l.uid !== lead.uid));
         showToast("Лид удалён", "ok");
       } else {

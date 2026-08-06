@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { SalesDirectorReport, ImportLeadEnhanced, PlatformLead, FollowupItem, SalesRecommendation, SalesKPI, PipelineHealth } from "@/lib/ai-company/sales/types";
 
 type Tab = "overview" | "import" | "platform" | "followup" | "recs";
@@ -146,6 +146,12 @@ function ImportLeadsTab({ leads, onNotify }: { leads: ImportLeadEnhanced[]; onNo
   const [localLeads, setLocalLeads] = useState<ImportLeadEnhanced[]>(leads);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const deletedIds = useRef<Set<string>>(new Set());
+
+  // Sync from parent refresh, keeping deleted leads filtered out
+  useEffect(() => {
+    setLocalLeads(leads.filter(l => !deletedIds.current.has(l.lead_id)));
+  }, [leads]);
 
   const filtered = filter === "ALL" ? localLeads : localLeads.filter(l => l.temperature === filter);
   const hotCount = localLeads.filter(l => l.temperature === "HOT").length;
@@ -160,6 +166,7 @@ function ImportLeadsTab({ leads, onNotify }: { leads: ImportLeadEnhanced[]; onNo
       const res  = await fetch(`/api/admin/leads?${params}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({ ok: false }));
       if (data.ok) {
+        deletedIds.current.add(lead.lead_id);
         setLocalLeads(prev => prev.filter(l => l.lead_id !== lead.lead_id));
         setToast("Лид удалён");
         setTimeout(() => setToast(null), 3000);
