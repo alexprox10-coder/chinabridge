@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { buildAllDepartments, buildCompanyMetrics } from "@/lib/ai-company/departments";
 import { generateCeoReport } from "@/lib/ai-company/ceo";
 import type { CeoReport } from "@/lib/ai-company/types";
+import { getLatestCtoReport } from "@/lib/ai-cto/db";
 import { AdminNav } from "@/components/admin/AdminNav";
 import AiOsDashboard from "./AiOsDashboard";
 
@@ -35,13 +36,16 @@ export default async function AiCompanyPage() {
   const isAdmin = cookieStore.get("cb_admin")?.value;
   if (!isAdmin) redirect("/admin/login");
 
-  const report = await loadInitialReport();
+  const [report, ctoReport] = await Promise.all([
+    loadInitialReport(),
+    getLatestCtoReport().catch(() => null),
+  ]);
 
   return (
     <div className="min-h-screen bg-slate-950">
       <AdminNav />
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <AiOsDashboard initialReport={report} />
+        <AiOsDashboard initialReport={report} initialCtoReport={ctoReport} />
       </main>
     </div>
   );

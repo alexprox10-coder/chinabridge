@@ -1,9 +1,12 @@
 "use client";
 import { useState, useCallback } from "react";
 import type { CeoReport, DepartmentReport, CeoRecommendation, CeoTask, DeptStatus, Priority } from "@/lib/ai-company/types";
+import type { CtoReport } from "@/lib/ai-cto/types";
+import CtoDashboard from "./cto/CtoDashboard";
 
 interface Props {
   initialReport: CeoReport | null;
+  initialCtoReport?: CtoReport | null;
 }
 
 const STATUS_CONFIG: Record<DeptStatus, { label: string; dot: string; badge: string }> = {
@@ -198,7 +201,7 @@ function TaskRow({ task }: { task: CeoTask }) {
   );
 }
 
-export default function AiOsDashboard({ initialReport }: Props) {
+export default function AiOsDashboard({ initialReport, initialCtoReport = null }: Props) {
   const [report, setReport] = useState<CeoReport | null>(initialReport);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -315,6 +318,12 @@ export default function AiOsDashboard({ initialReport }: Props) {
           </div>
         </div>
       )}
+
+      {/* AI CTO — embedded */}
+      <div>
+        <div className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-4">🤖 AI CTO — Аудит платформы</div>
+        <CtoDashboard initialReport={initialCtoReport} />
+      </div>
 
       {/* CEO Command Center Banner */}
       <div className="bg-gradient-to-r from-blue-900/30 via-purple-900/20 to-slate-900/30 border border-blue-700/50 rounded-xl p-5 flex items-center justify-between gap-4">
