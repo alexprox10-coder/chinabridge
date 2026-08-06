@@ -1,4 +1,5 @@
 import type { DepartmentReport, KPIMetric, AgentInfo, CompanyMetrics } from "./types";
+import { getDeletedLeadIds } from "@/lib/import-leads/status-store";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
 const N8N_KEY = process.env.N8N_API_KEY ?? "";
@@ -41,7 +42,15 @@ function idleReport(id: string, name: string, nameRu: string, icon: string, agen
 
 // --- SALES ---
 async function buildSalesDept(): Promise<DepartmentReport> {
-  const leads = await fetchTableRows(process.env.N8N_IMPORT_LEADS_TABLE_ID ?? "");
+  const [rawLeads, deletedIds] = await Promise.all([
+    fetchTableRows(process.env.N8N_IMPORT_LEADS_TABLE_ID ?? ""),
+    getDeletedLeadIds().catch(() => new Set<string>()),
+  ]);
+  const leads = rawLeads.filter(r => {
+    const lid = String(r.lead_id ?? "");
+    const synth = !lid && r.id != null ? `n8n_${r.id}` : lid;
+    return !synth || !deletedIds.has(synth);
+  });
   const total = leads.length;
   const newLeads = leads.filter(l => l.status === "new").length;
   const contacted = leads.filter(l => l.status === "contacted" || l.status === "approved").length;
