@@ -21,11 +21,11 @@ export async function GET(req: NextRequest) {
   const stats = searchParams.get("stats") === "1";
 
   if (stats) {
-    const data = await getDashboardStats();
+    const data = await getDashboardStats("tenant-chinabridge");
     return NextResponse.json(data);
   }
 
-  const leads = await getLeads({ status, priority });
+  const leads = await getLeads({ status, priority, tenantId: "tenant-chinabridge" });
   return NextResponse.json(leads);
 }
 

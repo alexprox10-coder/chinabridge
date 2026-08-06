@@ -105,7 +105,7 @@ export async function PATCH(req: NextRequest) {
         source:              `import:${il.source ?? "search"}`,
         utm_source:          "import-leads",
         utm_campaign:        "",
-      });
+      }, "tenant-chinabridge");
       crmLeadId = newLead.lead_id;
     } catch { /* crm push best-effort */ }
   }

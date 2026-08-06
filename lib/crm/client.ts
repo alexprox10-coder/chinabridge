@@ -1,9 +1,40 @@
 import { getDb } from "../db";
-import { crmLeads } from "../db/schema";
+import { crmLeads, tenants } from "../db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import type { CRMLead, LeadUpdate } from "./types";
 
 const OWNER_TENANT_ID = "tenant-chinabridge";
+
+// Auto-seed owner tenant row so FK constraint never fails for admin CRM ops
+let ownerTenantReady = false;
+async function ensureOwnerTenant(): Promise<void> {
+  if (ownerTenantReady) return;
+  ownerTenantReady = true; // Optimistic — don't retry on error
+  try {
+    const db = getDb();
+    const now = new Date().toISOString();
+    await db.insert(tenants).values({
+      id:          OWNER_TENANT_ID,
+      slug:        "chinabridge",
+      companyName: "ChinaBridge",
+      domain:      "chinabridge.pro",
+      subdomain:   "chinabridge",
+      country:     "RU",
+      timezone:    "Europe/Moscow",
+      currency:    "RUB",
+      language:    "ru",
+      plan:        "enterprise",
+      status:      "active",
+      createdAt:   "2024-01-15T00:00:00.000Z",
+      updatedAt:   now,
+      owner:       "admin@chinabridge.pro",
+      brandColor:  "#2563eb",
+      description: "Логистика и ВЭД из Китая",
+      industry:    "cargo",
+      aiEnabled:   true,
+    }).onConflictDoNothing();
+  } catch { /* already exists or DB unavailable */ }
+}
 
 async function resolveTenantId(override?: string): Promise<string> {
   if (override) return override;
@@ -108,6 +139,7 @@ export async function getLead(id: number, tenantIdOverride?: string): Promise<CR
 
 export async function createLead(data: Omit<CRMLead, "id">, tenantIdOverride?: string): Promise<CRMLead> {
   const tenantId = await resolveTenantId(tenantIdOverride);
+  if (tenantId === OWNER_TENANT_ID) await ensureOwnerTenant();
   const db = getDb();
   const now = new Date().toISOString();
   const [row] = await db.insert(crmLeads).values({
@@ -144,7 +176,15 @@ export async function createLead(data: Omit<CRMLead, "id">, tenantIdOverride?: s
     profit:             data.profit != null ? String(data.profit) : null,
     marginPercent:      data.margin_percent != null ? String(data.margin_percent) : null,
     pricingRule:        data.pricing_rule ?? null,
-  }).returning();
+  }).onConflictDoNothing().returning();
+  if (!row) {
+    // Lead with this lead_id already exists — return the existing one
+    const existing = await db.select().from(crmLeads)
+      .where(eq(crmLeads.leadId, data.lead_id || ""))
+      .limit(1);
+    if (existing[0]) return rowToLead(existing[0]);
+    throw new Error("Lead insert failed and no existing record found");
+  }
   return rowToLead(row);
 }
 

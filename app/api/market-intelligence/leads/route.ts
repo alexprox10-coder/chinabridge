@@ -122,7 +122,7 @@ export async function PATCH(req: NextRequest) {
         source:              `lead-finder:${lead.source}`,
         utm_source:          "market-intelligence",
         utm_campaign:        lead.source,
-      });
+      }, "tenant-chinabridge");
       crmLeadId = newLead.lead_id;
     } catch { /* best-effort */ }
   }
