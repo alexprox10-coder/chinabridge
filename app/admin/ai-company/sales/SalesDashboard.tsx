@@ -387,17 +387,46 @@ function PlatformLeadsTab({ leads, onAdd }: { leads: PlatformLead[]; onAdd: (l: 
 
 // ─── Followup Tab ─────────────────────────────────────────────────────────────
 function FollowupTab({ items }: { items: FollowupItem[] }) {
+  const [localItems, setLocalItems] = useState<FollowupItem[]>(items);
+  const [deleting, setDeleting]     = useState<number | null>(null);
+  const [toast, setToast]           = useState<string | null>(null);
+  const deletedIds = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    setLocalItems(items.filter(i => !deletedIds.current.has(i.id)));
+  }, [items]);
+
+  const handleDelete = async (item: FollowupItem) => {
+    if (deleting || !item.id) return;
+    setDeleting(item.id);
+    try {
+      const res  = await fetch(`/api/admin/leads/${item.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (data.ok) {
+        deletedIds.current.add(item.id);
+        setLocalItems(prev => prev.filter(i => i.id !== item.id));
+        setToast("Лид удалён");
+        setTimeout(() => setToast(null), 3000);
+      }
+    } finally { setDeleting(null); }
+  };
+
   const priorityDot = (p: string) => p === "HOT" ? "bg-red-400" : p === "WARM" ? "bg-amber-400" : "bg-slate-500";
   return (
     <div className="space-y-2">
-      {items.length === 0 ? (
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-xl border bg-green-900/90 border-green-700 text-green-200">
+          {toast}
+        </div>
+      )}
+      {localItems.length === 0 ? (
         <div className="text-center py-16 text-slate-500">
           <div className="text-4xl mb-3">✅</div>
           <div>Follow-up очередь пуста</div>
         </div>
       ) : (
-        items.map((item, i) => (
-          <div key={i} className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex items-center gap-4">
+        localItems.map((item) => (
+          <div key={item.id} className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex items-center gap-4">
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${priorityDot(item.priority)}`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -413,6 +442,13 @@ function FollowupTab({ items }: { items: FollowupItem[] }) {
               <div className="text-slate-500 text-xs">{item.status}</div>
               {item.phone && <div className="text-slate-400 text-xs">📞 {item.phone}</div>}
               {item.telegram && <div className="text-blue-400 text-xs">✈️ {item.telegram}</div>}
+              <button
+                onClick={() => handleDelete(item)}
+                disabled={deleting === item.id}
+                title="Удалить лид"
+                className="mt-1 p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition disabled:opacity-40">
+                {deleting === item.id ? "⏳" : "🗑"}
+              </button>
             </div>
           </div>
         ))

@@ -1,5 +1,6 @@
 import type { ImportLeadEnhanced, PlatformLead, PipelineHealth, FollowupItem, SalesKPI } from "./types";
 import type { ImportLead } from "@/lib/import-leads/types";
+import { getLeads } from "@/lib/crm/client";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
 const N8N_KEY = process.env.N8N_API_KEY ?? "";
@@ -57,16 +58,8 @@ export async function fetchPlatformLeads(): Promise<PlatformLead[]> {
 
 async function fetchCrmLeads(): Promise<Record<string, unknown>[]> {
   try {
-    const res = await fetch(`${N8N_BASE}/webhook/crm-leads`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dataTableId: "DrRONX1C3uf4Igx4", returnAll: true }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return [];
-    const data = await res.json().catch(() => []);
-    return Array.isArray(data) ? data : (data.rows ?? []);
+    const leads = await getLeads();
+    return leads as unknown as Record<string, unknown>[];
   } catch {
     return [];
   }

@@ -35,11 +35,25 @@ function timeLabel(iso: string) {
 function LeadCard({
   lead,
   onDragStart,
+  onDelete,
 }: {
   lead: CRMLead;
   onDragStart: (e: React.DragEvent, lead: CRMLead) => void;
+  onDelete: (id: number) => void;
 }) {
+  const [deleting, setDeleting] = useState(false);
   const isStale = lead.status === "NEW" && msAgo(lead.created_at) > 24 * 3600000;
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const res  = await fetch(`/api/admin/leads/${lead.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (data.ok) onDelete(lead.id!);
+    } finally { setDeleting(false); }
+  };
 
   return (
     <div
@@ -57,7 +71,16 @@ function LeadCard({
         >
           {lead.name || "—"}
         </Link>
-        <span className="text-base shrink-0">{PRIORITY_EMOJI[(lead.priority ?? "COLD") as keyof typeof PRIORITY_EMOJI]}</span>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="text-base">{PRIORITY_EMOJI[(lead.priority ?? "COLD") as keyof typeof PRIORITY_EMOJI]}</span>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            title="Удалить лид"
+            className="p-1 rounded text-slate-700 hover:text-red-400 hover:bg-red-900/20 transition disabled:opacity-40">
+            {deleting ? "⏳" : "🗑"}
+          </button>
+        </div>
       </div>
 
       {lead.product && (
@@ -105,6 +128,7 @@ function KanbanColumn({
   onDrop,
   onDragOver,
   onDragLeave,
+  onDelete,
   isOver,
 }: {
   col: (typeof COLUMNS)[0];
@@ -113,6 +137,7 @@ function KanbanColumn({
   onDrop: (e: React.DragEvent, status: LeadStatus) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: () => void;
+  onDelete: (id: number) => void;
   isOver: boolean;
 }) {
   return (
@@ -130,7 +155,7 @@ function KanbanColumn({
       </div>
       <div className="flex flex-col gap-2 p-2 overflow-y-auto flex-1 min-h-[80px] max-h-[calc(100vh-220px)]">
         {leads.map((l) => (
-          <LeadCard key={l.id} lead={l} onDragStart={onDragStart} />
+          <LeadCard key={l.id} lead={l} onDragStart={onDragStart} onDelete={onDelete} />
         ))}
         {leads.length === 0 && (
           <div className="text-slate-700 text-xs text-center py-4">Пусто</div>
@@ -186,6 +211,10 @@ export default function PipelinePage() {
     draggedLead.current = null;
   }, []);
 
+  const handleDelete = useCallback((id: number) => {
+    setLeads(prev => prev.filter(l => l.id !== id));
+  }, []);
+
   const byStatus = (status: LeadStatus) => leads.filter((l) => l.status === status);
 
   return (
@@ -218,6 +247,7 @@ export default function PipelinePage() {
                 onDrop={handleDrop}
                 onDragOver={(e) => { handleDragOver(e); setOverCol(col.status); }}
                 onDragLeave={() => setOverCol(null)}
+                onDelete={handleDelete}
                 isOver={overCol === col.status}
               />
             ))}
