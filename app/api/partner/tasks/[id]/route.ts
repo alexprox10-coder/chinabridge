@@ -91,7 +91,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         utm_campaign:        session.partnerId,
       }, "tenant-chinabridge");
       crmLeadId = newLead.lead_id;
-    } catch { /* best-effort */ }
+    } catch (e) {
+      console.error("[Partner→CRM] createLead failed:", e);
+    }
   }
 
   return NextResponse.json({ ok, crmLeadId });
