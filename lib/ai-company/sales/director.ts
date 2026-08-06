@@ -173,11 +173,15 @@ Follow-up очередь: ${followupQueue.length} лидов требуют ко
 
 export async function notifyHotLeads(leads: ImportLeadEnhanced[]): Promise<number> {
   if (!BOT_TOKEN || !CHAT_ID) return 0;
-  const hot = leads.filter(l => l.temperature === "HOT").slice(0, 5);
+  // Отправлять HOT + WARM (score >= 40 из 100, т.е. оценка >= 2)
+  const toNotify = leads
+    .filter(l => l.temperature === "HOT" || l.temperature === "WARM")
+    .slice(0, 10);
   let sent = 0;
-  for (const lead of hot) {
+  for (const lead of toNotify) {
+    const tempIcon = lead.temperature === "HOT" ? "🔥" : "🌡️";
     const text =
-      `🔥 *Sales Alert — Горячий лид*\n\n` +
+      `${tempIcon} *Sales Alert — ${lead.temperature === "HOT" ? "Горячий" : "Тёплый"} лид*\n\n` +
       `Компания: *${lead.company}*\n` +
       `Категория: ${lead.category}\n` +
       `Город: ${lead.city}\n` +
