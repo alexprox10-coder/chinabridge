@@ -151,17 +151,22 @@ function ImportLeadsTab({ leads, onNotify, onDelete }: { leads: ImportLeadEnhanc
 
   const handleDelete = async (lead: ImportLeadEnhanced) => {
     if (deleting) return;
-    setDeleting(lead.lead_id);
+    const lid = lead.lead_id ?? "";
+    if (!lid && !lead.id) { setToast("Ошибка: нет ID лида"); setTimeout(() => setToast(null), 3000); return; }
+    setDeleting(lid || String(lead.id));
     try {
       const params = new URLSearchParams({ system: "import" });
-      params.set("lead_id", lead.lead_id);
+      if (lid) params.set("lead_id", lid);
       if (lead.id) params.set("n8n_id", String(lead.id));
       const res  = await fetch(`/api/admin/leads?${params}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({ ok: false }));
       if (data.ok) {
-        onDelete(lead.lead_id);
+        onDelete(lid || String(lead.id));
         setToast("Лид удалён");
         setTimeout(() => setToast(null), 3000);
+      } else {
+        setToast(`Ошибка удаления: ${data.error ?? "неизвестная"}`);
+        setTimeout(() => setToast(null), 5000);
       }
     } finally { setDeleting(null); }
   };
@@ -392,6 +397,9 @@ function FollowupTab({ items, onDelete }: { items: FollowupItem[]; onDelete: (id
         onDelete(item.id);
         setToast("Лид удалён");
         setTimeout(() => setToast(null), 3000);
+      } else {
+        setToast(`Ошибка: ${data.error ?? "неизвестная"}`);
+        setTimeout(() => setToast(null), 5000);
       }
     } finally { setDeleting(null); }
   };

@@ -1,5 +1,5 @@
 import type { ImportLead, LeadStatus } from "./types";
-import { setLeadStatus, getLeadStatuses } from "./status-store";
+import { setLeadStatus, getLeadStatuses, markLeadDeleted } from "./status-store";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
 const N8N_KEY = process.env.N8N_API_KEY ?? "";
@@ -55,12 +55,16 @@ export async function getAllLeads(companyId?: string): Promise<ImportLead[]> {
   const leads = await dtQuery(filters);
   try {
     const statuses = await getLeadStatuses();
-    return leads.map((l) =>
-      statuses[l.lead_id] ? { ...l, status: statuses[l.lead_id] } : l
-    );
+    return leads
+      .filter(l => statuses[l.lead_id] !== ("deleted" as LeadStatus))
+      .map(l => statuses[l.lead_id] ? { ...l, status: statuses[l.lead_id] } : l);
   } catch {
     return leads;
   }
+}
+
+export async function deleteLeadPermanently(leadId: string): Promise<void> {
+  await markLeadDeleted(leadId);
 }
 
 export async function getLeadsByScore(minScore: number, companyId?: string): Promise<ImportLead[]> {

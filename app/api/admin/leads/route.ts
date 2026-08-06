@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { neon } from "@neondatabase/serverless";
 import { getLeads, getDashboardStats } from "@/lib/crm/client";
 import { isAuthorized } from "@/lib/api-auth";
+import { markLeadDeleted } from "@/lib/import-leads/status-store";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
 const N8N_KEY  = process.env.N8N_API_KEY ?? "";
@@ -45,21 +46,20 @@ export async function DELETE(req: NextRequest) {
   }
 
   if (system === "import") {
-    const leadId  = searchParams.get("lead_id");
+    const leadId   = searchParams.get("lead_id");
     const n8nIdRaw = searchParams.get("n8n_id");
 
-    // 1. Delete status from Neon
-    if (leadId) {
-      await db`DELETE FROM import_lead_statuses WHERE lead_id = ${leadId}`.catch(() => {});
-    }
+    if (!leadId && !n8nIdRaw) return NextResponse.json({ ok: false, error: "missing lead_id" }, { status: 400 });
 
-    // 2. Delete n8n row
+    // 1. Mark as deleted in Neon — PERMANENT, survives any page refresh
+    if (leadId) await markLeadDeleted(leadId).catch(() => {});
+
+    // 2. Best-effort delete from n8n (if fails, Neon filter handles it)
     if (TABLE_ID && N8N_KEY) {
       try {
-        let n8nRowId: string | number | null = n8nIdRaw ? n8nIdRaw : null;
+        let n8nRowId: string | null = n8nIdRaw || null;
 
-        // If no direct row ID, fall back to lookup by lead_id
-        if (!n8nRowId && leadId) {
+        if (!n8nRowId) {
           const rowsRes = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`, {
             headers: { "X-N8N-API-KEY": N8N_KEY },
             signal:  AbortSignal.timeout(10000),
@@ -69,7 +69,7 @@ export async function DELETE(req: NextRequest) {
             const rows: Array<Record<string, unknown>> =
               Array.isArray(json) ? json : (json.data ?? json.rows ?? json.items ?? []);
             const row = rows.find(r => String(r.lead_id ?? "") === leadId);
-            n8nRowId = row ? String(row.id ?? "") : null;
+            n8nRowId = row?.id != null ? String(row.id) : null;
           }
         }
 
@@ -78,7 +78,7 @@ export async function DELETE(req: NextRequest) {
             method:  "DELETE",
             headers: { "X-N8N-API-KEY": N8N_KEY },
             signal:  AbortSignal.timeout(5000),
-          });
+          }).catch(() => {});
         }
       } catch { /* best effort */ }
     }

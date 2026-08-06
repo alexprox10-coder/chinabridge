@@ -1,6 +1,7 @@
 import type { ImportLeadEnhanced, PlatformLead, PipelineHealth, FollowupItem, SalesKPI } from "./types";
 import type { ImportLead } from "@/lib/import-leads/types";
 import { getLeads } from "@/lib/crm/client";
+import { getDeletedLeadIds } from "@/lib/import-leads/status-store";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
 const N8N_KEY = process.env.N8N_API_KEY ?? "";
@@ -45,8 +46,15 @@ function enhanceLead(lead: ImportLead): ImportLeadEnhanced {
 }
 
 export async function fetchImportLeads(): Promise<ImportLeadEnhanced[]> {
-  const rows = await n8nRows(IMPORT_TABLE);
+  const [rows, deletedIds] = await Promise.all([
+    n8nRows(IMPORT_TABLE),
+    getDeletedLeadIds().catch(() => new Set<string>()),
+  ]);
   return rows
+    .filter(r => {
+      const lid = String(r.lead_id ?? "");
+      return lid && !deletedIds.has(lid);
+    })
     .map(r => enhanceLead(r as unknown as ImportLead))
     .sort((a, b) => b.score100 - a.score100);
 }

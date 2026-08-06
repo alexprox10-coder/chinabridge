@@ -27,3 +27,18 @@ export async function getLeadStatuses(): Promise<Record<string, LeadStatus>> {
   const rows = await sql`SELECT lead_id, status FROM import_lead_statuses`;
   return Object.fromEntries(rows.map((r) => [r.lead_id as string, r.status as LeadStatus]));
 }
+
+export async function markLeadDeleted(leadId: string): Promise<void> {
+  await ensureTable();
+  await sql`
+    INSERT INTO import_lead_statuses (lead_id, status)
+    VALUES (${leadId}, 'deleted')
+    ON CONFLICT (lead_id) DO UPDATE SET status = 'deleted', updated_at = NOW()
+  `;
+}
+
+export async function getDeletedLeadIds(): Promise<Set<string>> {
+  await ensureTable();
+  const rows = await sql`SELECT lead_id FROM import_lead_statuses WHERE status = 'deleted'`;
+  return new Set(rows.map(r => r.lead_id as string));
+}
