@@ -140,3 +140,17 @@ export async function createPartnerTask(fields: Omit<PartnerTask, "id" | "create
   const result = await dtInsert(PARTNER_TASKS_TABLE, { ...fields, created_at: now, updated_at: now });
   return result !== null;
 }
+
+export async function deletePartnerTask(rowId: number): Promise<boolean> {
+  if (!PARTNER_TASKS_TABLE || !N8N_KEY) return false;
+  try {
+    const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${PARTNER_TASKS_TABLE}/rows/${rowId}`, {
+      method: "DELETE",
+      headers: { "X-N8N-API-KEY": N8N_KEY },
+      signal: AbortSignal.timeout(8000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

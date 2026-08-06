@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { SalesDirectorReport, ImportLeadEnhanced, PlatformLead, FollowupItem, SalesRecommendation, SalesKPI, PipelineHealth } from "@/lib/ai-company/sales/types";
 
 type Tab = "overview" | "import" | "platform" | "followup" | "recs";
@@ -139,22 +139,15 @@ function OverviewTab({ kpis, pipeline }: { kpis: SalesKPI; pipeline: PipelineHea
 }
 
 // ─── Import Leads Tab ─────────────────────────────────────────────────────────
-function ImportLeadsTab({ leads, onNotify }: { leads: ImportLeadEnhanced[]; onNotify: () => void }) {
+function ImportLeadsTab({ leads, onNotify, onDelete }: { leads: ImportLeadEnhanced[]; onNotify: () => void; onDelete: (leadId: string) => void }) {
   const [filter, setFilter] = useState<"ALL" | "HOT" | "WARM" | "COLD">("ALL");
   const [notifying, setNotifying] = useState(false);
   const [notified, setNotified] = useState<number | null>(null);
-  const [localLeads, setLocalLeads] = useState<ImportLeadEnhanced[]>(leads);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const deletedIds = useRef<Set<string>>(new Set());
 
-  // Sync from parent refresh, keeping deleted leads filtered out
-  useEffect(() => {
-    setLocalLeads(leads.filter(l => !deletedIds.current.has(l.lead_id)));
-  }, [leads]);
-
-  const filtered = filter === "ALL" ? localLeads : localLeads.filter(l => l.temperature === filter);
-  const hotCount = localLeads.filter(l => l.temperature === "HOT").length;
+  const filtered = filter === "ALL" ? leads : leads.filter(l => l.temperature === filter);
+  const hotCount = leads.filter(l => l.temperature === "HOT").length;
 
   const handleDelete = async (lead: ImportLeadEnhanced) => {
     if (deleting) return;
@@ -166,8 +159,7 @@ function ImportLeadsTab({ leads, onNotify }: { leads: ImportLeadEnhanced[]; onNo
       const res  = await fetch(`/api/admin/leads?${params}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({ ok: false }));
       if (data.ok) {
-        deletedIds.current.add(lead.lead_id);
-        setLocalLeads(prev => prev.filter(l => l.lead_id !== lead.lead_id));
+        onDelete(lead.lead_id);
         setToast("Лид удалён");
         setTimeout(() => setToast(null), 3000);
       }
@@ -386,15 +378,9 @@ function PlatformLeadsTab({ leads, onAdd }: { leads: PlatformLead[]; onAdd: (l: 
 }
 
 // ─── Followup Tab ─────────────────────────────────────────────────────────────
-function FollowupTab({ items }: { items: FollowupItem[] }) {
-  const [localItems, setLocalItems] = useState<FollowupItem[]>(items);
-  const [deleting, setDeleting]     = useState<number | null>(null);
-  const [toast, setToast]           = useState<string | null>(null);
-  const deletedIds = useRef<Set<number>>(new Set());
-
-  useEffect(() => {
-    setLocalItems(items.filter(i => !deletedIds.current.has(i.id)));
-  }, [items]);
+function FollowupTab({ items, onDelete }: { items: FollowupItem[]; onDelete: (id: number) => void }) {
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [toast, setToast]       = useState<string | null>(null);
 
   const handleDelete = async (item: FollowupItem) => {
     if (deleting || !item.id) return;
@@ -403,8 +389,7 @@ function FollowupTab({ items }: { items: FollowupItem[] }) {
       const res  = await fetch(`/api/admin/leads/${item.id}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({ ok: false }));
       if (data.ok) {
-        deletedIds.current.add(item.id);
-        setLocalItems(prev => prev.filter(i => i.id !== item.id));
+        onDelete(item.id);
         setToast("Лид удалён");
         setTimeout(() => setToast(null), 3000);
       }
@@ -419,13 +404,13 @@ function FollowupTab({ items }: { items: FollowupItem[] }) {
           {toast}
         </div>
       )}
-      {localItems.length === 0 ? (
+      {items.length === 0 ? (
         <div className="text-center py-16 text-slate-500">
           <div className="text-4xl mb-3">✅</div>
           <div>Follow-up очередь пуста</div>
         </div>
       ) : (
-        localItems.map((item) => (
+        items.map((item) => (
           <div key={item.id} className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex items-center gap-4">
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${priorityDot(item.priority)}`} />
             <div className="flex-1 min-w-0">
@@ -520,6 +505,8 @@ export default function SalesDashboard({ initialReport }: { initialReport: Sales
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [platformLeads, setPlatformLeads] = useState<PlatformLead[]>(initialReport?.platformLeads ?? []);
+  const [deletedImportIds, setDeletedImportIds] = useState<Set<string>>(new Set());
+  const [deletedCrmIds, setDeletedCrmIds] = useState<Set<number>>(new Set());
 
   const refresh = useCallback(async () => {
     setLoading(true); setError(null);
@@ -534,11 +521,28 @@ export default function SalesDashboard({ initialReport }: { initialReport: Sales
     finally { setLoading(false); }
   }, []);
 
+  const handleDeleteImport = useCallback((leadId: string) => {
+    setDeletedImportIds(prev => new Set([...prev, leadId]));
+  }, []);
+
+  const handleDeleteCrm = useCallback((id: number) => {
+    setDeletedCrmIds(prev => new Set([...prev, id]));
+  }, []);
+
+  const visibleImportLeads = useMemo(
+    () => report ? report.importLeads.filter(l => !deletedImportIds.has(l.lead_id)) : [],
+    [report, deletedImportIds]
+  );
+  const visibleFollowup = useMemo(
+    () => report ? report.followupQueue.filter(i => !deletedCrmIds.has(i.id)) : [],
+    [report, deletedCrmIds]
+  );
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview",  label: "📊 Обзор" },
-    { id: "import",    label: `🎯 Импорт лиды${report ? ` (${report.importLeads.length})` : ""}` },
+    { id: "import",    label: `🎯 Импорт лиды${report ? ` (${visibleImportLeads.length})` : ""}` },
     { id: "platform",  label: `🏢 Платформа${platformLeads.length > 0 ? ` (${platformLeads.length})` : ""}` },
-    { id: "followup",  label: `⏰ Дожим${report ? ` (${report.followupQueue.length})` : ""}` },
+    { id: "followup",  label: `⏰ Дожим${report ? ` (${visibleFollowup.length})` : ""}` },
     { id: "recs",      label: "🤖 AI Директор" },
   ];
 
@@ -592,9 +596,9 @@ export default function SalesDashboard({ initialReport }: { initialReport: Sales
       ) : report ? (
         <>
           {tab === "overview"  && <OverviewTab kpis={report.kpis} pipeline={report.pipelineHealth} />}
-          {tab === "import"    && <ImportLeadsTab leads={report.importLeads} onNotify={refresh} />}
+          {tab === "import"    && <ImportLeadsTab leads={visibleImportLeads} onNotify={refresh} onDelete={handleDeleteImport} />}
           {tab === "platform"  && <PlatformLeadsTab leads={platformLeads} onAdd={l => setPlatformLeads(prev => [l, ...prev])} />}
-          {tab === "followup"  && <FollowupTab items={report.followupQueue} />}
+          {tab === "followup"  && <FollowupTab items={visibleFollowup} onDelete={handleDeleteCrm} />}
           {tab === "recs"      && <RecsTab summary={report.summary} recs={report.recommendations} tasks={report.tasks} />}
         </>
       ) : null}

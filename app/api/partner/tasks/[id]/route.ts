@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPartnerSession } from "@/lib/partner-portal/auth";
-import { getTaskById, updateTaskResponse } from "@/lib/partner-portal/api";
+import { getTaskById, updateTaskResponse, deletePartnerTask } from "@/lib/partner-portal/api";
 
 export const runtime = "nodejs";
 
@@ -33,5 +33,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     ...(complete ? { completed_at: now } : {}),
   });
 
+  return NextResponse.json({ ok });
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getPartnerSession();
+  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+  const task = await getTaskById(id, session.partnerId);
+  if (!task) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+  const ok = await deletePartnerTask(task.id);
   return NextResponse.json({ ok });
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/partner-portal/i18n";
 import type { PartnerTask, TaskStatus } from "@/lib/partner-portal/types";
@@ -16,13 +16,36 @@ export default function PartnerDashboard() {
   const { t } = useI18n();
   const [tasks, setTasks] = useState<PartnerTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const deletedIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/partner/tasks")
       .then((r) => r.json())
-      .then((data) => { setTasks(Array.isArray(data) ? data : []); setLoading(false); })
+      .then((data) => {
+        const all: PartnerTask[] = Array.isArray(data) ? data : [];
+        setTasks(all.filter(t => !deletedIds.current.has(t.task_id)));
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
+
+  async function handleDelete(e: React.MouseEvent, task: PartnerTask) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (deleting) return;
+    setDeleting(task.task_id);
+    try {
+      const res = await fetch(`/api/partner/tasks/${task.task_id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (data.ok) {
+        deletedIds.current.add(task.task_id);
+        setTasks(prev => prev.filter(t => t.task_id !== task.task_id));
+      }
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   const counts = {
     NEW:           tasks.filter((t) => t.status === "NEW").length,
@@ -68,9 +91,8 @@ export default function PartnerDashboard() {
         ) : (
           <div className="space-y-2">
             {tasks.slice(0, 5).map((task) => (
-              <Link key={task.task_id} href={`/partner/tasks/${task.task_id}`}
-                className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition group">
-                <div className="min-w-0">
+              <div key={task.task_id} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition">
+                <Link href={`/partner/tasks/${task.task_id}`} className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-mono text-slate-400">{task.task_id}</span>
                     <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
@@ -81,11 +103,20 @@ export default function PartnerDashboard() {
                   <p className="text-xs text-slate-400 mt-0.5">
                     {task.quantity} {t("pcs")} · {task.deadline_hours}{t("hours")}
                   </p>
+                </Link>
+                <div className="flex items-center gap-2 ml-3 shrink-0">
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[task.status]}`}>
+                    {t(`status_${task.status}` as keyof typeof ru)}
+                  </span>
+                  <button
+                    onClick={(e) => handleDelete(e, task)}
+                    disabled={deleting === task.task_id}
+                    title="Удалить"
+                    className="p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition disabled:opacity-40">
+                    {deleting === task.task_id ? "⏳" : "🗑"}
+                  </button>
                 </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ml-3 ${STATUS_COLORS[task.status]}`}>
-                  {t(`status_${task.status}` as keyof typeof ru)}
-                </span>
-              </Link>
+              </div>
             ))}
           </div>
         )}
