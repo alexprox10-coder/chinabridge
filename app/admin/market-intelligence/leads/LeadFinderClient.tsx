@@ -47,6 +47,7 @@ export default function LeadFinderClient() {
   const [runResult,  setRunResult]  = useState("");
   const [filterTemp, setFilterTemp] = useState("");
   const [expanded,   setExpanded]   = useState<string | null>(null);
+  const [toast,      setToast]      = useState<{ msg: string; type: "ok" | "err" } | null>(null);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
@@ -80,12 +81,27 @@ export default function LeadFinderClient() {
     setRunning(false);
   }
 
-  async function movePipeline(id: number, pipeline: MILeadPipeline) {
-    await fetch("/api/market-intelligence/leads", {
+  function showToast(msg: string, type: "ok" | "err") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  }
+
+  async function movePipeline(lead: MILead, pipeline: MILeadPipeline) {
+    const id = lead.id;
+    if (!id) return;
+    const res = await fetch("/api/market-intelligence/leads", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, pipeline }),
+      body: JSON.stringify({ id, pipeline, lead: pipeline === "CONTACT" ? lead : undefined }),
     });
+    const data = await res.json().catch(() => ({}));
     setLeads(prev => prev.map(l => l.id === id ? { ...l, pipeline } : l));
+    if (pipeline === "CONTACT") {
+      if (data.crmLeadId) {
+        showToast("✅ Лид добавлен в CRM → /admin/leads", "ok");
+      } else {
+        showToast("⚠️ Статус обновлён, но перенос в CRM не удался", "err");
+      }
+    }
   }
 
   return (
@@ -104,6 +120,16 @@ export default function LeadFinderClient() {
           {running ? "⏳ Ищем..." : "🚀 Запустить поиск"}
         </button>
       </div>
+
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-xl border ${
+          toast.type === "ok"
+            ? "bg-green-900/90 border-green-700 text-green-200"
+            : "bg-amber-900/90 border-amber-700 text-amber-200"
+        }`}>
+          {toast.msg}
+        </div>
+      )}
 
       {runResult && (
         <div className="mb-4 px-4 py-2.5 bg-blue-900/20 border border-blue-700/40 rounded-xl text-blue-300 text-sm">
@@ -211,7 +237,7 @@ export default function LeadFinderClient() {
                     <p className="text-slate-500 text-xs mb-2">Pipeline:</p>
                     <div className="flex flex-wrap gap-1.5">
                       {(Object.keys(MI_PIPELINE_LABELS) as MILeadPipeline[]).map(p => (
-                        <button key={p} onClick={() => lead.id && movePipeline(lead.id, p)}
+                        <button key={p} onClick={() => movePipeline(lead, p)}
                           className={`px-2.5 py-1 rounded-lg text-xs border transition ${lead.pipeline === p ? PIPE_COLORS[p] : "border-slate-700 text-slate-500 hover:border-slate-500"}`}>
                           {MI_PIPELINE_LABELS[p]}
                         </button>
