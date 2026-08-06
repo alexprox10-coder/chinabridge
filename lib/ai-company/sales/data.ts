@@ -51,11 +51,17 @@ export async function fetchImportLeads(): Promise<ImportLeadEnhanced[]> {
     getDeletedLeadIds().catch(() => new Set<string>()),
   ]);
   return rows
-    .filter(r => {
-      const lid = String(r.lead_id ?? "");
-      return lid && !deletedIds.has(lid);
+    .map(r => {
+      const lead = r as unknown as ImportLead;
+      // Use n8n row id as fallback when lead_id is absent
+      const lid = lead.lead_id || (lead.id != null ? `n8n_${lead.id}` : "");
+      return lid !== lead.lead_id ? { ...lead, lead_id: lid } : lead;
     })
-    .map(r => enhanceLead(r as unknown as ImportLead))
+    .filter(l => {
+      const lid = l.lead_id ?? "";
+      return !lid || !deletedIds.has(lid);
+    })
+    .map(l => enhanceLead(l))
     .sort((a, b) => b.score100 - a.score100);
 }
 

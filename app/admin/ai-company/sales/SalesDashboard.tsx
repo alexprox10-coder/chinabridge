@@ -199,7 +199,7 @@ function ImportLeadsTab({ leads, onNotify, onDelete }: { leads: ImportLeadEnhanc
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${filter === f ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-400 hover:text-white"}`}
             >
-              {f === "ALL" ? `Все (${localLeads.length})` : f === "HOT" ? `🔥 HOT (${hotCount})` : f === "WARM" ? `🌡️ WARM` : `❄️ COLD`}
+              {f === "ALL" ? `Все (${leads.length})` : f === "HOT" ? `🔥 HOT (${hotCount})` : f === "WARM" ? `🌡️ WARM` : `❄️ COLD`}
             </button>
           ))}
         </div>
@@ -256,10 +256,10 @@ function ImportLeadsTab({ leads, onNotify, onDelete }: { leads: ImportLeadEnhanc
                     )}
                     <button
                       onClick={() => handleDelete(lead)}
-                      disabled={deleting === lead.lead_id}
+                      disabled={!!deleting && deleting === (lead.lead_id || String(lead.id ?? ""))}
                       title="Удалить лид"
                       className="mt-1 p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition disabled:opacity-40">
-                      {deleting === lead.lead_id ? "⏳" : "🗑"}
+                      {deleting === (lead.lead_id || String(lead.id ?? "")) ? "⏳" : "🗑"}
                     </button>
                   </div>
                 </div>
@@ -538,7 +538,10 @@ export default function SalesDashboard({ initialReport }: { initialReport: Sales
   }, []);
 
   const visibleImportLeads = useMemo(
-    () => report ? report.importLeads.filter(l => !deletedImportIds.has(l.lead_id)) : [],
+    () => report ? report.importLeads.filter(l => {
+        const key = l.lead_id ?? "";
+        return !key || !deletedImportIds.has(key);
+      }) : [],
     [report, deletedImportIds]
   );
   const visibleFollowup = useMemo(

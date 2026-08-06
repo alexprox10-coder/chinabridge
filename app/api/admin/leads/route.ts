@@ -52,7 +52,9 @@ export async function DELETE(req: NextRequest) {
     if (!leadId && !n8nIdRaw) return NextResponse.json({ ok: false, error: "missing lead_id" }, { status: 400 });
 
     // 1. Mark as deleted in Neon — PERMANENT, survives any page refresh
-    if (leadId) await markLeadDeleted(leadId).catch(() => {});
+    // Use synthetic "n8n_<id>" key when lead_id is absent
+    const neonKey = leadId || (n8nIdRaw ? `n8n_${n8nIdRaw}` : null);
+    if (neonKey) await markLeadDeleted(neonKey).catch(() => {});
 
     // 2. Best-effort delete from n8n (if fails, Neon filter handles it)
     if (TABLE_ID && N8N_KEY) {
