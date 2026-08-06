@@ -5,7 +5,7 @@ import { runLeadFinder } from "@/lib/market-intelligence/lead-finder";
 import type { MILeadPipeline } from "@/lib/market-intelligence/types";
 
 export const runtime     = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 export const dynamic     = "force-dynamic";
 
 async function getTenantId() {

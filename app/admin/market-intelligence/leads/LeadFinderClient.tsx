@@ -71,7 +71,7 @@ export default function LeadFinderClient() {
       const sources = tab === "all" ? ["google", "telegram", "vk"] : [tab];
       const res = await fetch("/api/market-intelligence/leads", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sources, limit: 15 }),
+        body: JSON.stringify({ sources, limit: 5 }),
       });
       const data = await res.json();
       setRunResult(`✅ Найдено: Google ${data.google ?? 0} | Telegram ${data.telegram ?? 0} | VK ${data.vk ?? 0} | HOT: ${data.hot ?? 0}`);
