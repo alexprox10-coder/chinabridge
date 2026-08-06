@@ -134,7 +134,8 @@ async function searchTelegram(tenantId: string, limit: number): Promise<MILead[]
   const uniq = dedup(raw).slice(0, limit);
   const scored = await Promise.all(uniq.map(r => aiScore(r.url, r.title, r.description, "telegram")));
   const leads: MILead[] = scored.map((s, i) => {
-    const channelName = uniq[i].url.replace(/https?:\/\/t\.me\//, "").split("/")[0];
+    const tgPath = uniq[i].url.replace(/https?:\/\/t\.me\//, "");
+    const channelName = tgPath.startsWith("s/") ? tgPath.split("/")[1] : tgPath.split("/")[0];
     return {
       leadId: `mi-tg-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
       tenantId, source: "telegram" as MILeadSource, sourceUrl: uniq[i].url, sourceChannel: `@${channelName}`,
