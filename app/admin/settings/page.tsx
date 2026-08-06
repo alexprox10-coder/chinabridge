@@ -2,6 +2,7 @@ import Link from "next/link";
 
 export default function SettingsPage() {
   const items = [
+    { href: "/admin/settings/billing",  icon: "💳", title: "Подписка и оплата",  desc: "Тариф, оплата через Точка Банк — карта, СБП, Т-Pay" },
     { href: "/admin/settings/company", icon: "🏢", title: "Реквизиты компании", desc: "ИНН, ОГРНИП, банк, адрес — данные для документов" },
     { href: "/admin/finance/settings", icon: "💱", title: "Курсы валют",         desc: "USD, CNY, RUB, KZT — ручные курсы для финансовых расчётов" },
   ];
