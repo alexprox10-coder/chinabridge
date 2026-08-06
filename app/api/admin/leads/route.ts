@@ -6,7 +6,8 @@ import { isAuthorized } from "@/lib/api-auth";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
 const N8N_KEY  = process.env.N8N_API_KEY ?? "";
-const TABLE_ID = process.env.N8N_IMPORT_LEADS_TABLE_ID ?? "";
+// same fallback as lib/ai-company/sales/data.ts so we hit the same table
+const TABLE_ID = process.env.N8N_IMPORT_LEADS_TABLE_ID ?? "ZUdd2z8BpyvePLeX";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
