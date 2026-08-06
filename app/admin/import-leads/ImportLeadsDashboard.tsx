@@ -108,20 +108,20 @@ export default function ImportLeadsDashboard({ initialLeads, isTableConfigured }
   }
 
   async function updateStatus(lead: ImportLead, status: LeadStatus) {
-    if (!lead.id) { showToast("Ошибка: нет ID у лида", "err"); return; }
-    setUpdating(lead.id);
+    if (!lead.lead_id) { showToast("Ошибка: нет lead_id у лида", "err"); return; }
+    setUpdating(lead.id ?? 0);
     try {
       const res = await fetch("/api/import-leads/leads", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lead.id, status, lead }),
+        body: JSON.stringify({ leadId: lead.lead_id, status, lead }),
       });
       const data = await res.json().catch(() => ({ ok: false }));
       if (!data.ok) {
         showToast(`Ошибка сохранения: ${data.error ?? res.status}`, "err");
         return;
       }
-      setLeads((prev) => prev.map((l) => l.id === lead.id ? { ...l, status } : l));
+      setLeads((prev) => prev.map((l) => l.lead_id === lead.lead_id ? { ...l, status } : l));
       if (status === "approved") {
         showToast(
           data.crmLeadId

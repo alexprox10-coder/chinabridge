@@ -24,11 +24,13 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
-  let body: { id: number; status: LeadStatus; lead?: ImportLead };
+  let body: { leadId: string; status: LeadStatus; lead?: ImportLead };
   try { body = await req.json(); }
   catch { return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 }); }
 
-  const updateResult = await updateLeadStatus(body.id, body.status);
+  if (!body.leadId) return NextResponse.json({ ok: false, error: "leadId required" }, { status: 400 });
+
+  const updateResult = await updateLeadStatus(body.leadId, body.status);
   if (!updateResult.ok) return NextResponse.json({ ok: false, error: updateResult.error ?? "update_failed" }, { status: 500 });
 
   // When approved → push to main CRM

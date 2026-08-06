@@ -1,4 +1,5 @@
 import type { ImportLead, LeadStatus } from "./types";
+import { setLeadStatus, getLeadStatuses } from "./status-store";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
 const N8N_KEY = process.env.N8N_API_KEY ?? "";
@@ -39,31 +40,9 @@ async function dtInsert(fields: Record<string, unknown>): Promise<ImportLead | n
     });
     if (!res.ok) return null;
     const json = await res.json().catch(() => null);
-    // Response: { success: true, insertedRows: 1 } — return fields with fake id
     return json?.success ? { ...fields, id: Date.now() } as unknown as ImportLead : null;
   } catch {
     return null;
-  }
-}
-
-async function dtPatch(rowId: number, fields: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
-  if (!TABLE_ID || !N8N_KEY) return { ok: false, error: "n8n не настроен: отсутствует TABLE_ID или API_KEY" };
-  try {
-    const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows/${rowId}`, {
-      method: "PATCH",
-      headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify(fields),
-      cache: "no-store",
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      console.error(`[import-leads] PATCH row ${rowId} → ${res.status}: ${errText}`);
-      return { ok: false, error: `n8n ${res.status}: ${errText.slice(0, 300)}` };
-    }
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: String(e) };
   }
 }
 
@@ -73,7 +52,15 @@ export async function saveLead(lead: Omit<ImportLead, "id">): Promise<ImportLead
 
 export async function getAllLeads(companyId?: string): Promise<ImportLead[]> {
   const filters = companyId ? [{ key: "company_id", value: companyId }] : [];
-  return dtQuery(filters);
+  const leads = await dtQuery(filters);
+  try {
+    const statuses = await getLeadStatuses();
+    return leads.map((l) =>
+      statuses[l.lead_id] ? { ...l, status: statuses[l.lead_id] } : l
+    );
+  } catch {
+    return leads;
+  }
 }
 
 export async function getLeadsByScore(minScore: number, companyId?: string): Promise<ImportLead[]> {
@@ -82,13 +69,17 @@ export async function getLeadsByScore(minScore: number, companyId?: string): Pro
 }
 
 export async function getLeadsByStatus(status: LeadStatus, companyId?: string): Promise<ImportLead[]> {
-  const filters: { key: string; value: string }[] = [{ key: "status", value: status }];
-  if (companyId) filters.push({ key: "company_id", value: companyId });
-  return dtQuery(filters);
+  const all = await getAllLeads(companyId);
+  return all.filter((l) => l.status === status);
 }
 
-export async function updateLeadStatus(rowId: number, status: LeadStatus): Promise<{ ok: boolean; error?: string }> {
-  return dtPatch(rowId, { status });
+export async function updateLeadStatus(leadId: string, status: LeadStatus): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await setLeadStatus(leadId, status);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
 }
 
 export async function isDuplicateWebsite(website: string, companyId: string): Promise<boolean> {
