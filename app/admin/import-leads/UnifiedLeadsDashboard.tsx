@@ -282,10 +282,16 @@ export default function UnifiedLeadsDashboard() {
           <h2 className="text-xl font-bold text-white">🎯 Поиск лидов</h2>
           <p className="text-slate-400 text-sm mt-0.5">AI-поиск через Google, Telegram, VK + анализ импортёров</p>
         </div>
-        <button onClick={runSearch} disabled={running}
-          className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl transition-colors">
-          {running ? "⏳ Идёт поиск..." : "🚀 Запустить поиск"}
-        </button>
+        <div className="flex gap-2">
+          <a href="/api/admin/export/approved-leads?format=csv" target="_blank"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-sm rounded-xl transition-colors border border-slate-600">
+            📥 Экспорт контактов
+          </a>
+          <button onClick={runSearch} disabled={running}
+            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold text-sm rounded-xl transition-colors">
+            {running ? "⏳ Идёт поиск..." : "🚀 Запустить поиск"}
+          </button>
+        </div>
       </div>
 
       {runResult && (

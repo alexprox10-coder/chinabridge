@@ -92,6 +92,33 @@ async function aiScore(url: string, title: string, description: string, source: 
   } catch { return heuristic(url, title, description, source); }
 }
 
+// ─── Contact extractor ───────────────────────────────────────────────────────
+
+interface Contacts { phone: string; email: string; telegram: string; }
+
+async function extractContacts(url: string): Promise<Contacts> {
+  const empty: Contacts = { phone: "", email: "", telegram: "" };
+  if (!FIRECRAWL_KEY || !url) return empty;
+  try {
+    const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${FIRECRAWL_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ url, formats: ["extract"], extract: { prompt: "Extract phone number, email address and Telegram handle/link. Return JSON: {phone, email, telegram}" } }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return empty;
+    const data = await res.json();
+    const extracted = data.data?.extract ?? data.extract ?? {};
+    // Also try regex on raw content
+    const content: string = data.data?.content ?? data.data?.markdown ?? "";
+    const phone   = extracted.phone   || content.match(/(?:\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/)?.[0] || "";
+    const email   = extracted.email   || content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] || "";
+    const tgRaw   = extracted.telegram || content.match(/@[\w]{3,32}|t\.me\/[\w]{3,32}/)?.[0] || "";
+    const telegram = tgRaw ? (tgRaw.startsWith("@") ? tgRaw : `@${tgRaw.replace(/.*t\.me\//, "")}`) : "";
+    return { phone, email, telegram };
+  } catch { return empty; }
+}
+
 // ─── Dedup helper ─────────────────────────────────────────────────────────────
 
 function dedup(items: Array<{url: string; title: string; description: string}>) {
@@ -114,10 +141,13 @@ async function searchGoogle(tenantId: string, limit: number): Promise<MILead[]> 
   const raw = dedup(batches.flat()).slice(0, limit);
   // All AI scoring in parallel
   const scored = await Promise.all(raw.map(r => aiScore(r.url, r.title, r.description, "google")));
+  // Extract contacts from websites in parallel
+  const contacts = await Promise.all(raw.map(r => extractContacts(r.url)));
   const leads: MILead[] = scored.map((s, i) => ({
     leadId: `mi-google-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
     tenantId, source: "google" as MILeadSource, sourceUrl: raw[i].url,
     company: s.company, website: s.website, city: s.city, country: "RU",
+    phone: contacts[i].phone, email: contacts[i].email, telegram: contacts[i].telegram,
     type: s.type, temperature: s.temperature, score: s.score,
     scoreReason: s.scoreReason, description: s.description, nextAction: s.nextAction,
     pipeline: "NEW", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
