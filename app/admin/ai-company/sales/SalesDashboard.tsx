@@ -143,7 +143,9 @@ function ImportLeadsTab({ leads, onNotify, onDelete }: { leads: ImportLeadEnhanc
   const [filter, setFilter] = useState<"ALL" | "HOT" | "WARM" | "COLD">("ALL");
   const [notifying, setNotifying] = useState(false);
   const [notified, setNotified] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleting,  setDeleting]  = useState<string | null>(null);
+  const [approving, setApproving] = useState<string | null>(null);
+  const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
 
   const filtered = filter === "ALL" ? leads : leads.filter(l => l.temperature === filter);
@@ -171,6 +173,28 @@ function ImportLeadsTab({ leads, onNotify, onDelete }: { leads: ImportLeadEnhanc
         setTimeout(() => setToast(null), 5000);
       }
     } finally { setDeleting(null); }
+  };
+
+  const handleApprove = async (lead: ImportLeadEnhanced) => {
+    const lid = lead.lead_id ?? "";
+    if (!lid || approving) return;
+    setApproving(lid);
+    try {
+      const res  = await fetch("/api/import-leads/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lid, status: "approved", lead }),
+      });
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (data.ok) {
+        setApprovedIds(prev => new Set([...prev, lid]));
+        setToast("✓ Лид добавлен в CRM");
+        setTimeout(() => setToast(null), 3000);
+      } else {
+        setToast(`Ошибка: ${data.error ?? "не удалось добавить в CRM"}`);
+        setTimeout(() => setToast(null), 5000);
+      }
+    } finally { setApproving(null); }
   };
 
   const handleNotify = async () => {
@@ -256,13 +280,26 @@ function ImportLeadsTab({ leads, onNotify, onDelete }: { leads: ImportLeadEnhanc
                         🌐 {lead.website.replace(/^https?:\/\//, "")}
                       </a>
                     )}
-                    <button
-                      onClick={() => handleDelete(lead)}
-                      disabled={!!deleting && deleting === (lead.lead_id || String(lead.id ?? ""))}
-                      title="Удалить лид"
-                      className="mt-1 p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition disabled:opacity-40">
-                      {deleting === (lead.lead_id || String(lead.id ?? "")) ? "⏳" : "🗑"}
-                    </button>
+                    <div className="flex items-center gap-1 mt-1 justify-end">
+                      {approvedIds.has(lead.lead_id ?? "") || lead.status === "approved" ? (
+                        <span className="text-xs text-emerald-400 font-medium px-2 py-1">✓ В CRM</span>
+                      ) : (
+                        <button
+                          onClick={() => handleApprove(lead)}
+                          disabled={!!approving}
+                          title="Одобрить и добавить в CRM"
+                          className="px-2 py-1 rounded-lg text-xs font-medium text-emerald-400 border border-emerald-700/50 hover:bg-emerald-900/30 transition disabled:opacity-40">
+                          {approving === (lead.lead_id ?? "") ? "⏳" : "✓ В CRM"}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(lead)}
+                        disabled={!!deleting && deleting === (lead.lead_id || String(lead.id ?? ""))}
+                        title="Удалить лид"
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition disabled:opacity-40">
+                        {deleting === (lead.lead_id || String(lead.id ?? "")) ? "⏳" : "🗑"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

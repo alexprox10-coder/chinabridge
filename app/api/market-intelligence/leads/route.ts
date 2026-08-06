@@ -90,9 +90,9 @@ export async function PATCH(req: NextRequest) {
 
   await updateMILeadPipeline(id, pipeline);
 
-  // При переводе в "Одобрен" (CLIENT) — копируем в основную CRM
+  // При переводе в CONTACT или CLIENT — копируем в основную CRM
   let crmLeadId: string | null = null;
-  if (pipeline === "CLIENT" && lead) {
+  if ((pipeline === "CONTACT" || pipeline === "CLIENT") && lead) {
     try {
       const now = new Date().toISOString();
       const newLead = await createLead({
