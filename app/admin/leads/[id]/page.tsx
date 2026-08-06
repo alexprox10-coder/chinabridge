@@ -10,7 +10,9 @@ export const revalidate = 0;
 export default async function LeadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   let lead = null;
-  try { lead = await getLead(Number(id)); } catch {}
+  try { lead = await getLead(Number(id), "tenant-chinabridge"); } catch (e) {
+    console.error("[LeadDetail] getLead failed:", e);
+  }
   if (!lead) notFound();
   return (
     <div className="min-h-screen bg-slate-950">
