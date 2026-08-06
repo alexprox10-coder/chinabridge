@@ -143,9 +143,29 @@ function ImportLeadsTab({ leads, onNotify }: { leads: ImportLeadEnhanced[]; onNo
   const [filter, setFilter] = useState<"ALL" | "HOT" | "WARM" | "COLD">("ALL");
   const [notifying, setNotifying] = useState(false);
   const [notified, setNotified] = useState<number | null>(null);
+  const [localLeads, setLocalLeads] = useState<ImportLeadEnhanced[]>(leads);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const filtered = filter === "ALL" ? leads : leads.filter(l => l.temperature === filter);
-  const hotCount = leads.filter(l => l.temperature === "HOT").length;
+  const filtered = filter === "ALL" ? localLeads : localLeads.filter(l => l.temperature === filter);
+  const hotCount = localLeads.filter(l => l.temperature === "HOT").length;
+
+  const handleDelete = async (lead: ImportLeadEnhanced) => {
+    if (deleting) return;
+    setDeleting(lead.lead_id);
+    try {
+      const params = new URLSearchParams({ system: "import" });
+      params.set("lead_id", lead.lead_id);
+      if (lead.id) params.set("n8n_id", String(lead.id));
+      const res  = await fetch(`/api/admin/leads?${params}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({ ok: false }));
+      if (data.ok) {
+        setLocalLeads(prev => prev.filter(l => l.lead_id !== lead.lead_id));
+        setToast("Лид удалён");
+        setTimeout(() => setToast(null), 3000);
+      }
+    } finally { setDeleting(null); }
+  };
 
   const handleNotify = async () => {
     setNotifying(true);
@@ -161,6 +181,12 @@ function ImportLeadsTab({ leads, onNotify }: { leads: ImportLeadEnhanced[]; onNo
 
   return (
     <div className="space-y-4">
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-xl border bg-green-900/90 border-green-700 text-green-200">
+          {toast}
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex gap-2">
           {(["ALL","HOT","WARM","COLD"] as const).map(f => (
@@ -169,7 +195,7 @@ function ImportLeadsTab({ leads, onNotify }: { leads: ImportLeadEnhanced[]; onNo
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${filter === f ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-400 hover:text-white"}`}
             >
-              {f === "ALL" ? `Все (${leads.length})` : f === "HOT" ? `🔥 HOT (${hotCount})` : f === "WARM" ? `🌡️ WARM` : `❄️ COLD`}
+              {f === "ALL" ? `Все (${localLeads.length})` : f === "HOT" ? `🔥 HOT (${hotCount})` : f === "WARM" ? `🌡️ WARM` : `❄️ COLD`}
             </button>
           ))}
         </div>
@@ -224,6 +250,13 @@ function ImportLeadsTab({ leads, onNotify }: { leads: ImportLeadEnhanced[]; onNo
                         🌐 {lead.website.replace(/^https?:\/\//, "")}
                       </a>
                     )}
+                    <button
+                      onClick={() => handleDelete(lead)}
+                      disabled={deleting === lead.lead_id}
+                      title="Удалить лид"
+                      className="mt-1 p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition disabled:opacity-40">
+                      {deleting === lead.lead_id ? "⏳" : "🗑"}
+                    </button>
                   </div>
                 </div>
               </div>
