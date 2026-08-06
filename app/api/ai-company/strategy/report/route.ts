@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { fetchStrategyData } from "@/lib/ai-company/strategy/data";
 import { generateStrategyDirectorReport } from "@/lib/ai-company/strategy/director";
+import { isAuthorized } from "@/lib/api-auth";
 
 export const runtime    = "nodejs";
 export const maxDuration = 60;
 
-export async function GET(_req: NextRequest) {
-  const cookieStore = await cookies();
-  if (!cookieStore.get("cb_admin")?.value) {
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 

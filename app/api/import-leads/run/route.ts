@@ -15,11 +15,12 @@ const QUICK_OVERRIDES = {
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("Authorization") ?? "";
-  const isCron = CRON_SECRET && authHeader === `Bearer ${CRON_SECRET}`;
+  const isCron  = CRON_SECRET && authHeader === `Bearer ${CRON_SECRET}`;
   const isAdmin = req.cookies.get("cb_admin")?.value;
+  const isTenant = req.cookies.get("cb_tenant_session")?.value;
 
   // UI button calls without cron secret — allow quick-mode only
-  const isQuickUI = !isCron && !isAdmin;
+  const isQuickUI = !isCron && !isAdmin && !isTenant;
 
   let overrides: Record<string, unknown> = {};
   try { overrides = await req.json(); } catch { /* no body */ }

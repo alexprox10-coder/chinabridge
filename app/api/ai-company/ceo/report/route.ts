@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { buildAllDepartments, buildCompanyMetrics } from "@/lib/ai-company/departments";
+import { isAuthorized } from "@/lib/api-auth";
 import { generateDecisions }    from "@/lib/ai-company/ceo/decisions";
 import { generateNotifications } from "@/lib/ai-company/ceo/notifications";
 import { generateKpis }          from "@/lib/ai-company/ceo/kpi";
@@ -33,9 +33,8 @@ function toSummary(dept: DepartmentReport): DeptSummary {
   };
 }
 
-export async function GET(_req: NextRequest) {
-  const cookieStore = await cookies();
-  if (!cookieStore.get("cb_admin")?.value) {
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 

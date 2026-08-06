@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { PlatformLead } from "@/lib/ai-company/sales/types";
+import { isAuthorized } from "@/lib/api-auth";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
 const N8N_KEY = process.env.N8N_API_KEY ?? "";
@@ -8,8 +9,7 @@ const TABLE_ID = process.env.N8N_PLATFORM_LEADS_TABLE_ID ?? "qIt6WfrUTVWsi1pV";
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const isAdmin = req.cookies.get("cb_admin")?.value;
-  if (!isAdmin) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  if (!isAuthorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
   const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`, {
     headers: { "X-N8N-API-KEY": N8N_KEY },
@@ -23,8 +23,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const isAdmin = req.cookies.get("cb_admin")?.value;
-  if (!isAdmin) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  if (!isAuthorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({})) as Partial<PlatformLead>;
   const now = new Date().toISOString();

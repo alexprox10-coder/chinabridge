@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildAllDepartments, buildCompanyMetrics } from "@/lib/ai-company/departments";
 import { generateCeoReport } from "@/lib/ai-company/ceo";
 import type { CeoReport } from "@/lib/ai-company/types";
+import { isAuthorized } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
-  const authCookie = req.cookies.get("cb_admin")?.value;
-  if (!authCookie) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
