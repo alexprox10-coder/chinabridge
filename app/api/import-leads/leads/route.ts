@@ -28,8 +28,8 @@ export async function PATCH(req: NextRequest) {
   try { body = await req.json(); }
   catch { return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 }); }
 
-  const ok = await updateLeadStatus(body.id, body.status);
-  if (!ok) return NextResponse.json({ ok: false, error: "update_failed" }, { status: 500 });
+  const updateResult = await updateLeadStatus(body.id, body.status);
+  if (!updateResult.ok) return NextResponse.json({ ok: false, error: updateResult.error ?? "update_failed" }, { status: 500 });
 
   // When approved → push to main CRM
   let crmLeadId: string | null = null;

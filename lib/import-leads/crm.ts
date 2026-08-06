@@ -46,19 +46,24 @@ async function dtInsert(fields: Record<string, unknown>): Promise<ImportLead | n
   }
 }
 
-async function dtPatch(rowId: number, fields: Record<string, unknown>): Promise<boolean> {
-  if (!TABLE_ID || !N8N_KEY) return false;
+async function dtPatch(rowId: number, fields: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
+  if (!TABLE_ID || !N8N_KEY) return { ok: false, error: "n8n не настроен: отсутствует TABLE_ID или API_KEY" };
   try {
     const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows/${rowId}`, {
       method: "PATCH",
       headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ data: fields }),
+      body: JSON.stringify(fields),
       cache: "no-store",
       signal: AbortSignal.timeout(10000),
     });
-    return res.ok;
-  } catch {
-    return false;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`[import-leads] PATCH row ${rowId} → ${res.status}: ${errText}`);
+      return { ok: false, error: `n8n ${res.status}: ${errText.slice(0, 300)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
   }
 }
 
@@ -82,8 +87,8 @@ export async function getLeadsByStatus(status: LeadStatus, companyId?: string): 
   return dtQuery(filters);
 }
 
-export async function updateLeadStatus(rowId: number, status: LeadStatus): Promise<boolean> {
-  return dtPatch(rowId, { status, updated_at: new Date().toISOString() });
+export async function updateLeadStatus(rowId: number, status: LeadStatus): Promise<{ ok: boolean; error?: string }> {
+  return dtPatch(rowId, { status });
 }
 
 export async function isDuplicateWebsite(website: string, companyId: string): Promise<boolean> {
