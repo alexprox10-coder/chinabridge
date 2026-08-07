@@ -133,14 +133,20 @@ export async function updateClientProfile(
   fields: Partial<Pick<ClientAccount, "name" | "company" | "phone" | "password_hash">>
 ): Promise<boolean> {
   // n8n Data Tables REST API v1 does not support row-level PATCH.
-  // Use insert-newest: write a full record with updated fields.
+  // Use insert-newest: write a full clean record with only schema fields.
   // findClientByEmail / getClientById sort by updated_at DESC → newest row wins.
   const now = new Date().toISOString();
-  const { id: _id, ...rest } = currentRecord; void _id;
   const result = await dtInsert(CLIENTS_TABLE, {
-    ...rest,
-    ...fields,
-    updated_at: now,
+    client_id:     currentRecord.client_id,
+    email:         currentRecord.email,
+    password_hash: fields.password_hash ?? currentRecord.password_hash,
+    name:          fields.name ?? currentRecord.name,
+    company:       fields.company ?? currentRecord.company ?? "",
+    phone:         fields.phone ?? currentRecord.phone ?? "",
+    role:          currentRecord.role,
+    status:        currentRecord.status,
+    created_at:    currentRecord.created_at,
+    updated_at:    now,
   });
   return result !== null;
 }
