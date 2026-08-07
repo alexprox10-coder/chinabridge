@@ -46,13 +46,18 @@ async function dtInsert(tableId: string, fields: Record<string, unknown>): Promi
     const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${tableId}/rows`, {
       method: "POST",
       headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ fields }),
+      body: JSON.stringify({ data: [fields] }),
       cache: "no-store",
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[partner dtInsert] table=${tableId} status=${res.status} body=${body}`);
+      return null;
+    }
     return res.json().catch(() => null);
-  } catch {
+  } catch (e) {
+    console.error(`[partner dtInsert] table=${tableId} error:`, e);
     return null;
   }
 }
@@ -63,7 +68,7 @@ async function dtPatch(tableId: string, rowId: number, fields: Record<string, un
     const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${tableId}/rows/${rowId}`, {
       method: "PATCH",
       headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ fields }),
+      body: JSON.stringify({ data: fields }),
       cache: "no-store",
       signal: AbortSignal.timeout(10000),
     });
