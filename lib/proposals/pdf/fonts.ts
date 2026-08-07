@@ -4,35 +4,43 @@ import fs from 'fs';
 
 let registered = false;
 
-export function registerFonts() {
-  if (registered) return;
-  registered = true;
-
-  // Primary: filesystem path (works locally + Vercel if outputFileTracingIncludes picks it up)
-  // Fallback: serve from public URL (always works on Vercel since public/ is static)
-  const base = path.join(process.cwd(), 'public', 'fonts');
-  const localOk = fs.existsSync(path.join(base, 'Roboto-Regular.ttf'));
-
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://chinabridge.pro';
-
-  const src = (name: string) =>
-    localOk ? path.join(base, name) : `${origin}/fonts/${name}`;
-
-  if (!localOk) {
-    console.warn(`[proposals] Local fonts not found, loading from ${origin}/fonts/`);
+async function loadFontAsDataUri(name: string): Promise<string> {
+  const localPath = path.join(process.cwd(), 'public', 'fonts', name);
+  // Try local filesystem first (works locally and sometimes on Vercel)
+  if (fs.existsSync(localPath)) {
+    const buf = fs.readFileSync(localPath);
+    return `data:font/truetype;base64,${buf.toString('base64')}`;
   }
+  // Fallback: fetch from public URL (always works on Vercel since public/ is static)
+  const url = `https://chinabridge.pro/fonts/${name}`;
+  console.log(`[proposals] Fetching font from ${url}`);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Font fetch failed: ${res.status} ${url}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  return `data:font/truetype;base64,${buf.toString('base64')}`;
+}
 
+export async function registerFonts() {
+  if (registered) return;
   try {
+    const [regular, bold, light] = await Promise.all([
+      loadFontAsDataUri('Roboto-Regular.ttf'),
+      loadFontAsDataUri('Roboto-Bold.ttf'),
+      loadFontAsDataUri('Roboto-Light.ttf'),
+    ]);
     Font.register({
       family: 'Roboto',
       fonts: [
-        { src: src('Roboto-Regular.ttf'), fontWeight: 'normal' },
-        { src: src('Roboto-Bold.ttf'),    fontWeight: 'bold'   },
-        { src: src('Roboto-Light.ttf'),   fontWeight: 300      },
+        { src: regular, fontWeight: 'normal' },
+        { src: bold,    fontWeight: 'bold'   },
+        { src: light,   fontWeight: 300      },
       ],
     });
     Font.registerHyphenationCallback((w) => [w]);
+    registered = true;
+    console.log('[proposals] Fonts registered OK');
   } catch (err) {
     console.error('[proposals] Font registration failed:', err);
+    // Don't set registered=true so next request retries
   }
 }

@@ -12,7 +12,7 @@ export async function generateProposal(
   lead: CRMLead,
   mode: ProposalMode,
 ): Promise<{ ctx: ProposalContext; buffer: Buffer }> {
-  registerFonts();
+  await registerFonts();
 
   const leadSnapshot: LeadSnapshot = {
     id: String(lead.id ?? lead.lead_id ?? ''),
