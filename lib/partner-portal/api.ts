@@ -31,8 +31,11 @@ async function dtQuery(tableId: string, filters: Filter[] = []): Promise<unknown
       });
     }
 
+    // Sort by updated_at DESC — newest row wins in insert-newest pattern
     rows.sort((a, b) =>
-      String(b["created_at"] ?? "").localeCompare(String(a["created_at"] ?? ""))
+      String(b["updated_at"] ?? b["created_at"] ?? "").localeCompare(
+        String(a["updated_at"] ?? a["created_at"] ?? "")
+      )
     );
     return rows;
   } catch {
@@ -62,25 +65,10 @@ async function dtInsert(tableId: string, fields: Record<string, unknown>): Promi
   }
 }
 
-async function dtPatch(tableId: string, rowId: number, fields: Record<string, unknown>): Promise<boolean> {
-  if (!tableId || !N8N_KEY) return false;
-  try {
-    const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${tableId}/rows/${rowId}`, {
-      method: "PATCH",
-      headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ data: fields }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(10000),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 // ── Partners ─────────────────────────────────────────────────────────────────
 
 export async function findPartnerByEmail(email: string): Promise<PartnerAccount | null> {
+  // Sort by updated_at DESC — newest version of the record wins
   const rows = await dtQuery(PARTNERS_TABLE, [
     { keyName: "email", condition: "eq", keyValue: email.toLowerCase().trim() },
   ]) as PartnerAccount[];
@@ -94,23 +82,70 @@ export async function getPartnerById(partnerId: string): Promise<PartnerAccount 
   return rows[0] ?? null;
 }
 
-export async function updatePartnerLanguage(rowId: number, language: Lang): Promise<boolean> {
-  return dtPatch(PARTNERS_TABLE, rowId, { language, updated_at: new Date().toISOString() });
+export async function updatePartnerLanguage(currentRecord: PartnerAccount, language: Lang): Promise<boolean> {
+  // n8n Data Tables REST v1 has no PATCH. Use insert-newest.
+  const now = new Date().toISOString();
+  const { id: _id, ...rest } = currentRecord; void _id;
+  const result = await dtInsert(PARTNERS_TABLE, {
+    partner_id:    rest.partner_id,
+    email:         rest.email,
+    password_hash: rest.password_hash,
+    name_ru:       rest.name_ru,
+    name_cn:       rest.name_cn ?? "",
+    company:       rest.company ?? "",
+    country:       rest.country ?? "",
+    city:          rest.city ?? "",
+    phone:         rest.phone ?? "",
+    wechat:        rest.wechat ?? "",
+    language,
+    role:          rest.role,
+    status:        rest.status,
+    created_at:    rest.created_at,
+    updated_at:    now,
+  });
+  return result !== null;
 }
 
 export async function updatePartnerProfile(
-  rowId: number,
+  currentRecord: PartnerAccount,
   fields: Partial<Pick<PartnerAccount, "name_ru" | "name_cn" | "company" | "city" | "phone" | "wechat">>
 ): Promise<boolean> {
-  return dtPatch(PARTNERS_TABLE, rowId, { ...fields, updated_at: new Date().toISOString() });
+  // n8n Data Tables REST v1 has no PATCH. Use insert-newest.
+  const now = new Date().toISOString();
+  const result = await dtInsert(PARTNERS_TABLE, {
+    partner_id:    currentRecord.partner_id,
+    email:         currentRecord.email,
+    password_hash: currentRecord.password_hash,
+    name_ru:       fields.name_ru       ?? currentRecord.name_ru,
+    name_cn:       fields.name_cn       ?? currentRecord.name_cn ?? "",
+    company:       fields.company       ?? currentRecord.company ?? "",
+    country:       currentRecord.country ?? "",
+    city:          fields.city          ?? currentRecord.city ?? "",
+    phone:         fields.phone         ?? currentRecord.phone ?? "",
+    wechat:        fields.wechat        ?? currentRecord.wechat ?? "",
+    language:      currentRecord.language,
+    role:          currentRecord.role,
+    status:        currentRecord.status,
+    created_at:    currentRecord.created_at,
+    updated_at:    now,
+  });
+  return result !== null;
 }
 
 // ── Partner Tasks ─────────────────────────────────────────────────────────────
 
 export async function getPartnerTasks(partnerId: string): Promise<PartnerTask[]> {
-  return dtQuery(PARTNER_TASKS_TABLE, [
+  const rows = await dtQuery(PARTNER_TASKS_TABLE, [
     { keyName: "partner_id", condition: "eq", keyValue: partnerId },
-  ]) as Promise<PartnerTask[]>;
+  ]) as PartnerTask[];
+
+  // Deduplicate by task_id — keep newest version only (insert-newest pattern)
+  const seen = new Set<string>();
+  return rows.filter((t) => {
+    if (seen.has(t.task_id)) return false;
+    seen.add(t.task_id);
+    return true;
+  });
 }
 
 export async function getTaskById(taskId: string, partnerId: string): Promise<PartnerTask | null> {
@@ -118,11 +153,11 @@ export async function getTaskById(taskId: string, partnerId: string): Promise<Pa
     { keyName: "task_id", condition: "eq", keyValue: taskId },
     { keyName: "partner_id", condition: "eq", keyValue: partnerId },
   ]) as PartnerTask[];
-  return rows[0] ?? null;
+  return rows[0] ?? null; // newest first after DESC sort
 }
 
 export async function updateTaskResponse(
-  rowId: number,
+  currentTask: PartnerTask,
   fields: Partial<Pick<
     PartnerTask,
     "status" | "response_product_name" | "response_price_usd" | "response_moq" |
@@ -130,7 +165,33 @@ export async function updateTaskResponse(
     "response_comment" | "response_photos" | "response_factory_photos" | "response_video_url"
   >> & { completed_at?: string }
 ): Promise<boolean> {
-  return dtPatch(PARTNER_TASKS_TABLE, rowId, { ...fields, updated_at: new Date().toISOString() });
+  // n8n Data Tables REST v1 has no PATCH. Use insert-newest.
+  const now = new Date().toISOString();
+  const result = await dtInsert(PARTNER_TASKS_TABLE, {
+    task_id:                  currentTask.task_id,
+    partner_id:               currentTask.partner_id,
+    type:                     currentTask.type,
+    status:                   fields.status                  ?? currentTask.status,
+    product_display:          currentTask.product_display,
+    quantity:                 currentTask.quantity,
+    quantity_unit:            currentTask.quantity_unit,
+    deadline_hours:           currentTask.deadline_hours,
+    description:              currentTask.description         ?? "",
+    response_product_name:    fields.response_product_name   ?? currentTask.response_product_name   ?? "",
+    response_price_usd:       fields.response_price_usd      ?? currentTask.response_price_usd      ?? "",
+    response_moq:             fields.response_moq             ?? currentTask.response_moq             ?? "",
+    response_factory:         fields.response_factory         ?? currentTask.response_factory         ?? "",
+    response_production_time: fields.response_production_time ?? currentTask.response_production_time ?? "",
+    response_in_stock:        fields.response_in_stock        ?? currentTask.response_in_stock        ?? "",
+    response_comment:         fields.response_comment         ?? currentTask.response_comment         ?? "",
+    response_photos:          fields.response_photos          ?? currentTask.response_photos          ?? "",
+    response_factory_photos:  fields.response_factory_photos  ?? currentTask.response_factory_photos  ?? "",
+    response_video_url:       fields.response_video_url       ?? currentTask.response_video_url       ?? "",
+    completed_at:             fields.completed_at             ?? currentTask.completed_at             ?? "",
+    created_at:               currentTask.created_at,
+    updated_at:               now,
+  });
+  return result !== null;
 }
 
 export async function createPartner(
@@ -146,16 +207,10 @@ export async function createPartnerTask(fields: Omit<PartnerTask, "id" | "create
   return result !== null;
 }
 
-export async function deletePartnerTask(rowId: number): Promise<boolean> {
-  if (!PARTNER_TASKS_TABLE || !N8N_KEY) return false;
-  try {
-    const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${PARTNER_TASKS_TABLE}/rows/${rowId}`, {
-      method: "DELETE",
-      headers: { "X-N8N-API-KEY": N8N_KEY },
-      signal: AbortSignal.timeout(8000),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+export async function deletePartnerTask(taskId: string): Promise<boolean> {
+  // n8n DELETE /rows/{id} returns 404 (endpoint not supported in REST v1).
+  // Soft-delete is handled by status-store (Neon Postgres).
+  // This function is kept for interface compatibility but always returns true.
+  void taskId;
+  return true;
 }

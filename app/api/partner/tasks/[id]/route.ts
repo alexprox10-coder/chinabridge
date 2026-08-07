@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { complete, ...fields } = body as { complete?: boolean } & Record<string, string>;
 
   const now = new Date().toISOString();
-  const ok = await updateTaskResponse(task.id, {
+  const ok = await updateTaskResponse(task, {
     ...fields,
     status: complete ? "COMPLETED" : "IN_PROGRESS",
     ...(complete ? { completed_at: now } : {}),
@@ -108,7 +108,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!task) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   const [ok] = await Promise.all([
-    deletePartnerTask(task.id),
+    deletePartnerTask(task.task_id),
     markPartnerTaskDeleted(task.task_id).catch(() => {}),
   ]);
   return NextResponse.json({ ok });

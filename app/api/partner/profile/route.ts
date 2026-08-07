@@ -35,6 +35,7 @@ export async function PATCH(req: NextRequest) {
     name_ru: string; name_cn: string; company: string; city: string; phone: string; wechat: string;
   }>;
 
-  const ok = await updatePartnerProfile(partner.id, body);
-  return NextResponse.json({ ok });
+  const ok = await updatePartnerProfile(partner, body);
+  if (!ok) return NextResponse.json({ error: "save_failed" }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }
