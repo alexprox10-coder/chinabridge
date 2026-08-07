@@ -1,12 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Prevent webpack from bundling react-pdf and fontkit.
+  // When bundled, webpack picks fontkit's BROWSER build (dist/browser-module.mjs)
+  // which does NOT export fontkit.open() → silent Helvetica fallback → garbled Cyrillic.
+  // With serverExternalPackages, Node.js resolves fontkit via the "node" export condition
+  // → dist/module.mjs → fontkit.open() works correctly.
+  serverExternalPackages: ['@react-pdf/renderer', '@react-pdf/font', 'fontkit'],
   experimental: {
-    // Include TTF fonts in the serverless bundle so @react-pdf/renderer can read them on Vercel
     outputFileTracingIncludes: {
-      '/api/proposals/create':       ['./public/fonts/**'],
-      '/api/proposals/[id]':         ['./public/fonts/**'],
-      '/api/proposals/download/[id]':['./public/fonts/**'],
+      '/api/proposals/create':        ['./public/fonts/**'],
+      '/api/proposals/[id]':          ['./public/fonts/**'],
+      '/api/proposals/download/[id]': ['./public/fonts/**'],
     },
   },
   images: {
