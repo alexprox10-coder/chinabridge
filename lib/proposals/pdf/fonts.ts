@@ -1,32 +1,41 @@
 import { Font } from '@react-pdf/renderer';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 let registered = false;
 
-async function loadFontAsDataUri(name: string): Promise<string> {
+async function ensureFont(name: string): Promise<string> {
+  // 1. Local public/fonts — works in dev and sometimes in Vercel with outputFileTracingIncludes
   const localPath = path.join(process.cwd(), 'public', 'fonts', name);
-  // Try local filesystem first (works locally and sometimes on Vercel)
-  if (fs.existsSync(localPath)) {
-    const buf = fs.readFileSync(localPath);
-    return `data:font/truetype;base64,${buf.toString('base64')}`;
-  }
-  // Fallback: fetch from public URL (always works on Vercel since public/ is static)
+  if (fs.existsSync(localPath)) return localPath;
+
+  // 2. Write to /tmp — writable on Vercel, persists across warm invocations
+  const tmpDir = path.join(os.tmpdir(), 'cb-fonts');
+  const tmpPath = path.join(tmpDir, name);
+
+  if (fs.existsSync(tmpPath)) return tmpPath;
+
+  // 3. Fetch from public URL and cache in /tmp
   const url = `https://chinabridge.pro/fonts/${name}`;
-  console.log(`[proposals] Fetching font from ${url}`);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Font fetch failed: ${res.status} ${url}`);
+  console.log(`[proposals] Fetching font ${name} from CDN...`);
+  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`Font fetch failed ${res.status}: ${url}`);
+
   const buf = Buffer.from(await res.arrayBuffer());
-  return `data:font/truetype;base64,${buf.toString('base64')}`;
+  fs.mkdirSync(tmpDir, { recursive: true });
+  fs.writeFileSync(tmpPath, buf);
+  console.log(`[proposals] Cached ${name} to ${tmpPath} (${buf.length} bytes)`);
+  return tmpPath;
 }
 
 export async function registerFonts() {
   if (registered) return;
   try {
     const [regular, bold, light] = await Promise.all([
-      loadFontAsDataUri('Roboto-Regular.ttf'),
-      loadFontAsDataUri('Roboto-Bold.ttf'),
-      loadFontAsDataUri('Roboto-Light.ttf'),
+      ensureFont('Roboto-Regular.ttf'),
+      ensureFont('Roboto-Bold.ttf'),
+      ensureFont('Roboto-Light.ttf'),
     ]);
     Font.register({
       family: 'Roboto',
@@ -40,7 +49,6 @@ export async function registerFonts() {
     registered = true;
     console.log('[proposals] Fonts registered OK');
   } catch (err) {
-    console.error('[proposals] Font registration failed:', err);
-    // Don't set registered=true so next request retries
+    console.error('[proposals] Font registration FAILED:', err);
   }
 }
