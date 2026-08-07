@@ -8,7 +8,6 @@ const NAV = [
   { href: "/client/calculator",   label: "Калькулятор",  icon: "🧮" },
   { href: "/client/orders",       label: "Мои заявки",   icon: "📦" },
   { href: "/client/payments",     label: "Оплаты",       icon: "💱" },
-  { href: "/client/messages",     label: "Сообщения",    icon: "💬" },
   { href: "/client/documents",    label: "Документы",    icon: "📄" },
   { href: "/client/calculations", label: "История",      icon: "📋" },
   { href: "/client/profile",      label: "Профиль",      icon: "👤" },
