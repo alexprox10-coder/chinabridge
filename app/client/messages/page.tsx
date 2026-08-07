@@ -11,6 +11,7 @@ function MessagesView() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sendError, setSendError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   async function load() {
@@ -36,14 +37,21 @@ function MessagesView() {
     e.preventDefault();
     if (!text.trim() || sending) return;
     setSending(true);
+    setSendError("");
     try {
-      await fetch("/api/client/messages", {
+      const res = await fetch("/api/client/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, order_id: orderId }),
       });
+      if (!res.ok) {
+        setSendError("Не удалось отправить сообщение. Попробуйте ещё раз.");
+        return;
+      }
       setText("");
       await load();
+    } catch {
+      setSendError("Ошибка сети. Проверьте соединение.");
     } finally {
       setSending(false);
     }
@@ -81,6 +89,11 @@ function MessagesView() {
         </div>
 
         {/* Input */}
+        {sendError && (
+          <div className="px-4 pb-2">
+            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{sendError}</p>
+          </div>
+        )}
         <form onSubmit={handleSend} className="border-t border-slate-100 p-4 flex gap-3">
           <input
             value={text}

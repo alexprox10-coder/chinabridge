@@ -33,5 +33,10 @@ export async function POST(req: NextRequest) {
     is_read: false,
   });
 
-  return NextResponse.json({ ok });
+  if (!ok) {
+    console.error(`[messages POST] sendMessage failed for client=${session.clientId}`);
+    return NextResponse.json({ error: "save_failed" }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

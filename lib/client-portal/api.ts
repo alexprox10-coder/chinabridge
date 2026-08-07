@@ -71,7 +71,10 @@ async function dtQuery(tableId: string, filters: Filter[] = [], order = "created
 }
 
 async function dtInsert(tableId: string, fields: Record<string, unknown>): Promise<unknown | null> {
-  if (!tableId || !N8N_KEY) return null;
+  if (!tableId || !N8N_KEY) {
+    console.error(`[dtInsert] Missing config: tableId=${!!tableId} key=${!!N8N_KEY}`);
+    return null;
+  }
   try {
     const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${tableId}/rows`, {
       method: "POST",
@@ -80,9 +83,14 @@ async function dtInsert(tableId: string, fields: Record<string, unknown>): Promi
       cache: "no-store",
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[dtInsert] table=${tableId} status=${res.status} body=${body}`);
+      return null;
+    }
     return res.json().catch(() => null);
-  } catch {
+  } catch (e) {
+    console.error(`[dtInsert] table=${tableId} error:`, e);
     return null;
   }
 }
