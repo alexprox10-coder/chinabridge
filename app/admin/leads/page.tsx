@@ -1,22 +1,62 @@
+"use client";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { getLeads } from "@/lib/crm/client";
-import { STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS, PRIORITY_EMOJI } from "@/lib/crm/types";
-import type { LeadStatus, LeadPriority } from "@/lib/crm/types";
 import { AdminNav } from "@/components/admin/AdminNav";
-
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS, PRIORITY_EMOJI } from "@/lib/crm/types";
+import type { CRMLead, LeadStatus, LeadPriority } from "@/lib/crm/types";
 
 const ALL_STATUSES = Object.keys(STATUS_LABELS) as LeadStatus[];
 
-export default async function LeadsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string; priority?: string }>;
-}) {
-  const sp = await searchParams;
-  let leads: Awaited<ReturnType<typeof getLeads>> = [];
-  try { leads = await getLeads({ status: sp.status, priority: sp.priority, tenantId: "tenant-chinabridge" }); } catch {}
+export default function LeadsPage() {
+  const [leads, setLeads] = useState<CRMLead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [priorityFilter, setPriorityFilter] = useState<string>("");
+
+  const loadLeads = useCallback(async () => {
+    const params = new URLSearchParams();
+    if (statusFilter)   params.set("status", statusFilter);
+    if (priorityFilter) params.set("priority", priorityFilter);
+    const res = await fetch(`/api/admin/leads?${params}`);
+    if (res.ok) setLeads(await res.json());
+    setLoading(false);
+  }, [statusFilter, priorityFilter]);
+
+  useEffect(() => { loadLeads(); }, [loadLeads]);
+
+  async function handleDelete(e: React.MouseEvent, lead: CRMLead) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (deleting) return;
+    if (!confirm(`Удалить лид "${lead.name || lead.product || lead.id}"?`)) return;
+    setDeleting(lead.id);
+    try {
+      const res = await fetch(`/api/admin/leads/${lead.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+      } else {
+        alert("Не удалось удалить лид");
+      }
+    } finally {
+      setDeleting(null);
+    }
+  }
+
+  const setFilter = (type: "status" | "priority", value: string) => {
+    if (type === "status")   { setStatusFilter(v => v === value ? "" : value); setPriorityFilter(""); }
+    if (type === "priority") { setPriorityFilter(v => v === value ? "" : value); setStatusFilter(""); }
+  };
+  const clearFilters = () => { setStatusFilter(""); setPriorityFilter(""); };
+
+  if (loading) return (
+    <div className="min-h-screen bg-slate-950">
+      <AdminNav />
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <p className="text-slate-500">Загрузка...</p>
+      </main>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -29,41 +69,41 @@ export default async function LeadsPage({
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <Link
-            href="/admin/leads"
+          <button
+            onClick={clearFilters}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
-              !sp.status && !sp.priority
+              !statusFilter && !priorityFilter
                 ? "bg-red-600 border-red-600 text-white"
                 : "border-slate-700 text-slate-400 hover:border-slate-500"
             }`}
           >
             Все
-          </Link>
-          {["HOT", "WARM", "COLD"].map((p) => (
-            <Link
+          </button>
+          {(["HOT", "WARM", "COLD"] as LeadPriority[]).map((p) => (
+            <button
               key={p}
-              href={`/admin/leads?priority=${p}`}
+              onClick={() => setFilter("priority", p)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
-                sp.priority === p
+                priorityFilter === p
                   ? "bg-red-600 border-red-600 text-white"
                   : "border-slate-700 text-slate-400 hover:border-slate-500"
               }`}
             >
-              {PRIORITY_EMOJI[p as LeadPriority]} {p}
-            </Link>
+              {PRIORITY_EMOJI[p]} {p}
+            </button>
           ))}
           {ALL_STATUSES.map((s) => (
-            <Link
+            <button
               key={s}
-              href={`/admin/leads?status=${s}`}
+              onClick={() => setFilter("status", s)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
-                sp.status === s
+                statusFilter === s
                   ? "bg-red-600 border-red-600 text-white"
                   : "border-slate-700 text-slate-400 hover:border-slate-500"
               }`}
             >
               {STATUS_LABELS[s]}
-            </Link>
+            </button>
           ))}
         </div>
 
@@ -79,12 +119,13 @@ export default async function LeadsPage({
                 <th className="px-4 py-3 font-medium">Статус</th>
                 <th className="px-4 py-3 font-medium">Менеджер</th>
                 <th className="px-4 py-3 font-medium">Дата</th>
+                <th className="px-4 py-3 font-medium w-10"></th>
               </tr>
             </thead>
             <tbody>
               {leads.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-slate-600">
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-600">
                     Заявок нет
                   </td>
                 </tr>
@@ -119,6 +160,16 @@ export default async function LeadsPage({
                     </td>
                     <td className="px-4 py-3 text-slate-400 text-xs">{lead.manager || "—"}</td>
                     <td className="px-4 py-3 text-slate-500 text-xs">{(lead.created_at ?? "").slice(0, 10)}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={(e) => handleDelete(e, lead)}
+                        disabled={deleting === lead.id}
+                        title="Удалить лид"
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-900/20 transition disabled:opacity-40"
+                      >
+                        {deleting === lead.id ? "⏳" : "🗑"}
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
