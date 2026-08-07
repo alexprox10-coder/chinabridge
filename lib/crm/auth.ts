@@ -49,4 +49,20 @@ export async function verifyTenantSessionToken(token: string, tenantId: string):
   }
 }
 
+export async function hashPin(pin: string, tenantId: string): Promise<string> {
+  const secret = process.env.TENANT_SESSION_SECRET ?? "chinabridge-tenant-secret-2026";
+  const key = await getKey(secret);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`pin:${tenantId}:${pin}`));
+  return Buffer.from(sig).toString("base64url");
+}
+
+export async function verifyPin(pin: string, storedHash: string, tenantId: string): Promise<boolean> {
+  try {
+    const expected = await hashPin(pin, tenantId);
+    return expected === storedHash;
+  } catch {
+    return false;
+  }
+}
+
 export { SESSION_COOKIE, TENANT_SESSION_COOKIE };

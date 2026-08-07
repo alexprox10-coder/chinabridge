@@ -41,6 +41,7 @@ export const tenants = pgTable("tenants", {
   mrr:              integer("mrr").notNull().default(0),
   usersCount:       integer("users_count").notNull().default(1),
   lastActiveAt:     text("last_active_at"),
+  pinHash:          text("pin_hash"),
 }, (t) => [index("tenants_slug_idx").on(t.slug)]);
 
 // ─── Tenant Settings ──────────────────────────────────────────────────────────

@@ -197,6 +197,7 @@ export async function ensureSchema() {
     )
   `;
 
+  await sql`ALTER TABLE "tenants" ADD COLUMN IF NOT EXISTS "pin_hash" text`;
   await sql`CREATE INDEX IF NOT EXISTS "tenants_slug_idx" ON "tenants" ("slug")`;
   await sql`CREATE INDEX IF NOT EXISTS "crm_leads_tenant_idx" ON "crm_leads" ("tenant_id")`;
   await sql`CREATE INDEX IF NOT EXISTS "crm_leads_status_idx" ON "crm_leads" ("status")`;

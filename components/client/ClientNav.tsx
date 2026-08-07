@@ -63,6 +63,18 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
           })}
         </nav>
 
+        {/* AI для Бизнеса CTA */}
+        <div className="px-3 pb-2">
+          <Link
+            href="/onboarding"
+            className="w-full flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-md shadow-green-200 group"
+          >
+            <span className="text-base">🤖</span>
+            <span className="flex-1">AI для Бизнеса</span>
+            <span className="text-xs opacity-75 group-hover:translate-x-0.5 transition-transform">→</span>
+          </Link>
+        </div>
+
         {/* Support */}
         <div className="px-3 pb-2">
           <a
@@ -115,6 +127,13 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
             </Link>
           );
         })}
+        <Link
+          href="/onboarding"
+          className="flex-1 flex flex-col items-center justify-center py-2 text-xs text-green-600 font-semibold"
+        >
+          <span className="text-lg">🤖</span>
+          <span className="mt-0.5">AI Бизнес</span>
+        </Link>
         <a
           href="https://t.me/Chinabridge_HELP_24_bot"
           target="_blank"

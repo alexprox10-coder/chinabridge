@@ -2,6 +2,23 @@
 import { useState } from "react";
 import Link from "next/link";
 
+function PinDots({ value }: { value: string }) {
+  return (
+    <div className="flex gap-2 justify-center my-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className={`w-9 h-11 rounded-lg border-2 flex items-center justify-center text-lg font-bold transition-all ${
+            i < value.length ? "border-emerald-500 bg-emerald-900/30 text-emerald-400" : "border-slate-700 bg-slate-800 text-slate-600"
+          }`}
+        >
+          {i < value.length ? "●" : "·"}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const COUNTRIES = [
   { code: "RU", label: "🇷🇺 Россия" },
   { code: "KZ", label: "🇰🇿 Казахстан" },
@@ -18,6 +35,8 @@ export default function SignupForm() {
   const [step,    setStep]    = useState(1);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
+  const [pin,     setPin]     = useState("");
+  const [pinConf, setPinConf] = useState("");
   const [form, setForm] = useState({
     companyName: "",
     email:       "",
@@ -32,6 +51,7 @@ export default function SignupForm() {
 
   const canStep1 = form.companyName.length >= 2 && form.email.includes("@") && form.password.length >= 6;
   const canStep2 = !!form.country;
+  const canStep3 = pin.length >= 4 && pin === pinConf;
 
   async function handleSubmit() {
     setLoading(true);
@@ -40,7 +60,7 @@ export default function SignupForm() {
       const res  = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, pin }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Ошибка регистрации");
@@ -66,7 +86,7 @@ export default function SignupForm() {
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 mb-6">
-        {[1, 2, 3].map(s => (
+        {[1, 2, 3, 4].map(s => (
           <div key={s} className={`flex-1 h-1 rounded-full transition-all ${s <= step ? "bg-emerald-500" : "bg-slate-800"}`} />
         ))}
       </div>
@@ -139,10 +159,58 @@ export default function SignupForm() {
           </>
         )}
 
-        {/* Step 3: Confirm + Submit */}
+        {/* Step 3: PIN creation */}
         {step === 3 && (
           <>
-            <div className="text-white font-semibold mb-2">3. Подтверждение</div>
+            <div className="text-white font-semibold mb-1">3. Создайте PIN-код</div>
+            <p className="text-slate-400 text-xs mb-4">Этот код нужен для входа в ваш кабинет. Запомните его — он не восстанавливается.</p>
+            <div>
+              <label className="text-slate-400 text-xs block mb-1">PIN-код (4–6 цифр) *</label>
+              <div className="relative cursor-pointer" onClick={() => document.getElementById("pin-input")?.focus()}>
+                <PinDots value={pin} />
+              </div>
+              <input
+                id="pin-input"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={pin}
+                onChange={e => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-emerald-500 mt-2"
+                placeholder="Введите 4-6 цифр"
+              />
+            </div>
+            <div className="mt-3">
+              <label className="text-slate-400 text-xs block mb-1">Повторите PIN *</label>
+              <input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={pinConf}
+                onChange={e => setPinConf(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className={`w-full bg-slate-800 border rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none transition ${
+                  pinConf && pin !== pinConf ? "border-red-500" : "border-slate-600 focus:border-emerald-500"
+                }`}
+                placeholder="Повторите PIN"
+              />
+              {pinConf && pin !== pinConf && <p className="text-red-400 text-xs mt-1">PIN не совпадает</p>}
+            </div>
+            <div className="flex gap-2 mt-1">
+              <button onClick={() => setStep(2)} className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl text-sm">← Назад</button>
+              <button onClick={() => canStep3 && setStep(4)} disabled={!canStep3}
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-xl text-sm font-semibold">
+                Далее →
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Step 4: Confirm + Submit */}
+        {step === 4 && (
+          <>
+            <div className="text-white font-semibold mb-2">4. Подтверждение</div>
             <div className="bg-slate-800/60 rounded-xl p-4 space-y-2 text-sm">
               {[
                 ["🏢 Компания", form.companyName],
@@ -161,7 +229,7 @@ export default function SignupForm() {
             </div>
             {error && <div className="bg-red-900/30 border border-red-700 rounded-xl p-3 text-red-300 text-xs">{error}</div>}
             <div className="flex gap-2">
-              <button onClick={() => setStep(2)} className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl text-sm">← Назад</button>
+              <button onClick={() => setStep(3)} className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl text-sm">← Назад</button>
               <button onClick={handleSubmit} disabled={loading}
                 className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-900 text-white rounded-xl text-sm font-semibold">
                 {loading ? <span className="animate-spin inline-block">⟳</span> : "🚀 Создать компанию"}

@@ -136,6 +136,7 @@ export async function getTenantByDomain(domain: string): Promise<Tenant | null> 
 }
 
 export async function createTenant(data: {
+  id?: string;
   companyName: string;
   slug: string;
   country: TenantCountry;
@@ -147,6 +148,7 @@ export async function createTenant(data: {
   description: string;
   timezone: string;
   brandColor: string;
+  pinHash?: string;
 }): Promise<Tenant> {
   const db = getDb();
   const now = new Date().toISOString();
@@ -155,7 +157,7 @@ export async function createTenant(data: {
     : null;
 
   const tenant: typeof tenantsTable.$inferInsert = {
-    id: `tenant-${data.slug}-${Date.now()}`,
+    id: data.id ?? `tenant-${data.slug}-${Date.now()}`,
     slug: data.slug,
     companyName: data.companyName,
     domain: null,
@@ -183,6 +185,7 @@ export async function createTenant(data: {
     mrr: 0,
     usersCount: 1,
     lastActiveAt: now,
+    pinHash: data.pinHash ?? null,
   };
 
   const [inserted] = await db.insert(tenantsTable).values(tenant).returning();

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createTenant } from "@/lib/multitenant/store";
 import { ensureSchema } from "@/lib/db/ensure-schema";
-import { createTenantSessionToken } from "@/lib/crm/auth";
+import { createTenantSessionToken, hashPin } from "@/lib/crm/auth";
 import type { TenantCountry } from "@/lib/multitenant/types";
 
 export const runtime     = "nodejs";
@@ -12,13 +12,16 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); }
   catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
 
-  const { companyName, email, password, country, telegram, industry } = body;
+  const { companyName, email, password, country, telegram, industry, pin } = body;
 
   if (!companyName || !email || !password) {
     return NextResponse.json({ ok: false, error: "Необходимы: компания, email, пароль" }, { status: 400 });
   }
   if (String(password).length < 6) {
     return NextResponse.json({ ok: false, error: "Пароль минимум 6 символов" }, { status: 400 });
+  }
+  if (pin !== undefined && (String(pin).length < 4 || !/^\d+$/.test(String(pin)))) {
+    return NextResponse.json({ ok: false, error: "PIN: минимум 4 цифры" }, { status: 400 });
   }
 
   // Generate unique slug from company name
@@ -32,7 +35,10 @@ export async function POST(req: NextRequest) {
 
   try {
     await ensureSchema();
+    const tenantId = `tenant-${slug}-${Date.now()}`;
+    const pinHash = pin ? await hashPin(String(pin), tenantId) : undefined;
     const tenant = await createTenant({
+      id:           tenantId,
       companyName:  String(companyName),
       slug,
       country:      (country as TenantCountry) ?? "RU",
@@ -44,6 +50,7 @@ export async function POST(req: NextRequest) {
       description:  `${companyName} — логистика и ВЭД`,
       timezone:     "Europe/Moscow",
       brandColor:   "#2563eb",
+      pinHash,
     });
 
     // Set auth cookies
