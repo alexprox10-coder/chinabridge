@@ -16,7 +16,7 @@ async function fetchCrmLeads(): Promise<Record<string, unknown>[]> {
     });
     if (!res.ok) return [];
     const data = await res.json().catch(() => []);
-    return Array.isArray(data) ? data : (data.rows ?? []);
+    return Array.isArray(data) ? data : (data.rows ?? data.data ?? []);
   } catch {
     return [];
   }

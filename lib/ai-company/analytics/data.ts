@@ -14,7 +14,7 @@ async function fetchTable(tableId: string): Promise<Record<string, unknown>[]> {
     });
     if (!res.ok) return [];
     const json = await res.json().catch(() => ({}));
-    return Array.isArray(json) ? json : (json.data ?? []);
+    return Array.isArray(json) ? json : (json.rows ?? json.data ?? []);
   } catch {
     return [];
   }
@@ -31,7 +31,7 @@ async function fetchCrm(): Promise<Record<string, unknown>[]> {
     });
     if (!res.ok) return [];
     const json = await res.json().catch(() => ({}));
-    return Array.isArray(json) ? json : (json.data ?? json.leads ?? []);
+    return Array.isArray(json) ? json : (json.rows ?? json.data ?? json.leads ?? []);
   } catch {
     return [];
   }

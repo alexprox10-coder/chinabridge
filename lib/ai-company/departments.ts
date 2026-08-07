@@ -14,7 +14,7 @@ async function fetchTableRows(tableId: string): Promise<Record<string, unknown>[
     });
     if (!res.ok) return [];
     const json = await res.json().catch(() => ({}));
-    return Array.isArray(json) ? json : (json.data ?? []);
+    return Array.isArray(json) ? json : (json.rows ?? json.data ?? []);
   } catch {
     return [];
   }
