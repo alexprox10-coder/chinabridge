@@ -35,27 +35,34 @@ export async function GET(req: NextRequest) {
     report.get_error = String(e);
   }
 
-  // 2. POST a test row
-  const testFields = {
-    client_id:   "__debug_test__",
-    author_role: "CLIENT",
-    author_name: "Debug Test",
-    text:        "Debug message — delete me",
-    is_read:     false,
-    created_at:  new Date().toISOString(),
-  };
+  // 2. PATCH row 1 — test update format
   try {
-    const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`, {
-      method: "POST",
+    const patchRes = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows/1`, {
+      method: "PATCH",
       headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ data: [testFields] }),
+      body: JSON.stringify({ data: { is_read: true } }),
       signal: AbortSignal.timeout(10000),
     });
-    const text = await res.text();
-    report.post_status = res.status;
-    try { report.post_body = JSON.parse(text); } catch { report.post_body_raw = text.slice(0, 500); }
+    const patchText = await patchRes.text();
+    report.patch_data_status = patchRes.status;
+    try { report.patch_data_body = JSON.parse(patchText); } catch { report.patch_data_raw = patchText.slice(0, 500); }
   } catch (e) {
-    report.post_error = String(e);
+    report.patch_data_error = String(e);
+  }
+
+  // 3. PATCH row 1 — alternative format (flat fields)
+  try {
+    const patchRes2 = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows/1`, {
+      method: "PATCH",
+      headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ is_read: false }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const patchText2 = await patchRes2.text();
+    report.patch_flat_status = patchRes2.status;
+    try { report.patch_flat_body = JSON.parse(patchText2); } catch { report.patch_flat_raw = patchText2.slice(0, 500); }
+  } catch (e) {
+    report.patch_flat_error = String(e);
   }
 
   return NextResponse.json(report, { status: 200 });
