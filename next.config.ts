@@ -4,7 +4,9 @@ const nextConfig: NextConfig = {
   experimental: {
     // Include TTF fonts in the serverless bundle so @react-pdf/renderer can read them on Vercel
     outputFileTracingIncludes: {
-      '/api/proposals/(.*)': ['./public/fonts/**'],
+      '/api/proposals/create':       ['./public/fonts/**'],
+      '/api/proposals/[id]':         ['./public/fonts/**'],
+      '/api/proposals/download/[id]':['./public/fonts/**'],
     },
   },
   images: {
