@@ -15,6 +15,7 @@ const GROUPS = [
   {
     label: "Операции",
     items: [
+      { href: "/admin/messages",   label: "Сообщения",  icon: "💬" },
       { href: "/admin/finance",    label: "Финансы",    icon: "💰" },
       { href: "/admin/rates",      label: "Тарифы",     icon: "💱" },
       { href: "/admin/routes",     label: "Маршруты",   icon: "🗺" },

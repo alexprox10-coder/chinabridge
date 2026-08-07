@@ -202,6 +202,14 @@ export async function sendMessage(
   return result !== null;
 }
 
+export async function getAllMessages(clientId?: string): Promise<ClientMessage[]> {
+  const filters: Filter[] = clientId
+    ? [{ keyName: "client_id", condition: "eq", keyValue: clientId }]
+    : [];
+  const rows = await dtQuery(MESSAGES_TABLE, filters, "created_at") as ClientMessage[];
+  return rows.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+}
+
 export async function markManagerMessagesRead(clientId: string): Promise<void> {
   const rows = await dtQuery(MESSAGES_TABLE, [
     { keyName: "client_id", condition: "eq", keyValue: clientId },
