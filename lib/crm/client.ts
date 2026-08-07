@@ -112,6 +112,7 @@ async function resolveTenantId(override?: string): Promise<string> {
   try {
     const { cookies } = await import("next/headers");
     const store = await cookies();
+    if (store.get("cb_admin")?.value) return OWNER_TENANT_ID;
     return store.get("cb_tenant_id")?.value || OWNER_TENANT_ID;
   } catch {
     return OWNER_TENANT_ID;
