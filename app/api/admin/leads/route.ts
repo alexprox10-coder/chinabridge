@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { neon } from "@neondatabase/serverless";
 import { getLeads, getDashboardStats } from "@/lib/crm/client";
-import { isAuthorized } from "@/lib/api-auth";
+import { isAuthorized, getTenantId } from "@/lib/api-auth";
 import { markLeadDeleted } from "@/lib/import-leads/status-store";
 
 const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
@@ -20,12 +20,14 @@ export async function GET(req: NextRequest) {
   const priority = searchParams.get("priority") ?? undefined;
   const stats = searchParams.get("stats") === "1";
 
+  const tenantId = getTenantId(req);
+
   if (stats) {
-    const data = await getDashboardStats("tenant-chinabridge");
+    const data = await getDashboardStats(tenantId);
     return NextResponse.json(data);
   }
 
-  const leads = await getLeads({ status, priority, tenantId: "tenant-chinabridge" });
+  const leads = await getLeads({ status, priority, tenantId });
   return NextResponse.json(leads);
 }
 

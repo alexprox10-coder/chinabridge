@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { getLead } from "@/lib/crm/client";
 import { AdminNav } from "@/components/admin/AdminNav";
@@ -9,8 +10,10 @@ export const revalidate = 0;
 
 export default async function LeadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const cookieStore = await cookies();
+  const tenantId = cookieStore.get("cb_tenant_id")?.value ?? "tenant-chinabridge";
   let lead = null;
-  try { lead = await getLead(Number(id), "tenant-chinabridge"); } catch (e) {
+  try { lead = await getLead(Number(id), tenantId); } catch (e) {
     console.error("[LeadDetail] getLead failed:", e);
   }
   if (!lead) notFound();
