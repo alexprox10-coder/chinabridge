@@ -79,7 +79,7 @@ async function dtInsert(tableId: string, fields: Record<string, unknown>): Promi
     const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${tableId}/rows`, {
       method: "POST",
       headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ data: fields }),
+      body: JSON.stringify({ data: [fields] }),
       cache: "no-store",
       signal: AbortSignal.timeout(10000),
     });
