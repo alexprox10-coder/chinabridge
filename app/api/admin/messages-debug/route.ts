@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     const res = await fetch(`${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`, {
       method: "POST",
       headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ fields: testFields }),
+      body: JSON.stringify({ data: testFields }),
       signal: AbortSignal.timeout(10000),
     });
     const text = await res.text();
