@@ -44,6 +44,7 @@ export const styles = StyleSheet.create({
   },
   // Cover page
   coverPage: {
+    fontFamily: 'Roboto',
     backgroundColor: DARK,
   },
   coverHeader: {

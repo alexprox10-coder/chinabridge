@@ -261,7 +261,7 @@ function PageHeader({ ctx }: { ctx: ProposalContext }) {
 
 function ContactsPage({ ctx }: { ctx: ProposalContext }) {
   return (
-    <Page size="A4" style={{ backgroundColor: DARK, paddingBottom: 40 }}>
+    <Page size="A4" style={{ fontFamily: 'Roboto', backgroundColor: DARK, paddingBottom: 40 }}>
       <View style={styles.contactsHeader}>
         <Text style={styles.contactsTitle}>Свяжитесь с нами</Text>
         <Text style={styles.contactsSub}>
