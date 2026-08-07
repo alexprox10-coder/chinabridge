@@ -11,7 +11,10 @@ export const revalidate = 0;
 export default async function LeadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const cookieStore = await cookies();
-  const tenantId = cookieStore.get("cb_tenant_id")?.value ?? "tenant-chinabridge";
+  const isAdmin = !!cookieStore.get("cb_admin")?.value;
+  const tenantId = isAdmin
+    ? "tenant-chinabridge"
+    : (cookieStore.get("cb_tenant_id")?.value ?? "tenant-chinabridge");
   let lead = null;
   try { lead = await getLead(Number(id), tenantId); } catch (e) {
     console.error("[LeadDetail] getLead failed:", e);

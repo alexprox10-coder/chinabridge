@@ -26,7 +26,10 @@ export function isAdminOnly(req: NextRequest): boolean {
 
 /**
  * Returns the tenant id from cookie, falling back to owner tenant.
+ * Platform owner (cb_admin) always resolves to "tenant-chinabridge"
+ * regardless of any leftover cb_tenant_id cookie from testing.
  */
 export function getTenantId(req: NextRequest): string {
+  if (req.cookies.get("cb_admin")?.value) return "tenant-chinabridge";
   return req.cookies.get("cb_tenant_id")?.value ?? "tenant-chinabridge";
 }

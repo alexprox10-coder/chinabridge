@@ -14,7 +14,9 @@ export async function POST(req: NextRequest) {
 
   // Try numeric row ID first, then fall back to string lead_id
   const numId = Number(leadId);
-  const tenantId = req.cookies.get("cb_tenant_id")?.value ?? "tenant-chinabridge";
+  const tenantId = req.cookies.get("cb_admin")?.value
+    ? "tenant-chinabridge"
+    : (req.cookies.get("cb_tenant_id")?.value ?? "tenant-chinabridge");
   const lead = Number.isNaN(numId)
     ? await getLeadByLeadId(String(leadId), tenantId)
     : await getLead(numId, tenantId) ?? await getLeadByLeadId(String(leadId), tenantId);
