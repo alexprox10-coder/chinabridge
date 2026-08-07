@@ -51,6 +51,7 @@ export async function PATCH(req: NextRequest) {
     fields.password_hash = await clientHashPassword(new_password.trim());
   }
 
-  const ok = await updateClientProfile(client.id, fields as Parameters<typeof updateClientProfile>[1]);
-  return NextResponse.json({ ok });
+  const ok = await updateClientProfile(client, fields as Parameters<typeof updateClientProfile>[1]);
+  if (!ok) return NextResponse.json({ error: "save_failed" }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }

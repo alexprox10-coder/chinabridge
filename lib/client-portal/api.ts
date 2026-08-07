@@ -114,24 +114,35 @@ async function dtPatch(tableId: string, rowId: number, fields: Record<string, un
 // ── Clients ─────────────────────────────────────────────────────────────────
 
 export async function findClientByEmail(email: string): Promise<ClientAccount | null> {
+  // Sort by updated_at so the most-recent version wins (update-by-insert pattern)
   const rows = await dtQuery(CLIENTS_TABLE, [
     { keyName: "email", condition: "eq", keyValue: email.toLowerCase().trim() },
-  ]) as ClientAccount[];
+  ], "updated_at") as ClientAccount[];
   return rows[0] ?? null;
 }
 
 export async function getClientById(clientId: string): Promise<ClientAccount | null> {
   const rows = await dtQuery(CLIENTS_TABLE, [
     { keyName: "client_id", condition: "eq", keyValue: clientId },
-  ]) as ClientAccount[];
+  ], "updated_at") as ClientAccount[];
   return rows[0] ?? null;
 }
 
 export async function updateClientProfile(
-  rowId: number,
+  currentRecord: ClientAccount,
   fields: Partial<Pick<ClientAccount, "name" | "company" | "phone" | "password_hash">>
 ): Promise<boolean> {
-  return dtPatch(CLIENTS_TABLE, rowId, { ...fields, updated_at: new Date().toISOString() });
+  // n8n Data Tables REST API v1 does not support row-level PATCH.
+  // Use insert-newest: write a full record with updated fields.
+  // findClientByEmail / getClientById sort by updated_at DESC → newest row wins.
+  const now = new Date().toISOString();
+  const { id: _id, ...rest } = currentRecord; void _id;
+  const result = await dtInsert(CLIENTS_TABLE, {
+    ...rest,
+    ...fields,
+    updated_at: now,
+  });
+  return result !== null;
 }
 
 export async function createClient(
