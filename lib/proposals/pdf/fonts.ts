@@ -4,35 +4,31 @@ import fs from 'fs';
 
 let registered = false;
 
-// Google Fonts CDN — Roboto with full Cyrillic subset (TTF, works with react-pdf)
-const CDN: Record<string, string> = {
-  regular: 'https://fonts.gstatic.com/s/roboto/v47/KFOMCnqEu92Fr1ME5WNKORIhAA.ttf',
-  bold:    'https://fonts.gstatic.com/s/roboto/v47/KFOMCnqEu92Fr1ME5WNKORIhAA.ttf',
-  light:   'https://fonts.gstatic.com/s/roboto/v47/KFOMCnqEu92Fr1ME5WNKORIhAA.ttf',
-};
-
 export function registerFonts() {
   if (registered) return;
   registered = true;
 
+  // Primary: filesystem path (works locally + Vercel if outputFileTracingIncludes picks it up)
+  // Fallback: serve from public URL (always works on Vercel since public/ is static)
   const base = path.join(process.cwd(), 'public', 'fonts');
   const localOk = fs.existsSync(path.join(base, 'Roboto-Regular.ttf'));
 
-  const regular = localOk ? path.join(base, 'Roboto-Regular.ttf') : CDN.regular;
-  const bold    = localOk ? path.join(base, 'Roboto-Bold.ttf')    : CDN.bold;
-  const light   = localOk ? path.join(base, 'Roboto-Light.ttf')   : CDN.light;
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://chinabridge.pro';
+
+  const src = (name: string) =>
+    localOk ? path.join(base, name) : `${origin}/fonts/${name}`;
 
   if (!localOk) {
-    console.warn('[proposals] Local TTF fonts not found, falling back to Google Fonts CDN');
+    console.warn(`[proposals] Local fonts not found, loading from ${origin}/fonts/`);
   }
 
   try {
     Font.register({
       family: 'Roboto',
       fonts: [
-        { src: regular, fontWeight: 'normal' },
-        { src: bold,    fontWeight: 'bold'   },
-        { src: light,   fontWeight: 300      },
+        { src: src('Roboto-Regular.ttf'), fontWeight: 'normal' },
+        { src: src('Roboto-Bold.ttf'),    fontWeight: 'bold'   },
+        { src: src('Roboto-Light.ttf'),   fontWeight: 300      },
       ],
     });
     Font.registerHyphenationCallback((w) => [w]);
