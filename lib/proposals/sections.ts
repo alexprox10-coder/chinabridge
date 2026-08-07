@@ -25,8 +25,8 @@ export const COOPERATION_STEPS = [
 export const CONTACTS = {
   phone: '+7 (XXX) XXX-XX-XX',
   telegram: '@ChinaBridgeManager',
-  email: 'info@chinabridge.ru',
-  website: 'chinabridge.ru',
+  email: 'info@chinabridge.pro',
+  website: 'chinabridge.pro',
 };
 
 export const FIELD_LABELS: Record<string, string> = {
