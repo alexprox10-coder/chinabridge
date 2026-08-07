@@ -12,11 +12,11 @@ export async function POST(req: NextRequest) {
 
   if (!leadId) return NextResponse.json({ ok: false, error: 'leadId required' }, { status: 400 });
 
-  // Try numeric row ID first, then fall back to string lead_id UUID
+  // Try numeric row ID first, then fall back to string lead_id
   const numId = Number(leadId);
   const lead = Number.isNaN(numId)
-    ? await getLeadByLeadId(String(leadId))
-    : await getLead(numId) ?? await getLeadByLeadId(String(leadId));
+    ? await getLeadByLeadId(String(leadId), 'tenant-chinabridge')
+    : await getLead(numId, 'tenant-chinabridge') ?? await getLeadByLeadId(String(leadId), 'tenant-chinabridge');
 
   if (!lead) return NextResponse.json({ ok: false, error: 'lead_not_found' }, { status: 404 });
 

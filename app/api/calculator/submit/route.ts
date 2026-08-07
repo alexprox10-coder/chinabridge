@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateCostBreakdown } from '@/lib/cost-engine';
+import { createLead } from '@/lib/crm/client';
 
 export const runtime = 'nodejs';
 
@@ -83,12 +84,49 @@ export async function POST(req: NextRequest) {
 
   const n8nData = Array.isArray(n8n) ? n8n[0] ?? {} : (n8n ?? {});
 
+  // Save to crm_leads so the proposal API can find the lead by ID
+  const crmLeadId = `calc-${id}`;
+  await createLead({
+    lead_id:             crmLeadId,
+    created_at:          new Date().toISOString(),
+    updated_at:          new Date().toISOString(),
+    name:                body.name ?? '',
+    phone:               body.phone ?? '',
+    telegram:            body.telegram ?? '',
+    email:               body.email ?? '',
+    company:             '',
+    product:             body.product_name ?? '',
+    product_link:        body.product_link ?? '',
+    category:            body.category ?? '',
+    quantity:            String(body.quantity ?? ''),
+    weight:              String(body.weight_kg ?? ''),
+    volume:              String(body.volume_m3 ?? ''),
+    country_destination: body.country_to ?? 'Russia',
+    city_destination:    body.city_to ?? '',
+    delivery_type:       '',
+    service_type:        body.service_type ?? '',
+    status:              'NEW',
+    priority:            (n8nData.priority ?? 'WARM') as 'HOT' | 'WARM' | 'COLD',
+    estimated_value:     hasRate ? cost!.sale_price : 0,
+    manager:             '',
+    comment:             n8nData.reason ?? '',
+    source:              'delivery_calculator',
+    utm_source:          'calculator',
+    utm_campaign:        '',
+    delivery_cost:       hasRate ? cost!.sale_price : undefined,
+    carrier_cost:        hasRate ? cost!.carrier_cost : undefined,
+    markup_percent:      hasRate ? cost!.markup_percent : undefined,
+    profit:              hasRate ? cost!.profit : undefined,
+    margin_percent:      hasRate ? cost!.margin_percent : undefined,
+    pricing_rule:        hasRate ? cost!.selected_rule_name : undefined,
+  }, 'tenant-chinabridge').catch((e) => console.error('[calculator] createLead failed:', e));
+
   return NextResponse.json({
     ok: true,
     cargo_type: n8nData.cargo_type ?? 'consolidation',
     priority: n8nData.priority ?? 'WARM',
     reason: n8nData.reason ?? '',
-    lead_id: n8nData.lead_id ?? id,
+    lead_id: crmLeadId,
     ...(hasRate && {
       delivery_cost: cost!.sale_price,
       delivery_days_min: cost!.delivery_days_min,
