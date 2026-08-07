@@ -7,13 +7,6 @@ const nextConfig: NextConfig = {
   // With serverExternalPackages, Node.js resolves fontkit via the "node" export condition
   // → dist/module.mjs → fontkit.open() works correctly.
   serverExternalPackages: ['@react-pdf/renderer', '@react-pdf/font', 'fontkit'],
-  experimental: {
-    outputFileTracingIncludes: {
-      '/api/proposals/create':        ['./public/fonts/**'],
-      '/api/proposals/[id]':          ['./public/fonts/**'],
-      '/api/proposals/download/[id]': ['./public/fonts/**'],
-    },
-  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [],
