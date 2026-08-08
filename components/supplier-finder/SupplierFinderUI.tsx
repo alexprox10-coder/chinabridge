@@ -145,6 +145,23 @@ export function SupplierFinderUI() {
             </button>
           ))}
         </div>
+
+        {/* Limit + CTA */}
+        <div className="mt-4 pt-4 border-t border-[#243a5e] flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[#8899aa] text-xs">
+            🆓 <span className="text-white font-medium">5 запросов в день</span> бесплатно ·{" "}
+            <Link href="/signup" className="text-[#00A86B] hover:underline">
+              Зарегистрируйтесь
+            </Link>{" "}
+            для неограниченного доступа
+          </p>
+          <a
+            href="/#services"
+            className="text-xs px-3 py-1.5 bg-[#00A86B]/10 border border-[#00A86B]/30 text-[#00A86B] rounded-lg hover:bg-[#00A86B]/20 transition-all whitespace-nowrap"
+          >
+            Заказать проверку фабрики →
+          </a>
+        </div>
       </div>
 
       {/* Loading */}

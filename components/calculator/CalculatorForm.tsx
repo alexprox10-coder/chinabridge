@@ -656,9 +656,21 @@ export function CalculatorForm() {
 
               {ecoOpen && (
                 <div className="px-4 pb-4 space-y-3 border-t border-[#243a5e]">
-                  <p className="text-[#8899aa] text-[11px] pt-3">
-                    Заполните для AI-анализа рентабельности. Бесплатно: 2 расчёта в день.
-                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3">
+                    <p className="text-[#8899aa] text-[11px]">
+                      🆓 <span className="text-white font-medium">2 AI-расчёта в день</span> бесплатно ·{" "}
+                      <a href="/signup" className="text-[#00A86B] hover:underline">
+                        Зарегистрируйтесь
+                      </a>{" "}
+                      для неограниченного доступа
+                    </p>
+                    <a
+                      href="/#services"
+                      className="text-[11px] px-2.5 py-1 bg-[#00A86B]/10 border border-[#00A86B]/30 text-[#00A86B] rounded-lg hover:bg-[#00A86B]/20 transition-all whitespace-nowrap"
+                    >
+                      Заказать расчёт у менеджера →
+                    </a>
+                  </div>
 
                   <div>
                     <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
