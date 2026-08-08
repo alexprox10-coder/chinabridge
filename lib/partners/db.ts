@@ -2,8 +2,13 @@ import { neon } from "@neondatabase/serverless";
 
 let ready = false;
 
-async function bootstrap(sql: ReturnType<typeof neon>) {
+function getSql() {
+  return neon(process.env.DATABASE_URL!);
+}
+
+async function bootstrap() {
   if (ready) return;
+  const sql = getSql();
   await sql`
     CREATE TABLE IF NOT EXISTS affiliate_links (
       id         text PRIMARY KEY,
@@ -46,8 +51,8 @@ function nowIso(): string {
 }
 
 export async function getOrCreateLink(tenantId: string): Promise<{ code: string }> {
-  const sql = neon(process.env.DATABASE_URL!);
-  await bootstrap(sql);
+  await bootstrap();
+  const sql = getSql();
 
   const existing = await sql`
     SELECT code FROM affiliate_links WHERE tenant_id = ${tenantId} LIMIT 1
@@ -70,8 +75,8 @@ export async function getOrCreateLink(tenantId: string): Promise<{ code: string 
 }
 
 export async function recordClick(code: string, ip: string): Promise<void> {
-  const sql = neon(process.env.DATABASE_URL!);
-  await bootstrap(sql);
+  await bootstrap();
+  const sql = getSql();
 
   const link = await sql`SELECT id FROM affiliate_links WHERE code = ${code} LIMIT 1`;
   if (link.length === 0) return;
@@ -93,8 +98,8 @@ export interface PartnerStats {
 }
 
 export async function getStats(tenantId: string): Promise<PartnerStats | null> {
-  const sql = neon(process.env.DATABASE_URL!);
-  await bootstrap(sql);
+  await bootstrap();
+  const sql = getSql();
 
   const link = await sql`SELECT id, code FROM affiliate_links WHERE tenant_id = ${tenantId} LIMIT 1`;
   if (link.length === 0) return null;
