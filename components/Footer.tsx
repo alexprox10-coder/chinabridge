@@ -83,12 +83,11 @@ export default function Footer() {
                 <Send className="w-4 h-4" />
               </a>
               <a
-                href="https://wa.me/79000000000"
+                href="https://t.me/chinabridgeline"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => analytics.whatsappClick()}
-                className="p-2.5 rounded-xl border border-border hover:border-accent/50 hover:bg-accent/10 transition-colors text-[#8899aa] hover:text-accent"
-                aria-label="WhatsApp"
+                className="p-2.5 rounded-xl border border-border hover:border-[#229ED9]/50 hover:bg-[#229ED9]/10 transition-colors text-[#8899aa] hover:text-[#229ED9]"
+                aria-label="Telegram канал"
               >
                 <MessageCircle className="w-4 h-4" />
               </a>
@@ -237,8 +236,8 @@ export default function Footer() {
             <Link href="/client/login" className="text-xs text-[#8899aa] hover:text-white transition-colors">
               Личный кабинет
             </Link>
-            <Link href="/partner/login" className="text-xs text-[#8899aa] hover:text-white transition-colors">
-              合作伙伴入口
+            <Link href="/partners" className="text-xs text-[#8899aa] hover:text-white transition-colors">
+              Партнёрам
             </Link>
             <Link href="/requisites" className="text-xs text-[#8899aa] hover:text-white transition-colors">
               Реквизиты

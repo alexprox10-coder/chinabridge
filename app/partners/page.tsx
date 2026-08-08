@@ -148,7 +148,7 @@ export default function PartnersPage() {
             >
               Создать аккаунт бесплатно
             </Link>
-            <p className="text-[#8899aa] text-xs mt-4">Первые 14 дней бесплатно · Без привязки карты</p>
+            <p className="text-[#8899aa] text-xs mt-4">Регистрация бесплатная · Ссылка готова за 30 секунд</p>
           </section>
 
         </div>

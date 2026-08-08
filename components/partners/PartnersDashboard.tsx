@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { Copy, Check, ExternalLink, CreditCard } from "lucide-react";
 import Link from "next/link";
 
 interface Stats {
@@ -123,7 +123,7 @@ export function PartnersDashboard() {
             rel="noopener noreferrer"
             className="ml-auto flex items-center gap-1 text-[#00A86B] hover:underline"
           >
-            Проверить <ExternalLink className="w-3 h-3" />
+            Открыть ссылку <ExternalLink className="w-3 h-3" />
           </a>
         </div>
       </div>
@@ -192,6 +192,93 @@ export function PartnersDashboard() {
           ))}
         </ul>
       </div>
+
+      {/* Payment details */}
+      <PayoutDetails pendingRub={stats?.pending_commission_rub ?? 0} />
+    </div>
+  );
+}
+
+function PayoutDetails({ pendingRub }: { pendingRub: number }) {
+  const [saved, setSaved] = useState(false);
+  const [form, setForm] = useState({ type: "card", details: "", name: "" });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  }
+
+  return (
+    <div className="card-glass rounded-2xl p-6">
+      <div className="flex items-center gap-3 mb-5">
+        <CreditCard className="w-5 h-5 text-[#00A86B]" />
+        <h2 className="text-white font-semibold">Реквизиты для выплаты</h2>
+        {pendingRub >= 3000 && (
+          <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-[#00A86B]/20 text-[#00A86B] font-semibold">
+            {pendingRub.toLocaleString("ru-RU")} ₽ к выплате
+          </span>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-[#8899aa] text-xs mb-1.5">Способ получения</label>
+          <div className="flex gap-2">
+            {[
+              { val: "card", label: "Карта РФ" },
+              { val: "account", label: "Расчётный счёт" },
+            ].map(opt => (
+              <button
+                key={opt.val}
+                type="button"
+                onClick={() => setForm(f => ({ ...f, type: opt.val }))}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                  form.type === opt.val
+                    ? "bg-[#00A86B]/20 border-[#00A86B]/50 text-[#00A86B]"
+                    : "bg-[#0B1F3A] border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/30"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-[#8899aa] text-xs mb-1.5">
+            {form.type === "card" ? "Номер карты" : "Расчётный счёт (р/с)"}
+          </label>
+          <input
+            type="text"
+            value={form.details}
+            onChange={e => setForm(f => ({ ...f, details: e.target.value }))}
+            placeholder={form.type === "card" ? "0000 0000 0000 0000" : "40802810ХXXXXXXXXX"}
+            className="w-full px-4 py-3 bg-[#0B1F3A] border border-[#243a5e] rounded-xl text-white text-sm placeholder-[#8899aa]/50 focus:outline-none focus:border-[#00A86B]/50 transition-colors"
+          />
+        </div>
+
+        <div>
+          <label className="block text-[#8899aa] text-xs mb-1.5">ФИО получателя</label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            placeholder="Иванов Иван Иванович"
+            className="w-full px-4 py-3 bg-[#0B1F3A] border border-[#243a5e] rounded-xl text-white text-sm placeholder-[#8899aa]/50 focus:outline-none focus:border-[#00A86B]/50 transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <p className="text-[#8899aa] text-xs">Выплата до 15 числа следующего месяца · мин. 3 000 ₽</p>
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-[#00A86B] hover:bg-[#008f59] text-white text-sm font-semibold rounded-xl transition-colors"
+          >
+            {saved ? "✓ Сохранено" : "Сохранить"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

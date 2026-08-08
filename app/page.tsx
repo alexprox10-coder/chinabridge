@@ -3,16 +3,12 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
 import ForWhom from "@/components/ForWhom";
-import AiCompanyOsBlock from "@/components/AiCompanyOsBlock";
-import SaaSPlatformBlock from "@/components/SaaSPlatformBlock";
 import Advantages from "@/components/Advantages";
 import ImportEcosystemBlock from "@/components/ImportEcosystemBlock";
-import Process from "@/components/Process";
 import Services from "@/components/Services";
 import Directions from "@/components/Directions";
 import Cases from "@/components/Cases";
 import TrustBlock from "@/components/TrustBlock";
-import VideoBlock from "@/components/VideoBlock";
 import Calculator from "@/components/Calculator";
 import LeadMagnetSection from "@/components/LeadMagnetSection";
 import FAQ from "@/components/FAQ";
@@ -102,16 +98,12 @@ export default function Home() {
         <Hero />
         <HowItWorks />
         <ForWhom />
-        <AiCompanyOsBlock />
-        <SaaSPlatformBlock />
         <Advantages />
         <ImportEcosystemBlock />
-        <Process />
         <Services />
         <Directions />
         <Cases />
         <TrustBlock />
-        <VideoBlock />
         <Calculator />
         <LeadMagnetSection />
         <FAQ />

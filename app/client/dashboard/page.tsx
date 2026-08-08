@@ -47,6 +47,27 @@ export default async function DashboardPage() {
         </Link>
       )}
 
+      {/* AI tools quick access */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {[
+          { href: "/product-finder",  icon: "🔍", label: "Найти товар",      sub: "AI поиск по 1688 и Alibaba" },
+          { href: "/supplier-finder", icon: "🏭", label: "Найти поставщика", sub: "Supplier Score и аналитика" },
+          { href: "/delivery-calculator", icon: "🧮", label: "Калькулятор",  sub: "Расчёт доставки за 30 сек" },
+        ].map(tool => (
+          <a
+            key={tool.href}
+            href={tool.href}
+            className="flex items-start gap-3 bg-white border border-slate-200 hover:border-green-300 hover:shadow-sm rounded-xl p-4 transition-all group"
+          >
+            <span className="text-2xl mt-0.5">{tool.icon}</span>
+            <div>
+              <p className="text-sm font-semibold text-slate-800 group-hover:text-green-700 transition-colors">{tool.label}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{tool.sub}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+
       {/* Recent orders */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -102,10 +123,35 @@ function OrderRow({ order }: { order: ClientOrder }) {
 
 function EmptyState() {
   return (
-    <div className="bg-white border border-dashed border-slate-300 rounded-xl px-6 py-10 text-center">
-      <div className="text-4xl mb-3">📦</div>
-      <p className="text-slate-500 text-sm">Заявок пока нет</p>
-      <p className="text-slate-400 text-xs mt-1">Обратитесь к менеджеру для создания первой заявки</p>
+    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl px-6 py-10">
+      <div className="max-w-md mx-auto text-center">
+        <div className="text-5xl mb-4">🚀</div>
+        <h3 className="text-slate-800 font-bold text-lg mb-2">Начните первую поставку</h3>
+        <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+          Опишите товар — менеджер подберёт поставщика, рассчитает стоимость и проведёт вас по каждому шагу.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <a
+            href="https://t.me/ChinaBridgeLID_bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors shadow-sm shadow-green-200"
+          >
+            ✈️ Написать менеджеру
+          </a>
+          <a
+            href="/delivery-calculator"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-green-300 hover:border-green-500 text-green-700 font-semibold rounded-xl transition-colors bg-white"
+          >
+            🧮 Рассчитать доставку
+          </a>
+        </div>
+        <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-400">
+          <span>✓ Ответ за 15 минут</span>
+          <span>✓ Бесплатная консультация</span>
+          <span>✓ От 50 кг</span>
+        </div>
+      </div>
     </div>
   );
 }
