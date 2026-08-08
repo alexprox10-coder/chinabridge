@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Menu, X, User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Menu, X, User, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { analytics } from "@/lib/analytics";
@@ -19,14 +19,34 @@ const pageLinks = [
   { label: "Доставка", href: "/delivery" },
 ];
 
+const toolLinks = [
+  { icon: "🧮", label: "Калькулятор доставки", href: "/delivery-calculator" },
+  { icon: "🔍", label: "AI Поиск товаров",     href: "/product-finder" },
+  { icon: "🏭", label: "AI Поиск поставщиков", href: "/supplier-finder" },
+  { icon: "📚", label: "База знаний",           href: "/knowledge" },
+  { icon: "🤝", label: "Партнёрам",             href: "/partners" },
+];
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handler);
     return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+        setToolsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const pathname = usePathname();
@@ -69,6 +89,32 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+
+            {/* AI Tools dropdown */}
+            <div className="relative" ref={toolsRef}>
+              <button
+                onClick={() => setToolsOpen(v => !v)}
+                className="flex items-center gap-1 px-4 py-2 text-sm text-[#8899aa] hover:text-white transition-colors rounded-lg hover:bg-white/5"
+              >
+                AI Сервисы
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`} />
+              </button>
+              {toolsOpen && (
+                <div className="absolute top-full mt-2 right-0 w-56 bg-[#0f2644] border border-[#243a5e] rounded-2xl shadow-xl py-2 z-50">
+                  {toolLinks.map((t) => (
+                    <Link
+                      key={t.href}
+                      href={t.href}
+                      onClick={() => setToolsOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#8899aa] hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <span className="text-base">{t.icon}</span>
+                      {t.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
           <div className="hidden md:flex items-center">
@@ -100,6 +146,15 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            <div className="pt-2 mt-1 border-t border-[#243a5e]">
+              <p className="px-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-[#8899aa]/60">AI Сервисы</p>
+              {toolLinks.map((t) => (
+                <Link key={t.href} href={t.href} onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#8899aa] hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                  <span>{t.icon}</span>{t.label}
+                </Link>
+              ))}
+            </div>
             <Link href="/client/login" onClick={() => setIsOpen(false)}
               className="mt-2 flex items-center justify-center gap-2 px-4 py-3 bg-[#00A86B] text-white text-sm font-semibold rounded-xl text-center hover:bg-[#008f59] transition-colors">
               <User className="w-4 h-4" /> Личный кабинет

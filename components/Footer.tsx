@@ -19,6 +19,23 @@ const pageLinks = [
   { label: "FAQ", href: "/faq" },
 ];
 
+const toolLinks = [
+  { label: "🧮 Калькулятор доставки",  href: "/delivery-calculator" },
+  { label: "🔍 AI Поиск товаров",       href: "/product-finder" },
+  { label: "🏭 AI Поиск поставщиков",   href: "/supplier-finder" },
+  { label: "📚 База знаний",            href: "/knowledge" },
+  { label: "🤝 Партнёрская программа",  href: "/partners" },
+];
+
+const importLinks = [
+  { label: "Импорт одежды из Китая",        href: "/import-clothing-from-china" },
+  { label: "Импорт обуви из Китая",         href: "/import-shoes-from-china" },
+  { label: "Импорт мебели из Китая",        href: "/import-furniture-from-china" },
+  { label: "Импорт автозапчастей из Китая", href: "/import-auto-parts-from-china" },
+  { label: "Товары для Wildberries",        href: "/import-products-for-wildberries" },
+  { label: "Товары для Ozon",              href: "/import-products-for-ozon" },
+];
+
 const companyLinks = [
   { label: "О компании", href: "/requisites" },
   { label: "Реквизиты", href: "/requisites" },
@@ -34,7 +51,7 @@ export default function Footer() {
   return (
     <footer id="contacts" className="border-t border-border pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
 
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
@@ -104,6 +121,38 @@ export default function Footer() {
               ))}
               <li className="pt-1 border-t border-[#243a5e] mt-1" />
               {pageLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm text-[#8899aa] hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* AI Tools */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#8899aa] mb-4">
+              AI Сервисы
+            </h4>
+            <ul className="flex flex-col gap-2">
+              {toolLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm text-[#8899aa] hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Import categories */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#8899aa] mb-4">
+              Импорт из Китая
+            </h4>
+            <ul className="flex flex-col gap-2">
+              {importLinks.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm text-[#8899aa] hover:text-white transition-colors">
                     {link.label}
