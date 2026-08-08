@@ -3,6 +3,35 @@ import { Lead, LeadInput, LeadApiResponse, LeadApiError } from "@/lib/types/lead
 import { sendLead } from "@/lib/webhook/n8n";
 import { createLead } from "@/lib/crm/client";
 
+async function notifyManagerTelegram(lead: Lead): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const tg = (s: string) => s.replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&");
+  const lines = [
+    "🔥 *Новый лид на ChinaBridge*",
+    "",
+    `👤 *Имя:* ${tg(lead.name)}`,
+    `📞 *Телефон:* ${tg(lead.phone)}`,
+    lead.telegram ? `✈️ *Telegram:* ${tg(lead.telegram)}` : null,
+    `📦 *Товар:* ${tg(lead.product)}`,
+    lead.link ? `🔗 ${tg(lead.link)}` : null,
+    lead.weight ? `⚖️ *Вес:* ${tg(lead.weight)}` : null,
+    lead.from_city || lead.to_city
+      ? `🗺 *Маршрут:* ${tg(lead.from_city ?? "Китай")} → ${tg(lead.to_city ?? "—")}` : null,
+    `📍 *Источник:* ${tg(lead.source)}`,
+    "",
+    `🆔 \`${lead.id.slice(0, 8)}\``,
+  ].filter(Boolean).join("\n");
+
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text: lines, parse_mode: "MarkdownV2" }),
+  });
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -121,10 +150,13 @@ export async function POST(req: NextRequest) {
     console.error("[POST /api/leads] Neon save failed:", err);
   }
 
-  // Fire-and-forget: Telegram notification via n8n
+  // Fire-and-forget: n8n webhook
   sendLead(lead).catch((err) =>
     console.error("[POST /api/leads] n8n webhook failed:", err)
   );
+
+  // Fire-and-forget: Telegram notification to manager
+  notifyManagerTelegram(lead).catch(() => {});
 
   return NextResponse.json<LeadApiResponse>({ ok: true, id: lead.id }, { status: 201 });
 }
