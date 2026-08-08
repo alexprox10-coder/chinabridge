@@ -39,14 +39,24 @@ async function checkLimit(
   }
 }
 
-const SYSTEM_PROMPT = `Ты — эксперт по работе с китайскими поставщиками. Проанализируй товар/запрос и опиши 4-5 типичных профилей поставщиков на рынке Китая. Используй реальные рыночные паттерны 2024-2025 года. НЕ выдумывай конкретные названия компаний.
+const SYSTEM_PROMPT = `Ты — эксперт по поиску поставщиков в Китае. Задача: помочь найти РЕАЛЬНЫХ поставщиков на 1688.com и Alibaba.com по запросу пользователя.
+
+ОБЯЗАТЕЛЬНО верни поисковые запросы для маркетплейсов:
+- search_queries.queries_1688: 3-4 поисковых фразы ТОЛЬКО на китайском языке (иероглифы), для поиска на 1688.com
+- search_queries.queries_alibaba: 3-4 поисковых фразы ТОЛЬКО на английском языке, для поиска на Alibaba.com
+
+Также верни 3-4 профиля типичных поставщиков (без реальных названий компаний).
 
 Ответь ТОЛЬКО валидным JSON без markdown:
 {
-  "market_overview": "1-2 предложения об особенностях рынка поставщиков",
+  "market_overview": "1-2 предложения об особенностях рынка",
+  "search_queries": {
+    "queries_1688": ["中文关键词1", "中文关键词2", "中文关键词3"],
+    "queries_alibaba": ["english query 1", "english query 2", "english query 3"]
+  },
   "suppliers": [
     {
-      "type": "Тип: Производитель / Оптовик / Торговая компания / Фабрика",
+      "type": "Производитель / Оптовик / Торговая компания",
       "region": "Провинция/город Китая",
       "platform": "1688",
       "price_level": "low",
@@ -56,22 +66,17 @@ const SYSTEM_PROMPT = `Ты — эксперт по работе с китайс
       "moq_max": 500,
       "quality_level": "standard",
       "reliability_score": 78,
-      "score_breakdown": {
-        "reliability": 80,
-        "price": 70,
-        "quality": 75,
-        "communication": 82
-      },
-      "pros": ["Низкая цена", "Гибкий МОQ"],
-      "cons": ["Дольше доставка", "Нужна инспекция"],
-      "verification_tips": "На что обратить внимание при проверке этого типа поставщика"
+      "search_keyword_1688": "中文关键词 для этого типа",
+      "search_keyword_alibaba": "english keyword for this type",
+      "score_breakdown": { "reliability": 80, "price": 70, "quality": 75, "communication": 82 },
+      "pros": ["Низкая цена", "Гибкий MOQ"],
+      "cons": ["Нужна инспекция"],
+      "verification_tips": "На что обратить внимание при проверке"
     }
   ]
 }
 
-reliability_score: 0-100, AI-оценка на основе типичных паттернов данного типа поставщика.
-price_level: low | medium | high
-quality_level: basic | standard | premium`;
+price_level: low | medium | high. quality_level: basic | standard | premium. reliability_score: 0-100.`;
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
@@ -127,6 +132,7 @@ export async function POST(req: NextRequest) {
 
     const parsed = JSON.parse(content) as {
       market_overview?: string;
+      search_queries?: { queries_1688?: string[]; queries_alibaba?: string[] };
       suppliers?: unknown[];
     };
 
@@ -136,8 +142,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      market_overview: parsed.market_overview ?? '',
-      suppliers:       parsed.suppliers.slice(0, 5),
+      market_overview:  parsed.market_overview ?? '',
+      search_queries:   parsed.search_queries ?? { queries_1688: [], queries_alibaba: [] },
+      suppliers:        parsed.suppliers.slice(0, 4),
       rate_limit_remaining: remaining,
     });
   } catch (e) {
