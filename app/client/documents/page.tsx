@@ -24,10 +24,33 @@ export default async function DocumentsPage() {
       </div>
 
       {docs.length === 0 ? (
-        <div className="bg-white border border-dashed border-slate-300 rounded-2xl px-6 py-16 text-center">
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-blue-100 rounded-2xl px-6 py-12 text-center">
           <div className="text-5xl mb-4">📂</div>
-          <p className="text-slate-600 font-medium">Документов пока нет</p>
-          <p className="text-slate-400 text-sm mt-1">Документы появятся после оформления заявки</p>
+          <p className="text-slate-700 font-semibold text-lg mb-2">Документов пока нет</p>
+          <p className="text-slate-500 text-sm mb-5 leading-relaxed max-w-sm mx-auto">
+            Договоры, инвойсы, таможенные декларации и акты — всё будет здесь после оформления первой поставки.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              ✈️ Начать первую поставку
+            </a>
+            <a
+              href="/knowledge"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-slate-200 hover:border-slate-400 text-slate-600 text-sm font-semibold rounded-xl transition-colors bg-white"
+            >
+              📚 Узнать об импорте
+            </a>
+          </div>
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-md mx-auto text-xs text-slate-400">
+            {["📋 Договор", "🧾 Инвойс", "🛃 Декларация", "🔍 Акт"].map(t => (
+              <div key={t} className="bg-white border border-dashed border-slate-200 rounded-lg py-2 px-1">{t}</div>
+            ))}
+          </div>
         </div>
       ) : (
         Object.entries(byType).map(([type, items]) => (

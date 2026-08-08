@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAuthorized } from "@/lib/api-auth";
 
 export const runtime     = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => ({}));
   const { action, plan } = body;
 
@@ -25,7 +27,8 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: false, error: "Unknown action" }, { status: 400 });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   return NextResponse.json({
     ok: true,
     plans: [

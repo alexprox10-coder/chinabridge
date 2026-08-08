@@ -14,10 +14,10 @@ const NAV = [
 ];
 
 const AI_NAV = [
-  { href: "/product-finder",  label: "Поиск товаров",      icon: "🔍" },
-  { href: "/supplier-finder", label: "Поиск поставщиков",  icon: "🏭" },
-  { href: "/knowledge",       label: "База знаний",         icon: "📚" },
-  { href: "/partners",        label: "Партнёрам",           icon: "🤝" },
+  { href: "/product-finder",    label: "Поиск товаров",         icon: "🔍" },
+  { href: "/supplier-finder",   label: "Поиск поставщиков",     icon: "🏭" },
+  { href: "/knowledge",         label: "FAQ и консультант",      icon: "📚" },
+  { href: "/settings/partners", label: "Партнёрская программа", icon: "🤝" },
 ];
 
 export default function ClientNav({ session }: { session: SessionPayload }) {

@@ -33,11 +33,14 @@ export async function PATCH(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const { name, company, phone, new_password } = body as {
+  const { name, company, phone, new_password, telegram, inn, country } = body as {
     name?: string;
     company?: string;
     phone?: string;
     new_password?: string;
+    telegram?: string;
+    inn?: string;
+    country?: string;
   };
 
   const client = await getClientById(session.clientId);
@@ -47,6 +50,9 @@ export async function PATCH(req: NextRequest) {
   if (name?.trim()) fields.name = name.trim();
   if (company !== undefined) fields.company = company.trim();
   if (phone !== undefined) fields.phone = phone.trim();
+  if (telegram !== undefined) fields.telegram = telegram.trim();
+  if (inn !== undefined) fields.inn = inn.trim();
+  if (country !== undefined) fields.country = country.trim();
   if (new_password?.trim()) {
     fields.password_hash = await clientHashPassword(new_password.trim());
   }

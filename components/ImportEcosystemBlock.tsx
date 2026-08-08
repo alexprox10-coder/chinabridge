@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { trackGAEvent } from "@/lib/analytics/ga";
 import {
   Search, PackageCheck, CreditCard, FileText, Truck, ClipboardList, Warehouse,
-  ShieldCheck, TrendingUp, Store, ChevronDown, DollarSign, Plus, Equal,
+  ShieldCheck, TrendingUp, Store, ChevronDown,
 } from "lucide-react";
 
 /* ── Accent colours ── */
@@ -123,20 +123,10 @@ const partnerCards = [
   { emoji: "📋", title: "Документы", desc: "Сертификация и таможня" },
 ];
 
-const financialScheme = [
-  { label: "Стоимость товара", icon: DollarSign, op: null },
-  { label: "Логистика", icon: Plus, op: "+" },
-  { label: "Документы", icon: Plus, op: "+" },
-  { label: "Таможня", icon: Plus, op: "+" },
-  { label: "Комиссии платежей", icon: Plus, op: "+" },
-  { label: "Полная стоимость импорта", icon: Equal, op: "=" },
-];
 
 export default function ImportEcosystemBlock() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const paymentBlockRef = useRef<HTMLDivElement>(null);
   const trackedRef = useRef(false);
-  const paymentTrackedRef = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -155,20 +145,8 @@ export default function ImportEcosystemBlock() {
     );
     sectionRef.current?.querySelectorAll(".fade-up").forEach((el) => observer.observe(el));
 
-    const paymentObserver = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !paymentTrackedRef.current) {
-          paymentTrackedRef.current = true;
-          trackGAEvent("importPaymentBlockView");
-        }
-      },
-      { threshold: 0.3 }
-    );
-    if (paymentBlockRef.current) paymentObserver.observe(paymentBlockRef.current);
-
     return () => {
       observer.disconnect();
-      paymentObserver.disconnect();
     };
   }, []);
 
@@ -323,67 +301,6 @@ export default function ImportEcosystemBlock() {
               )}
             </div>
           ))}
-        </div>
-
-        {/* ── "Pay suppliers safely" block ── */}
-        <div
-          ref={paymentBlockRef}
-          className="fade-up rounded-2xl p-8 md:p-10 mb-16"
-          style={{ background: `linear-gradient(135deg, #0f2644 0%, #0B1F3A 100%)`, border: `1px solid ${GOLD}20` }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              <div
-                className="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-4"
-                style={{ background: `${GOLD}15`, color: GOLD, border: `1px solid ${GOLD}30` }}
-              >
-                💱 Финансовый контроль
-              </div>
-              <h3 className="text-2xl font-bold mb-3">
-                Оплачивайте поставки{" "}
-                <span style={{ color: GOLD }}>безопасно</span>
-              </h3>
-              <p className="text-[#8899aa] leading-relaxed text-sm">
-                При работе с китайскими поставщиками важно не только найти товар, но и правильно
-                организовать оплату. ChinaBridge помогает контролировать финансовую часть сделки:
-                от расчёта стоимости до подтверждения оплаты поставщику.
-              </p>
-            </div>
-            {/* Financial scheme */}
-            <div className="flex flex-col gap-2">
-              {financialScheme.map((item, i) => {
-                const isResult = item.op === "=";
-                return (
-                  <div key={item.label} className="flex items-center gap-3">
-                    <div
-                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold"
-                      style={
-                        isResult
-                          ? { background: `${GOLD}20`, color: GOLD }
-                          : { background: "#243a5e", color: "#8899aa" }
-                      }
-                    >
-                      {item.op ?? "₽"}
-                    </div>
-                    <span
-                      className={`text-sm ${isResult ? "font-semibold" : "text-[#8899aa]"}`}
-                      style={isResult ? { color: GOLD } : {}}
-                    >
-                      {item.label}
-                    </span>
-                    {isResult && (
-                      <div
-                        className="ml-auto px-2 py-0.5 rounded-full text-xs font-semibold"
-                        style={{ background: `${GOLD}15`, color: GOLD, border: `1px solid ${GOLD}30` }}
-                      >
-                        Итого
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         {/* ── Why white import ── */}

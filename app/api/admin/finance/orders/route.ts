@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllFinanceOrders, createFinanceOrder } from "@/lib/finance/api";
 import { calcFinancials } from "@/lib/finance/types";
 import { randomUUID } from "crypto";
+import { isAuthorized } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const leadId = searchParams.get("lead_id");
   const all = await getAllFinanceOrders();

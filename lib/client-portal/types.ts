@@ -66,6 +66,9 @@ export interface ClientAccount {
   name: string;
   company?: string;
   phone?: string;
+  telegram?: string;
+  inn?: string;
+  country?: string;
   role: ClientRole;
   status: "ACTIVE" | "INACTIVE";
   created_at: string;

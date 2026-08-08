@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { getDashboardStats, getLeads } from "@/lib/crm/client";
 import { STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS, PRIORITY_EMOJI } from "@/lib/crm/types";
 import type { CRMLead, LeadStatus, LeadPriority } from "@/lib/crm/types";
@@ -103,6 +105,12 @@ function FunnelBar({ by_status }: { by_status: Record<string, number> }) {
 }
 
 export default async function DashboardPage() {
+  const store    = await cookies();
+  const isTenant = store.get("cb_tenant_session")?.value;
+  const isAdmin  = store.get("cb_admin")?.value;
+  const isDone   = store.get("cb_onboarding")?.value;
+  if (isTenant && !isAdmin && !isDone) redirect("/onboarding");
+
   let stats: Awaited<ReturnType<typeof getDashboardStats>> | null = null;
   let leads: CRMLead[] = [];
   try {

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/client-portal/auth";
 import { getClientOrders, getAllOrders } from "@/lib/client-portal/api";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, ORDER_STATUSES } from "@/lib/client-portal/types";
 import type { ClientOrder, OrderStatus } from "@/lib/client-portal/types";
+import CreateOrderForm from "@/components/client/CreateOrderForm";
 
 export default async function OrdersPage() {
   const session = await getSession();
@@ -25,11 +26,28 @@ export default async function OrdersPage() {
         </p>
       </div>
 
+      <CreateOrderForm />
+
       {orders.length === 0 ? (
-        <div className="bg-white border border-dashed border-slate-300 rounded-2xl px-6 py-16 text-center">
-          <div className="text-5xl mb-4">📭</div>
-          <p className="text-slate-600 font-medium">Заявок пока нет</p>
-          <p className="text-slate-400 text-sm mt-1">Ваши грузы появятся здесь после создания заявки</p>
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl px-6 py-12 text-center">
+          <div className="text-5xl mb-4">📦</div>
+          <h3 className="text-slate-800 font-bold text-lg mb-2">Заявок пока нет</h3>
+          <p className="text-slate-500 text-sm mb-6 leading-relaxed max-w-sm mx-auto">
+            Опишите товар выше или напишите менеджеру — мы найдём поставщика и рассчитаем стоимость.
+          </p>
+          <a
+            href="https://t.me/ChinaBridgeLID_bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors shadow-sm shadow-green-200"
+          >
+            ✈️ Написать менеджеру
+          </a>
+          <div className="mt-5 flex flex-wrap justify-center gap-4 text-xs text-slate-400">
+            <span>✓ Ответ за 15 минут</span>
+            <span>✓ Бесплатная консультация</span>
+            <span>✓ От 50 кг</span>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">

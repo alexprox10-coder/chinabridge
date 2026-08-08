@@ -37,14 +37,17 @@ export async function createTochkaPayment(params: {
         paymentMode:  ["sbp", "tinkoff", "card"],
         redirectUrl:  params.redirectUrl,
         failRedirectUrl: params.failUrl,
-        paymentLinkId: `cb-${params.tenantId}-${params.plan}-${Date.now()}`,
+        paymentLinkId: `cb-${params.plan.slice(0, 3)}-${Date.now().toString(36)}`,
         ttl: 10080,
       },
     }),
     signal: AbortSignal.timeout(12000),
   });
   const json = await res.json();
-  if (!res.ok) throw new Error(json.message ?? JSON.stringify(json.Errors ?? "API error"));
+  if (!res.ok) {
+    const errMsg = json.Errors?.[0]?.message ?? json.Errors?.[0]?.UserMessage ?? json.message ?? JSON.stringify(json);
+    throw new Error(`Tochka ${res.status}: ${errMsg}`);
+  }
   return {
     operationId: json.Data.operationId,
     paymentLink: json.Data.paymentLink,

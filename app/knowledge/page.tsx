@@ -17,15 +17,15 @@ export default function KnowledgePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <p className="text-[#00A86B] text-sm font-semibold uppercase tracking-widest mb-3">
-              База знаний
+              FAQ и AI-консультант
             </p>
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Всё об <span className="text-gradient">импорте</span>
+              Вопросы об <span className="text-gradient">импорте</span>
               <br />
               из Китая
             </h1>
             <p className="text-[#8899aa] text-lg">
-              Частые вопросы и AI-консультант — ответим на любой вопрос об импорте
+              Ответы на частые вопросы и AI-консультант онлайн — бесплатно
             </p>
           </div>
           <KnowledgeUI />

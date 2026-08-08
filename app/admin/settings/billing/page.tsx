@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { getTenantById } from "@/lib/multitenant/store";
@@ -25,6 +26,9 @@ export default async function BillingPage() {
       <AdminNav />
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="mb-8">
+          <Link href="/admin/settings" className="inline-flex items-center gap-1 text-slate-400 hover:text-white text-sm mb-4 transition">
+            ← Настройки
+          </Link>
           <h1 className="text-2xl font-bold text-white">💳 Подписка и оплата</h1>
           <p className="text-slate-400 text-sm mt-1">
             Текущий тариф:{" "}

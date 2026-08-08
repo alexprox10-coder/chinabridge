@@ -6,6 +6,9 @@ interface Profile {
   email: string;
   company?: string;
   phone?: string;
+  telegram?: string;
+  inn?: string;
+  country?: string;
   role: string;
   created_at: string;
 }
@@ -15,6 +18,9 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
+  const [telegram, setTelegram] = useState("");
+  const [inn, setInn] = useState("");
+  const [country, setCountry] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -28,6 +34,9 @@ export default function ProfilePage() {
         setName(p.name ?? "");
         setCompany(p.company ?? "");
         setPhone(p.phone ?? "");
+        setTelegram(p.telegram ?? "");
+        setInn(p.inn ?? "");
+        setCountry(p.country ?? "");
       });
   }, []);
 
@@ -44,6 +53,9 @@ export default function ProfilePage() {
           name,
           company,
           phone,
+          telegram,
+          inn,
+          country,
           ...(newPassword.trim() ? { new_password: newPassword } : {}),
         }),
       });
@@ -129,6 +141,43 @@ export default function ProfilePage() {
             className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             placeholder="+7 999 000 00 00"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Telegram</label>
+          <input
+            value={telegram}
+            onChange={(e) => setTelegram(e.target.value)}
+            className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            placeholder="@username"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">ИНН компании</label>
+            <input
+              value={inn}
+              onChange={(e) => setInn(e.target.value)}
+              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="1234567890"
+              maxLength={12}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Страна доставки</label>
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+            >
+              <option value="">Не выбрано</option>
+              <option value="RU">🇷🇺 Россия</option>
+              <option value="KZ">🇰🇿 Казахстан</option>
+              <option value="BY">🇧🇾 Беларусь</option>
+              <option value="OTHER">Другая</option>
+            </select>
+          </div>
         </div>
 
         <div>
