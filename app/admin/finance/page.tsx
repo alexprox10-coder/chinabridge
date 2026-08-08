@@ -1,5 +1,6 @@
 import { AdminNav } from "@/components/admin/AdminNav";
 import { FinanceNav } from "@/components/admin/finance/FinanceNav";
+import { TochkaLinksSection } from "@/components/admin/finance/TochkaLinksSection";
 import { getAllFinanceOrders, getAllPayments, getAllCashFlow } from "@/lib/finance/api";
 import { ACCOUNT_LABELS, CURRENCY_SYMBOLS } from "@/lib/finance/types";
 import type { FinanceCurrency, FinanceOrder, FinancePayment, CashFlowEntry } from "@/lib/finance/types";
@@ -224,6 +225,9 @@ export default async function FinanceDashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Tochka payment links */}
+        <TochkaLinksSection />
       </main>
     </div>
   );

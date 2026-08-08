@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/ai-cto",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/content-publish",
+      "schedule": "0 * * * *"
     }
   ]
 }

@@ -143,6 +143,8 @@ export function ContentPageClient() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [tgConfigured, setTgConfigured] = useState(false);
   const [notice, setNotice] = useState("");
+  const [schedulingId, setSchedulingId] = useState<number | null>(null);
+  const [schedulingTime, setSchedulingTime] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -289,6 +291,30 @@ export function ContentPageClient() {
       }
     } catch {
       setNotice("Ошибка сети при публикации.");
+    }
+  }
+
+  async function schedulePost(post: Post, isoTime: string) {
+    setNotice("");
+    try {
+      const res = await fetch(`/api/content/posts?id=${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "scheduled", scheduled_at: isoTime }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        setNotice(`Запланировано: ${new Date(isoTime).toLocaleString("ru-RU")}`);
+      } else {
+        setNotice("Ошибка планирования. Попробуйте ещё раз.");
+      }
+    } catch {
+      setNotice("Ошибка сети при планировании.");
+    } finally {
+      setSchedulingId(null);
+      setSchedulingTime("");
+      loadPosts();
+      loadAnalytics();
     }
   }
 
@@ -529,6 +555,44 @@ export function ContentPageClient() {
                     >
                       В очередь
                     </button>
+                  )}
+                  {p.status === "approved" && (
+                    schedulingId === p.id ? (
+                      <div className="flex items-center gap-1 w-full mt-1">
+                        <input
+                          type="datetime-local"
+                          value={schedulingTime}
+                          onChange={(e) => setSchedulingTime(e.target.value)}
+                          className="flex-1 text-[11px] bg-slate-800 border border-slate-600 rounded-md px-1.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-green-600/50"
+                        />
+                        <button
+                          onClick={() => schedulingTime && schedulePost(p, new Date(schedulingTime).toISOString())}
+                          disabled={!schedulingTime}
+                          className="text-[11px] px-2 py-1 rounded-md bg-green-700 hover:bg-green-600 disabled:opacity-40 text-white border border-green-700 transition-colors whitespace-nowrap"
+                        >
+                          OK
+                        </button>
+                        <button
+                          onClick={() => { setSchedulingId(null); setSchedulingTime(""); }}
+                          className="text-[11px] px-1.5 py-1 rounded-md text-slate-500 hover:text-slate-300 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setSchedulingId(p.id);
+                          // Pre-fill with 1 hour from now
+                          const d = new Date(Date.now() + 3600_000);
+                          const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                          setSchedulingTime(local);
+                        }}
+                        className="text-[11px] px-2 py-1 rounded-md bg-violet-900/30 hover:bg-violet-900/50 text-violet-300 border border-violet-800/40 transition-colors"
+                      >
+                        Запланировать
+                      </button>
+                    )
                   )}
                   <button
                     onClick={() => copyPost(p)}
