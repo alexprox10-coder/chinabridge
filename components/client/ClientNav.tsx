@@ -4,13 +4,20 @@ import { usePathname, useRouter } from "next/navigation";
 import type { SessionPayload } from "@/lib/client-portal/types";
 
 const NAV = [
-  { href: "/client/dashboard",    label: "Главная",      icon: "🏠" },
-  { href: "/client/calculator",   label: "Калькулятор",  icon: "🧮" },
-  { href: "/client/orders",       label: "Мои заявки",   icon: "📦" },
-  { href: "/client/payments",     label: "Оплаты",       icon: "💱" },
-  { href: "/client/documents",    label: "Документы",    icon: "📄" },
-  { href: "/client/calculations", label: "История",      icon: "📋" },
-  { href: "/client/profile",      label: "Профиль",      icon: "👤" },
+  { href: "/client/dashboard",    label: "Главная",           icon: "🏠" },
+  { href: "/client/calculator",   label: "Калькулятор",       icon: "🧮" },
+  { href: "/client/orders",       label: "Мои заявки",        icon: "📦" },
+  { href: "/client/payments",     label: "Оплаты",            icon: "💱" },
+  { href: "/client/documents",    label: "Документы",         icon: "📄" },
+  { href: "/client/calculations", label: "История",           icon: "📋" },
+  { href: "/client/profile",      label: "Профиль",           icon: "👤" },
+];
+
+const AI_NAV = [
+  { href: "/product-finder",  label: "Поиск товаров",      icon: "🔍" },
+  { href: "/supplier-finder", label: "Поиск поставщиков",  icon: "🏭" },
+  { href: "/knowledge",       label: "База знаний",         icon: "📚" },
+  { href: "/partners",        label: "Партнёрам",           icon: "🤝" },
 ];
 
 export default function ClientNav({ session }: { session: SessionPayload }) {
@@ -46,6 +53,27 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {NAV.map(({ href, label, icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-green-50 text-green-700"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                <span className="text-base">{icon}</span>
+                {label}
+              </Link>
+            );
+          })}
+
+          <div className="pt-3 pb-1">
+            <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Инструменты</p>
+          </div>
+          {AI_NAV.map(({ href, label, icon }) => {
+            const active = pathname === href;
             return (
               <Link
                 key={href}

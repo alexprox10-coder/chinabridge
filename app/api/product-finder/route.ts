@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { isAuthorized } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -86,15 +87,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Запрос слишком длинный' }, { status: 400 });
   }
 
-  const ip      = getIp(req);
-  const today   = new Date().toISOString().slice(0, 10);
-  const { allowed, remaining } = await checkLimit(`pf:${ip}`, today);
+  const loggedIn = isAuthorized(req);
+  const ip       = getIp(req);
+  const today    = new Date().toISOString().slice(0, 10);
 
-  if (!allowed) {
-    return NextResponse.json(
-      { ok: false, error: `Лимит: ${DAILY_LIMIT} поисков в день. Зарегистрируйтесь для расширенного доступа.` },
-      { status: 429 },
-    );
+  let remaining = 999;
+  if (!loggedIn) {
+    const limit = await checkLimit(`pf:${ip}`, today);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { ok: false, error: `Лимит: ${DAILY_LIMIT} поисков в день. Зарегистрируйтесь для неограниченного доступа.` },
+        { status: 429 },
+      );
+    }
+    remaining = limit.remaining;
   }
 
   const orKey = process.env.OPENROUTER_API_KEY;
