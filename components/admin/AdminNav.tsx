@@ -26,6 +26,7 @@ const GROUPS = [
   {
     label: "AI & Аналитика",
     items: [
+      { href: "/admin/marketing",           label: "Marketing AI",       icon: "📣" },
       { href: "/admin/market-intelligence", label: "Поиск лидов",       icon: "🎯" },
       { href: "/admin/ai-company",          label: "AI Кабинет",         icon: "🤖" },
       { href: "/product-finder",            label: "Поиск товаров",      icon: "🔍" },
