@@ -68,6 +68,30 @@ export interface CalculatorFormData {
   email: string;
 }
 
+export interface EconomicsResult {
+  quantity: number;
+  unit_price_rub: number;
+  purchase_total_rub: number;
+  delivery_total_rub: number;
+  customs_rub: number;
+  other_costs_rub: number;
+  total_cost_rub: number;
+  unit_cost_rub: number;
+  sale_price_rub: number;
+  gross_revenue_rub: number;
+  marketplace_fee_rub: number;
+  ad_cost_rub: number;
+  net_profit_rub: number;
+  margin_pct: number;
+  roi_pct: number;
+  verdict: "green" | "yellow" | "red";
+  verdict_emoji: string;
+  verdict_label: string;
+  ai_analysis?: string;
+  cny_rate: number;
+  usd_rate: number;
+}
+
 export interface CalculatorResult {
   ok: boolean;
   cargo_type?: CargoType;
@@ -85,6 +109,9 @@ export interface CalculatorResult {
   markup_percent?: number;
   profit?: number;
   margin_percent?: number;
+  // AI Economics (optional)
+  economics?: EconomicsResult;
+  rate_limit_remaining?: number;
 }
 
 export const CARGO_TYPE_LABELS: Record<CargoType, string> = {
