@@ -13,6 +13,7 @@ import Calculator from "@/components/Calculator";
 import LeadMagnetSection from "@/components/LeadMagnetSection";
 import FAQ from "@/components/FAQ";
 import TelegramChannelBanner from "@/components/TelegramChannelBanner";
+import KnowledgePromoBlock from "@/components/KnowledgePromoBlock";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
@@ -108,6 +109,7 @@ export default function Home() {
         <Calculator />
         <LeadMagnetSection />
         <FAQ />
+        <KnowledgePromoBlock />
         <TelegramChannelBanner />
         <Footer />
       </main>
