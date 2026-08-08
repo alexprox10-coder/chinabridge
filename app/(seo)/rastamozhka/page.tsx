@@ -14,6 +14,7 @@ export const metadata: Metadata = {
     "таможенная очистка",
     "растаможка для бизнеса",
   ],
+  alternates: { canonical: "https://chinabridge.pro/rastamozhka" },
 };
 
 export default function Page() {

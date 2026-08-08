@@ -14,6 +14,7 @@ export const metadata: Metadata = {
     "импорт из Китая для малого бизнеса",
     "ChinaBridge импорт",
   ],
+  alternates: { canonical: "https://chinabridge.pro/import-iz-kitaya" },
 };
 
 export default function Page() {

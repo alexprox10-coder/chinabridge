@@ -14,6 +14,7 @@ export const metadata: Metadata = {
     "авиадоставка из Китая",
     "морская доставка из Китая",
   ],
+  alternates: { canonical: "https://chinabridge.pro/dostavka-iz-kitaya" },
 };
 
 export default function Page() {

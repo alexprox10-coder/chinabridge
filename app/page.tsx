@@ -34,6 +34,7 @@ export const metadata: Metadata = {
     "WB Ozon поставка из Китая",
     "ChinaBridge",
   ],
+  alternates: { canonical: "https://chinabridge.pro" },
   openGraph: {
     title: "Импорт из Китая под ключ | AI-платформа ChinaBridge",
     description:

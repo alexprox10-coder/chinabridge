@@ -15,6 +15,7 @@ export const metadata: Metadata = {
     "фабрики Китай оптом",
     "supplier score",
   ],
+  alternates: { canonical: "https://chinabridge.pro/postavschiki-kitaya" },
 };
 
 export default function Page() {
