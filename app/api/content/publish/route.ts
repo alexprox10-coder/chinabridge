@@ -43,7 +43,10 @@ export async function POST(req: NextRequest) {
   }
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHANNEL_ID || DEFAULT_TELEGRAM_CHANNEL;
+  const chatId =
+    process.env.TELEGRAM_CHANNEL_ID ||
+    process.env.TELEGRAM_CHAT_ID ||
+    DEFAULT_TELEGRAM_CHANNEL;
 
   if (!botToken) {
     return NextResponse.json({
