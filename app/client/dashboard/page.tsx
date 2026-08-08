@@ -4,6 +4,7 @@ import { getSession } from "@/lib/client-portal/auth";
 import { getClientOrders, getAllOrders, countUnreadMessages } from "@/lib/client-portal/api";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/client-portal/types";
 import type { ClientOrder } from "@/lib/client-portal/types";
+import OnboardingSteps from "@/components/client/OnboardingSteps";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -46,6 +47,9 @@ export default async function DashboardPage() {
           <span className="ml-auto text-blue-400">→</span>
         </Link>
       )}
+
+      {/* Onboarding steps — shown only for new clients with no orders */}
+      {orders.length === 0 && <OnboardingSteps isNew={true} />}
 
       {/* AI tools quick access */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
