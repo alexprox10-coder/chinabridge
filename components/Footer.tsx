@@ -204,6 +204,17 @@ export default function Footer() {
                 </a>
               </li>
               <li className="flex items-center gap-2.5 text-sm">
+                <Send className="w-4 h-4 text-[#229ED9] flex-shrink-0" />
+                <a
+                  href="https://t.me/chinabridgeline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#8899aa] hover:text-[#229ED9] transition-colors"
+                >
+                  Наш канал
+                </a>
+              </li>
+              <li className="flex items-center gap-2.5 text-sm">
                 <Mail className="w-4 h-4 text-accent flex-shrink-0" />
                 <a
                   href="mailto:info@chinabridge.pro"
