@@ -74,6 +74,8 @@ export interface EconomicsResult {
   purchase_total_rub: number;
   delivery_total_rub: number;
   customs_rub: number;
+  marketplace_logistics_rub: number;
+  tax_rub: number;
   other_costs_rub: number;
   total_cost_rub: number;
   unit_cost_rub: number;
@@ -90,6 +92,51 @@ export interface EconomicsResult {
   ai_analysis?: string;
   cny_rate: number;
   usd_rate: number;
+  // Extended
+  product_score?: ProductScore;
+  target_price?: TargetPrice;
+  scenarios?: EconomicsScenario[];
+  supplier_risk?: SupplierRiskResult;
+}
+
+export interface EconomicsScenario {
+  name: 'conservative' | 'base' | 'optimistic';
+  label: string;
+  sale_price_rub: number;
+  unit_cost_rub: number;
+  net_profit_rub: number;
+  margin_pct: number;
+  roi_pct: number;
+  verdict: 'green' | 'yellow' | 'red';
+}
+
+export interface ProductScore {
+  total: number;
+  margin_score: number;
+  roi_score: number;
+  price_score: number;
+  logistics_score: number;
+  supplier_score: number;
+  moq_score: number;
+  label: string;
+  explanation: string;
+}
+
+export interface TargetPrice {
+  max_purchase_price_cny: number;
+  max_purchase_price_rub: number;
+  min_sale_price_rub: number;
+  target_margin_pct: number;
+  current_is_achievable: boolean;
+}
+
+export type SupplierRisk = 'low' | 'medium' | 'high';
+
+export interface SupplierRiskResult {
+  level: SupplierRisk;
+  emoji: string;
+  label: string;
+  factors: string[];
 }
 
 export interface CalculatorResult {

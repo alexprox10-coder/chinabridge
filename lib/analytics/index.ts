@@ -52,4 +52,21 @@ export const analytics = {
   aiFunnelLeadCreated:   (p?: { priority?: string })     => fire("ai_funnel_lead_created",    "ai_funnel_lead_created",   { category: "ai_funnel", ...p }),
   aiFunnelSupplierClick: ()                               => fire("ai_funnel_supplier_click",  "ai_funnel_supplier_click", { category: "ai_funnel" }),
   aiFunnelImportClick:   ()                               => fire("ai_funnel_import_click",    "ai_funnel_import_click",   { category: "ai_funnel" }),
+
+  // ── Unit Economics Engine — полная воронка (ТЗ §30) ───────────────────────
+  unitEconomicsOpen:        ()                                          => fire("unit_economics_open",        "unit_economics_open",        { category: "unit_economics" }),
+  productUrlEntered:        ()                                          => fire("product_url_entered",        "product_url_entered",        { category: "unit_economics" }),
+  productAnalysisStarted:   ()                                          => fire("product_analysis_started",   "product_analysis_started",   { category: "unit_economics" }),
+  productAnalysisCompleted: (p?: { confidence?: string })              => fire("product_analysis_completed",  "product_analysis_completed", { category: "unit_economics", ...p }),
+  previewResultViewed:      (p?: { verdict?: string })                 => fire("preview_result_viewed",       "preview_result_viewed",      { category: "unit_economics", ...p }),
+  marketplaceSelected:      (p?: { marketplace?: string })             => fire("marketplace_selected",        "marketplace_selected",       { category: "unit_economics", ...p }),
+  destinationSelected:      (p?: { city?: string })                    => fire("destination_selected",        "destination_selected",       { category: "unit_economics", ...p }),
+  fullCalculationStarted:   ()                                          => fire("full_calculation_started",   "full_calculation_started",   { category: "unit_economics" }),
+  fullCalculationCompleted: (p?: { verdict?: string; score?: number }) => fire("full_calculation_completed",  "full_calculation_completed", { category: "unit_economics", ...p }),
+  saveAnalysisClicked:      ()                                          => fire("save_analysis_clicked",      "save_analysis_clicked",      { category: "unit_economics" }),
+  supplierSearchClicked:    ()                                          => fire("supplier_search_clicked",    "supplier_search_clicked",    { category: "unit_economics" }),
+  similarProductsClicked:   ()                                          => fire("similar_products_clicked",   "similar_products_clicked",   { category: "unit_economics" }),
+  importStarted:            (p?: { priority?: string })                => fire("import_started",              "import_started",             { category: "unit_economics", ...p }),
+  scenarioSwitched:         (p?: { scenario?: string })                => fire("scenario_switched",           "scenario_switched",          { category: "unit_economics", ...p }),
+  targetPriceViewed:        ()                                          => fire("target_price_viewed",        "target_price_viewed",        { category: "unit_economics" }),
 };

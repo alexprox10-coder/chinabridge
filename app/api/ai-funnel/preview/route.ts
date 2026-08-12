@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateUnitEconomics } from '@/lib/economics/calculator';
-import { getCommission }          from '@/lib/economics/marketplaces';
+import { getMarketplace }         from '@/lib/economics/marketplaces';
 import { neon }                   from '@neondatabase/serverless';
 
 export const runtime     = 'nodejs';
@@ -54,9 +54,12 @@ export async function POST(req: NextRequest) {
   }
 
   const marketplaceId = String(body.marketplace ?? 'wb');
+  const mp = getMarketplace(marketplaceId);
+
+  // commissionPct: из тела (overrride) или из конфига маркетплейса
   const commissionPct = body.commission_pct != null
     ? parseFloat(String(body.commission_pct))
-    : getCommission(marketplaceId);
+    : mp?.commission_pct ?? 15;
 
   const result = await calculateUnitEconomics({
     unitPrice,
@@ -64,20 +67,23 @@ export async function POST(req: NextRequest) {
     salePrice,
     quantity:      Math.max(1, parseInt(String(body.quantity ?? '1')) || 1),
     commissionPct,
+    marketplaceId,
     adSpend:       parseFloat(String(body.ad_spend    ?? '0')),
     otherCosts:    parseFloat(String(body.other_costs ?? '0')),
-    cityTo:        String(body.city_to  ?? ''),
+    cityTo:        String(body.city_to   ?? ''),
     countryTo:     String(body.country_to ?? 'Russia'),
     weightKg:      body.weight_kg ? parseFloat(String(body.weight_kg)) : undefined,
     productName:   String(body.product_name ?? ''),
+    moq:           body.moq ? parseInt(String(body.moq)) : undefined,
   });
 
   return NextResponse.json({
-    ok: true,
-    preview: true,
+    ok:                   true,
+    preview:              true,
     economics:            result.economics,
     delivery:             result.delivery,
     priority:             result.priority,
+    marketplace_config:   mp ? { id: mp.id, label: mp.label, tariff_date: mp.tariff_date, commission_note: mp.commission_note } : null,
     rate_limit_remaining: remaining,
   });
 }

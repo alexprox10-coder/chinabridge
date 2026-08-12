@@ -210,9 +210,11 @@ export async function POST(req: NextRequest) {
     verdict,
     verdict_emoji:       verdictEmoji,
     verdict_label:       verdictLabel,
-    ai_analysis:         aiAnalysis,
-    cny_rate:            CNY_RATE,
-    usd_rate:            USD_RATE,
+    ai_analysis:              aiAnalysis,
+    cny_rate:                 CNY_RATE,
+    usd_rate:                 USD_RATE,
+    marketplace_logistics_rub: 0,
+    tax_rub:                  0,
   };
 
   return NextResponse.json({

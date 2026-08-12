@@ -197,6 +197,69 @@ export async function ensureSchema() {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS "product_analyses" (
+      "id" serial PRIMARY KEY NOT NULL,
+      "analysis_id" text NOT NULL,
+      "tenant_id" text DEFAULT 'tenant-chinabridge' NOT NULL,
+      "lead_id" text DEFAULT '' NOT NULL,
+      "source_url" text DEFAULT '' NOT NULL,
+      "source_platform" text DEFAULT '' NOT NULL,
+      "product_name" text DEFAULT '' NOT NULL,
+      "product_data" jsonb DEFAULT '{}'::jsonb NOT NULL,
+      "marketplace" text DEFAULT '' NOT NULL,
+      "city_destination" text DEFAULT '' NOT NULL,
+      "quantity" integer DEFAULT 1 NOT NULL,
+      "unit_price_cny" numeric DEFAULT '0' NOT NULL,
+      "sale_price_rub" numeric DEFAULT '0' NOT NULL,
+      "margin_pct" numeric DEFAULT '0' NOT NULL,
+      "roi_pct" numeric DEFAULT '0' NOT NULL,
+      "net_profit_rub" numeric DEFAULT '0' NOT NULL,
+      "product_score" numeric DEFAULT '0' NOT NULL,
+      "verdict" text DEFAULT '' NOT NULL,
+      "tariff_version" text DEFAULT '' NOT NULL,
+      "cny_rate" numeric DEFAULT '0' NOT NULL,
+      "created_at" text NOT NULL,
+      CONSTRAINT "product_analyses_analysis_id_unique" UNIQUE("analysis_id")
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS "marketplace_rates" (
+      "id" serial PRIMARY KEY NOT NULL,
+      "marketplace" text NOT NULL,
+      "country" text DEFAULT 'RU' NOT NULL,
+      "category" text DEFAULT 'general' NOT NULL,
+      "commission_pct" numeric NOT NULL,
+      "logistics_base_rub" numeric DEFAULT '0' NOT NULL,
+      "logistics_per_kg_rub" numeric DEFAULT '0' NOT NULL,
+      "last_mile_pct" numeric DEFAULT '0' NOT NULL,
+      "last_mile_max_rub" numeric DEFAULT '0' NOT NULL,
+      "effective_from" text NOT NULL,
+      "effective_to" text,
+      "source" text DEFAULT '' NOT NULL,
+      "version" text DEFAULT '1' NOT NULL,
+      "status" text DEFAULT 'active' NOT NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS "tax_rates" (
+      "id" serial PRIMARY KEY NOT NULL,
+      "country" text NOT NULL,
+      "tax_regime" text NOT NULL,
+      "label" text DEFAULT '' NOT NULL,
+      "rate" numeric NOT NULL,
+      "effective_from" text NOT NULL,
+      "effective_to" text,
+      "version" text DEFAULT '1' NOT NULL,
+      "status" text DEFAULT 'active' NOT NULL
+    )
+  `;
+
+  await sql`CREATE INDEX IF NOT EXISTS "product_analyses_tenant_idx" ON "product_analyses" ("tenant_id")`;
+  await sql`CREATE INDEX IF NOT EXISTS "marketplace_rates_mp_idx" ON "marketplace_rates" ("marketplace")`;
+
   await sql`ALTER TABLE "tenants" ADD COLUMN IF NOT EXISTS "pin_hash" text`;
   await sql`CREATE INDEX IF NOT EXISTS "tenants_slug_idx" ON "tenants" ("slug")`;
   await sql`CREATE INDEX IF NOT EXISTS "crm_leads_tenant_idx" ON "crm_leads" ("tenant_id")`;

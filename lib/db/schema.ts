@@ -186,6 +186,66 @@ export const financeSettings = pgTable("finance_settings", {
   updatedAt: text("updated_at").notNull(),
 }, (t) => [index("finance_settings_tenant_idx").on(t.tenantId)]);
 
+// ─── Product Analyses ─────────────────────────────────────────────────────────
+
+export const productAnalyses = pgTable("product_analyses", {
+  id:              serial("id").primaryKey(),
+  analysisId:      text("analysis_id").notNull().unique(),
+  tenantId:        text("tenant_id").notNull().default("tenant-chinabridge"),
+  leadId:          text("lead_id").notNull().default(""),
+  sourceUrl:       text("source_url").notNull().default(""),
+  sourcePlatform:  text("source_platform").notNull().default(""),
+  productName:     text("product_name").notNull().default(""),
+  productData:     jsonb("product_data").notNull().default({}),
+  marketplace:     text("marketplace").notNull().default(""),
+  cityDestination: text("city_destination").notNull().default(""),
+  quantity:        integer("quantity").notNull().default(1),
+  unitPriceCny:    numeric("unit_price_cny").notNull().default("0"),
+  salePriceRub:    numeric("sale_price_rub").notNull().default("0"),
+  marginPct:       numeric("margin_pct").notNull().default("0"),
+  roiPct:          numeric("roi_pct").notNull().default("0"),
+  netProfitRub:    numeric("net_profit_rub").notNull().default("0"),
+  productScore:    numeric("product_score").notNull().default("0"),
+  verdict:         text("verdict").notNull().default(""),
+  tariffVersion:   text("tariff_version").notNull().default(""),
+  cnyRate:         numeric("cny_rate").notNull().default("0"),
+  createdAt:       text("created_at").notNull(),
+}, (t) => [index("product_analyses_tenant_idx").on(t.tenantId)]);
+
+// ─── Marketplace Rates ────────────────────────────────────────────────────────
+// Хранит актуальные тарифы — обновляются через admin без деплоя
+
+export const marketplaceRates = pgTable("marketplace_rates", {
+  id:                 serial("id").primaryKey(),
+  marketplace:        text("marketplace").notNull(),
+  country:            text("country").notNull().default("RU"),
+  category:           text("category").notNull().default("general"),
+  commissionPct:      numeric("commission_pct").notNull(),
+  logisticsBaseRub:   numeric("logistics_base_rub").notNull().default("0"),
+  logisticsPerKgRub:  numeric("logistics_per_kg_rub").notNull().default("0"),
+  lastMilePct:        numeric("last_mile_pct").notNull().default("0"),
+  lastMileMaxRub:     numeric("last_mile_max_rub").notNull().default("0"),
+  effectiveFrom:      text("effective_from").notNull(),
+  effectiveTo:        text("effective_to"),
+  source:             text("source").notNull().default(""),
+  version:            text("version").notNull().default("1"),
+  status:             text("status").notNull().default("active"),
+}, (t) => [index("marketplace_rates_mp_idx").on(t.marketplace)]);
+
+// ─── Tax Rates ────────────────────────────────────────────────────────────────
+
+export const taxRates = pgTable("tax_rates", {
+  id:            serial("id").primaryKey(),
+  country:       text("country").notNull(),
+  taxRegime:     text("tax_regime").notNull(),
+  label:         text("label").notNull().default(""),
+  rate:          numeric("rate").notNull(),
+  effectiveFrom: text("effective_from").notNull(),
+  effectiveTo:   text("effective_to"),
+  version:       text("version").notNull().default("1"),
+  status:        text("status").notNull().default("active"),
+});
+
 // ─── Cash Flow ────────────────────────────────────────────────────────────────
 
 export const cashFlow = pgTable("cash_flow", {
