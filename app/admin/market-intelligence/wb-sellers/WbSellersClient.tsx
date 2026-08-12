@@ -17,6 +17,7 @@ interface РасширенныеДанные {
   reason?: string;
   estimatedSavings?: number;
   supplierId?: string;
+  topProduct?: string;
 }
 
 function parseExtra(message: string): РасширенныеДанные {
