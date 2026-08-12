@@ -75,6 +75,29 @@ export default async function MarketIntelligencePage() {
               <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
             </Link>
 
+            {/* WB Seller AI */}
+            <Link href="/admin/market-intelligence/wb-sellers"
+              className="bg-gradient-to-br from-[#00A86B]/20 to-[#00A86B]/5 border border-[#00A86B]/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">🛒</span>
+                <h3 className="text-white font-bold text-base">WB Продавцы — AI Лид Finder</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-4">Парсер WB → dadata → GPT-4o: находит продавцов, считает экономию, генерирует персональный оффер</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: "Категории",     value: "Электроника, Одежда, Дом, Авто" },
+                  { label: "Lead Score",    value: "AI скоринг 0–100" },
+                  { label: "Оффер",         value: "Персональный + экономия ₽/шт" },
+                ].map(s => (
+                  <div key={s.label} className="flex justify-between text-sm">
+                    <span className="text-slate-500">{s.label}</span>
+                    <span className="text-white font-medium text-xs">{s.value}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
+            </Link>
+
             {/* Deal Intelligence */}
             <Link href="/admin/market-intelligence/deals"
               className="bg-gradient-to-br from-emerald-600/20 to-emerald-800/10 border border-emerald-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">

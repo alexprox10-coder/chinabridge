@@ -30,6 +30,7 @@ const GROUPS = [
       { href: "/admin/marketing/placements",label: "Размещения",         icon: "📌" },
       { href: "/admin/content",             label: "Content AI",         icon: "✍️" },
       { href: "/admin/market-intelligence", label: "Поиск лидов",       icon: "🎯" },
+      { href: "/admin/market-intelligence/wb-sellers", label: "WB Продавцы AI", icon: "🛒" },
       { href: "/admin/ai-company",          label: "AI Кабинет",         icon: "🤖" },
       { href: "/product-finder",            label: "Поиск товаров",      icon: "🔍" },
       { href: "/supplier-finder",           label: "Поиск поставщиков",  icon: "🏭" },
