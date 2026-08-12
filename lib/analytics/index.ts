@@ -69,4 +69,17 @@ export const analytics = {
   importStarted:            (p?: { priority?: string })                => fire("import_started",              "import_started",             { category: "unit_economics", ...p }),
   scenarioSwitched:         (p?: { scenario?: string })                => fire("scenario_switched",           "scenario_switched",          { category: "unit_economics", ...p }),
   targetPriceViewed:        ()                                          => fire("target_price_viewed",        "target_price_viewed",        { category: "unit_economics" }),
+
+  // ── AI Product Analyzer v1.1 — воронка без промежуточной формы ───────────
+  productUrlSubmitted:       ()                                          => fire("product_url_submitted",       "product_url_submitted",       { category: "product_analyzer" }),
+  productScrapeStarted:      ()                                          => fire("product_scrape_started",      "product_scrape_started",      { category: "product_analyzer" }),
+  productScrapeSuccess:      (p?: { platform?: string })                => fire("product_scrape_success",      "product_scrape_success",      { category: "product_analyzer", ...p }),
+  productScrapeFailed:       (p?: { reason?: string })                  => fire("product_scrape_failed",       "product_scrape_failed",       { category: "product_analyzer", ...p }),
+  productExtractionSuccess:  (p?: { confidence?: string })              => fire("product_extraction_success",  "product_extraction_success",  { category: "product_analyzer", ...p }),
+  productExtractionPartial:  (p?: { missing?: string })                 => fire("product_extraction_partial",  "product_extraction_partial",  { category: "product_analyzer", ...p }),
+  unitEconomicsAutoStarted:  ()                                          => fire("unit_economics_auto_started", "unit_economics_auto_started", { category: "product_analyzer" }),
+  unitEconomicsAutoCompleted:(p?: { verdict?: string; score?: number }) => fire("unit_economics_auto_completed","unit_economics_auto_completed",{ category: "product_analyzer", ...p }),
+  manualCorrectionOpened:    ()                                          => fire("manual_correction_opened",    "manual_correction_opened",    { category: "product_analyzer" }),
+  manualCorrectionSaved:     ()                                          => fire("manual_correction_saved",     "manual_correction_saved",     { category: "product_analyzer" }),
+  unitEconomicsRecalculated: (p?: { verdict?: string })                 => fire("unit_economics_recalculated", "unit_economics_recalculated", { category: "product_analyzer", ...p }),
 };

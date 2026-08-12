@@ -60,13 +60,23 @@ export async function POST(req: NextRequest) {
   const result = await parseProductUrl(url);
 
   if (!result.ok) {
-    // Не ошибка — просто предлагаем ввести вручную
+    const codeMap: Record<string, string> = {
+      no_key:             'FIRECRAWL_NOT_CONFIGURED',
+      scrape_failed:      'SCRAPE_FAILED',
+      parse_failed:       'PARSE_FAILED',
+      unsupported_domain: 'UNSUPPORTED_DOMAIN',
+    };
+    const msgMap: Record<string, string> = {
+      no_key:             'Автоматический анализ товара временно недоступен',
+      scrape_failed:      'Не удалось открыть страницу товара (CAPTCHA или недоступность)',
+      parse_failed:       'Не удалось извлечь данные. Введите параметры вручную.',
+      unsupported_domain: 'Поддерживаются только 1688.com, Alibaba.com, Taobao.com',
+    };
     return NextResponse.json({
-      ok:     false,
-      reason: result.reason,
-      message: result.reason === 'no_key'
-        ? 'Автоанализ временно недоступен'
-        : 'Не удалось извлечь данные автоматически. Введите параметры вручную.',
+      ok:      false,
+      reason:  result.reason,
+      code:    (result as { code?: string }).code ?? codeMap[result.reason] ?? 'UNKNOWN',
+      message: msgMap[result.reason] ?? 'Ошибка анализа. Введите данные вручную.',
     });
   }
 
