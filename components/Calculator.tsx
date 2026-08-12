@@ -143,6 +143,26 @@ export default function Calculator() {
             transition={{ duration: 0.65, delay: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
           >
             <CalculatorForm />
+
+            {/* AI Unit Economics CTA */}
+            <motion.a
+              href="/ai-calculator"
+              initial={{ opacity: 0, y: 8 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="mt-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-[#243a5e] hover:border-[#00A86B]/40 bg-white/[0.02] hover:bg-[#00A86B]/5 transition-all group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-xl shrink-0">🤖</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white leading-tight">AI-анализ товара из Китая</p>
+                  <p className="text-[11px] text-[#8899aa] truncate">Рассчитайте маржу и прибыль — без регистрации</p>
+                </div>
+              </div>
+              <svg className="w-4 h-4 text-[#8899aa] group-hover:text-[#00A86B] transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </motion.a>
           </motion.div>
 
         </div>

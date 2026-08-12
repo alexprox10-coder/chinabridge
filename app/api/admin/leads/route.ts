@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { neon } from "@neondatabase/serverless";
-import { getLeads, getDashboardStats } from "@/lib/crm/client";
+import { getLeads, getDashboardStats, createLead } from "@/lib/crm/client";
 import { isAuthorized, getTenantId } from "@/lib/api-auth";
 import { markLeadDeleted } from "@/lib/import-leads/status-store";
 
@@ -29,6 +29,45 @@ export async function GET(req: NextRequest) {
 
   const leads = await getLeads({ status, priority, tenantId });
   return NextResponse.json(leads);
+}
+
+export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const body = await req.json();
+    const now = new Date().toISOString();
+    const lead = await createLead({
+      lead_id:             body.lead_id || crypto.randomUUID(),
+      created_at:          body.created_at || now,
+      updated_at:          now,
+      name:                body.name || "",
+      phone:               body.phone || "",
+      telegram:            body.telegram || "",
+      email:               body.email || "",
+      company:             body.company || "",
+      product:             body.product || "",
+      product_link:        body.product_link || "",
+      category:            body.category || "",
+      quantity:            body.quantity || "",
+      weight:              body.weight || "",
+      volume:              body.volume || "",
+      country_destination: body.country_destination || "",
+      city_destination:    body.city_destination || "",
+      delivery_type:       body.delivery_type || "",
+      service_type:        body.service_type || "",
+      status:              body.status || "NEW",
+      priority:            body.priority || "WARM",
+      estimated_value:     body.estimated_value || 0,
+      manager:             body.manager || "",
+      comment:             body.comment || "",
+      source:              body.source || "manual",
+      utm_source:          body.utm_source || "",
+      utm_campaign:        body.utm_campaign || "",
+    }, getTenantId(req));
+    return NextResponse.json({ ok: true, lead_id: lead.lead_id }, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: "db_error", detail: String(e) }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {

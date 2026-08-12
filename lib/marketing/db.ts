@@ -71,6 +71,20 @@ export interface TaskRow {
   completed_at?: string | null;
 }
 
+export interface PlacementRow {
+  id: number;
+  name: string;
+  username: string | null;
+  channel_type: string;
+  post_type: string;
+  duration_hours: number | null;
+  placed_at: string;
+  expires_at: string | null;
+  cost_rub: number | null;
+  notes: string | null;
+  created_at?: string;
+}
+
 export interface ChannelRow {
   id: number;
   name: string;
@@ -206,6 +220,22 @@ async function bootstrap() {
       role       TEXT NOT NULL,
       content    TEXT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS ad_placements (
+      id             SERIAL PRIMARY KEY,
+      name           TEXT NOT NULL,
+      username       TEXT,
+      channel_type   TEXT NOT NULL DEFAULT 'канал',
+      post_type      TEXT NOT NULL DEFAULT 'временный',
+      duration_hours INTEGER,
+      placed_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at     TIMESTAMPTZ,
+      cost_rub       INTEGER,
+      notes          TEXT,
+      created_at     TIMESTAMPTZ DEFAULT NOW()
     )
   `;
 
@@ -539,6 +569,68 @@ export async function createTask(data: Partial<TaskRow>): Promise<number> {
     RETURNING id
   `) as Record<string, unknown>[];
   return num(rows[0]?.id);
+}
+
+/* ── Ad Placements ────────────────────────────────────────────────────────── */
+
+function mapPlacement(r: Record<string, unknown>): PlacementRow {
+  return {
+    id: num(r.id),
+    name: str(r.name),
+    username: nullableStr(r.username),
+    channel_type: str(r.channel_type, "канал"),
+    post_type: str(r.post_type, "временный"),
+    duration_hours: nullableNum(r.duration_hours),
+    placed_at: r.placed_at ? String(r.placed_at) : new Date().toISOString(),
+    expires_at: r.expires_at ? String(r.expires_at) : null,
+    cost_rub: nullableNum(r.cost_rub),
+    notes: nullableStr(r.notes),
+    created_at: r.created_at ? String(r.created_at) : undefined,
+  };
+}
+
+export async function getPlacements(): Promise<PlacementRow[]> {
+  await bootstrap();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT * FROM ad_placements
+    ORDER BY placed_at DESC, id DESC
+  `) as Record<string, unknown>[];
+  return rows.map(mapPlacement);
+}
+
+export async function createPlacement(data: Partial<PlacementRow>): Promise<number> {
+  await bootstrap();
+  const sql = getSql();
+  const rows = (await sql`
+    INSERT INTO ad_placements
+      (name, username, channel_type, post_type, duration_hours, placed_at, expires_at, cost_rub, notes)
+    VALUES (
+      ${str(data.name, "Без названия")},
+      ${nullableStr(data.username)},
+      ${str(data.channel_type, "канал")},
+      ${str(data.post_type, "временный")},
+      ${nullableNum(data.duration_hours)},
+      ${data.placed_at ? new Date(data.placed_at).toISOString() : new Date().toISOString()},
+      ${data.expires_at ? new Date(data.expires_at).toISOString() : null},
+      ${nullableNum(data.cost_rub)},
+      ${nullableStr(data.notes)}
+    )
+    RETURNING id
+  `) as Record<string, unknown>[];
+  return num(rows[0]?.id);
+}
+
+export async function deletePlacement(id: number): Promise<void> {
+  await bootstrap();
+  const sql = getSql();
+  await sql`DELETE FROM ad_placements WHERE id = ${id}`;
+}
+
+export async function updatePlacementNotes(id: number, notes: string): Promise<void> {
+  await bootstrap();
+  const sql = getSql();
+  await sql`UPDATE ad_placements SET notes = ${notes} WHERE id = ${id}`;
 }
 
 /* ── Channels ─────────────────────────────────────────────────────────────── */

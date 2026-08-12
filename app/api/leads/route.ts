@@ -35,8 +35,9 @@ async function notifyManagerTelegram(lead: Lead): Promise<void> {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Required fields — everything else is optional
-const REQUIRED: (keyof LeadInput)[] = ["name", "phone", "product", "source"];
+// Required fields — phone is optional for lead-magnet/bot sources
+const REQUIRED: (keyof LeadInput)[] = ["name", "product", "source"];
+const REQUIRES_PHONE: (keyof LeadInput)[] = ["phone"];
 
 function validate(body: unknown): { input: LeadInput; errors: Record<string, string> } | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
@@ -51,14 +52,25 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
     }
   }
 
-  // Phone basic check
-  if (!errors.phone && typeof b.phone === "string") {
+  // Phone required unless lead-magnet source
+  const noPhoneSource = ["LEAD_MAGNET_FREE", "telegram_bot"].includes(b.source as string);
+  if (!noPhoneSource) {
+    for (const field of REQUIRES_PHONE) {
+      if (!b[field] || typeof b[field] !== "string" || !(b[field] as string).trim()) {
+        errors[field] = `${field} is required`;
+      }
+    }
+  }
+
+  // Phone basic check (not required for lead magnet sources)
+  const noPhoneRequired = ["LEAD_MAGNET_FREE", "telegram_bot"].includes(b.source as string);
+  if (!noPhoneRequired && !errors.phone && typeof b.phone === "string") {
     const digits = b.phone.replace(/\D/g, "");
     if (digits.length < 10) errors.phone = "phone must have at least 10 digits";
   }
 
   // Source whitelist
-  const allowedSources = ["website_form", "website_chat", "api"];
+  const allowedSources = ["website_form", "website_chat", "api", "LEAD_MAGNET_FREE", "telegram_bot"];
   if (!errors.source && !allowedSources.includes(b.source as string)) {
     errors.source = `source must be one of: ${allowedSources.join(", ")}`;
   }

@@ -39,4 +39,17 @@ export const analytics = {
 
   // ── Прочее ────────────────────────────────────────────────────────────────
   priceDownload:  () => fire("price_download",    "price_download",   { category: "content" }),
+
+  // ── AI Unit Economics Funnel ───────────────────────────────────────────────
+  aiFunnelStart:         ()                               => fire("ai_funnel_start",          "ai_funnel_start",          { category: "ai_funnel" }),
+  aiFunnelUrlEntered:    ()                               => fire("ai_funnel_url_entered",     "ai_funnel_url_entered",    { category: "ai_funnel" }),
+  aiFunnelDescEntered:   ()                               => fire("ai_funnel_desc_entered",    "ai_funnel_desc_entered",   { category: "ai_funnel" }),
+  aiFunnelAnalyzed:      (p?: { confidence?: string })   => fire("ai_funnel_analyzed",        "ai_funnel_analyzed",       { category: "ai_funnel", ...p }),
+  aiFunnelPreviewShown:  (p?: { verdict?: string })      => fire("ai_funnel_preview_shown",   "ai_funnel_preview_shown",  { category: "ai_funnel", ...p }),
+  aiFunnelMpSelected:    (p?: { marketplace?: string })  => fire("ai_funnel_mp_selected",     "ai_funnel_mp_selected",    { category: "ai_funnel", ...p }),
+  aiFunnelFullCalc:      (p?: { verdict?: string })      => fire("ai_funnel_full_calc",       "ai_funnel_full_calc",      { category: "ai_funnel", ...p }),
+  aiFunnelContactOpen:   ()                               => fire("ai_funnel_contact_open",    "ai_funnel_contact_open",   { category: "ai_funnel" }),
+  aiFunnelLeadCreated:   (p?: { priority?: string })     => fire("ai_funnel_lead_created",    "ai_funnel_lead_created",   { category: "ai_funnel", ...p }),
+  aiFunnelSupplierClick: ()                               => fire("ai_funnel_supplier_click",  "ai_funnel_supplier_click", { category: "ai_funnel" }),
+  aiFunnelImportClick:   ()                               => fire("ai_funnel_import_click",    "ai_funnel_import_click",   { category: "ai_funnel" }),
 };
