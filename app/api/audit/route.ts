@@ -1,8 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callLLM } from "@/lib/ai/client";
+import { getLLMConfig } from "@/lib/ai/client";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+async function callAuditLLM(systemPrompt: string, userPrompt: string): Promise<string> {
+  const { baseURL, apiKey, model } = getLLMConfig();
+  if (!apiKey) throw new Error("no_api_key");
+  const res = await fetch(`${baseURL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://chinabridge.pro",
+      "X-Title": "ChinaBridge AI Audit",
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.2,
+      max_tokens: 1200,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+    signal: AbortSignal.timeout(45000),
+  });
+  if (!res.ok) throw new Error(`llm_error_${res.status}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? "{}";
+}
 
 async function fetchSiteText(url: string): Promise<string> {
   try {
@@ -85,9 +113,8 @@ ${siteText || "(не удалось загрузить — анализируй 
 
   let audit: Record<string, unknown> = {};
   try {
-    const raw = await callLLM(SYSTEM, [{ role: "user", content: userPrompt }]);
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-    audit = JSON.parse(cleaned);
+    const raw = await callAuditLLM(SYSTEM, userPrompt);
+    audit = JSON.parse(raw);
   } catch {
     audit = {
       companyName: "Компания",
