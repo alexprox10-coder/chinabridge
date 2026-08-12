@@ -86,13 +86,20 @@ export async function POST(req: NextRequest) {
       `🔗 CRM: https://chinabridge.pro/admin/import-leads`,
     ].filter(Boolean).join('\n');
 
-    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
-      signal: AbortSignal.timeout(8000),
-    }).catch(() => {});
+    let tgDebug: unknown = null;
+    try {
+      const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+        signal: AbortSignal.timeout(8000),
+      });
+      tgDebug = await tgRes.json();
+    } catch (e) {
+      tgDebug = { error: String(e) };
+    }
+    return NextResponse.json({ ok: true, lead_id: leadId, _tg: tgDebug, _chat: chatId?.slice(0, 6) });
   }
 
-  return NextResponse.json({ ok: true, lead_id: leadId });
+  return NextResponse.json({ ok: true, lead_id: leadId, _tg: 'no_credentials' });
 }
