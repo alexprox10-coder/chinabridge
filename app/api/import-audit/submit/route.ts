@@ -59,24 +59,38 @@ export async function POST(req: NextRequest) {
     'tenant-chinabridge',
   ).catch(() => {});
 
-  const n8nUrl = process.env.N8N_WEBHOOK_URL;
-  if (n8nUrl) {
-    fetch(n8nUrl, {
+  // Прямое Telegram-уведомление менеджеру
+  const botToken  = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId    = process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
+  if (botToken && chatId) {
+    const VOLUME_LABELS: Record<string, string> = {
+      less_1m: '< 1 млн ₽/мес', '1_5m': '1–5 млн ₽/мес',
+      '5_20m': '5–20 млн ₽/мес', over_20m: '> 20 млн ₽/мес',
+    };
+    const PROBLEM_LABELS: Record<string, string> = {
+      margin: 'Маржа падает', supplier: 'Поставщик ненадёжный/дорогой',
+      logistics: 'Логистика дорогая', customs: 'Проблемы с таможней', all: 'Общий аудит',
+    };
+    const text = [
+      '📊 <b>Новый лид — Аудит импорта</b>',
+      '',
+      `📦 Товар: ${product || '—'}`,
+      `💰 Объём: ${(VOLUME_LABELS[volume] ?? volume) || '—'}`,
+      `⚠️ Проблема: ${(PROBLEM_LABELS[problem] ?? problem) || '—'}`,
+      '',
+      name     ? `👤 Имя: ${name}` : '',
+      telegram ? `📱 Telegram: ${telegram}` : '',
+      phone    ? `📞 Телефон: ${phone}` : '',
+      '',
+      `🆔 Lead ID: ${leadId}`,
+      `🔗 CRM: https://chinabridge.pro/admin/import-leads`,
+    ].filter(Boolean).join('\n');
+
+    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event:    'lead.created',
-        lead_id:  leadId,
-        source:   'import_audit_lm',
-        name,
-        phone,
-        telegram,
-        product,
-        volume,
-        problem,
-        priority: 'HIGH',
-      }),
-      signal: AbortSignal.timeout(5000),
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+      signal: AbortSignal.timeout(8000),
     }).catch(() => {});
   }
 
