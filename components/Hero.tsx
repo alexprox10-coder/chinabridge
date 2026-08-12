@@ -6,7 +6,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { trackGAEvent } from "@/lib/analytics/ga";
 
-const checks = ["Представитель в Китае", "Проверка фабрик", "Сборные грузы", "Под ключ"];
+const checks = [
+  "Товар на полке WB/Ozon за 25–35 дней",
+  "Поставщик + проверка фабрики в Китае",
+  "Таможня + документы под ключ",
+  "AI-расчёт маржи до закупки",
+];
 
 function RouteMap() {
   return (
@@ -211,12 +216,12 @@ export default function Hero() {
             </div>
 
             <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-5">
-              Импорт из Китая<br/>
-              <span className="text-gradient">под ключ — с AI</span>
+              Ваш товар на полке<br/>
+              <span className="text-gradient">WB и Ozon из Китая</span>
             </h1>
 
             <p className="fade-up text-lg text-[#8899aa] leading-relaxed mb-7 max-w-lg">
-              AI-платформа + представитель в Китае: найдём фабрику, проверим товар, оформим таможню и доставим в Россию или Казахстан. Белый импорт без серых схем.
+              Находим поставщика, проверяем фабрику, везём, растамаживаем и отправляем на склад маркетплейса. Вы получаете готовый товар — и считаете прибыль.
             </p>
 
             <ul className="fade-up flex flex-col gap-2.5 mb-9">
@@ -230,23 +235,23 @@ export default function Hero() {
 
             <div className="fade-up flex flex-col sm:flex-row gap-3">
               <Link
-                href="/free"
+                href="/ai-calculator"
                 className="btn-primary"
-                onClick={() => trackGAEvent("hero_import_click")}
+                onClick={() => trackGAEvent("hero_calc_click")}
               >
-                Начать импорт <ArrowRight className="w-4 h-4"/>
+                Рассчитать прибыль <ArrowRight className="w-4 h-4"/>
               </Link>
               <Link
-                href="/platform"
+                href="#launch-package"
                 className="btn-outline"
-                onClick={() => trackGAEvent("hero_platform_click")}
+                onClick={(e) => { e.preventDefault(); trackGAEvent("hero_package_click"); document.querySelector("#launch-package")?.scrollIntoView({ behavior: "smooth" }); }}
               >
-                Для карго-компаний
+                Пакеты запуска
               </Link>
             </div>
 
             <div className="fade-up flex gap-8 mt-10 pt-8 border-t border-[#243a5e]">
-              {[{ v: "500+", l: "успешных поставок" }, { v: "от 50 кг", l: "минимальный вес" }, { v: "20–40%", l: "экономия vs Alibaba" }].map(s => (
+              {[{ v: "500+", l: "успешных поставок" }, { v: "25–35", l: "дней до полки WB" }, { v: "20–40%", l: "экономия vs Alibaba" }].map(s => (
                 <div key={s.l}>
                   <div className="text-2xl font-bold">{s.v}</div>
                   <div className="text-xs text-[#8899aa] mt-0.5">{s.l}</div>

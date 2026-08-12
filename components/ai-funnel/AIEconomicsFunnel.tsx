@@ -1251,10 +1251,10 @@ export default function AIEconomicsFunnel() {
           <div className="flex flex-col gap-2.5">
             {ec.verdict !== "red" ? (
               <button
-                onClick={() => { analytics.aiFunnelImportClick(); analytics.importStarted({ priority: s.priority ?? undefined }); window.location.href = "/"; }}
+                onClick={() => { analytics.aiFunnelImportClick(); analytics.importStarted({ priority: s.priority ?? undefined }); window.location.href = "/#launch-package"; }}
                 className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all"
               >
-                🚀 Запустить импорт
+                🚀 Запустить товар на WB/Ozon
               </button>
             ) : (
               <button

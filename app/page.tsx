@@ -4,6 +4,7 @@ import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
 import ForWhom from "@/components/ForWhom";
 import Advantages from "@/components/Advantages";
+import LaunchPackageSection from "@/components/LaunchPackageSection";
 import ImportEcosystemBlock from "@/components/ImportEcosystemBlock";
 import Services from "@/components/Services";
 import Directions from "@/components/Directions";
@@ -98,6 +99,7 @@ export default function Home() {
       <main>
         <Header />
         <Hero />
+        <LaunchPackageSection />
         <HowItWorks />
         <ForWhom />
         <Advantages />
