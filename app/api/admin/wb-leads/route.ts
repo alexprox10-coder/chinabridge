@@ -3,9 +3,9 @@ import { getAllLeads } from "@/lib/import-leads/crm";
 
 export const runtime = "nodejs";
 
-const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
-const N8N_KEY  = process.env.N8N_API_KEY  ?? "";
-const WB_WORKFLOW_ID = "ptPvBMZXCYAWnUr6";
+// Webhook URL задаётся через env или дефолт — путь прописан в ноде "Вебхук запуск"
+const WB_WEBHOOK_URL = process.env.N8N_WB_PARSER_WEBHOOK_URL
+  ?? "https://n8n.arendadom24.ru/webhook/wb-seller-parser-start";
 
 function isAuthorized(req: NextRequest) {
   return !!(req.cookies.get("cb_admin")?.value || req.cookies.get("cb_tenant_session")?.value);
@@ -24,17 +24,18 @@ export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
 
   try {
-    const res = await fetch(`${N8N_BASE}/api/v1/workflows/${WB_WORKFLOW_ID}/run`, {
+    const res = await fetch(WB_WEBHOOK_URL, {
       method: "POST",
-      headers: { "X-N8N-API-KEY": N8N_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-      signal: AbortSignal.timeout(10000),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source: "admin_ui" }),
+      signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) {
-      return NextResponse.json({ ok: false, error: "n8n_error" }, { status: 502 });
+      const errText = await res.text().catch(() => "");
+      console.error("[POST /api/admin/wb-leads] webhook error", res.status, errText);
+      return NextResponse.json({ ok: false, error: "n8n_error", status: res.status }, { status: 502 });
     }
-    const data = await res.json().catch(() => ({}));
-    return NextResponse.json({ ok: true, executionId: data.data?.id ?? null });
+    return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[POST /api/admin/wb-leads]", e);
     return NextResponse.json({ ok: false, error: "internal" }, { status: 500 });
