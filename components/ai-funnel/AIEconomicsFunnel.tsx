@@ -697,6 +697,33 @@ export default function AIEconomicsFunnel() {
     }
   }
 
+  // ── Share ───────────────────────────────────────────────────────────────────
+
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare(ec: EconomicsResult) {
+    const mp   = s.marketplace_config?.label ?? s.marketplace.toUpperCase();
+    const text = `Проверил товар через AI-калькулятор ChinaBridge:\n${ec.verdict_emoji} ${ec.verdict_label}\nМаржа ${ec.margin_pct.toFixed(1)}% · ROI ${ec.roi_pct.toFixed(0)}% · Прибыль ${Math.round(ec.net_profit_rub / ec.quantity).toLocaleString("ru-RU")} ₽/шт (${mp})\n\nРассчитай свой товар →`;
+    const url  = "https://chinabridge.pro/ai-calculator";
+
+    if (navigator.share) {
+      try { await navigator.share({ title: "Расчёт товара из Китая", text, url }); return; } catch { /* user cancelled */ }
+    }
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch { /* ignore */ }
+  }
+
+  function handleTgShare(ec: EconomicsResult) {
+    const mp   = s.marketplace_config?.label ?? s.marketplace.toUpperCase();
+    const text = `Проверил товар через AI-калькулятор ChinaBridge: ${ec.verdict_emoji} ${ec.verdict_label}, маржа ${ec.margin_pct.toFixed(1)}%, ROI ${ec.roi_pct.toFixed(0)}% (${mp}). Рассчитай свой товар →`;
+    const url  = encodeURIComponent("https://chinabridge.pro/ai-calculator");
+    window.open(`https://t.me/share/url?url=${url}&text=${encodeURIComponent(text)}`, "_blank");
+  }
+
   // ── Progress bar ────────────────────────────────────────────────────────────
 
   const ec = s.economics;
@@ -1243,6 +1270,28 @@ export default function AIEconomicsFunnel() {
             >
               Написать менеджеру в Telegram
             </a>
+
+            {/* Share block */}
+            <div className="pt-1 border-t border-[#243a5e]/60">
+              <p className="text-[10px] text-[#8899aa] text-center mb-2 uppercase tracking-wide">Поделиться расчётом</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleShare(ec)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-[#243a5e] hover:border-[#00A86B]/40 text-[#8899aa] hover:text-white text-xs rounded-xl transition-all"
+                >
+                  {copied ? "✅ Скопировано!" : "🔗 Скопировать ссылку"}
+                </button>
+                <button
+                  onClick={() => handleTgShare(ec)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-[#243a5e] hover:border-[#229ED9]/50 text-[#8899aa] hover:text-[#229ED9] text-xs rounded-xl transition-all"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.02 9.52c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.4 14.382l-2.95-.924c-.641-.2-.654-.641.136-.948l11.527-4.445c.537-.194 1.006.131.449.182z"/>
+                  </svg>
+                  Telegram
+                </button>
+              </div>
+            </div>
           </div>
 
           <button
