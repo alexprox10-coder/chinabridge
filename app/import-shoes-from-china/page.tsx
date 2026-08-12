@@ -53,8 +53,8 @@ export default function Page() {
             a: "Да. Обувь без логотипов известных брендов — без ограничений. Реплики с логотипами Nike, Adidas и других — не берём в работу.",
           },
         ],
-        cta_primary_text: "Рассчитать доставку",
-        cta_primary_href: "/delivery-calculator",
+        cta_primary_text: "🤖 Рассчитать маржу бесплатно",
+        cta_primary_href: "/ai-calculator",
         cta_secondary_text: "Найти производителя",
         cta_secondary_href: "/supplier-finder",
         related: [

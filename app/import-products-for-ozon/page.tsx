@@ -53,8 +53,8 @@ export default function Page() {
             a: "При готовых документах: 2-3 недели на доставку + 3-5 дней на регистрацию в Ozon + 5-7 дней на приёмку. Итого ~1 месяц от заказа до первых продаж.",
           },
         ],
-        cta_primary_text: "Рассчитать AI юнит-экономику",
-        cta_primary_href: "/delivery-calculator",
+        cta_primary_text: "🤖 Рассчитать маржу бесплатно",
+        cta_primary_href: "/ai-calculator",
         cta_secondary_text: "Найти товары для Ozon",
         cta_secondary_href: "/product-finder",
         related: [

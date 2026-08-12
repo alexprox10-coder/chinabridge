@@ -53,8 +53,8 @@ export default function Page() {
             a: "Для ряда категорий — обязательно: одежда, обувь, детские товары, электроника, посуда. Wildberries блокирует карточки без документов. Помогаем оформить до начала продаж.",
           },
         ],
-        cta_primary_text: "Рассчитать AI юнит-экономику",
-        cta_primary_href: "/delivery-calculator",
+        cta_primary_text: "🤖 Рассчитать маржу бесплатно",
+        cta_primary_href: "/ai-calculator",
         cta_secondary_text: "Найти товары для WB",
         cta_secondary_href: "/product-finder",
         related: [

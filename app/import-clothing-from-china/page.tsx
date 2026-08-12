@@ -53,8 +53,8 @@ export default function Page() {
             a: "Минимум для сборного груза — 50 кг. Для разовых небольших партий предлагаем авиадоставку (5-7 дней), минимум от 5 кг.",
           },
         ],
-        cta_primary_text: "Рассчитать доставку",
-        cta_primary_href: "/delivery-calculator",
+        cta_primary_text: "🤖 Рассчитать маржу бесплатно",
+        cta_primary_href: "/ai-calculator",
         cta_secondary_text: "Найти поставщика",
         cta_secondary_href: "/supplier-finder",
         related: [

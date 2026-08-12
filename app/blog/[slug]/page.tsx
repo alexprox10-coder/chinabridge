@@ -172,12 +172,12 @@ export default async function ArticlePage({ params }: Props) {
 
         {/* CTA in article */}
         <div className="mt-10 p-6 bg-[#0f2644]/60 border border-[#00A86B]/30 rounded-2xl text-center">
-          <p className="text-white font-semibold mb-3">Готовы рассчитать стоимость доставки?</p>
+          <p className="text-white font-semibold mb-3">Рассчитайте маржу вашего товара за 15 секунд</p>
           <Link
-            href="/#calculator"
+            href="/ai-calculator"
             className="inline-flex items-center gap-2 bg-[#00A86B] hover:bg-[#009060] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
           >
-            Рассчитать доставку →
+            🤖 Рассчитать маржу бесплатно →
           </Link>
         </div>
       </article>
