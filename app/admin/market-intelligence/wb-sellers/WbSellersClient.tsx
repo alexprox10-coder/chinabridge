@@ -208,7 +208,7 @@ export default function WbSellersClient() {
 
                     {/* Товар */}
                     <div className="hidden sm:block min-w-0 max-w-[200px]">
-                      <p className="text-slate-400 text-xs truncate">{лид.product}</p>
+                      <p className="text-slate-400 text-xs truncate">{ext.topProduct ?? ""}</p>
                       {ext.estimatedSavings && ext.estimatedSavings > 0 ? (
                         <p className="text-[#00A86B] text-xs font-semibold">
                           экономия ~{ext.estimatedSavings.toLocaleString("ru")}₽/шт

@@ -26,15 +26,15 @@ const GROUPS = [
   {
     label: "AI & Аналитика",
     items: [
-      { href: "/admin/marketing",           label: "Marketing AI",       icon: "📣" },
+      { href: "/admin/marketing",           label: "Маркетинг AI",       icon: "📣" },
       { href: "/admin/marketing/placements",label: "Размещения",         icon: "📌" },
-      { href: "/admin/content",             label: "Content AI",         icon: "✍️" },
-      { href: "/admin/market-intelligence", label: "Поиск лидов",       icon: "🎯" },
+      { href: "/admin/content",             label: "Контент AI",         icon: "✍️" },
+      { href: "/admin/market-intelligence", label: "Поиск лидов",        icon: "🎯" },
       { href: "/admin/market-intelligence/wb-sellers", label: "WB Продавцы AI", icon: "🛒" },
       { href: "/admin/ai-company",          label: "AI Кабинет",         icon: "🤖" },
       { href: "/product-finder",            label: "Поиск товаров",      icon: "🔍" },
       { href: "/supplier-finder",           label: "Поиск поставщиков",  icon: "🏭" },
-      { href: "/knowledge",                 label: "База знаний",         icon: "📚" },
+      { href: "/knowledge",                 label: "База знаний",        icon: "📚" },
     ],
   },
   {

@@ -24,6 +24,12 @@ export async function POST(req: NextRequest) {
 
     const addressRaw = String(extraData.address ?? body.city ?? "");
 
+    // Объединяем extraData с product из тела запроса
+    const messageData = {
+      ...extraData,
+      topProduct: body.product ?? extraData.topProduct ?? "",
+    };
+
     const lead: Omit<ImportLead, "id"> = {
       lead_id:    String(body.lead_id ?? `wb-${Date.now()}`),
       company:    String(body.company ?? body.name ?? ""),
@@ -40,7 +46,7 @@ export async function POST(req: NextRequest) {
       score_stars: "★".repeat(mappedScore),
       why:        String(extraData.reason ?? body.why ?? ""),
       offer:      String(extraData.offer  ?? body.offer ?? ""),
-      message:    typeof rawComment === "string" ? rawComment : JSON.stringify(rawComment),
+      message:    JSON.stringify(messageData),
       company_id: "chinabridge",
       created_at: new Date().toISOString(),
       status:     "new",

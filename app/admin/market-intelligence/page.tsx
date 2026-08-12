@@ -57,7 +57,7 @@ export default async function MarketIntelligencePage() {
               className="bg-gradient-to-br from-purple-600/20 to-purple-800/10 border border-purple-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">📡</span>
-                <h3 className="text-white font-bold text-base">Market Radar AI</h3>
+                <h3 className="text-white font-bold text-base">Радар рынка AI</h3>
               </div>
               <p className="text-slate-400 text-sm mb-4">Мониторинг рынка: конкуренты, тренды, Telegram-каналы, VK-сообщества</p>
               <div className="space-y-1.5">
@@ -103,7 +103,7 @@ export default async function MarketIntelligencePage() {
               className="bg-gradient-to-br from-emerald-600/20 to-emerald-800/10 border border-emerald-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">💡</span>
-                <h3 className="text-white font-bold text-base">Deal Intelligence AI</h3>
+                <h3 className="text-white font-bold text-base">Сделки — AI Аналитика</h3>
               </div>
               <p className="text-slate-400 text-sm mb-4">AI-скоринг сделок, вероятность закрытия, прогноз выручки на 7/30/90 дней</p>
               <div className="space-y-1.5">
