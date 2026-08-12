@@ -264,7 +264,7 @@ export default function HhLeadsClient() {
                       </div>
                       <div>
                         <p className="text-slate-500 text-xs mb-0.5">Категория</p>
-                        <p className="text-white">{КАТ_LABEL[кат] ?? кат || "—"}</p>
+                        <p className="text-white">{(КАТ_LABEL[кат] ?? кат) || "—"}</p>
                       </div>
                     </div>
 
