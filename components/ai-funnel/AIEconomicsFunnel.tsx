@@ -1128,13 +1128,27 @@ export default function AIEconomicsFunnel() {
 
           {/* CTA */}
           <div className="bg-[#00A86B]/5 border border-[#00A86B]/20 rounded-xl p-4">
-            <p className="text-sm font-semibold text-white mb-1">Получить полный расчёт и сохранить анализ</p>
-            <p className="text-xs text-[#8899aa] mb-3">Менеджер свяжется и подберёт точную стоимость доставки</p>
+            {ec.verdict === "red" ? (
+              <>
+                <p className="text-sm font-semibold text-white mb-1">Маржа {ec.margin_pct.toFixed(1)}% — найдём поставщика дешевле</p>
+                <p className="text-xs text-[#8899aa] mb-3">Подберём 3 альтернативы с ценой на 15–30% ниже и пересчитаем маржу</p>
+              </>
+            ) : ec.verdict === "yellow" ? (
+              <>
+                <p className="text-sm font-semibold text-white mb-1">Маржа {ec.margin_pct.toFixed(1)}% — есть потенциал до 25%+</p>
+                <p className="text-xs text-[#8899aa] mb-3">Покажем, где снизить логистику или комиссию, чтобы выйти на цель</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-white mb-1">Маржа {ec.margin_pct.toFixed(1)}% — товар готов к запуску</p>
+                <p className="text-xs text-[#8899aa] mb-3">Зафиксируем расчёт и предложим схему доставки с точными ценами</p>
+              </>
+            )}
             <button
               onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict }); go("contact"); }}
               className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
             >
-              📩 Получить полный расчёт
+              {ec.verdict === "red" ? "🔍 Найти поставщика дешевле" : ec.verdict === "yellow" ? "📊 Получить план оптимизации" : "🚀 Зафиксировать расчёт"}
             </button>
           </div>
 
@@ -1143,7 +1157,7 @@ export default function AIEconomicsFunnel() {
               onClick={() => { analytics.aiFunnelSupplierClick(); analytics.supplierSearchClicked(); window.location.href = "/supplier-finder"; }}
               className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all"
             >
-              🔍 Найти поставщика дешевле →
+              🔍 Сразу перейти к поиску поставщиков →
             </button>
           )}
 
@@ -1219,8 +1233,8 @@ export default function AIEconomicsFunnel() {
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white mb-1">Анализ сохранён!</h2>
-            <p className="text-sm text-[#8899aa]">Менеджер ChinaBridge свяжется с вами в течение 15 минут</p>
+            <h2 className="text-xl font-bold text-white mb-1">Менеджер уже видит ваш расчёт</h2>
+            <p className="text-sm text-[#8899aa]">Свяжемся в течение 15 минут и уточним детали</p>
           </div>
 
           <div className={`rounded-xl p-4 border ${verdictBg(ec.verdict)}`}>
@@ -1248,25 +1262,60 @@ export default function AIEconomicsFunnel() {
             </div>
           )}
 
-          <div className="flex flex-col gap-2.5">
-            {ec.verdict !== "red" ? (
-              <button
-                onClick={() => { analytics.aiFunnelImportClick(); analytics.importStarted({ priority: s.priority ?? undefined }); window.location.href = "/#launch-package"; }}
-                className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all"
-              >
-                🚀 Запустить товар на WB/Ozon
-              </button>
+          {/* OTO — следующий шаг по вердикту */}
+          <div className="bg-[#0d2035] border border-[#1a3050] rounded-xl p-4 text-left">
+            <p className="text-[10px] text-[#8899aa] uppercase font-semibold tracking-wide mb-2">Что дальше</p>
+            {ec.verdict === "red" ? (
+              <>
+                <p className="text-sm text-white mb-3">Товар убыточен при текущей цене закупки. Менеджер подберёт 3 альтернативных поставщика — чтобы выйти на маржу 20%+</p>
+                <button
+                  onClick={() => { analytics.aiFunnelSupplierClick(); analytics.supplierSearchClicked(); window.location.href = "/supplier-finder"; }}
+                  className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
+                >
+                  🔍 Найти поставщика с ценой ниже
+                </button>
+              </>
+            ) : ec.verdict === "yellow" ? (
+              <>
+                <p className="text-sm text-white mb-3">Потенциал есть — маржа вырастет до 25%+. Менеджер покажет, где снизить логистику или комиссию маркетплейса</p>
+                <button
+                  onClick={() => { analytics.aiFunnelImportClick(); analytics.importStarted({ priority: s.priority ?? undefined }); window.location.href = "/#launch-package"; }}
+                  className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
+                >
+                  📊 Оптимизировать структуру затрат
+                </button>
+              </>
             ) : (
-              <button
-                onClick={() => { analytics.aiFunnelSupplierClick(); analytics.supplierSearchClicked(); window.location.href = "/supplier-finder"; }}
-                className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all"
-              >
-                🔍 Найти поставщика дешевле
-              </button>
+              <>
+                <p className="text-sm text-white mb-3">Отличный товар! Следующий шаг — найти поставщика и запустить первую партию. Менеджер готов к работе</p>
+                <button
+                  onClick={() => { analytics.aiFunnelImportClick(); analytics.importStarted({ priority: s.priority ?? undefined }); window.location.href = "/#launch-package"; }}
+                  className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
+                >
+                  🚀 Запустить импорт
+                </button>
+              </>
             )}
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {/* Telegram channel — точка входа в follow-up серию */}
+            <a href="https://t.me/chinabridgeline" target="_blank" rel="noopener noreferrer"
+              onClick={() => analytics.telegramClick()}
+              className="flex items-center justify-between w-full px-4 py-3 border border-[#1a3050] hover:border-[#229ED9]/50 hover:bg-white/5 text-sm rounded-xl transition-all"
+            >
+              <span className="flex items-center gap-2 text-white">
+                <svg className="w-4 h-4 text-[#229ED9] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.247l-2.02 9.52c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.4 14.382l-2.95-.924c-.641-.2-.654-.641.136-.948l11.527-4.445c.537-.194 1.006.131.449.182z"/>
+                </svg>
+                Telegram-канал ChinaBridge
+              </span>
+              <span className="text-xs text-[#8899aa]">Кейсы и советы →</span>
+            </a>
+
             <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
               onClick={() => analytics.telegramClick()}
-              className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-white hover:bg-white/5 text-sm rounded-xl transition-all block"
+              className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all block"
             >
               Написать менеджеру в Telegram
             </a>

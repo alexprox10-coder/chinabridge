@@ -136,14 +136,14 @@ export default function AICalculatorPage() {
               AI Unit Economics
             </p>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
-              Рассчитайте прибыль<br className="hidden sm:block" />
+              Проверьте товар<br className="hidden sm:block" />
               <span className="bg-gradient-to-r from-[#00A86B] to-[#00d48a] bg-clip-text text-transparent">
-                {" "}от импорта из Китая
+                {" "}перед закупкой из Китая
               </span>
             </h1>
             <p className="text-[#8899aa] text-sm leading-relaxed max-w-lg mx-auto">
-              Вставьте ссылку на 1688 или Alibaba — AI проверит товар, рассчитает
-              таможню, маржу и потенциальную прибыль. Бесплатно.
+              Не покупайте вслепую — вставьте ссылку с 1688 или Alibaba и получите
+              реальную маржу с учётом таможни, доставки и комиссии маркетплейса. Бесплатно.
             </p>
           </div>
 
