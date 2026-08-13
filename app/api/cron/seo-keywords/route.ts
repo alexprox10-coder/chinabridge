@@ -1,36 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { neon } from "@neondatabase/serverless";
 import { getLLMConfig } from "@/lib/ai/client";
 import { SEO_KEYWORDS } from "@/lib/seo/clusters";
-
-async function ensureSeoTable() {
-  const { neon } = await import("@neondatabase/serverless");
-  const sql = neon(process.env.DATABASE_URL!);
-  await sql`
-    CREATE TABLE IF NOT EXISTS seo_keywords_dynamic (
-      id          TEXT PRIMARY KEY,
-      keyword     TEXT NOT NULL,
-      cluster     TEXT NOT NULL,
-      cluster_label TEXT NOT NULL,
-      cluster_group TEXT NOT NULL,
-      type        TEXT NOT NULL,
-      traffic     TEXT NOT NULL DEFAULT 'medium',
-      competition TEXT NOT NULL DEFAULT 'medium',
-      priority    INTEGER NOT NULL DEFAULT 7,
-      template    TEXT NOT NULL DEFAULT 'landing',
-      target_url  TEXT NOT NULL,
-      status      TEXT NOT NULL DEFAULT 'pending',
-      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `;
-  return sql;
-}
-
-async function getExistingUrls(sql: ReturnType<typeof import("@neondatabase/serverless")["neon"]>) {
-  const static_urls = SEO_KEYWORDS.map(k => k.targetUrl);
-  const dynamic = await sql`SELECT target_url FROM seo_keywords_dynamic`;
-  const dynamic_urls = (dynamic as { target_url: string }[]).map(r => r.target_url);
-  return new Set([...static_urls, ...dynamic_urls]);
-}
 
 export async function GET(req: NextRequest) {
   const cronHeader = req.headers.get("x-vercel-cron");
@@ -43,22 +14,44 @@ export async function GET(req: NextRequest) {
   const { baseURL, apiKey, model } = getLLMConfig();
   if (!apiKey) return NextResponse.json({ ok: false, error: "no_api_key" }, { status: 500 });
 
-  let sql: ReturnType<typeof import("@neondatabase/serverless")["neon"]>;
+  const sql = neon(process.env.DATABASE_URL!);
+
   try {
-    sql = await ensureSeoTable();
+    await sql`
+      CREATE TABLE IF NOT EXISTS seo_keywords_dynamic (
+        id          TEXT PRIMARY KEY,
+        keyword     TEXT NOT NULL,
+        cluster     TEXT NOT NULL,
+        cluster_label TEXT NOT NULL,
+        cluster_group TEXT NOT NULL,
+        type        TEXT NOT NULL,
+        traffic     TEXT NOT NULL DEFAULT 'medium',
+        competition TEXT NOT NULL DEFAULT 'medium',
+        priority    INTEGER NOT NULL DEFAULT 7,
+        template    TEXT NOT NULL DEFAULT 'landing',
+        target_url  TEXT NOT NULL,
+        status      TEXT NOT NULL DEFAULT 'pending',
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
   } catch (e) {
     return NextResponse.json({ ok: false, error: `db_init: ${e}` }, { status: 500 });
   }
 
-  const existingUrls = await getExistingUrls(sql);
+  // Существующие URL (статические + динамические)
+  const staticUrls = SEO_KEYWORDS.map(k => k.targetUrl);
+  const dynRows = (await sql`SELECT target_url FROM seo_keywords_dynamic`) as Array<{ target_url: string }>;
+  const existingUrls = new Set([...staticUrls, ...dynRows.map(r => r.target_url)]);
 
+  // Счётчик для промпта
+  const countRows = (await sql`SELECT COUNT(*)::int AS n FROM seo_keywords_dynamic`) as Array<{ n: number }>;
+  const existingCount = SEO_KEYWORDS.length + (countRows[0]?.n ?? 0);
   const existingClusters = [...new Set(SEO_KEYWORDS.map(k => k.clusterLabel))].join(", ");
-  const existingKeywordsCount = SEO_KEYWORDS.length + (await sql`SELECT COUNT(*) as n FROM seo_keywords_dynamic`)[0].n;
 
   const systemPrompt = `Ты SEO-эксперт по B2B импорту из Китая для рынков СНГ (Россия, Казахстан, Узбекистан, Беларусь).
 Ответ ТОЛЬКО в JSON без markdown.`;
 
-  const userPrompt = `Сейчас в базе ${existingKeywordsCount} ключевых запросов по кластерам: ${existingClusters}.
+  const userPrompt = `Сейчас в базе ${existingCount} ключевых запросов по кластерам: ${existingClusters}.
 
 Придумай 8 НОВЫХ ключевых запросов, которых ещё нет в базе.
 Фокусируй на: специфические товарные ниши, длинный хвост, новые гео, коммерческие запросы с деньгами/расчётами, FAQ.
@@ -74,7 +67,7 @@ export async function GET(req: NextRequest) {
       "type": "commercial|informational",
       "traffic": "low|medium|high",
       "competition": "low|medium|high",
-      "priority": 6-10,
+      "priority": 6,
       "template": "landing|blog|faq|category",
       "target_url": "/slug-url"
     }
@@ -101,7 +94,7 @@ export async function GET(req: NextRequest) {
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: "user",   content: userPrompt },
         ],
       }),
       signal: AbortSignal.timeout(45000),
@@ -114,7 +107,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: `llm: ${e}` }, { status: 500 });
   }
 
-  // Фильтруем дубли по URL
   const unique = newKeywords.filter(k => k.target_url && !existingUrls.has(k.target_url));
 
   const inserted: string[] = [];
