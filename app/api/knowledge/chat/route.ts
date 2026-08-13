@@ -76,9 +76,46 @@ export async function POST(req: NextRequest) {
       ? parsed.suggestions.filter((s: unknown) => typeof s === 'string').slice(0, 2)
       : [];
 
+    // Сохраняем вопрос в DB для SEO-анализа (non-blocking)
+    saveQuestion(question, answer).catch(() => {});
+
     return NextResponse.json({ ok: true, answer, suggestions });
   } catch (e) {
     console.error('[knowledge/chat]', e);
     return NextResponse.json({ ok: false, error: 'Ошибка AI. Попробуйте ещё раз.' }, { status: 500 });
   }
+}
+
+async function saveQuestion(question: string, answer: string) {
+  if (question.length < 10) return;
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL!);
+
+    let score = 5;
+    const q = question.toLowerCase();
+    if (question.length > 40) score += 2;
+    else if (question.length > 25) score += 1;
+    if (question.length < 15) score -= 2;
+    const infoWords = ["как", "сколько", "почему", "что такое", "можно ли", "нужно ли", "когда", "зачем", "где"];
+    if (infoWords.some(w => q.includes(w))) score += 1;
+    const importWords = ["китай", "доставк", "таможн", "поставщик", "карго", "казахстан", "wb", "ozon", "1688", "alibaba", "выкуп", "импорт"];
+    score += Math.min(importWords.filter(w => q.includes(w)).length, 2);
+    score = Math.max(1, Math.min(10, score));
+
+    const keyword = question.replace(/^(как|сколько|почему|что такое|можно ли|когда|зачем|где|есть ли)\s+/i, "").replace(/\?$/, "").trim();
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS knowledge_questions (
+        id SERIAL PRIMARY KEY, question TEXT NOT NULL, answer TEXT NOT NULL,
+        keyword TEXT, seo_score INTEGER DEFAULT 5,
+        page_created BOOLEAN DEFAULT false, page_slug TEXT,
+        asked_at TIMESTAMPTZ DEFAULT now()
+      )
+    `;
+    await sql`
+      INSERT INTO knowledge_questions (question, answer, keyword, seo_score)
+      VALUES (${question}, ${answer}, ${keyword}, ${score})
+    `;
+  } catch { /* silent */ }
 }
