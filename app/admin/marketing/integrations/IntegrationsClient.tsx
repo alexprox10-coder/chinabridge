@@ -20,12 +20,18 @@ const STATIC_INTEGRATIONS = [
   { name: "Авито", icon: "🟢", description: "Продвижение объявлений и брендирование на Авито", status: "inactive", platform: "avito" },
 ];
 
+const VK_IMPLICIT_URL = `https://target.vk.ru/oauth2/authorize/?client_id=RSQWZsO7iPxs5BnN&redirect_uri=https%3A%2F%2Foauth.vk.ru%2Fblank.html&response_type=token&scope=read_ads`;
+
 export function IntegrationsClient() {
   const searchParams = useSearchParams();
   const vkResult = searchParams.get("vk_ads");
   const [vkStatus, setVkStatus] = useState<VkStatus | null>(null);
   const [vkLoading, setVkLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [showTokenInput, setShowTokenInput] = useState(false);
+  const [tokenValue, setTokenValue] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
 
   const loadVkStatus = useCallback(async () => {
     setVkLoading(true);
@@ -43,6 +49,31 @@ export function IntegrationsClient() {
     await fetch("/api/vk-ads/sync").catch(() => {});
     await loadVkStatus();
     setSyncing(false);
+  };
+
+  const handleSaveToken = async () => {
+    const raw = tokenValue.trim();
+    // Поддерживаем как полный URL, так и просто токен
+    const match = raw.match(/access_token=([^&#]+)/);
+    const token = match ? match[1] : raw;
+    if (!token) { setSaveMsg("Вставьте токен или URL"); return; }
+    setSaving(true);
+    const expiresMatch = raw.match(/expires_in=(\d+)/);
+    const expires_in = expiresMatch ? parseInt(expiresMatch[1]) : undefined;
+    const r = await fetch("/api/vk-ads/set-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, expires_in }),
+    });
+    if (r.ok) {
+      setSaveMsg("✅ Токен сохранён");
+      setTokenValue("");
+      setShowTokenInput(false);
+      await loadVkStatus();
+    } else {
+      setSaveMsg("❌ Ошибка сохранения");
+    }
+    setSaving(false);
   };
 
   return (
@@ -98,9 +129,45 @@ export function IntegrationsClient() {
               </div>
             </div>
           ) : (
-            <a href="/api/vk-ads/auth" className="w-full text-xs py-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors text-center block">
-              Подключить VK Рекламу
-            </a>
+            <div className="space-y-2">
+              <a
+                href={VK_IMPLICIT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-xs py-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors text-center block"
+              >
+                1. Авторизоваться в VK Рекламе →
+              </a>
+              <button
+                onClick={() => setShowTokenInput(v => !v)}
+                className="w-full text-xs py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors"
+              >
+                2. Вставить токен из URL
+              </button>
+              {showTokenInput && (
+                <div className="space-y-2 pt-1">
+                  <p className="text-xs text-slate-500">
+                    После авторизации скопируй весь URL из адресной строки и вставь сюда:
+                  </p>
+                  <textarea
+                    value={tokenValue}
+                    onChange={e => setTokenValue(e.target.value)}
+                    placeholder="https://oauth.vk.ru/blank.html#access_token=..."
+                    className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-300 resize-none h-16 font-mono"
+                  />
+                  <div className="flex gap-2 items-center">
+                    <button
+                      onClick={handleSaveToken}
+                      disabled={saving}
+                      className="flex-1 text-xs py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {saving ? "Сохранение…" : "Сохранить токен"}
+                    </button>
+                    {saveMsg && <span className="text-xs text-slate-400">{saveMsg}</span>}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
