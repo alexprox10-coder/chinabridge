@@ -36,12 +36,28 @@ function detectPlatform(url: string): ParsedProduct['source_platform'] {
 
 async function scrape(url: string): Promise<string | null> {
   if (!FIRECRAWL_KEY) return null;
+  const is1688 = url.includes('1688.com');
   try {
+    const body: Record<string, unknown> = {
+      url,
+      formats:         ['markdown'],
+      onlyMainContent: !is1688,
+      timeout:         is1688 ? 25000 : 12000,
+    };
+    if (is1688) {
+      body.mobile  = true;
+      body.waitFor = 3000;
+      body.headers = {
+        'User-Agent':      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Referer':         'https://www.1688.com/',
+      };
+    }
     const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
-      method: 'POST',
+      method:  'POST',
       headers: { Authorization: `Bearer ${FIRECRAWL_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, formats: ['markdown'], onlyMainContent: true, timeout: 12000 }),
-      signal: AbortSignal.timeout(16000),
+      body:    JSON.stringify(body),
+      signal:  AbortSignal.timeout(is1688 ? 32000 : 16000),
     });
     if (!res.ok) return null;
     const d = await res.json();

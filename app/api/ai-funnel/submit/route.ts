@@ -97,6 +97,43 @@ async function saveProductAnalysis(params: {
   } catch { /* best-effort */ }
 }
 
+async function sendTelegramAlert(p: {
+  leadId: string; name: string; phone: string; telegram: string;
+  product: string; marginPct: number; verdict: string; score?: number;
+  priority: string; marketplace: string; cityTo: string;
+}): Promise<void> {
+  const token  = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const ve = p.verdict === 'go' ? '✅' : p.verdict === 'maybe' ? '⚠️' : '❌';
+  const pe = p.priority === 'HIGH' ? '🔥' : p.priority === 'MEDIUM' ? '⚡' : '💤';
+
+  const lines = [
+    `${pe} <b>Новый лид — AI калькулятор</b>`,
+    ``,
+    `👤 ${p.name || 'Без имени'}`,
+    p.phone    ? `📞 ${p.phone}`    : '',
+    p.telegram ? `✈️ ${p.telegram}` : '',
+    ``,
+    `📦 ${p.product || '—'}`,
+    `🏪 ${p.marketplace}${p.cityTo ? ' → ' + p.cityTo : ''}`,
+    `📊 Маржа: <b>${p.marginPct.toFixed(1)}%</b>`,
+    `${ve} Вердикт: ${p.verdict}${p.score ? ` · Скор ${p.score}/100` : ''}`,
+    ``,
+    `🆔 <code>${p.leadId}</code>`,
+  ].filter(Boolean).join('\n');
+
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: lines, parse_mode: 'HTML' }),
+      signal: AbortSignal.timeout(6000),
+    });
+  } catch { /* best-effort */ }
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}) as Record<string, unknown>);
 
@@ -227,7 +264,22 @@ export async function POST(req: NextRequest) {
     cnyRate:      economics.cny_rate,
   });
 
-  // n8n Telegram уведомление
+  // Прямое Telegram-уведомление (через бота)
+  void sendTelegramAlert({
+    leadId,
+    name:      String(body.name ?? ''),
+    phone,
+    telegram,
+    product:   String(body.product_name ?? ''),
+    marginPct: economics.margin_pct,
+    verdict:   economics.verdict,
+    score:     economics.product_score?.total,
+    priority,
+    marketplace: mp?.label ?? marketplaceId,
+    cityTo:    String(body.city_to ?? ''),
+  });
+
+  // n8n Telegram уведомление (доп. канал, если настроен)
   const n8nUrl = process.env.N8N_WEBHOOK_URL;
   if (n8nUrl) {
     fetch(n8nUrl, {
