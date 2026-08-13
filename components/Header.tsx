@@ -17,6 +17,7 @@ const navLinks = [
 const pageLinks = [
   { label: "Блог", href: "/blog" },
   { label: "Доставка", href: "/delivery" },
+  { label: "📦 Фулфилмент", href: "/fulfilment" },
 ];
 
 const toolLinks = [
