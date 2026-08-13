@@ -125,6 +125,10 @@ async function sendTelegramAlert(p: {
   ].filter(Boolean).join('\n');
 
   try {
+    // Логируем куда идёт сообщение
+    const chatInfo = await fetch(`https://api.telegram.org/bot${token}/getChat?chat_id=${chatId}`, { signal: AbortSignal.timeout(4000) }).then(r => r.json()).catch(() => ({}));
+    console.log('[TG] sending to chat_id:', chatId, '| title:', chatInfo?.result?.title, '| username:', chatInfo?.result?.username, '| type:', chatInfo?.result?.type);
+
     const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -134,6 +138,8 @@ async function sendTelegramAlert(p: {
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
       console.error('[TG] sendMessage failed', r.status, JSON.stringify(err));
+    } else {
+      console.log('[TG] OK - message sent');
     }
   } catch (e) { console.error('[TG] fetch error', e); }
 }
