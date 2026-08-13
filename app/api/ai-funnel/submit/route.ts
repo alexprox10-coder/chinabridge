@@ -125,10 +125,6 @@ async function sendTelegramAlert(p: {
   ].filter(Boolean).join('\n');
 
   try {
-    // Логируем куда идёт сообщение
-    const chatInfo = await fetch(`https://api.telegram.org/bot${token}/getChat?chat_id=${chatId}`, { signal: AbortSignal.timeout(4000) }).then(r => r.json()).catch(() => ({}));
-    console.log('[TG] sending to chat_id:', chatId, '| title:', chatInfo?.result?.title, '| username:', chatInfo?.result?.username, '| type:', chatInfo?.result?.type);
-
     const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -138,8 +134,6 @@ async function sendTelegramAlert(p: {
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
       console.error('[TG] sendMessage failed', r.status, JSON.stringify(err));
-    } else {
-      console.log('[TG] OK - message sent');
     }
   } catch (e) { console.error('[TG] fetch error', e); }
 }
@@ -288,32 +282,6 @@ export async function POST(req: NextRequest) {
     marketplace: mp?.label ?? marketplaceId,
     cityTo:    String(body.city_to ?? ''),
   });
-
-  // n8n Telegram уведомление (доп. канал, если настроен)
-  const n8nUrl = process.env.N8N_WEBHOOK_URL;
-  if (n8nUrl) {
-    fetch(n8nUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event:        'lead.created',
-        lead_id:      leadId,
-        analysis_id:  analysisId,
-        source:       'ai_economics_funnel',
-        name:         body.name ?? '',
-        phone,
-        telegram,
-        product:      body.product_name ?? '',
-        margin_pct:   economics.margin_pct,
-        verdict:      economics.verdict,
-        score:        economics.product_score?.total,
-        city_to:      body.city_to ?? '',
-        marketplace:  mp?.label ?? marketplaceId,
-        priority,
-      }),
-      signal: AbortSignal.timeout(5000),
-    }).catch(() => {});
-  }
 
   const enriched = { ...economics, ai_analysis: aiAnalysis };
 

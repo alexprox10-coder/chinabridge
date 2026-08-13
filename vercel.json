@@ -24,6 +24,10 @@
     {
       "path": "/api/cron/ceo-report",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/vk-ads/sync",
+      "schedule": "0 8 * * *"
     }
   ]
 }
