@@ -125,13 +125,17 @@ async function sendTelegramAlert(p: {
   ].filter(Boolean).join('\n');
 
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text: lines, parse_mode: 'HTML' }),
       signal: AbortSignal.timeout(6000),
     });
-  } catch { /* best-effort */ }
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      console.error('[TG] sendMessage failed', r.status, JSON.stringify(err));
+    }
+  } catch (e) { console.error('[TG] fetch error', e); }
 }
 
 export async function POST(req: NextRequest) {
