@@ -20,7 +20,7 @@ const STATIC_INTEGRATIONS = [
   { name: "Авито", icon: "🟢", description: "Продвижение объявлений и брендирование на Авито", status: "inactive", platform: "avito" },
 ];
 
-const VK_IMPLICIT_URL = `https://target.vk.ru/oauth2/authorize/?client_id=RSQWZsO7iPxs5BnN&redirect_uri=https%3A%2F%2Foauth.vk.ru%2Fblank.html&response_type=token&scope=read_ads`;
+const VK_AUTH_URL = `https://target.vk.ru/oauth2/authorize/?client_id=RSQWZsO7iPxs5BnN&redirect_uri=https%3A%2F%2Foauth.vk.ru%2Fblank.html&response_type=code&scope=ads_management`;
 
 export function IntegrationsClient() {
   const searchParams = useSearchParams();
@@ -53,25 +53,24 @@ export function IntegrationsClient() {
 
   const handleSaveToken = async () => {
     const raw = tokenValue.trim();
-    // Поддерживаем как полный URL, так и просто токен
-    const match = raw.match(/access_token=([^&#]+)/);
-    const token = match ? match[1] : raw;
-    if (!token) { setSaveMsg("Вставьте токен или URL"); return; }
+    if (!raw) { setSaveMsg("Вставьте URL из адресной строки"); return; }
     setSaving(true);
-    const expiresMatch = raw.match(/expires_in=(\d+)/);
-    const expires_in = expiresMatch ? parseInt(expiresMatch[1]) : undefined;
-    const r = await fetch("/api/vk-ads/set-token", {
+    setSaveMsg("");
+    const r = await fetch("/api/vk-ads/exchange-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, expires_in }),
+      body: JSON.stringify({ input: raw }),
     });
-    if (r.ok) {
-      setSaveMsg("✅ Токен сохранён");
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      setSaveMsg("✅ Токен получен и сохранён");
       setTokenValue("");
       setShowTokenInput(false);
       await loadVkStatus();
     } else {
-      setSaveMsg("❌ Ошибка сохранения");
+      const hint = d.hint ?? "";
+      const details = d.details ? JSON.stringify(d.details) : "";
+      setSaveMsg(`❌ ${d.error ?? "Ошибка"}. ${hint} ${details}`.trim());
     }
     setSaving(false);
   };
@@ -126,15 +125,15 @@ export function IntegrationsClient() {
                 <button onClick={handleSync} disabled={syncing} className="text-xs py-2 px-3 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors disabled:opacity-50">
                   {syncing ? "…" : "Синхр."}
                 </button>
-                <a href="/api/vk-ads/auth" className="text-xs py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors">
+                  <button onClick={() => { setShowTokenInput(true); window.open(VK_AUTH_URL, '_blank'); }} className="text-xs py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors">
                   ↺
-                </a>
+                </button>
               </div>
             </div>
           ) : (
             <div className="space-y-2">
               <a
-                href={VK_IMPLICIT_URL}
+                href={VK_AUTH_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full text-xs py-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors text-center block"
@@ -150,12 +149,12 @@ export function IntegrationsClient() {
               {showTokenInput && (
                 <div className="space-y-2 pt-1">
                   <p className="text-xs text-slate-500">
-                    После авторизации скопируй весь URL из адресной строки и вставь сюда:
+                    После авторизации ты окажешься на пустой странице. Скопируй <b>весь URL</b> из адресной строки (там будет <code>?code=...</code>) и вставь сюда — <b>быстро</b>, код живёт 60 сек:
                   </p>
                   <textarea
                     value={tokenValue}
                     onChange={e => setTokenValue(e.target.value)}
-                    placeholder="https://oauth.vk.ru/blank.html#access_token=..."
+                    placeholder="https://oauth.vk.ru/blank.html?code=..."
                     className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-300 resize-none h-16 font-mono"
                   />
                   <div className="flex gap-2 items-center">
