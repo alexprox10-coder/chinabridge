@@ -120,11 +120,14 @@ export function IntegrationsClient() {
                 <span className="text-sm font-mono text-blue-300">{vkStatus.leads_synced ?? 0}</span>
               </div>
               <div className="flex gap-2">
-                <button onClick={handleSync} disabled={syncing} className="flex-1 text-xs py-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors disabled:opacity-50">
-                  {syncing ? "Синхронизация…" : "Синхронизировать лиды"}
+                <a href="/admin/marketing/vk-ads" className="flex-1 text-xs py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-xl transition-colors text-center font-medium">
+                  Управление РК →
+                </a>
+                <button onClick={handleSync} disabled={syncing} className="text-xs py-2 px-3 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors disabled:opacity-50">
+                  {syncing ? "…" : "Синхр."}
                 </button>
                 <a href="/api/vk-ads/auth" className="text-xs py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors">
-                  Переподключить
+                  ↺
                 </a>
               </div>
             </div>
