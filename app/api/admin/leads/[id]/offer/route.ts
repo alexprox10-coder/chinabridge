@@ -10,29 +10,30 @@ export async function POST(
   if (!token) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  let lead;
+  let lead = null;
   try {
     lead = await getLead(Number(id), "tenant-chinabridge");
   } catch {
     return NextResponse.json({ ok: false, error: "lead not found" }, { status: 404 });
   }
+  if (!lead) return NextResponse.json({ ok: false, error: "lead not found" }, { status: 404 });
 
-  const { url, model, headers } = getLLMConfig();
+  const { baseURL, apiKey, model } = getLLMConfig();
 
   const context = [
-    lead.name ? `Клиент: ${lead.name}` : null,
-    lead.company ? `Компания: ${lead.company}` : null,
-    lead.product ? `Товар/запрос: ${lead.product}` : null,
-    lead.category ? `Категория: ${lead.category}` : null,
-    lead.quantity ? `Количество: ${lead.quantity}` : null,
-    lead.weight ? `Вес: ${lead.weight} кг` : null,
+    lead.name        ? `Клиент: ${lead.name}` : null,
+    lead.company     ? `Компания: ${lead.company}` : null,
+    lead.product     ? `Товар/запрос: ${lead.product}` : null,
+    lead.category    ? `Категория: ${lead.category}` : null,
+    lead.quantity    ? `Количество: ${lead.quantity}` : null,
+    lead.weight      ? `Вес: ${lead.weight} кг` : null,
     lead.country_destination ? `Страна: ${lead.country_destination}` : null,
-    lead.city_destination ? `Город: ${lead.city_destination}` : null,
-    lead.delivery_type ? `Тип доставки: ${lead.delivery_type}` : null,
-    lead.service_type ? `Услуга: ${lead.service_type}` : null,
-    lead.source ? `Источник лида: ${lead.source}` : null,
-    lead.comment ? `Комментарий: ${lead.comment}` : null,
-    lead.product_link ? `Ссылка на товар: ${lead.product_link}` : null,
+    lead.city_destination    ? `Город: ${lead.city_destination}` : null,
+    lead.delivery_type       ? `Тип доставки: ${lead.delivery_type}` : null,
+    lead.service_type        ? `Услуга: ${lead.service_type}` : null,
+    lead.source              ? `Источник лида: ${lead.source}` : null,
+    lead.comment             ? `Комментарий: ${lead.comment}` : null,
+    lead.product_link        ? `Ссылка на товар: ${lead.product_link}` : null,
   ].filter(Boolean).join("\n");
 
   const prompt = `Ты — менеджер ChinaBridge, платформы по импорту из Китая.
@@ -46,19 +47,24 @@ ${context}
 - Обратись по имени (если есть)
 - Упомяни конкретный товар/запрос клиента
 - Объясни, чем ChinaBridge поможет именно в этом кейсе
-- Укажи конкретные преимущества: экономия 20–40%, таможня под ключ, AI-поиск поставщика, 25–35 дней до склада
-- Если есть маркетплейс в категории (WB, Ozon, Kaspi) — упомяни фулфилмент
-- Если Казахстан — упомяни склад в Алматы
-- Добавь призыв к действию: предложить созвониться или прислать расчёт
+- Конкретные преимущества: экономия 20–40%, таможня под ключ, AI-поиск поставщика, 25–35 дней до склада
+- Если категория связана с маркетплейсами (WB, Ozon, Kaspi) — упомяни фулфилмент
+- Если страна KZ или Казахстан — упомяни склад в Алматы
+- Призыв к действию: предложить созвониться или прислать расчёт
 - Длина: 5–8 предложений, без воды
-- Только текст сообщения, без subject и заголовков
+- Только текст сообщения, без заголовков
 
-Ответь JSON: { "offer": "текст оффера", "subject": "тема письма если по email" }`;
+Ответь JSON: { "offer": "текст оффера", "subject": "тема письма" }`;
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch(`${baseURL}/chat/completions`, {
       method: "POST",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://chinabridge.pro",
+        "X-Title": "ChinaBridge Personal Offer",
+      },
       body: JSON.stringify({
         model,
         messages: [{ role: "user", content: prompt }],
@@ -68,8 +74,8 @@ ${context}
       }),
     });
     const data = await res.json();
-    const content = data.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content);
+    const raw = data.choices?.[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim());
     return NextResponse.json({ ok: true, offer: parsed.offer ?? "", subject: parsed.subject ?? "" });
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
