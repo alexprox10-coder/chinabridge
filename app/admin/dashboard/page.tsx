@@ -2,9 +2,10 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDashboardStats, getLeads } from "@/lib/crm/client";
-import { STATUS_COLORS, STATUS_LABELS, PRIORITY_COLORS, PRIORITY_EMOJI } from "@/lib/crm/types";
+import { STATUS_COLORS, STATUS_LABELS, PRIORITY_EMOJI } from "@/lib/crm/types";
 import type { CRMLead, LeadStatus, LeadPriority } from "@/lib/crm/types";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { CeoReportWidget } from "./CeoReportWidget";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -139,6 +140,9 @@ export default async function DashboardPage() {
             Открыть Pipeline →
           </Link>
         </div>
+
+        {/* CEO AI Daily Report */}
+        <CeoReportWidget />
 
         {/* KPI row */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">

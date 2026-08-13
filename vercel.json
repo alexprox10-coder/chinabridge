@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/seo-keywords",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/ceo-report",
+      "schedule": "0 6 * * *"
     }
   ]
 }
