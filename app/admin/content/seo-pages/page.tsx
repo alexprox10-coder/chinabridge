@@ -24,6 +24,7 @@ export default function SeoPagesAdmin() {
   const [keywords, setKeywords] = useState<KwRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "published">("all");
   const [groupFilter, setGroupFilter] = useState("all");
   const [stats, setStats] = useState({ total: 0, generated: 0 });
@@ -46,6 +47,7 @@ export default function SeoPagesAdmin() {
 
   async function generate(keywordId: string) {
     setGenerating(keywordId);
+    setError("");
     try {
       const res = await fetch("/api/admin/seo-pages/generate", {
         method: "POST",
@@ -53,7 +55,13 @@ export default function SeoPagesAdmin() {
         body: JSON.stringify({ keywordId }),
       });
       const data = await res.json();
-      if (data.ok) await load();
+      if (data.ok) {
+        await load();
+      } else {
+        setError(`Ошибка: ${data.error ?? "неизвестная ошибка"} (status ${res.status})`);
+      }
+    } catch (e) {
+      setError(`Сетевая ошибка: ${String(e)}`);
     } finally {
       setGenerating(null);
     }
@@ -111,6 +119,12 @@ export default function SeoPagesAdmin() {
             </button>
           ))}
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
 
         {/* Table */}
         {loading ? (
