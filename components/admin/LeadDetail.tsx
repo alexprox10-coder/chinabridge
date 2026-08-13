@@ -5,6 +5,7 @@ import type { CRMLead, LeadStatus, LeadPriority } from "@/lib/crm/types";
 import { ProposalButton } from "@/components/admin/ProposalButton";
 import { FinanceTab }    from "@/components/admin/finance/FinanceTab";
 import { DocumentsTab } from "@/components/admin/documents/DocumentsTab";
+import { PersonalOfferWidget } from "@/components/admin/PersonalOfferWidget";
 import {
   STATUS_COLORS,
   STATUS_LABELS,
@@ -285,6 +286,8 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
             </button>
 
           </div>
+
+          <PersonalOfferWidget leadId={lead.id} />
 
           {/* Lead ID / Meta */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2 text-xs text-slate-500">
