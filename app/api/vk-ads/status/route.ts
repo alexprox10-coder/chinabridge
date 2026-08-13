@@ -28,14 +28,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ connected: false, message: 'Не подключён' });
     }
 
-    // Проверяем токен через VK API
-    const meRes = await fetch('https://id.vk.ru/oauth2/user_info', {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${accessToken}`,
-      },
-      body: new URLSearchParams({ client_id: process.env.VK_ADS_CLIENT_ID ?? '' }),
+    // Проверяем токен через myTarget API (не VK ID — разные системы)
+    const meRes = await fetch('https://target.my.com/api/v2/user.json', {
+      headers: { Authorization: `Bearer ${accessToken}` },
       signal: AbortSignal.timeout(5000),
     }).then(r => r.json()).catch(() => ({}));
 

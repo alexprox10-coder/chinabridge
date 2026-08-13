@@ -6,7 +6,7 @@ import { createLead } from '@/lib/crm/client';
 export const runtime     = 'nodejs';
 export const maxDuration = 60;
 
-const VK_ADS_API = 'https://ads.vk.com/api/v3';
+const MYTARGET_API = 'https://target.my.com/api/v2';
 
 interface VkLead {
   id:           number;
@@ -47,14 +47,14 @@ async function getToken(): Promise<string | null> {
   return token;
 }
 
-async function vkGet(path: string, token: string): Promise<unknown> {
-  const res = await fetch(`${VK_ADS_API}${path}`, {
+async function mtGet(path: string, token: string): Promise<unknown> {
+  const res = await fetch(`${MYTARGET_API}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`VK API ${path} → ${res.status}: ${err}`);
+    throw new Error(`myTarget API ${path} → ${res.status}: ${err}`);
   }
   return res.json();
 }
@@ -139,8 +139,8 @@ async function runSync(): Promise<NextResponse> {
   let totalNew = 0;
 
   try {
-    // Получаем список lead-форм
-    const formsData = await vkGet('/lead_forms/', token) as { items?: VkLeadForm[] };
+    // Получаем список lead-форм (myTarget API)
+    const formsData = await mtGet('/lead_ads.json?limit=50', token) as { items?: VkLeadForm[] };
     const forms: VkLeadForm[] = formsData?.items ?? [];
 
     if (!forms.length) {
@@ -162,7 +162,7 @@ async function runSync(): Promise<NextResponse> {
 
     for (const form of forms) {
       try {
-        const leadsData = await vkGet(`/lead_forms/${form.id}/leads/`, token) as { items?: VkLead[] };
+        const leadsData = await mtGet(`/lead_ads/${form.id}/leads.json?limit=200`, token) as { items?: VkLead[] };
         const leads: VkLead[] = leadsData?.items ?? [];
 
         for (const lead of leads) {
