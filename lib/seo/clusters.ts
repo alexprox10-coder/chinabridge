@@ -181,7 +181,131 @@ export const SEO_KEYWORDS: SeoKeyword[] = [
   kw("in-13","как выбрать поставщика на Alibaba",  "info-how","Гайды","informational","informational","high","medium",8,"blog","/vybrat-postavshika-alibaba"),
   kw("in-14","минимальная партия на 1688",         "info-how","Гайды","informational","informational","medium","low", 7,"faq","/minimalnaya-partiya-1688"),
   kw("in-15","срок доставки из Китая",             "info-how","Гайды","informational","informational","high","medium",8,"faq","/srok-dostavki-iz-kitaya"),
+
+  // ═══ ГЕО: КЫРГЫЗСТАН ══════════════════════════════════════════════
+  kw("kg-01","доставка из Китая в Кыргызстан",      "geo-kg","Кыргызстан","geo","commercial","medium","low",8,"landing","/dostavka-iz-kitaya-kyrgyzstan"),
+  kw("kg-02","карго Китай Бишкек",                  "geo-kg","Кыргызстан","geo","commercial","medium","low",8,"landing","/kargo-kitaj-bishkek"),
+  kw("kg-03","импорт из Китая Кыргызстан",          "geo-kg","Кыргызстан","geo","commercial","low","low",  7,"landing","/import-iz-kitaya-kyrgyzstan"),
+  kw("kg-04","выкуп 1688 Кыргызстан",              "geo-kg","Кыргызстан","geo","commercial","low","low",  6,"landing","/vikup-1688-kyrgyzstan"),
+
+  // ═══ ГЕО: АЗЕРБАЙДЖАН ════════════════════════════════════════════
+  kw("az-01","доставка из Китая в Азербайджан",     "geo-az","Азербайджан","geo","commercial","medium","low",7,"landing","/dostavka-iz-kitaya-azerbajdzhan"),
+  kw("az-02","карго Китай Баку",                    "geo-az","Азербайджан","geo","commercial","medium","low",7,"landing","/kargo-kitaj-baku"),
+  kw("az-03","импорт из Китая Азербайджан",         "geo-az","Азербайджан","geo","commercial","low","low",  6,"landing","/import-iz-kitaya-azerbajdzhan"),
+
+  // ═══ ГЕО: ГРУЗИЯ ══════════════════════════════════════════════════
+  kw("ge-01","доставка из Китая в Грузию",          "geo-ge","Грузия","geo","commercial","medium","low",7,"landing","/dostavka-iz-kitaya-gruziya"),
+  kw("ge-02","карго Китай Тбилиси",                 "geo-ge","Грузия","geo","commercial","medium","low",7,"landing","/kargo-kitaj-tbilisi"),
+  kw("ge-03","импорт из Китая Грузия",              "geo-ge","Грузия","geo","commercial","medium","low",6,"landing","/import-iz-kitaya-gruziya"),
+
+  // ═══ ГЕО: МОНГОЛИЯ ════════════════════════════════════════════════
+  kw("mn-01","доставка из Китая в Монголию",        "geo-mn","Монголия","geo","commercial","low","low",7,"landing","/dostavka-iz-kitaya-mongoliya"),
+  kw("mn-02","карго Китай Улан-Батор",              "geo-mn","Монголия","geo","commercial","low","low",7,"landing","/kargo-kitaj-ulan-bator"),
+
+  // ═══ КАТЕГОРИИ: ПРОДУКТЫ ПИТАНИЯ ══════════════════════════════════
+  kw("fd-01","продукты питания из Китая оптом",     "cat-food","Продукты","category","commercial","medium","medium",7,"landing","/produkty-iz-kitaya-optom"),
+  kw("fd-02","чай из Китая оптом",                  "cat-food","Продукты","category","commercial","medium","medium",7,"landing","/chaj-iz-kitaya-optom"),
+  kw("fd-03","орехи из Китая оптом",                "cat-food","Продукты","category","commercial","medium","low",  6,"landing","/orehi-iz-kitaya-optom"),
+  kw("fd-04","специи из Китая оптом",               "cat-food","Продукты","category","commercial","low","low",    6,"landing","/specii-iz-kitaya-optom"),
+  kw("fd-05","БАД из Китая оптом",                  "cat-food","Продукты","category","commercial","medium","medium",7,"landing","/bad-iz-kitaya-optom"),
+
+  // ═══ КАТЕГОРИИ: КОСМЕТИКА ═════════════════════════════════════════
+  kw("cs-01","косметика из Китая оптом",            "cat-cosmetics","Косметика","category","commercial","medium","high",7,"landing","/kosmetika-iz-kitaya-optom"),
+  kw("cs-02","корейская косметика из Китая",        "cat-cosmetics","Косметика","category","commercial","medium","high",6,"landing","/korejskaya-kosmetika-iz-kitaya"),
+  kw("cs-03","уходовая косметика из Китая",         "cat-cosmetics","Косметика","category","commercial","medium","medium",7,"landing","/uhodovaya-kosmetika-kitaj"),
+  kw("cs-04","парфюмерия из Китая оптом",           "cat-cosmetics","Косметика","category","commercial","medium","medium",6,"landing","/parfyumeriya-iz-kitaya-optom"),
+
+  // ═══ КАТЕГОРИИ: СПОРТ ═════════════════════════════════════════════
+  kw("sp-01","спортивные товары из Китая оптом",    "cat-sport","Спорттовары","category","commercial","medium","medium",7,"landing","/sportivnye-tovary-iz-kitaya-optom"),
+  kw("sp-02","спортивная одежда из Китая оптом",   "cat-sport","Спорттовары","category","commercial","medium","medium",7,"landing","/sportivnaya-odezhda-kitaj-optom"),
+  kw("sp-03","тренажёры из Китая оптом",            "cat-sport","Спорттовары","category","commercial","medium","low", 6,"landing","/trenazhery-iz-kitaya-optom"),
+  kw("sp-04","велосипеды из Китая оптом",           "cat-sport","Спорттовары","category","commercial","medium","low", 6,"landing","/velosipedy-iz-kitaya-optom"),
+
+  // ═══ КАТЕГОРИИ: ЗООТОВАРЫ ═════════════════════════════════════════
+  kw("zo-01","зоотовары из Китая оптом",            "cat-zoo","Зоотовары","category","commercial","medium","low",7,"landing","/zootovary-iz-kitaya-optom"),
+  kw("zo-02","корм для животных из Китая",          "cat-zoo","Зоотовары","category","commercial","medium","low",6,"landing","/korm-dlya-zhivotnyh-kitaj"),
+
+  // ═══ КАТЕГОРИИ: ПОСУДА / ДОМ ══════════════════════════════════════
+  kw("ho-01","посуда из Китая оптом",               "cat-home","Дом и посуда","category","commercial","medium","medium",7,"landing","/posuda-iz-kitaya-optom"),
+  kw("ho-02","товары для дома из Китая оптом",      "cat-home","Дом и посуда","category","commercial","medium","medium",7,"landing","/tovary-dlya-doma-iz-kitaya-optom"),
+  kw("ho-03","текстиль из Китая оптом",             "cat-home","Дом и посуда","category","commercial","medium","medium",7,"landing","/tekstil-iz-kitaya-optom"),
+  kw("ho-04","постельное бельё из Китая оптом",     "cat-home","Дом и посуда","category","commercial","medium","medium",6,"landing","/postelnoe-bele-iz-kitaya-optom"),
+  kw("ho-05","шторы из Китая оптом",                "cat-home","Дом и посуда","category","commercial","low","low",    5,"landing","/shtory-iz-kitaya-optom"),
+
+  // ═══ КАТЕГОРИИ: САДОВЫЕ ТОВАРЫ ════════════════════════════════════
+  kw("ga-01","садовый инструмент из Китая",         "cat-garden","Сад / огород","category","commercial","medium","low",6,"landing","/sadovyj-instrument-iz-kitaya"),
+  kw("ga-02","садовые товары из Китая оптом",       "cat-garden","Сад / огород","category","commercial","medium","low",6,"landing","/sadovye-tovary-iz-kitaya-optom"),
+
+  // ═══ КАТЕГОРИИ: УПАКОВКА ══════════════════════════════════════════
+  kw("pk-01","упаковка из Китая",                   "cat-pack","Упаковка","category","commercial","medium","medium",7,"landing","/upakovka-iz-kitaya"),
+  kw("pk-02","пакеты из Китая оптом",               "cat-pack","Упаковка","category","commercial","medium","low", 6,"landing","/pakety-iz-kitaya-optom"),
+  kw("pk-03","коробки из Китая оптом",              "cat-pack","Упаковка","category","commercial","medium","low", 6,"landing","/korobki-iz-kitaya-optom"),
+  kw("pk-04","принт и упаковка под ключ Китай",     "cat-pack","Упаковка","category","commercial","low","low",    6,"landing","/print-upakovka-kitaj"),
+
+  // ═══ КОММЕРЧЕСКИЕ: ЛОГИСТИКА ══════════════════════════════════════
+  kw("lg-01","логистика из Китая",                  "com-logistics","Логистика","commercial","commercial","high","medium",8,"landing","/logistika-iz-kitaya"),
+  kw("lg-02","морская доставка из Китая",           "com-logistics","Логистика","commercial","commercial","high","medium",8,"landing","/morskaya-dostavka-iz-kitaya"),
+  kw("lg-03","авиадоставка из Китая",               "com-logistics","Логистика","commercial","commercial","high","medium",8,"landing","/aviadostavka-iz-kitaya"),
+  kw("lg-04","доставка автотранспортом из Китая",   "com-logistics","Логистика","commercial","commercial","medium","medium",7,"landing","/dostavka-avtotransportom-iz-kitaya"),
+  kw("lg-05","ж/д доставка из Китая",              "com-logistics","Логистика","commercial","commercial","medium","medium",7,"landing","/zhd-dostavka-iz-kitaya"),
+  kw("lg-06","экспресс доставка из Китая",          "com-logistics","Логистика","commercial","commercial","high","medium",8,"landing","/ekspress-dostavka-iz-kitaya"),
+  kw("lg-07","консолидация грузов из Китая",        "com-logistics","Логистика","commercial","commercial","medium","low", 7,"landing","/konsolidaciya-gruzov-iz-kitaya"),
+  kw("lg-08","склад в Китае",                       "com-logistics","Логистика","commercial","commercial","medium","medium",7,"landing","/sklad-v-kitae"),
+
+  // ═══ КОММЕРЧЕСКИЕ: ВЭД / ТАМОЖНЯ ═════════════════════════════════
+  kw("vd-01","услуги ВЭД",                         "com-ved","ВЭД / таможня","commercial","commercial","high","medium",8,"landing","/uslugi-ved"),
+  kw("vd-02","таможенный брокер",                   "com-ved","ВЭД / таможня","commercial","commercial","high","medium",8,"landing","/tamozhennyj-broker"),
+  kw("vd-03","таможенное оформление под ключ",      "com-ved","ВЭД / таможня","commercial","commercial","high","medium",9,"landing","/tamozhennoe-oformlenie-pod-klyuch"),
+  kw("vd-04","декларирование товаров из Китая",     "com-ved","ВЭД / таможня","commercial","commercial","medium","medium",7,"landing","/deklarirovanie-tovarov-kitaj"),
+  kw("vd-05","фитосанитарный сертификат из Китая",  "com-ved","ВЭД / таможня","commercial","informational","low","low",  5,"blog","/fitosanitarnyj-sertifikat-kitaj"),
+  kw("vd-06","код ТН ВЭД на товары из Китая",      "com-ved","ВЭД / таможня","commercial","informational","medium","low",7,"faq","/tnved-kod-kitaj"),
+
+  // ═══ КОММЕРЧЕСКИЕ: ФИНАНСИРОВАНИЕ ════════════════════════════════
+  kw("fn-01","финансирование закупок в Китае",      "com-finance","Финансирование","commercial","commercial","medium","low",7,"landing","/finansirovanie-zakupok-kitaj"),
+  kw("fn-02","оплата поставщику в Китае",           "com-finance","Финансирование","commercial","commercial","high","medium",8,"landing","/oplata-postavshiku-v-kitae"),
+  kw("fn-03","SWIFT перевод в Китай",               "com-finance","Финансирование","commercial","commercial","high","medium",8,"landing","/swift-perevod-v-kitaj"),
+  kw("fn-04","юань оплата поставщику",              "com-finance","Финансирование","commercial","commercial","high","medium",9,"landing","/yuan-oplata-postavshiku"),
+  kw("fn-05","как оплатить 1688",                  "com-finance","Финансирование","commercial","informational","high","medium",9,"faq","/kak-oplatit-1688"),
+  kw("fn-06","оплата Alibaba из России",            "com-finance","Финансирование","commercial","informational","high","medium",8,"faq","/oplata-alibaba-iz-rossii"),
+
+  // ═══ ИНФОРМАЦИОННЫЕ: МАРКЕТПЛЕЙСЫ ════════════════════════════════
+  kw("mp-01","как продавать на WB импортный товар", "info-mp","Маркетплейсы","informational","informational","high","medium",9,"blog","/kak-prodavat-na-wb-importnyj-tovar"),
+  kw("mp-02","маркировка товаров из Китая для WB",  "info-mp","Маркетплейсы","informational","informational","high","medium",9,"blog","/markirovka-tovarov-kitaj-wb"),
+  kw("mp-03","как открыть ИП для WB",              "info-mp","Маркетплейсы","informational","informational","high","medium",8,"blog","/kak-otkryt-ip-dlya-wb"),
+  kw("mp-04","как зайти на Ozon с импортным товаром","info-mp","Маркетплейсы","informational","informational","high","medium",8,"blog","/kak-zajti-na-ozon-import"),
+  kw("mp-05","товары из Китая для маркетплейсов 2025","info-mp","Маркетплейсы","informational","informational","high","medium",9,"blog","/tovary-iz-kitaya-marketplejsy-2025"),
+
+  // ═══ ИНФОРМАЦИОННЫЕ: КЕЙСЫ ════════════════════════════════════════
+  kw("cs2-01","кейс импорт мебели из Китая",        "info-cases","Кейсы","informational","informational","medium","low",7,"blog","/kejs-import-mebeli-iz-kitaya"),
+  kw("cs2-02","кейс закупка электроники из Китая",  "info-cases","Кейсы","informational","informational","medium","low",7,"blog","/kejs-zakupka-elektroniki-kitaj"),
+  kw("cs2-03","кейс WB поставщик из Китая",         "info-cases","Кейсы","informational","informational","medium","low",7,"blog","/kejs-wb-postavshik-iz-kitaya"),
+
+  // ═══ ИНФОРМАЦИОННЫЕ: СРАВНЕНИЕ / РЕЙТИНГИ ═════════════════════════
+  kw("rt-01","1688 vs Alibaba — что лучше",         "info-compare","Сравнения","informational","informational","high","medium",8,"blog","/1688-vs-alibaba"),
+  kw("rt-02","карго vs почта — что дешевле из Китая","info-compare","Сравнения","informational","informational","medium","low",7,"blog","/kargo-vs-pochta-iz-kitaya"),
+  kw("rt-03","лучшие карго из Китая",               "info-compare","Сравнения","informational","informational","high","medium",8,"blog","/luchshie-kargo-iz-kitaya"),
+  kw("rt-04","рейтинг поставщиков из Китая",        "info-compare","Сравнения","informational","informational","medium","medium",7,"blog","/rejting-postavshikov-iz-kitaya"),
+
+  // ═══ ИНФОРМАЦИОННЫЕ: FAQ ══════════════════════════════════════════
+  kw("fq-01","можно ли везти наличные в Китай",     "info-faq","FAQ","informational","informational","medium","low",5,"faq","/nalichnye-v-kitaj"),
+  kw("fq-02","нужна ли лицензия на импорт из Китая","info-faq","FAQ","informational","informational","medium","low",6,"faq","/licenziya-na-import-kitaj"),
+  kw("fq-03","что нельзя везти из Китая в Россию",  "info-faq","FAQ","informational","informational","medium","low",6,"faq","/chto-nelzya-vezti-iz-kitaya-rossiya"),
+  kw("fq-04","НДС при импорте из Китая",            "info-faq","FAQ","informational","informational","medium","medium",7,"faq","/nds-import-iz-kitaya"),
+  kw("fq-05","ТЗ на производство в Китае",          "info-faq","FAQ","informational","informational","medium","low",6,"faq","/tz-na-proizvodstvo-v-kitae"),
+
+  // ═══ ГЕО: ДОПОЛНИТЕЛЬНЫЕ ГОРОДА КАЗАХСТАНА ════════════════════════
+  kw("kz-16","доставка из Китая в Актобе",          "geo-kz","Казахстан","geo","commercial","low","low",6,"landing","/dostavka-iz-kitaya-aktobe"),
+  kw("kz-17","доставка из Китая в Туркестан",       "geo-kz","Казахстан","geo","commercial","low","low",6,"landing","/dostavka-iz-kitaya-turkestan"),
+
+  // ═══ ГЕО: ДОПОЛНИТЕЛЬНЫЕ ГОРОДА РОССИИ ════════════════════════════
+  kw("ru-21","доставка из Китая в Красноярск",      "geo-ru","Россия","geo","commercial","medium","low",6,"landing","/dostavka-iz-kitaya-krasnoyarsk"),
+  kw("ru-22","доставка из Китая в Ростов-на-Дону",  "geo-ru","Россия","geo","commercial","medium","low",6,"landing","/dostavka-iz-kitaya-rostov"),
+  kw("ru-23","доставка из Китая в Самару",          "geo-ru","Россия","geo","commercial","medium","low",6,"landing","/dostavka-iz-kitaya-samara"),
+  kw("ru-24","доставка из Китая в Тюмень",          "geo-ru","Россия","geo","commercial","medium","low",6,"landing","/dostavka-iz-kitaya-tyumen"),
+  kw("ru-25","доставка из Китая в Уфу",             "geo-ru","Россия","geo","commercial","medium","low",6,"landing","/dostavka-iz-kitaya-ufa"),
+  kw("ru-26","доставка из Китая в Иркутск",         "geo-ru","Россия","geo","commercial","medium","low",6,"landing","/dostavka-iz-kitaya-irkutsk"),
 ];
+
 
 export function getClusterGroups(): Array<{ id: string; label: string; group: SeoKeyword["clusterGroup"]; count: number; color: string }> {
   const map = new Map<string, { label: string; group: SeoKeyword["clusterGroup"]; count: number; color: string }>();

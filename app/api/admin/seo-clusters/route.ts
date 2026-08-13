@@ -1,9 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SEO_KEYWORDS, getClusterGroups } from "@/lib/seo/clusters";
+import type { SeoKeyword } from "@/lib/seo/clusters";
 import { getLLMConfig } from "@/lib/ai/client";
 
 function auth(req: NextRequest) {
   return req.cookies.get("cb_admin")?.value || req.cookies.get("cb_tenant_session")?.value;
+}
+
+async function getDynamicKeywords(): Promise<SeoKeyword[]> {
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL!);
+    const rows = await sql`SELECT * FROM seo_keywords_dynamic ORDER BY priority DESC, created_at DESC LIMIT 500`;
+    return (rows as Record<string, string | number>[]).map(r => ({
+      id:              String(r.id),
+      keyword:         String(r.keyword),
+      cluster:         String(r.cluster),
+      clusterLabel:    String(r.cluster_label),
+      clusterGroup:    r.cluster_group as SeoKeyword["clusterGroup"],
+      type:            r.type as SeoKeyword["type"],
+      estimatedTraffic: r.traffic as SeoKeyword["estimatedTraffic"],
+      competition:     r.competition as SeoKeyword["competition"],
+      priority:        Number(r.priority),
+      pageTemplate:    r.template as SeoKeyword["pageTemplate"],
+      targetUrl:       String(r.target_url),
+      status:          (r.status ?? "pending") as SeoKeyword["status"],
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -16,22 +41,26 @@ export async function GET(req: NextRequest) {
   const type     = searchParams.get("type")    ?? "";
   const priority = searchParams.get("priority") ? Number(searchParams.get("priority")) : 0;
 
-  let keywords = SEO_KEYWORDS;
+  const dynamic  = await getDynamicKeywords();
+  const all      = [...SEO_KEYWORDS, ...dynamic];
+
+  let keywords = all;
   if (cluster)  keywords = keywords.filter(k => k.cluster === cluster);
   if (group)    keywords = keywords.filter(k => k.clusterGroup === group);
   if (status)   keywords = keywords.filter(k => k.status === status);
   if (type)     keywords = keywords.filter(k => k.type === type);
   if (priority) keywords = keywords.filter(k => k.priority >= priority);
+  keywords = keywords.sort((a, b) => b.priority - a.priority);
 
   const groups = getClusterGroups();
   const stats = {
-    total:        SEO_KEYWORDS.length,
-    pending:      SEO_KEYWORDS.filter(k => k.status === "pending").length,
-    briefReady:   SEO_KEYWORDS.filter(k => k.status === "brief_ready").length,
-    pageCreated:  SEO_KEYWORDS.filter(k => k.status === "page_created").length,
-    indexed:      SEO_KEYWORDS.filter(k => k.status === "indexed").length,
-    highPriority: SEO_KEYWORDS.filter(k => k.priority >= 9).length,
-    commercial:   SEO_KEYWORDS.filter(k => k.type === "commercial").length,
+    total:        all.length,
+    pending:      all.filter(k => k.status === "pending").length,
+    briefReady:   all.filter(k => k.status === "brief_ready").length,
+    pageCreated:  all.filter(k => k.status === "page_created").length,
+    indexed:      all.filter(k => k.status === "indexed").length,
+    highPriority: all.filter(k => k.priority >= 9).length,
+    commercial:   all.filter(k => k.type === "commercial").length,
   };
 
   return NextResponse.json({ ok: true, keywords, groups, stats });

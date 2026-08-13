@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/content-publish",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/seo-keywords",
+      "schedule": "0 7 * * *"
     }
   ]
 }
