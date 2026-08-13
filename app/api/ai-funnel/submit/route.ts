@@ -103,7 +103,7 @@ async function sendTelegramAlert(p: {
   priority: string; marketplace: string; cityTo: string;
 }): Promise<void> {
   const token  = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
 
   const ve = p.verdict === 'go' ? '✅' : p.verdict === 'maybe' ? '⚠️' : '❌';
