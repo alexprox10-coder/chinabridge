@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
   const clientId     = process.env.VK_ADS_CLIENT_ID     ?? 'RSQWZsO7iPxs5BnN';
   const clientSecret = process.env.VK_ADS_CLIENT_SECRET ?? '';
 
-  // Обмениваем code → myTarget access_token
-  const tokenRes = await fetch('https://target.my.com/api/v2/token.json', {
+  // Обмениваем code → VK Ads access_token (новая платформа ads.vk.com)
+  const tokenRes = await fetch('https://ads.vk.com/api/v2/token.json', {
     method:  'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({

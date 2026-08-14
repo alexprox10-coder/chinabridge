@@ -20,7 +20,7 @@ const STATIC_INTEGRATIONS = [
   { name: "Авито", icon: "🟢", description: "Продвижение объявлений и брендирование на Авито", status: "inactive", platform: "avito" },
 ];
 
-const VK_AUTH_URL = `https://target.vk.ru/oauth2/authorize/?client_id=RSQWZsO7iPxs5BnN&redirect_uri=https%3A%2F%2Foauth.vk.ru%2Fblank.html&response_type=code&scope=ads_management`;
+const VK_AUTH_URL = `https://ads.vk.com/oauth2/authorize/?client_id=RSQWZsO7iPxs5BnN&redirect_uri=https%3A%2F%2Foauth.vk.ru%2Fblank.html&response_type=code&scope=ads`;
 
 export function IntegrationsClient() {
   const searchParams = useSearchParams();

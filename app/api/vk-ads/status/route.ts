@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ connected: false, message: 'Не подключён' });
     }
 
-    // Проверяем токен через myTarget API (не VK ID — разные системы)
-    const meRes = await fetch('https://target.my.com/api/v2/user.json', {
+    // Проверяем токен через VK Ads API v3 (новая платформа)
+    const meRes = await fetch('https://ads.vk.com/api/v3/user/', {
       headers: { Authorization: `Bearer ${accessToken}` },
       signal: AbortSignal.timeout(5000),
     }).then(r => r.json()).catch(() => ({}));
