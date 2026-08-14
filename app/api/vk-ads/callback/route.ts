@@ -20,7 +20,8 @@ export async function GET(req: NextRequest) {
 
   try {
     // Обмениваем code → access_token
-    const tokenRes = await fetch('https://target.my.com/api/v2/token.json', {
+    // myTarget shut down — use new VK Ads OAuth token exchange via id.vk.com
+    const tokenRes = await fetch('https://id.vk.com/oauth2/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({

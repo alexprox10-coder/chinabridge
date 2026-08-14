@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
     state,
   });
 
-  const res = NextResponse.redirect(`https://target.vk.ru/oauth2/authorize/?${params}`);
+  // myTarget shut down — use new VK Ads OAuth via id.vk.com
+  const res = NextResponse.redirect(`https://id.vk.com/oauth2/authorize?${params}`);
   res.cookies.set('vk_oauth_state', state, {
     httpOnly: true,
     secure:   true,
