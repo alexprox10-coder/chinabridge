@@ -20,7 +20,9 @@ const STATIC_INTEGRATIONS = [
   { name: "Авито", icon: "🟢", description: "Продвижение объявлений и брендирование на Авито", status: "inactive", platform: "avito" },
 ];
 
-const VK_AUTH_URL = `https://target.vk.ru/oauth2/authorize/?client_id=RSQWZsO7iPxs5BnN&redirect_uri=https%3A%2F%2Foauth.vk.ru%2Fblank.html&response_type=token&scope=ads_management`;
+// VK стандартный OAuth через публичный VK client — единственный рабочий путь
+// scope=ads даёт доступ к myTarget/VK Ads API (target.my.com/api/v2)
+const VK_AUTH_URL = `https://oauth.vk.ru/authorize?client_id=2274003&redirect_uri=https%3A%2F%2Foauth.vk.ru%2Fblank.html&response_type=token&scope=ads&display=page&v=5.131`;
 
 export function IntegrationsClient() {
   const searchParams = useSearchParams();
