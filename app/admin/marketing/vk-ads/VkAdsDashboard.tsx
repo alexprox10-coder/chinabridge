@@ -121,19 +121,21 @@ export function VkAdsDashboard() {
           <h1 className="text-xl font-bold text-slate-100">VK Реклама — Кампании</h1>
           <p className="text-sm text-slate-500 mt-0.5">Управление рекламными кампаниями и лид-формами</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={reconnect}
-            disabled={connecting}
-            className="text-xs text-slate-500 hover:text-blue-400 transition-colors disabled:opacity-50"
-          >
-            {connecting ? "…" : "⚡ Переподключить"}
-          </button>
-          <a href="/admin/marketing/integrations" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-            ← Интеграции
-          </a>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={reconnect}
+              disabled={connecting}
+              className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+            >
+              {connecting ? "Подключаем…" : "⚡ Переподключить VK"}
+            </button>
+            <a href="/admin/marketing/integrations" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              ← Интеграции
+            </a>
+          </div>
+          {connectLog && <p className="text-xs font-mono text-slate-400">{connectLog}</p>}
         </div>
-        {connectLog && <p className="text-xs font-mono text-slate-400 mt-1">{connectLog}</p>}
       </div>
 
       {error && (
