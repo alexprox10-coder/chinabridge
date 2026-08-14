@@ -143,34 +143,15 @@ export function VkAdsDashboard() {
             <span className="text-2xl">🔌</span>
             <div>
               <p className="text-sm font-semibold text-slate-200">VK Ads не подключён</p>
-              <p className="text-xs text-slate-500 mt-0.5">Нажмите кнопку ниже для автоматической авторизации через client_credentials</p>
+              <p className="text-xs text-slate-500 mt-0.5">Нажмите кнопку ниже для авторизации через VK ID</p>
             </div>
           </div>
-          <button
-            onClick={async () => {
-              setConnecting(true);
-              setConnectLog("Запрашиваем токен у VK…");
-              try {
-                const r = await fetch("/api/vk-ads/client-auth", { method: "POST" });
-                const d = await r.json();
-                if (d.ok) {
-                  setConnectLog("✅ Подключено! Загружаем данные…");
-                  setError("");
-                  await loadData();
-                } else {
-                  setConnectLog("❌ Ошибка: " + JSON.stringify(d.details ?? d.error));
-                }
-              } catch (e) {
-                setConnectLog("❌ " + String(e));
-              }
-              setConnecting(false);
-            }}
-            disabled={connecting}
-            className="w-full py-2.5 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+          <a
+            href="/api/vk-ads/auth"
+            className="block w-full py-2.5 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium rounded-xl transition-colors text-center"
           >
-            {connecting ? "Подключаем…" : "⚡ Подключить VK Ads"}
-          </button>
-          {connectLog && <p className="text-xs font-mono text-slate-400">{connectLog}</p>}
+            ⚡ Подключить VK Ads
+          </a>
         </div>
       )}
 
