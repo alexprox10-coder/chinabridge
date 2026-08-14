@@ -14,6 +14,8 @@ export function VkAdsDashboard() {
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState("");
   const [creating, setCreating]     = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [connectLog, setConnectLog] = useState("");
   const [log, setLog]               = useState<string[]>([]);
   const [budget, setBudget]         = useState("5000");
 
@@ -108,7 +110,40 @@ export function VkAdsDashboard() {
       </div>
 
       {error && (
-        <div className="bg-red-900/30 border border-red-700/40 rounded-xl px-4 py-3 text-sm text-red-300">{error}</div>
+        <div className="bg-slate-900 border border-blue-700/30 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔌</span>
+            <div>
+              <p className="text-sm font-semibold text-slate-200">VK Ads не подключён</p>
+              <p className="text-xs text-slate-500 mt-0.5">Нажмите кнопку ниже для автоматической авторизации через client_credentials</p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              setConnecting(true);
+              setConnectLog("Запрашиваем токен у VK…");
+              try {
+                const r = await fetch("/api/vk-ads/client-auth", { method: "POST" });
+                const d = await r.json();
+                if (d.ok) {
+                  setConnectLog("✅ Подключено! Загружаем данные…");
+                  setError("");
+                  await loadData();
+                } else {
+                  setConnectLog("❌ Ошибка: " + JSON.stringify(d.details ?? d.error));
+                }
+              } catch (e) {
+                setConnectLog("❌ " + String(e));
+              }
+              setConnecting(false);
+            }}
+            disabled={connecting}
+            className="w-full py-2.5 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+          >
+            {connecting ? "Подключаем…" : "⚡ Подключить VK Ads"}
+          </button>
+          {connectLog && <p className="text-xs font-mono text-slate-400">{connectLog}</p>}
+        </div>
       )}
 
       {/* Создать РК */}
