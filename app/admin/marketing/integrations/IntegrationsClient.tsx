@@ -156,25 +156,28 @@ export function IntegrationsClient() {
               </div>
               {showTokenInput && (
                 <div className="space-y-2 pt-1">
-                  <p className="text-xs text-slate-500">
-                    После авторизации откроется пустая белая страница. Скопируй <b>весь URL</b> из адресной строки — там будет <code>#access_token=...</code> — и вставь сюда:
-                  </p>
+                  <button
+                    onClick={handleAutoConnect}
+                    disabled={saving}
+                    className="w-full text-xs py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50 font-medium"
+                  >
+                    {saving ? "Подключение…" : "🔗 Переподключить автоматически"}
+                  </button>
+                  {saveMsg && <p className="text-xs text-slate-400 text-center">{saveMsg}</p>}
+                  <p className="text-xs text-slate-600 text-center">или вставь токен вручную:</p>
                   <textarea
                     value={tokenValue}
                     onChange={e => setTokenValue(e.target.value)}
                     placeholder="https://oauth.vk.ru/blank.html#access_token=..."
-                    className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-300 resize-none h-16 font-mono"
+                    className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-300 resize-none h-14 font-mono"
                   />
-                  <div className="flex gap-2 items-center">
-                    <button
-                      onClick={handleSaveToken}
-                      disabled={saving}
-                      className="flex-1 text-xs py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {saving ? "Сохранение…" : "Обновить токен"}
-                    </button>
-                    {saveMsg && <span className="text-xs text-slate-400">{saveMsg}</span>}
-                  </div>
+                  <button
+                    onClick={handleSaveToken}
+                    disabled={saving}
+                    className="w-full text-xs py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {saving ? "Сохранение…" : "Сохранить токен из URL"}
+                  </button>
                 </div>
               )}
             </div>
