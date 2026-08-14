@@ -22,11 +22,13 @@ export async function GET(req: NextRequest) {
     redirect_uri:  `${appUrl}/api/vk-ads/callback`,
     response_type: 'code',
     scope:         'ads',
+    display:       'page',
+    v:             '5.199',
     state,
   });
 
-  // myTarget shut down — use new VK Ads OAuth via id.vk.com
-  const res = NextResponse.redirect(`https://id.vk.com/oauth2/authorize?${params}`);
+  // Classic VK OAuth — works for numeric app IDs with ads scope
+  const res = NextResponse.redirect(`https://oauth.vk.com/authorize?${params}`);
   res.cookies.set('vk_oauth_state', state, {
     httpOnly: true,
     secure:   true,

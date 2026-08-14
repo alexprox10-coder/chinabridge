@@ -19,18 +19,14 @@ export async function GET(req: NextRequest) {
   const clientSecret = process.env.VK_ADS_CLIENT_SECRET ?? '';
 
   try {
-    // Обмениваем code → access_token
-    // myTarget shut down — use new VK Ads OAuth token exchange via id.vk.com
-    const tokenRes = await fetch('https://id.vk.com/oauth2/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type:    'authorization_code',
-        code,
-        client_id:     clientId,
-        client_secret: clientSecret,
-        redirect_uri:  `${APP_URL}/api/vk-ads/callback`,
-      }),
+    // Classic VK OAuth token exchange
+    const tokenParams = new URLSearchParams({
+      client_id:     clientId,
+      client_secret: clientSecret,
+      redirect_uri:  `${APP_URL}/api/vk-ads/callback`,
+      code,
+    });
+    const tokenRes = await fetch(`https://oauth.vk.com/access_token?${tokenParams}`, {
       signal: AbortSignal.timeout(10000),
     });
 
