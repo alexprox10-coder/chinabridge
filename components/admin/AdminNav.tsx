@@ -8,8 +8,9 @@ const GROUPS = [
     items: [
       { href: "/admin/dashboard",  label: "Дашборд",   icon: "📊" },
       { href: "/admin/pipeline",   label: "Воронка",    icon: "🗂" },
-      { href: "/admin/leads",      label: "Лиды",       icon: "👥" },
-      { href: "/admin/proposals",  label: "Расчёты",    icon: "📋" },
+      { href: "/admin/leads",            label: "Лиды",          icon: "👥" },
+      { href: "/admin/outreach-leads",   label: "Email Outreach", icon: "📧" },
+      { href: "/admin/proposals",        label: "Расчёты",        icon: "📋" },
     ],
   },
   {
