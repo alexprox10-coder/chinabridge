@@ -5,18 +5,19 @@ import { neon } from '@neondatabase/serverless';
 export const runtime     = 'nodejs';
 export const maxDuration = 30;
 
-const VK_ADS_API = 'https://ads.vk.com/api/v3';
+// myTarget API v2 — работает с токенами из target.vk.ru implicit flow
+const MYTARGET_API = 'https://target.my.com/api/v2';
 
 async function getToken(): Promise<string | null> {
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
-    SELECT key, value FROM integration_tokens WHERE key = 'vk_ads_access_token'
+    SELECT value FROM integration_tokens WHERE key = 'vk_ads_access_token'
   `.catch(() => []);
   return (rows[0] as { value: string } | undefined)?.value ?? null;
 }
 
-async function vkGet(path: string, token: string) {
-  const res = await fetch(`${VK_ADS_API}${path}`, {
+async function mtGet(path: string, token: string) {
+  const res = await fetch(`${MYTARGET_API}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(10000),
   });
@@ -24,8 +25,8 @@ async function vkGet(path: string, token: string) {
   return { ok: res.ok, status: res.status, data };
 }
 
-async function vkPost(path: string, token: string, body: unknown) {
-  const res = await fetch(`${VK_ADS_API}${path}`, {
+async function mtPost(path: string, token: string, body: unknown) {
+  const res = await fetch(`${MYTARGET_API}${path}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -36,58 +37,47 @@ async function vkPost(path: string, token: string, body: unknown) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
+  if (!isAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const token = await getToken();
-  if (!token) {
-    return NextResponse.json({ error: 'VK Ads не подключён' }, { status: 400 });
-  }
+  if (!token) return NextResponse.json({ error: 'VK Ads не подключён' }, { status: 400 });
 
   const [campaignsRes, leadFormsRes] = await Promise.allSettled([
-    vkGet('/campaigns/?limit=50', token),
-    vkGet('/lead_forms/?limit=50', token),
+    mtGet('/campaigns.json?limit=50', token),
+    mtGet('/lead_ads.json?limit=50', token),
   ]);
 
   return NextResponse.json({
     ok: true,
-    campaigns:  campaignsRes.status  === 'fulfilled' ? campaignsRes.value.data  : { error: 'fetch failed' },
-    lead_forms: leadFormsRes.status === 'fulfilled' ? leadFormsRes.value.data : { error: 'fetch failed' },
+    campaigns:  campaignsRes.status  === 'fulfilled' ? campaignsRes.value.data  : { items: [] },
+    lead_forms: leadFormsRes.status === 'fulfilled' ? leadFormsRes.value.data : { items: [] },
   });
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
+  if (!isAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const token = await getToken();
-  if (!token) {
-    return NextResponse.json({ error: 'VK Ads не подключён' }, { status: 400 });
-  }
+  if (!token) return NextResponse.json({ error: 'VK Ads не подключён' }, { status: 400 });
 
   const body   = await req.json().catch(() => ({}) as Record<string, unknown>);
   const action = body.action as string;
 
   if (action === 'create_campaign') {
-    const r = await vkPost('/campaigns/', token, {
-      name:         body.name ?? 'ChinaBridge — Лидогенерация',
-      objective:    'lead_generation',
-      status:       'ACTIVE',
-      budget_limit: Number(body.budget ?? 5000),
-      budget_type:  'total',
-      start_time:   new Date().toISOString(),
+    const r = await mtPost('/campaigns.json', token, {
+      name:             body.name ?? 'ChinaBridge — Лидогенерация',
+      objective:        'leadads',
+      status:           'active',
+      budget_limit:     Number(body.budget ?? 5000),
+      budget_limit_day: Math.min(Number(body.budget ?? 5000), 1000),
     });
     return NextResponse.json({ ok: r.ok, campaign: r.data, http_status: r.status });
   }
 
   if (action === 'create_lead_form') {
-    const r = await vkPost('/lead_forms/', token, {
+    const r = await mtPost('/lead_ads.json', token, {
       name:              body.name ?? 'ChinaBridge — Заявка на доставку из Китая',
       campaign_id:       body.campaign_id,
-      description:       'Расчёт стоимости доставки товаров из Китая',
-      header:            'Получите расчёт за 5 минут',
       questions: [
         { type: 'name',   label: 'Ваше имя',            required: true  },
         { type: 'phone',  label: 'Телефон',              required: true  },
@@ -101,33 +91,29 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'create_ad_group') {
-    const r = await vkPost('/ad_groups/', token, {
+    const r = await mtPost('/ad_groups.json', token, {
       campaign_id:  body.campaign_id,
       name:         body.name ?? 'Предприниматели — Москва',
-      status:       'ACTIVE',
+      status:       'active',
       budget_limit: Number(body.budget ?? 1000),
-      bid:          Number(body.bid ?? 100),
       targeting: {
-        age_from:  25,
-        age_to:    55,
-        sex:       0,
-        interests: ['business', 'ecommerce', 'logistics'],
-        geo: { cities: body.cities ?? [1], exclude_cities: [] },
+        age:  { age_list: [{ age_from: 25, age_to: 55 }] },
+        sex:  { sex_list: [1, 2] },
+        geo:  { regions: [188] },
       },
     });
     return NextResponse.json({ ok: r.ok, ad_group: r.data, http_status: r.status });
   }
 
   if (action === 'get_stats') {
-    const r = await vkGet(
-      `/statistics/?object_type=campaign&object_ids=${body.campaign_id}&date_from=${body.date_from ?? '2026-01-01'}&date_to=${body.date_to ?? new Date().toISOString().slice(0, 10)}`,
+    const dateFrom = body.date_from ?? new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const dateTo   = body.date_to   ?? new Date().toISOString().slice(0, 10);
+    const r = await mtGet(
+      `/statistics/campaigns/day.json?id=${body.campaign_id}&date_from=${dateFrom}&date_to=${dateTo}`,
       token
     );
     return NextResponse.json({ ok: r.ok, stats: r.data });
   }
 
-  return NextResponse.json({
-    error: `Unknown action: ${action}`,
-    available: ['create_campaign', 'create_lead_form', 'create_ad_group', 'get_stats'],
-  }, { status: 400 });
+  return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
 }
