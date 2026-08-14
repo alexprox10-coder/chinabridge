@@ -125,10 +125,33 @@ export function IntegrationsClient() {
                 <button onClick={handleSync} disabled={syncing} className="text-xs py-2 px-3 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors disabled:opacity-50">
                   {syncing ? "…" : "Синхр."}
                 </button>
-                  <button onClick={() => { setShowTokenInput(true); window.open(VK_AUTH_URL, '_blank'); }} className="text-xs py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors">
+                <button onClick={() => { setShowTokenInput(v => !v); if (!showTokenInput) window.open(VK_AUTH_URL, '_blank'); }} className="text-xs py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors">
                   ↺
                 </button>
               </div>
+              {showTokenInput && (
+                <div className="space-y-2 pt-1">
+                  <p className="text-xs text-slate-500">
+                    Авторизуйся и скопируй <b>весь URL</b> из адресной строки (там будет <code>?code=...</code>) — <b>за 60 сек</b>:
+                  </p>
+                  <textarea
+                    value={tokenValue}
+                    onChange={e => setTokenValue(e.target.value)}
+                    placeholder="https://oauth.vk.ru/blank.html?code=..."
+                    className="w-full text-xs bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-300 resize-none h-16 font-mono"
+                  />
+                  <div className="flex gap-2 items-center">
+                    <button
+                      onClick={handleSaveToken}
+                      disabled={saving}
+                      className="flex-1 text-xs py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {saving ? "Сохранение…" : "Обновить токен"}
+                    </button>
+                    {saveMsg && <span className="text-xs text-slate-400">{saveMsg}</span>}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
