@@ -150,7 +150,7 @@ export function IntegrationsClient() {
                 <button onClick={handleSync} disabled={syncing} className="text-xs py-2 px-3 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors disabled:opacity-50">
                   {syncing ? "…" : "Синхр."}
                 </button>
-                <button onClick={() => { setShowTokenInput(v => !v); if (!showTokenInput) window.open(VK_AUTH_URL, '_blank'); }} className="text-xs py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors">
+                <button onClick={() => setShowTokenInput(v => !v)} className="text-xs py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors">
                   ↺
                 </button>
               </div>
