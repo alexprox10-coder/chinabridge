@@ -123,13 +123,12 @@ export function VkAdsDashboard() {
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="flex items-center gap-3">
-            <button
-              onClick={reconnect}
-              disabled={connecting}
-              className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+            <a
+              href="/api/vk-ads/auth"
+              className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors"
             >
-              {connecting ? "Подключаем…" : "⚡ Переподключить VK"}
-            </button>
+              ⚡ Переподключить VK
+            </a>
             <a href="/admin/marketing/integrations" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
               ← Интеграции
             </a>
