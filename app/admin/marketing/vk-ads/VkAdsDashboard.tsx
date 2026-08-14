@@ -21,6 +21,23 @@ export function VkAdsDashboard() {
 
   const addLog = (msg: string) => setLog(l => [...l, msg]);
 
+  const reconnect = async () => {
+    setConnecting(true);
+    setConnectLog("Запрашиваем новый токен у VK…");
+    try {
+      const r = await fetch("/api/vk-ads/client-auth", { method: "POST" });
+      const d = await r.json();
+      if (d.ok) {
+        setConnectLog("✅ Токен получен! Загружаем кампании…");
+        setError("");
+        await loadData();
+      } else {
+        setConnectLog("❌ " + JSON.stringify(d.details ?? d.error));
+      }
+    } catch (e) { setConnectLog("❌ " + String(e)); }
+    setConnecting(false);
+  };
+
   const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -104,9 +121,19 @@ export function VkAdsDashboard() {
           <h1 className="text-xl font-bold text-slate-100">VK Реклама — Кампании</h1>
           <p className="text-sm text-slate-500 mt-0.5">Управление рекламными кампаниями и лид-формами</p>
         </div>
-        <a href="/admin/marketing/integrations" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-          ← Интеграции
-        </a>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={reconnect}
+            disabled={connecting}
+            className="text-xs text-slate-500 hover:text-blue-400 transition-colors disabled:opacity-50"
+          >
+            {connecting ? "…" : "⚡ Переподключить"}
+          </button>
+          <a href="/admin/marketing/integrations" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+            ← Интеграции
+          </a>
+        </div>
+        {connectLog && <p className="text-xs font-mono text-slate-400 mt-1">{connectLog}</p>}
       </div>
 
       {error && (
