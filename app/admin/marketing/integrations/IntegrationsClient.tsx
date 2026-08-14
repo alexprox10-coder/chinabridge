@@ -53,6 +53,23 @@ export function IntegrationsClient() {
     setSyncing(false);
   };
 
+  const handleAutoConnect = async () => {
+    setSaving(true);
+    setSaveMsg("");
+    const r = await fetch("/api/vk-ads/client-auth", { method: "POST" });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      setSaveMsg("✅ Подключено");
+      setShowTokenInput(false);
+      await loadVkStatus();
+    } else {
+      const details = d.details ? JSON.stringify(d.details) : "";
+      setSaveMsg(`❌ ${d.error ?? "Ошибка"} ${details}`.trim());
+      setShowTokenInput(true); // показываем ручной ввод как fallback
+    }
+    setSaving(false);
+  };
+
   const handleSaveToken = async () => {
     const raw = tokenValue.trim();
     if (!raw) { setSaveMsg("Вставьте URL из адресной строки"); return; }
@@ -163,19 +180,19 @@ export function IntegrationsClient() {
             </div>
           ) : (
             <div className="space-y-2">
-              <a
-                href={VK_AUTH_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full text-xs py-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 border border-blue-700/30 rounded-xl transition-colors text-center block"
+              <button
+                onClick={handleAutoConnect}
+                disabled={saving}
+                className="w-full text-xs py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-xl transition-colors disabled:opacity-50 font-medium"
               >
-                1. Авторизоваться в VK Рекламе →
-              </a>
+                {saving ? "Подключение…" : "🔗 Подключить автоматически"}
+              </button>
+              {saveMsg && <p className="text-xs text-center text-slate-400">{saveMsg}</p>}
               <button
                 onClick={() => setShowTokenInput(v => !v)}
                 className="w-full text-xs py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl transition-colors"
               >
-                2. Вставить токен из URL
+                Вставить токен вручную
               </button>
               {showTokenInput && (
                 <div className="space-y-2 pt-1">
