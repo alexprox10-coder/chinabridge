@@ -15,15 +15,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'VK_ADS_CLIENT_SECRET не настроен в Vercel env' }, { status: 500 });
   }
 
-  // New VK Ads API (ads.vk.com) uses id.vk.com for token exchange
-  const tokenRes = await fetch('https://id.vk.com/oauth2/auth', {
+  const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+  const tokenRes = await fetch('https://target.my.com/api/v2/token.json', {
     method:  'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type:    'client_credentials',
-      client_id:     clientId,
-      client_secret: clientSecret,
-    }),
+    headers: {
+      'Content-Type':  'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${basic}`,
+    },
+    body: new URLSearchParams({ grant_type: 'client_credentials' }),
     signal: AbortSignal.timeout(10000),
   });
 
