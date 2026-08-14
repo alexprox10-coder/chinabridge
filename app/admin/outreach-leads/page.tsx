@@ -2,6 +2,44 @@
 import { useState } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 
+type WfKey = "wb-email-discovery" | "wb-vk-phones";
+type WfStatus = "idle" | "running" | "done" | "error";
+
+function useWorkflowRunner() {
+  const [status, setStatus] = useState<Record<WfKey, WfStatus>>({
+    "wb-email-discovery": "idle",
+    "wb-vk-phones": "idle",
+  });
+  const [results, setResults] = useState<Record<WfKey, string>>({
+    "wb-email-discovery": "",
+    "wb-vk-phones": "",
+  });
+
+  async function run(workflow: WfKey) {
+    setStatus((s) => ({ ...s, [workflow]: "running" }));
+    setResults((r) => ({ ...r, [workflow]: "" }));
+    try {
+      const res = await fetch("/api/admin/run-workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workflow }),
+      });
+      const data = await res.json();
+      if (data.ok || data.executionId) {
+        setStatus((s) => ({ ...s, [workflow]: "done" }));
+        setResults((r) => ({ ...r, [workflow]: `Запущен (ID: ${data.executionId ?? "—"})` }));
+      } else {
+        throw new Error(data.error ?? "unknown");
+      }
+    } catch (e) {
+      setStatus((s) => ({ ...s, [workflow]: "error" }));
+      setResults((r) => ({ ...r, [workflow]: String(e) }));
+    }
+  }
+
+  return { status, results, run };
+}
+
 const WEBHOOK = "https://n8n.arendadom24.ru/webhook/add-outreach-lead";
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1LmFhyPa9RTQ-i2699t1FjiuoUVXptGKrCMbyOYu3xAI/edit";
 
@@ -31,6 +69,7 @@ export default function OutreachLeadsPage() {
   const [added, setAdded] = useState<Lead[]>([]);
   const [error, setError] = useState("");
   const [copiedDork, setCopiedDork] = useState<number | null>(null);
+  const { status, results, run } = useWorkflowRunner();
 
   const set = (k: keyof Lead) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -81,6 +120,82 @@ export default function OutreachLeadsPage() {
           >
             📊 Google Sheet
           </a>
+        </div>
+
+        {/* WB Automation */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <h2 className="text-white font-semibold mb-1">WB Автоматизация</h2>
+          <p className="text-slate-500 text-xs mb-4">Автоматически тянет контакты из базы WB продавцов и добавляет в очередь рассылки</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Email Discovery */}
+            <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 flex flex-col gap-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">🔍</span>
+                  <span className="text-white font-medium text-sm">WB → Email Discovery</span>
+                </div>
+                <p className="text-slate-500 text-xs">Ищет email WB продавцов (score≥40) через dadata. Найденные контакты сразу попадают в Google Sheet для холодной рассылки.</p>
+              </div>
+              <button
+                onClick={() => run("wb-email-discovery")}
+                disabled={status["wb-email-discovery"] === "running"}
+                className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition border ${
+                  status["wb-email-discovery"] === "running"
+                    ? "bg-slate-700 border-slate-600 text-slate-400 cursor-not-allowed"
+                    : status["wb-email-discovery"] === "done"
+                    ? "bg-emerald-900/30 border-emerald-700 text-emerald-400 hover:bg-emerald-900/50"
+                    : status["wb-email-discovery"] === "error"
+                    ? "bg-red-900/30 border-red-700 text-red-400 hover:bg-red-900/50"
+                    : "bg-blue-900/20 border-blue-800 text-blue-400 hover:bg-blue-900/40"
+                }`}
+              >
+                {status["wb-email-discovery"] === "running" && "⏳ Запускаю..."}
+                {status["wb-email-discovery"] === "done" && "✓ Запущен"}
+                {status["wb-email-discovery"] === "error" && "✗ Ошибка"}
+                {status["wb-email-discovery"] === "idle" && "▶ Запустить"}
+              </button>
+              {results["wb-email-discovery"] && (
+                <p className={`text-xs ${status["wb-email-discovery"] === "error" ? "text-red-400" : "text-emerald-400"}`}>
+                  {results["wb-email-discovery"]}
+                </p>
+              )}
+            </div>
+
+            {/* VK Phones */}
+            <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 flex flex-col gap-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">📱</span>
+                  <span className="text-white font-medium text-sm">WB → VK Аудитория</span>
+                </div>
+                <p className="text-slate-500 text-xs">Собирает телефоны WB продавцов (score≥40) и отправляет список в Telegram для загрузки в VK Custom Audience через LidFly.</p>
+              </div>
+              <button
+                onClick={() => run("wb-vk-phones")}
+                disabled={status["wb-vk-phones"] === "running"}
+                className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition border ${
+                  status["wb-vk-phones"] === "running"
+                    ? "bg-slate-700 border-slate-600 text-slate-400 cursor-not-allowed"
+                    : status["wb-vk-phones"] === "done"
+                    ? "bg-emerald-900/30 border-emerald-700 text-emerald-400 hover:bg-emerald-900/50"
+                    : status["wb-vk-phones"] === "error"
+                    ? "bg-red-900/30 border-red-700 text-red-400 hover:bg-red-900/50"
+                    : "bg-violet-900/20 border-violet-800 text-violet-400 hover:bg-violet-900/40"
+                }`}
+              >
+                {status["wb-vk-phones"] === "running" && "⏳ Запускаю..."}
+                {status["wb-vk-phones"] === "done" && "✓ Запущен"}
+                {status["wb-vk-phones"] === "error" && "✗ Ошибка"}
+                {status["wb-vk-phones"] === "idle" && "▶ Запустить"}
+              </button>
+              {results["wb-vk-phones"] && (
+                <p className={`text-xs ${status["wb-vk-phones"] === "error" ? "text-red-400" : "text-emerald-400"}`}>
+                  {results["wb-vk-phones"]}
+                </p>
+              )}
+            </div>
+          </div>
+          <p className="text-slate-600 text-xs mt-3">Результат воркфлоу придёт в Telegram. Запуск занимает 1-3 минуты.</p>
         </div>
 
         {/* Dork templates */}
