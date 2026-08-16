@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 
 type WfKey = "wb-email-discovery" | "wb-vk-phones";
@@ -61,18 +61,45 @@ interface Lead {
   source: string;
 }
 
-const EMPTY: Lead = { company: "", contact_name: "", email: "", phone: "", niche: "", source: "google_dork" };
+interface WbSeller {
+  company: string;
+  category: string;
+  score: number;
+  phone: string;
+  email: string;
+}
+
+const EMPTY_LEAD: Lead = { company: "", contact_name: "", email: "", phone: "", niche: "", source: "google_dork" };
+const EMPTY_WB: WbSeller = { company: "", category: "", score: 50, phone: "", email: "" };
 
 export default function OutreachLeadsPage() {
-  const [form, setForm] = useState<Lead>(EMPTY);
+  const [form, setForm] = useState<Lead>(EMPTY_LEAD);
   const [saving, setSaving] = useState(false);
   const [added, setAdded] = useState<Lead[]>([]);
   const [error, setError] = useState("");
   const [copiedDork, setCopiedDork] = useState<number | null>(null);
   const { status, results, run } = useWorkflowRunner();
 
+  // WB sellers state
+  const [wbForm, setWbForm] = useState<WbSeller>(EMPTY_WB);
+  const [wbSaving, setWbSaving] = useState(false);
+  const [wbAdded, setWbAdded] = useState<WbSeller[]>([]);
+  const [wbError, setWbError] = useState("");
+  const [wbCount, setWbCount] = useState<number | null>(null);
+  const [wbOpen, setWbOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/wb-sellers")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setWbCount(d.count); })
+      .catch(() => {});
+  }, []);
+
   const set = (k: keyof Lead) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const setWb = (k: keyof WbSeller) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setWbForm((f) => ({ ...f, [k]: k === "score" ? Number(e.target.value) : e.target.value }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,11 +114,34 @@ export default function OutreachLeadsPage() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setAdded((prev) => [form, ...prev]);
-      setForm(EMPTY);
+      setForm(EMPTY_LEAD);
     } catch (err) {
       setError(`Ошибка: ${String(err)}`);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function submitWb(e: React.FormEvent) {
+    e.preventDefault();
+    if (!wbForm.company.trim()) { setWbError("Название компании обязательно"); return; }
+    setWbSaving(true);
+    setWbError("");
+    try {
+      const res = await fetch("/api/admin/wb-sellers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(wbForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setWbAdded((prev) => [wbForm, ...prev]);
+      setWbCount(c => (c ?? 0) + 1);
+      setWbForm(EMPTY_WB);
+    } catch (err) {
+      setWbError(`Ошибка: ${String(err)}`);
+    } finally {
+      setWbSaving(false);
     }
   }
 
@@ -198,6 +248,136 @@ export default function OutreachLeadsPage() {
           <p className="text-slate-600 text-xs mt-3">Результат воркфлоу придёт в Telegram. Запуск занимает 1-3 минуты.</p>
         </div>
 
+        {/* WB Sellers Database */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setWbOpen(o => !o)}
+            className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-800/40 transition"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">🏪</span>
+              <div className="text-left">
+                <h2 className="text-white font-semibold">База WB продавцов</h2>
+                <p className="text-slate-500 text-xs mt-0.5">Продавцы из которых WB автоматизация ищет email и телефоны</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {wbCount !== null && (
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  wbCount > 0 ? "bg-emerald-900/50 text-emerald-400" : "bg-slate-800 text-slate-500"
+                }`}>
+                  {wbCount} в базе
+                </span>
+              )}
+              <span className="text-slate-500 text-sm">{wbOpen ? "▲" : "▼"}</span>
+            </div>
+          </button>
+
+          {wbOpen && (
+            <div className="border-t border-slate-800 p-5">
+              {wbCount === 0 && wbAdded.length === 0 && (
+                <div className="bg-amber-950/30 border border-amber-900/50 rounded-lg p-3 mb-5 text-amber-300 text-xs">
+                  База пустая — WB автоматизация найдёт 0 контактов. Добавь хотя бы несколько продавцов ниже.
+                </div>
+              )}
+
+              <form onSubmit={submitWb} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Название компании <span className="text-red-400">*</span></label>
+                    <input
+                      type="text"
+                      value={wbForm.company}
+                      onChange={setWb("company")}
+                      placeholder="ООО Торговый Дом..."
+                      className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500 placeholder-slate-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Категория / Ниша</label>
+                    <input
+                      type="text"
+                      value={wbForm.category}
+                      onChange={setWb("category")}
+                      placeholder="Электроника, одежда, мебель..."
+                      className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500 placeholder-slate-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Телефон</label>
+                    <input
+                      type="text"
+                      value={wbForm.phone}
+                      onChange={setWb("phone")}
+                      placeholder="+7 999 000-00-00"
+                      className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500 placeholder-slate-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Email (если уже известен)</label>
+                    <input
+                      type="email"
+                      value={wbForm.email}
+                      onChange={setWb("email")}
+                      placeholder="director@company.ru"
+                      className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500 placeholder-slate-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-500 mb-2">
+                    Оценка привлекательности: <span className={`font-bold ${wbForm.score >= 60 ? "text-emerald-400" : wbForm.score >= 40 ? "text-amber-400" : "text-slate-400"}`}>{wbForm.score}/100</span>
+                    <span className="text-slate-600 ml-2">(≥40 — попадает в WB автоматизацию)</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={wbForm.score}
+                    onChange={setWb("score")}
+                    className="w-full accent-orange-500"
+                  />
+                  <div className="flex justify-between text-xs text-slate-600 mt-0.5">
+                    <span>0 — не интересен</span>
+                    <span>40 — порог автоматизации</span>
+                    <span>100 — топ</span>
+                  </div>
+                </div>
+
+                {wbError && <p className="text-red-400 text-sm">{wbError}</p>}
+
+                <button
+                  type="submit"
+                  disabled={wbSaving}
+                  className="px-6 py-2.5 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
+                >
+                  {wbSaving ? "Сохраняю..." : "➕ Добавить в базу WB"}
+                </button>
+              </form>
+
+              {/* Added WB sellers this session */}
+              {wbAdded.length > 0 && (
+                <div className="mt-5 border-t border-slate-800 pt-4">
+                  <p className="text-slate-500 text-xs mb-3">Добавлено в эту сессию:</p>
+                  <div className="space-y-2">
+                    {wbAdded.map((s, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-slate-800/50 rounded-lg px-3 py-2">
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${s.score >= 40 ? "bg-emerald-900/50 text-emerald-400" : "bg-slate-700 text-slate-400"}`}>
+                          {s.score}
+                        </span>
+                        <span className="text-white text-sm flex-1">{s.company}</span>
+                        {s.category && <span className="text-slate-500 text-xs">{s.category}</span>}
+                        {s.phone && <span className="text-blue-400 text-xs">{s.phone}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Dork templates */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
           <h2 className="text-white font-semibold mb-3">Google Dork запросы для ChinaBridge</h2>
@@ -228,7 +408,7 @@ export default function OutreachLeadsPage() {
 
         {/* Add lead form */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-white font-semibold mb-4">Добавить контакт</h2>
+          <h2 className="text-white font-semibold mb-4">Добавить контакт в Email Outreach</h2>
           <form onSubmit={submit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
