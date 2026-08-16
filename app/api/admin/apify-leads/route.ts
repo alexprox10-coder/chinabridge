@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createLead } from "@/lib/crm/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -215,6 +216,56 @@ export async function POST(req: NextRequest) {
       duplicates: toDelete.length,
       deleted,
     });
+  }
+
+  // ── TO_CRM: импортирует лиды в crm_leads (Neon) ──────────────────────────
+  if (action === "to_crm") {
+    const { leads = [] } = body as {
+      leads: { company: string; category: string; score: number; phone: string; website: string; city?: string; lead_id?: string }[]
+    };
+    if (!leads.length) return NextResponse.json({ error: "leads array is empty" }, { status: 400 });
+
+    let imported = 0;
+    const errors: string[] = [];
+    const now = new Date().toISOString();
+
+    for (const l of leads) {
+      try {
+        await createLead({
+          lead_id:            l.lead_id || `apify-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          created_at:         now,
+          updated_at:         now,
+          name:               "",
+          phone:              l.phone || "",
+          telegram:           "",
+          email:              "",
+          company:            l.company || "",
+          product:            "",
+          product_link:       l.website || "",
+          category:           l.category || "",
+          quantity:           "",
+          weight:             "",
+          volume:             "",
+          country_destination: "KZ",
+          city_destination:   l.city || "",
+          delivery_type:      "",
+          service_type:       "",
+          status:             "NEW",
+          priority:           "WARM",
+          estimated_value:    0,
+          manager:            "",
+          comment:            `Google Maps. Score: ${l.score ?? 0}`,
+          source:             "google_maps_apify",
+          utm_source:         "apify",
+          utm_campaign:       "almaty_wholesale_2026",
+        });
+        imported++;
+      } catch (e) {
+        errors.push(String(e).slice(0, 100));
+      }
+    }
+
+    return NextResponse.json({ ok: true, imported, errors: errors.slice(0, 5), total: leads.length });
   }
 
   return NextResponse.json({ error: "unknown_action" }, { status: 400 });
