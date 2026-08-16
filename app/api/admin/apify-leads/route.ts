@@ -153,5 +153,57 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, imported, total: leads.length });
   }
 
+  // ── DEDUPE: удаляет дублирующиеся строки по company ──────────────────────
+  if (action === "dedupe") {
+    if (!N8N_KEY) return NextResponse.json({ error: "N8N_API_KEY not configured" }, { status: 500 });
+
+    // Получаем все строки
+    const allRows: { id: string; data: Record<string, unknown> }[] = [];
+    let page = 0;
+    const PAGE = 500;
+    while (true) {
+      const r = await fetch(
+        `${N8N_BASE}/api/v1/data-tables/${WB_TABLE_ID}/rows?take=${PAGE}&skip=${page * PAGE}`,
+        { headers: { "X-N8N-API-KEY": N8N_KEY } },
+      ).catch(() => null);
+      if (!r?.ok) break;
+      const json = await r.json();
+      const items: { id: string; data: Record<string, unknown> }[] = json.rows ?? json.data ?? [];
+      allRows.push(...items);
+      if (items.length < PAGE) break;
+      page++;
+    }
+
+    // Находим дубли — оставляем первую запись, удаляем остальные с тем же company
+    const seen = new Map<string, boolean>();
+    const toDelete: string[] = [];
+    for (const row of allRows) {
+      const key = String(row.data?.company ?? row.data?.Company ?? "").trim().toLowerCase();
+      if (!key) continue;
+      if (seen.has(key)) {
+        toDelete.push(row.id);
+      } else {
+        seen.set(key, true);
+      }
+    }
+
+    // Удаляем дубли
+    let deleted = 0;
+    for (const rowId of toDelete) {
+      const r = await fetch(`${N8N_BASE}/api/v1/data-tables/${WB_TABLE_ID}/rows/${rowId}`, {
+        method: "DELETE",
+        headers: { "X-N8N-API-KEY": N8N_KEY },
+      }).catch(() => null);
+      if (r?.ok) deleted++;
+    }
+
+    return NextResponse.json({
+      ok: true,
+      total: allRows.length,
+      duplicates: toDelete.length,
+      deleted,
+    });
+  }
+
   return NextResponse.json({ error: "unknown_action" }, { status: 400 });
 }
