@@ -38,6 +38,18 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   contacted: { label: "Связались",color: "bg-purple-900/50 text-purple-300" },
 };
 
+interface OfferResult {
+  product: string;
+  product_label: string;
+  confidence: number;
+  why: string;
+  pain: string;
+  value_prop: string;
+  first_message: string;
+  score: number;
+  potential: string;
+}
+
 const OFFER_LABELS: Record<string, string> = {
   "Прямой импорт":   "🚢 Прямой импорт",
   "Поиск поставщика":"🔍 Поиск поставщика",
@@ -62,7 +74,7 @@ export function SalesCompaniesClient() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selected, setSelected] = useState<Company | null>(null);
   const [offerLoading, setOfferLoading] = useState(false);
-  const [offerData, setOfferData] = useState<Record<string, unknown> | null>(null);
+  const [offerData, setOfferData] = useState<OfferResult | null>(null);
 
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
@@ -277,13 +289,13 @@ export function SalesCompaniesClient() {
                     <p className="text-slate-500 text-xs mb-1">Рекомендованный оффер:</p>
                     <div className="flex items-center justify-between">
                       <span className="text-white font-medium text-sm">
-                        {String(offerData.product_label ?? "")}
+                        {offerData.product_label}
                       </span>
                       <span className={`text-xs font-bold ${
-                        Number(offerData.confidence) >= 80 ? "text-green-400" :
-                        Number(offerData.confidence) >= 60 ? "text-amber-400" : "text-slate-500"
+                        offerData.confidence >= 80 ? "text-green-400" :
+                        offerData.confidence >= 60 ? "text-amber-400" : "text-slate-500"
                       }`}>
-                        {String(offerData.confidence ?? 0)}% уверен
+                        {offerData.confidence}% уверен
                       </span>
                     </div>
                   </div>
@@ -291,14 +303,14 @@ export function SalesCompaniesClient() {
                   {offerData.pain && (
                     <div>
                       <p className="text-slate-500 text-xs mb-1">Боль клиента:</p>
-                      <p className="text-slate-300 text-xs">{String(offerData.pain)}</p>
+                      <p className="text-slate-300 text-xs">{offerData.pain}</p>
                     </div>
                   )}
 
                   {offerData.value_prop && (
                     <div>
                       <p className="text-slate-500 text-xs mb-1">Ценность:</p>
-                      <p className="text-slate-300 text-xs">{String(offerData.value_prop)}</p>
+                      <p className="text-slate-300 text-xs">{offerData.value_prop}</p>
                     </div>
                   )}
 
@@ -307,14 +319,14 @@ export function SalesCompaniesClient() {
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-slate-500 text-xs">Первое сообщение:</p>
                         <button
-                          onClick={() => copy(String(offerData.first_message))}
+                          onClick={() => copy(offerData.first_message)}
                           className="text-xs text-slate-500 hover:text-white transition"
                         >
                           копировать
                         </button>
                       </div>
                       <div className="bg-slate-800 rounded-lg p-3">
-                        <p className="text-slate-200 text-xs leading-relaxed">{String(offerData.first_message)}</p>
+                        <p className="text-slate-200 text-xs leading-relaxed">{offerData.first_message}</p>
                       </div>
                     </div>
                   )}
