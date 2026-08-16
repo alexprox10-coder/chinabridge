@@ -115,6 +115,8 @@ export default function OutreachLeadsPage() {
   const [apifyError, setApifyError] = useState("");
   const [apifyImporting, setApifyImporting] = useState(false);
   const [apifyImported, setApifyImported] = useState(0);
+  const [apifyCrmImporting, setApifyCrmImporting] = useState(false);
+  const [apifyCrmImported, setApifyCrmImported] = useState(0);
   const [apifyOpen, setApifyOpen] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -197,6 +199,21 @@ export default function OutreachLeadsPage() {
       }
     } catch {}
     setApifyImporting(false);
+  }
+
+  async function importApifyToCrm() {
+    if (!apifyLeads.length) return;
+    setApifyCrmImporting(true);
+    try {
+      const res = await fetch("/api/admin/apify-leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "to_crm", leads: apifyLeads }),
+      });
+      const data = await res.json();
+      if (data.ok) setApifyCrmImported(data.imported ?? 0);
+    } catch {}
+    setApifyCrmImporting(false);
   }
 
   // WB sellers state
@@ -429,20 +446,31 @@ export default function OutreachLeadsPage() {
                     )}
                   </div>
 
-                  {/* Import button */}
-                  <div className="flex items-center gap-3">
+                  {/* Import buttons */}
+                  <div className="flex flex-wrap items-center gap-3">
                     <button
                       onClick={importApifyLeads}
                       disabled={apifyImporting || apifyImported > 0}
                       className="px-5 py-2.5 rounded-lg text-sm font-medium transition border bg-orange-700 border-orange-600 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {apifyImporting && "⏳ Импортирую..."}
-                      {apifyImported > 0 && `✓ Импортировано ${apifyImported} в базу WB`}
-                      {!apifyImporting && apifyImported === 0 && `➕ Импортировать ${apifyLeads.length} лидов в базу WB`}
+                      {apifyImported > 0 && `✓ ${apifyImported} → база WB`}
+                      {!apifyImporting && apifyImported === 0 && `➕ В базу WB (${apifyLeads.length})`}
                     </button>
-                    {apifyImported === 0 && !apifyImporting && (
-                      <span className="text-xs text-slate-500">Лиды попадут в WB Email Discovery</span>
-                    )}
+                    <button
+                      onClick={importApifyToCrm}
+                      disabled={apifyCrmImporting || apifyCrmImported > 0}
+                      className="px-5 py-2.5 rounded-lg text-sm font-medium transition border bg-blue-700 border-blue-600 text-white hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {apifyCrmImporting && "⏳ Импортирую в CRM..."}
+                      {apifyCrmImported > 0 && `✓ ${apifyCrmImported} → CRM Лиды`}
+                      {!apifyCrmImporting && apifyCrmImported === 0 && `➕ В CRM Лиды (${apifyLeads.length})`}
+                    </button>
+                    <span className="text-xs text-slate-500">
+                      {apifyImported === 0 && apifyCrmImported === 0 && "WB — для Email Discovery · CRM — виден в разделе Лиды"}
+                      {apifyImported > 0 && apifyCrmImported === 0 && "Сохранено в WB базу · Нажми «В CRM Лиды» чтобы увидеть в разделе Лиды"}
+                      {apifyCrmImported > 0 && "Лиды добавлены — открой раздел «Лиды» чтобы их увидеть"}
+                    </span>
                   </div>
                 </div>
               )}
