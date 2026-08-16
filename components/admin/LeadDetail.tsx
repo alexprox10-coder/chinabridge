@@ -161,7 +161,8 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
       )}
 
       {/* Info tab */}
-      {mainTab === "info" && <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {mainTab === "info" && <div className="space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left column: client info */}
         <div className="lg:col-span-2 space-y-5">
           <Section title="Клиент">
@@ -287,8 +288,6 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
 
           </div>
 
-          <PersonalOfferWidget leadId={lead.id} />
-
           {/* Lead ID / Meta */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2 text-xs text-slate-500">
             <p>ID: {lead.lead_id || lead.id}</p>
@@ -296,6 +295,10 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
             {lead.updated_at && <p>Обновлён: {lead.updated_at.replace("T", " ").slice(0, 16)}</p>}
           </div>
         </div>
+        </div>
+
+        {/* AI analysis — full width below */}
+        <PersonalOfferWidget leadId={lead.id} />
       </div>}
     </main>
   );
