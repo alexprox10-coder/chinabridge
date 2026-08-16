@@ -10,6 +10,61 @@ const MODEL = process.env.TELEGRAM_AI_MODEL ?? "anthropic/claude-sonnet-4-5";
 // In-memory history (survives warm serverless instances)
 const sessions = new Map<string, { role: "user" | "assistant"; content: string }[]>();
 
+function extractUrls(text: string): string[] {
+  const re = /https?:\/\/[^\s\]\)>"']+/g;
+  return [...new Set(text.match(re) ?? [])].slice(0, 3);
+}
+
+async function scrapeUrl(url: string): Promise<string> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; ChinaBridgeBot/2.0)",
+        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
+      },
+    });
+    clearTimeout(t);
+    if (!res.ok) return `[Сайт ${url} вернул ${res.status}]`;
+
+    const html = await res.text();
+
+    const title = html.match(/<title[^>]*>([^<]{1,200})<\/title>/i)?.[1]?.trim() ?? "";
+    const desc = (
+      html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{1,400})["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']{1,400})["'][^>]+name=["']description["']/i)
+    )?.[1]?.trim() ?? "";
+
+    const h1 = [...html.matchAll(/<h1[^>]*>([\s\S]{1,200}?)<\/h1>/gi)]
+      .map(m => m[1].replace(/<[^>]+>/g, "").trim()).filter(Boolean).join(" | ");
+    const h2 = [...html.matchAll(/<h2[^>]*>([\s\S]{1,200}?)<\/h2>/gi)]
+      .map(m => m[1].replace(/<[^>]+>/g, "").trim()).filter(Boolean).slice(0, 6).join(" | ");
+
+    const body = html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&")
+      .replace(/\s+/g, " ").trim()
+      .split(/\s+/).slice(0, 700).join(" ");
+
+    return [
+      `=== Содержимое ${url} ===`,
+      title       ? `Заголовок: ${title}` : "",
+      desc        ? `Описание: ${desc}` : "",
+      h1          ? `H1: ${h1}` : "",
+      h2          ? `Разделы: ${h2}` : "",
+      body        ? `Текст: ${body}` : "",
+      "=== Конец ===",
+    ].filter(Boolean).join("\n").slice(0, 4000);
+  } catch {
+    return `[Не удалось загрузить ${url}]`;
+  }
+}
+
 async function tg(method: string, body: object) {
   await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
     method: "POST",
@@ -193,7 +248,17 @@ export async function POST(req: NextRequest) {
   await sendTyping(chatId);
 
   const msgs = sessions.get(key) ?? [];
-  msgs.push({ role: "user", content: text });
+
+  // Auto-scrape URLs found in the message
+  const urls = extractUrls(text);
+  let userContent = text;
+  if (urls.length > 0) {
+    await send(chatId, `🌐 Загружаю ${urls.length > 1 ? urls.length + " сайта" : "сайт"}...`);
+    const scraped = await Promise.all(urls.map(u => scrapeUrl(u)));
+    userContent = `${text}\n\n${scraped.join("\n\n")}`;
+  }
+
+  msgs.push({ role: "user", content: userContent });
 
   const reply = await callAI(msgs);
 
