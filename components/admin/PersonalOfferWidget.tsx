@@ -8,24 +8,38 @@ export function PersonalOfferWidget({ leadId }: { leadId: number }) {
   const [subject, setSubject] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [websiteAnalyzed, setWebsiteAnalyzed] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [loadingStep, setLoadingStep] = useState("");
 
   async function generate() {
     setLoading(true);
     setError("");
     setOffer("");
+    setWebsiteAnalyzed(false);
+    setLoadingStep("Загружаю данные лида...");
+
+    // Simulate steps for UX feedback
+    const stepTimer = setTimeout(() => setLoadingStep("Анализирую сайт компании..."), 1200);
+
     try {
       const res = await fetch(`/api/admin/leads/${leadId}/offer`, { method: "POST" });
+      clearTimeout(stepTimer);
       const data = await res.json();
       if (data.ok) {
         setOffer(data.offer ?? "");
         setSubject(data.subject ?? "");
+        setWebsiteAnalyzed(data.website_analyzed ?? false);
+        setWebsiteUrl(data.website_url ?? "");
       } else {
         setError(data.error ?? "Ошибка генерации");
       }
     } catch {
+      clearTimeout(stepTimer);
       setError("Ошибка сети");
     } finally {
       setLoading(false);
+      setLoadingStep("");
     }
   }
 
@@ -51,8 +65,18 @@ export function PersonalOfferWidget({ leadId }: { leadId: number }) {
 
       {!offer && !loading && (
         <p className="text-xs text-slate-500">
-          AI сгенерирует персональное сообщение на основе данных лида — товар, категория, маршрут, источник.
+          AI зайдёт на сайт компании, проанализирует бизнес и сгенерирует индивидуальное КП.
         </p>
+      )}
+
+      {websiteAnalyzed && websiteUrl && (
+        <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 rounded-lg px-3 py-1.5">
+          <span>✓</span>
+          <span>Сайт проанализирован:</span>
+          <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100 truncate max-w-[200px]">
+            {websiteUrl.replace(/^https?:\/\//, "")}
+          </a>
+        </div>
       )}
 
       {subject && (
@@ -65,7 +89,7 @@ export function PersonalOfferWidget({ leadId }: { leadId: number }) {
         <textarea
           value={offer}
           onChange={e => setOffer(e.target.value)}
-          rows={8}
+          rows={9}
           className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-3 text-slate-200 text-sm focus:outline-none focus:border-blue-500 resize-y leading-relaxed"
         />
       )}
@@ -82,7 +106,7 @@ export function PersonalOfferWidget({ leadId }: { leadId: number }) {
         {loading ? (
           <>
             <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Генерирую...
+            {loadingStep || "Генерирую..."}
           </>
         ) : offer ? "Перегенерировать" : "Сгенерировать оффер"}
       </button>
