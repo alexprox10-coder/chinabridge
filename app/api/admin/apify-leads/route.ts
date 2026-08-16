@@ -26,13 +26,13 @@ function scoreFromReviews(reviews: number): number {
 
 export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!APIFY_TOKEN) return NextResponse.json({ error: "APIFY_API_TOKEN not configured" }, { status: 500 });
 
   const body = await req.json().catch(() => ({}));
   const { action } = body;
 
   // ── START: запускает Apify актор ──────────────────────────────────────────
   if (action === "start") {
+    if (!APIFY_TOKEN) return NextResponse.json({ error: "APIFY_API_TOKEN not configured" }, { status: 500 });
     const { searchStrings = ["оптовый магазин Алматы"], limit = 50 } = body;
 
     const input = {
@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
 
   // ── STATUS: проверяет статус запуска ──────────────────────────────────────
   if (action === "status") {
+    if (!APIFY_TOKEN) return NextResponse.json({ error: "APIFY_API_TOKEN not configured" }, { status: 500 });
     const { runId } = body;
     if (!runId) return NextResponse.json({ error: "runId required" }, { status: 400 });
 
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
 
   // ── FETCH: забирает результаты из датасета ────────────────────────────────
   if (action === "fetch") {
+    if (!APIFY_TOKEN) return NextResponse.json({ error: "APIFY_API_TOKEN not configured" }, { status: 500 });
     const { datasetId, limit = 100, offset = 0 } = body;
     if (!datasetId) return NextResponse.json({ error: "datasetId required" }, { status: 400 });
 
