@@ -1,0 +1,11 @@
+company_name,phone,email,website,city,country,category,address,rating,reviews,source,status
+"ТОО Optima Trade","+7 727 212-34-56","info@optima-trade.kz","optima-trade.kz","Алматы","KZ","Оптовая торговля","ул. Розыбакиева 247","4.2","87","google_maps","new"
+"Оптовый центр Азия","","","","Алматы","KZ","Товары для дома","мкр. Аксай-4 ул. Навои 310","3.8","23","google_maps","new"
+"ИП Ким С.В.","+7 701 555-77-88","kim.optom@mail.ru","","Алматы","KZ","Электроника","Барахолка павильон 3-41","4.5","156","google_maps","new"
+"Stroy Master KZ","+7 727 388-90-11","info@stroymaster.kz","stroymaster.kz","Алматы","KZ","Стройматериалы","пр. Рыскулова 103","4.0","42","google_maps","new"
+"АвтоЗапчасти Оптом","+7 777 200-44-55","","","Алматы","KZ","Автозапчасти","ул. Жандосова 55","3.9","31","google_maps","new"
+"ТОО Алматы Импорт","+7 727 390-12-34","almaty-import@gmail.com","","Алматы","KZ","Импорт/ВЭД","мкр. Алатау ул. Чкалова 2/1","4.7","19","google_maps","new"
+"Caspi Trade","+7 727 267-88-99","info@caspi-trade.kz","caspi-trade.kz","Алматы","KZ","Текстиль оптом","ул. Толе би 101","4.1","63","google_maps","new"
+"ЦУМ Оптовый","+7 700 777-55-44","","zuman.kz","Алматы","KZ","Одежда оптом","пр. Жибек Жолы 54","3.6","18","google_maps","new"
+"ИП Марченко Д.А.","+7 707 333-21-10","marchenko.opt@yandex.ru","","Алматы","KZ","Товары для дома","Барахолка р-н Фурманова","4.3","44","google_maps","new"
+"Asia Logistics KZ","+7 727 399-55-77","sales@asialogistics.kz","asialogistics.kz","Алматы","KZ","Логистика/Импорт","ул. Алтынсарина 26","4.6","91","google_maps","new"

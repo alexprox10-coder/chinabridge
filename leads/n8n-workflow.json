@@ -1,0 +1,152 @@
+{
+  "_meta": {
+    "name": "ChinaBridge Lead Generator",
+    "description": "Еженедельный автоматический сбор лидов через Apify Google Maps Scraper",
+    "version": "1.0",
+    "created": "2026-08-16",
+    "apify_actor": "compass~crawler-google-places",
+    "n8n_import": "Импортировать через n8n → Workflows → Import from File"
+  },
+  "name": "ChinaBridge Lead Generator",
+  "nodes": [
+    {
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "weeks", "triggerAtDay": [1], "triggerAtHour": 9 }]
+        }
+      }
+    },
+    {
+      "id": "webhook-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 460],
+      "parameters": {
+        "path": "chinabridge-leads",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "apify-run",
+      "name": "Run Apify Google Maps",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [480, 380],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/compass~crawler-google-places/runs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "token", "value": "={{$env.APIFY_API_TOKEN}}" }]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "body": {
+          "searchStrings": [
+            "оптовый магазин Алматы",
+            "строительная компания Астана",
+            "автозапчасти оптом Алматы",
+            "электроника оптом Казахстан"
+          ],
+          "maxCrawledPlaces": 100,
+          "language": "ru",
+          "exportPlaceUrls": false,
+          "includeHistogram": false
+        }
+      }
+    },
+    {
+      "id": "wait-node",
+      "name": "Wait 90 seconds",
+      "type": "n8n-nodes-base.wait",
+      "position": [720, 380],
+      "parameters": {
+        "amount": 90,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "get-results",
+      "name": "Get Apify Results",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [960, 380],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/acts/compass~crawler-google-places/runs/last/dataset/items?token={{$env.APIFY_API_TOKEN}}&limit=200&format=json"
+      }
+    },
+    {
+      "id": "filter-code",
+      "name": "Filter & Deduplicate",
+      "type": "n8n-nodes-base.code",
+      "position": [1200, 380],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst seen = new Set();\nconst result = [];\n\nfor (const item of items) {\n  const d = item.json;\n  if (!d.phone && !d.website) continue;\n  const key = d.phone || d.website;\n  if (seen.has(key)) continue;\n  seen.add(key);\n  result.push({\n    json: {\n      source: 'google_maps',\n      company_name: d.title || '',\n      phone: d.phone || '',\n      email: d.email || '',\n      website: d.website || '',\n      city: d.city || '',\n      country: 'KZ',\n      category: d.categoryName || '',\n      address: d.address || '',\n      rating: d.totalScore || 0,\n      reviews: d.reviewsCount || 0,\n      status: 'new',\n      collected_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn result;"
+      }
+    },
+    {
+      "id": "save-supabase",
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1440, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/chinabridge_leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_ANON_KEY}}" },
+            { "name": "Authorization", "value": "=Bearer {{$env.SUPABASE_ANON_KEY}}" },
+            { "name": "Prefer", "value": "resolution=ignore-duplicates" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "body": "={{$json}}"
+      }
+    },
+    {
+      "id": "count-code",
+      "name": "Count Results",
+      "type": "n8n-nodes-base.code",
+      "position": [1440, 460],
+      "parameters": {
+        "jsCode": "const count = $input.all().length;\nreturn [{ json: { count, date: new Date().toISOString().split('T')[0] } }];"
+      }
+    },
+    {
+      "id": "telegram-notify",
+      "name": "Telegram Notify",
+      "type": "n8n-nodes-base.telegram",
+      "position": [1680, 380],
+      "parameters": {
+        "chatId": "8979087725",
+        "text": "=✅ ChinaBridge Lead Generator\n\nСобрано новых лидов: {{$json.count}}\nДата: {{$json.date}}\n\n📊 Лиды доступны в Supabase → chinabridge_leads\n🔗 chinabridge.pro/admin/sales"
+      }
+    }
+  ],
+  "connections": {
+    "schedule-trigger": { "main": [[{ "node": "apify-run", "type": "main", "index": 0 }]] },
+    "webhook-trigger": { "main": [[{ "node": "apify-run", "type": "main", "index": 0 }]] },
+    "apify-run": { "main": [[{ "node": "wait-node", "type": "main", "index": 0 }]] },
+    "wait-node": { "main": [[{ "node": "get-results", "type": "main", "index": 0 }]] },
+    "get-results": { "main": [[{ "node": "filter-code", "type": "main", "index": 0 }]] },
+    "filter-code": {
+      "main": [[
+        { "node": "save-supabase", "type": "main", "index": 0 },
+        { "node": "count-code", "type": "main", "index": 0 }
+      ]]
+    },
+    "count-code": { "main": [[{ "node": "telegram-notify", "type": "main", "index": 0 }]] }
+  },
+  "env_required": {
+    "APIFY_API_TOKEN": "Из apify.com → Settings → API & Integrations",
+    "SUPABASE_URL": "Из Supabase → Project Settings → API",
+    "SUPABASE_ANON_KEY": "Из Supabase → Project Settings → API"
+  }
+}

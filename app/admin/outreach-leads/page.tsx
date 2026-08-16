@@ -1,9 +1,31 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 
 type WfKey = "wb-seller-parser" | "wb-email-discovery" | "wb-vk-phones";
 type WfStatus = "idle" | "running" | "done" | "error";
+
+// ── Apify types ─────────────────────────────────────────────────────────────
+interface ApifyLead {
+  company: string;
+  phone: string;
+  website: string;
+  address: string;
+  city: string;
+  category: string;
+  rating: number;
+  reviews: number;
+  score: number;
+}
+
+const APIFY_PRESETS = [
+  { label: "Оптовые магазины Алматы", query: "оптовый магазин Алматы" },
+  { label: "Строительные компании Астана", query: "строительная компания Астана" },
+  { label: "Автозапчасти оптом KZ", query: "автозапчасти оптом Алматы" },
+  { label: "Электроника оптом", query: "электроника оптом Казахстан" },
+  { label: "Стройматериалы оптом", query: "стройматериалы оптом Алматы" },
+  { label: "Импортёры из Китая", query: "импортёр из Китая Алматы" },
+];
 
 function useWorkflowRunner() {
   const [status, setStatus] = useState<Record<WfKey, WfStatus>>({
@@ -81,6 +103,101 @@ export default function OutreachLeadsPage() {
   const [error, setError] = useState("");
   const [copiedDork, setCopiedDork] = useState<number | null>(null);
   const { status, results, run } = useWorkflowRunner();
+
+  // ── Apify state ───────────────────────────────────────────────────────────
+  const [apifyQuery, setApifyQuery] = useState(APIFY_PRESETS[0].query);
+  const [apifyLimit, setApifyLimit] = useState(50);
+  const [apifyPhase, setApifyPhase] = useState<"idle"|"starting"|"polling"|"fetching"|"done"|"error">("idle");
+  const [apifyRunId, setApifyRunId] = useState("");
+  const [apifyDatasetId, setApifyDatasetId] = useState("");
+  const [apifyLeads, setApifyLeads] = useState<ApifyLead[]>([]);
+  const [apifyTotal, setApifyTotal] = useState(0);
+  const [apifyError, setApifyError] = useState("");
+  const [apifyImporting, setApifyImporting] = useState(false);
+  const [apifyImported, setApifyImported] = useState(0);
+  const [apifyOpen, setApifyOpen] = useState(true);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  async function startApify() {
+    setApifyPhase("starting");
+    setApifyError("");
+    setApifyLeads([]);
+    setApifyImported(0);
+    try {
+      const res = await fetch("/api/admin/apify-leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", searchStrings: [apifyQuery], limit: apifyLimit }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error ?? "start_failed");
+      setApifyRunId(data.runId);
+      setApifyDatasetId(data.datasetId);
+      setApifyPhase("polling");
+      pollRef.current = setInterval(() => pollApify(data.runId, data.datasetId), 5000);
+    } catch (e) {
+      setApifyPhase("error");
+      setApifyError(String(e));
+    }
+  }
+
+  async function pollApify(runId: string, datasetId: string) {
+    try {
+      const res = await fetch("/api/admin/apify-leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "status", runId }),
+      });
+      const data = await res.json();
+      if (data.status === "SUCCEEDED") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setApifyPhase("fetching");
+        fetchApifyResults(datasetId);
+      } else if (data.status === "FAILED") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setApifyPhase("error");
+        setApifyError("Apify run failed");
+      }
+    } catch {}
+  }
+
+  async function fetchApifyResults(datasetId: string) {
+    try {
+      const res = await fetch("/api/admin/apify-leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "fetch", datasetId, limit: 200 }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      setApifyLeads(data.leads ?? []);
+      setApifyTotal(data.total ?? 0);
+      setApifyPhase("done");
+    } catch (e) {
+      setApifyPhase("error");
+      setApifyError(String(e));
+    }
+  }
+
+  async function importApifyLeads() {
+    if (!apifyLeads.length) return;
+    setApifyImporting(true);
+    try {
+      const res = await fetch("/api/admin/apify-leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "import", leads: apifyLeads }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setApifyImported(data.imported ?? 0);
+        setWbCount(c => (c ?? 0) + (data.imported ?? 0));
+      }
+    } catch {}
+    setApifyImporting(false);
+  }
 
   // WB sellers state
   const [wbForm, setWbForm] = useState<WbSeller>(EMPTY_WB);
@@ -172,6 +289,165 @@ export default function OutreachLeadsPage() {
           >
             📊 Google Sheet
           </a>
+        </div>
+
+        {/* ── Apify Google Maps Lead Generator ── */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setApifyOpen(o => !o)}
+            className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-800/40 transition"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🗺️</span>
+              <div className="text-left">
+                <h2 className="text-white font-semibold">Apify — Google Maps лиды</h2>
+                <p className="text-slate-500 text-xs mt-0.5">Автоматический сбор контактов компаний через Google Maps · ~0.4¢ за лид</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {apifyLeads.length > 0 && (
+                <span className="text-xs px-2 py-1 rounded-full bg-emerald-900/50 text-emerald-400 font-medium">
+                  {apifyLeads.length} лидов
+                </span>
+              )}
+              <span className="text-slate-500 text-sm">{apifyOpen ? "▲" : "▼"}</span>
+            </div>
+          </button>
+
+          {apifyOpen && (
+            <div className="border-t border-slate-800 p-5 space-y-5">
+              {/* Preset queries */}
+              <div>
+                <p className="text-xs text-slate-500 mb-2">Готовые запросы:</p>
+                <div className="flex flex-wrap gap-2">
+                  {APIFY_PRESETS.map(p => (
+                    <button
+                      key={p.query}
+                      onClick={() => setApifyQuery(p.query)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition ${
+                        apifyQuery === p.query
+                          ? "bg-emerald-900/40 border-emerald-700 text-emerald-300"
+                          : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom query + limit */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={apifyQuery}
+                  onChange={e => setApifyQuery(e.target.value)}
+                  placeholder="Введи свой запрос..."
+                  className="flex-1 bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 placeholder-slate-600"
+                />
+                <div className="flex items-center gap-2 shrink-0">
+                  <label className="text-xs text-slate-500 whitespace-nowrap">Лимит:</label>
+                  <select
+                    value={apifyLimit}
+                    onChange={e => setApifyLimit(Number(e.target.value))}
+                    className="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={200}>200</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Start button + status */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  onClick={startApify}
+                  disabled={apifyPhase === "starting" || apifyPhase === "polling" || apifyPhase === "fetching" || !apifyQuery.trim()}
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium transition border bg-emerald-700 border-emerald-600 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {apifyPhase === "starting" && "⏳ Запускаю..."}
+                  {apifyPhase === "polling" && "⏳ Парсю Google Maps..."}
+                  {apifyPhase === "fetching" && "⏳ Загружаю результаты..."}
+                  {(apifyPhase === "idle" || apifyPhase === "done" || apifyPhase === "error") && "▶ Собрать лиды"}
+                </button>
+
+                {apifyPhase === "polling" && (
+                  <span className="text-xs text-slate-400 animate-pulse">Обычно 1-3 минуты...</span>
+                )}
+                {apifyPhase === "done" && apifyTotal > 0 && (
+                  <span className="text-xs text-emerald-400">✓ Найдено {apifyTotal} мест, показываем {apifyLeads.length}</span>
+                )}
+                {apifyPhase === "error" && (
+                  <span className="text-xs text-red-400">✗ {apifyError}</span>
+                )}
+              </div>
+
+              {/* Results table */}
+              {apifyLeads.length > 0 && (
+                <div className="space-y-3">
+                  <div className="overflow-x-auto rounded-lg border border-slate-800">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-800/60 text-slate-400 text-left">
+                          <th className="px-3 py-2 font-medium text-xs">Компания</th>
+                          <th className="px-3 py-2 font-medium text-xs">Телефон</th>
+                          <th className="px-3 py-2 font-medium text-xs">★</th>
+                          <th className="px-3 py-2 font-medium text-xs">Отзывов</th>
+                          <th className="px-3 py-2 font-medium text-xs">Score</th>
+                          <th className="px-3 py-2 font-medium text-xs">Сайт</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {apifyLeads.slice(0, 20).map((lead, i) => (
+                          <tr key={i} className="border-t border-slate-800/60 hover:bg-slate-800/30 transition">
+                            <td className="px-3 py-2 text-white text-xs max-w-[200px] truncate">{lead.company || "—"}</td>
+                            <td className="px-3 py-2 text-blue-400 text-xs whitespace-nowrap">{lead.phone || "—"}</td>
+                            <td className="px-3 py-2 text-amber-400 text-xs">{lead.rating || "—"}</td>
+                            <td className="px-3 py-2 text-slate-400 text-xs">{lead.reviews || 0}</td>
+                            <td className="px-3 py-2 text-xs">
+                              <span className={`px-1.5 py-0.5 rounded font-bold text-xs ${lead.score >= 40 ? "bg-emerald-900/50 text-emerald-400" : "bg-slate-700 text-slate-400"}`}>
+                                {lead.score}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-xs max-w-[150px] truncate">
+                              {lead.website ? (
+                                <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                                  {lead.website.replace(/^https?:\/\//, "").slice(0, 30)}
+                                </a>
+                              ) : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {apifyLeads.length > 20 && (
+                      <div className="px-3 py-2 bg-slate-800/30 text-slate-500 text-xs text-center border-t border-slate-800">
+                        + ещё {apifyLeads.length - 20} лидов (все будут импортированы)
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Import button */}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={importApifyLeads}
+                      disabled={apifyImporting || apifyImported > 0}
+                      className="px-5 py-2.5 rounded-lg text-sm font-medium transition border bg-orange-700 border-orange-600 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {apifyImporting && "⏳ Импортирую..."}
+                      {apifyImported > 0 && `✓ Импортировано ${apifyImported} в базу WB`}
+                      {!apifyImporting && apifyImported === 0 && `➕ Импортировать ${apifyLeads.length} лидов в базу WB`}
+                    </button>
+                    {apifyImported === 0 && !apifyImporting && (
+                      <span className="text-xs text-slate-500">Лиды попадут в WB Email Discovery</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* WB Automation */}
