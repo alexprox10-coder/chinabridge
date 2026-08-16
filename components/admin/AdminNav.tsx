@@ -6,7 +6,6 @@ const GROUPS = [
   {
     label: "CRM",
     items: [
-      { href: "/admin/sales",      label: "AI Sales Dept", icon: "🤖" },
       { href: "/admin/dashboard",  label: "Дашборд",   icon: "📊" },
       { href: "/admin/pipeline",   label: "Воронка",    icon: "🗂" },
       { href: "/admin/leads",            label: "Лиды",          icon: "👥" },
@@ -37,7 +36,6 @@ const GROUPS = [
       { href: "/admin/market-intelligence", label: "Поиск лидов",        icon: "🎯" },
       { href: "/admin/market-intelligence/wb-sellers", label: "WB Продавцы AI", icon: "🛒" },
       { href: "/admin/market-intelligence/hh-leads", label: "HH.ru Лиды AI", icon: "💼" },
-      { href: "/admin/market-intelligence/ai-sales-agent", label: "AI Sales Agent", icon: "🤖" },
       { href: "/admin/ai-company",          label: "AI Кабинет",         icon: "🤖" },
       { href: "/product-finder",            label: "Поиск товаров",      icon: "🔍" },
       { href: "/supplier-finder",           label: "Поиск поставщиков",  icon: "🏭" },

@@ -186,54 +186,71 @@ export async function POST(
     contacts.address        ? `Адрес: ${contacts.address}` : null,
   ].filter(Boolean).join("\n");
 
-  const prompt = `Ты — эксперт по B2B продажам и аналитик ChinaBridge (платформа импорта товаров из Китая в Казахстан и Россию).
+  const prompt = `Ты — Chief Sales Officer ChinaBridge, компании по организации импорта товаров из Китая в Казахстан и Россию.
+
+Проанализируй лид и выдай полный AI Sales Cockpit.
 
 Данные лида из CRM:
 ${leadData}
-
-${foundContacts ? `Контакты найденные на сайте:\n${foundContacts}\n` : ""}
+${foundContacts ? `\nКонтакты найдены на сайте:\n${foundContacts}` : ""}
 ${websiteSection}
 
-ЗАДАНИЕ — выполни в одном ответе два блока:
+=== ПРОДУКТЫ CHINABRIDGE (выбери наиболее подходящий) ===
+| Что обнаружил у лида | Продукт ChinaBridge |
+|---|---|
+| Оптовый поставщик / реселлер | Поиск прямого производителя в Китае |
+| Дорогой поставщик или посредник | Снижение закупочной цены (прямой производитель) |
+| Регулярные закупки одного SKU | Регулярные поставки (контракт) |
+| Маркетплейсы WB / Ozon / Kaspi | AI Unit Economics + Product Finder |
+| Каталог / интернет-магазин | Поиск аналогов в Китае |
+| Много SKU (50+) | Procurement / China Sourcing |
+| Только нужна доставка | Карго / Консолидация |
+| Уже работает с Китаем | Оптимизация цепочки поставок |
+| Производство | Закупка сырья/компонентов из Китая |
+| Не знает поставщиков | Supplier Finder |
 
-1. АНАЛИЗ БИЗНЕСА И БОЛИ:
-   - Что конкретно продаёт/делает компания (товары, услуги, направления)
-   - Ключевые боли при закупках (выбери 2-3 наиболее релевантных):
-     * Высокие закупочные цены у местных посредников
-     * Длинные сроки поставки (2-3 месяца)
-     * Проблемы с таможенным оформлением
-     * Нестабильное качество товара
-     * Нет прямого выхода на производителей в Китае
-     * Сложности с оплатой в Китай (санкции, конвертация)
-     * Не знают реальную цену FOB у производителя
-   - Почему ChinaBridge может закрыть эти боли
+=== ПРАВИЛА ЛОГИСТИКИ (КРИТИЧЕСКИ ВАЖНО) ===
+- KZ / Казахстан: СЕРАЯ схема. Склад в Алматы. ЗАПРЕЩЕНО писать "таможня под ключ", "белая схема", "официальное оформление" — это неправда.
+- RU / Россия: БЕЛАЯ схема через Суньфэньхэ. Можно писать "таможня под ключ".
+- Оплата: расчётный счёт или онлайн (карта / СБП / Tinkoff). НЕ упоминать Kaspi — не подключён.
 
-2. ПЕРСОНАЛЬНОЕ КП (текст для отправки компании):
-   - Обратись к компании по имени
-   - Покажи что знаешь их бизнес — назови 1-2 конкретных товара/категории с их сайта
-   - Напрямую назови их боль: "Знаем, что у [профиль бизнеса] главная проблема — ..."
-   - Объясни как именно ChinaBridge закрывает эту боль
-   - Конкретные цифры: экономия 20-40%, 25-35 дней до склада
-   - КРИТИЧЕСКИ ВАЖНО — схема доставки зависит от страны:
-     * Если KZ / Казахстан: схема СЕРАЯ. Склад в Алматы. НЕ ПИШИ "таможня под ключ", "официальное оформление" — неправда для KZ.
-     * Если RU / Россия: белая доставка через Суньфэньхэ, можно писать "таможня под ключ".
-   - Оплата: расчётный счёт или онлайн (карта, СБП, Tinkoff). НЕ упоминай Kaspi — не подключён.
-   - ОБЯЗАТЕЛЬНЫЙ CTA — заканчивай КП ссылкой на инструмент сайта (НЕ "позвоните нам"):
-     * Для всех: "Рассчитайте стоимость доставки вашего товара прямо сейчас: https://chinabridge.pro/delivery-calculator"
-     * Для KZ дополнительно: "Подробнее о доставке в Казахстан: https://chinabridge.pro/delivery/china-kazakhstan"
-     * Для поиска товаров: "Найдите поставщика под ваш товар: https://chinabridge.pro/product-finder"
-     * Выбери 1-2 наиболее релевантные ссылки для этого лида
-   - Тон: клиент должен сам перейти на сайт и попасть в воронку — минимум контакта с менеджером
-   - Длина: 6-8 предложений, живой деловой тон, без клише
+=== CTA ССЫЛКИ ДЛЯ КП ===
+- Калькулятор доставки: https://chinabridge.pro/delivery-calculator
+- Доставка в Казахстан: https://chinabridge.pro/delivery/china-kazakhstan
+- Поиск товаров: https://chinabridge.pro/product-finder
 
-Ответь строго JSON (без markdown-блоков):
+Выдай строго JSON без markdown-блоков:
 {
+  "lead_score": число 0-100,
+  "score_level": "HOT" или "WARM" или "COLD",
+  "score_factors": [{"label": "причина балла", "points": число}, ...],
+  "deal_potential_min": число в USD,
+  "deal_potential_max": число в USD,
   "business_summary": "1-2 предложения: чем занимается компания",
-  "product_categories": ["товар1", "товар2"],
-  "pain_points": ["боль1 — почему", "боль2 — почему"],
-  "pain_analysis": "2-3 предложения: почему именно эти боли актуальны для этой компании",
-  "offer": "текст КП",
-  "subject": "тема письма для email/WhatsApp"
+  "product_categories": ["категория1", "категория2"],
+  "pain_points": ["боль1 — почему актуальна", "боль2 — почему актуальна"],
+  "pain_analysis": "2-3 предложения: почему именно эти боли у этой компании",
+  "selected_product": "название выбранного продукта ChinaBridge",
+  "product_reason": "1 предложение — почему именно этот продукт для этого лида",
+  "offer_options": [
+    {"title": "Оффер 1 — ...", "description": "2-3 предложения конкретного предложения"},
+    {"title": "Оффер 2 — ...", "description": "2-3 предложения альтернативного варианта"}
+  ],
+  "attack_plan": {
+    "response_probability": число 0-100,
+    "deal_probability": число 0-100,
+    "what_to_sell": "одна строка — что продаём этому клиенту",
+    "main_pain": "одна строка — главная боль",
+    "first_contact": "Телефон" или "WhatsApp" или "Email",
+    "second_contact": "следующий канал",
+    "best_contact": "лучший контакт для первого обращения (из сайта или CRM)",
+    "dont_do": "одна строка — что НЕ делать при контакте",
+    "first_goal": "одна строка — цель первого контакта (не продавать, а получить...)"
+  },
+  "call_script": "готовый скрипт звонка 3-5 предложений — живой, конкретный, не шаблонный",
+  "message_short": "короткое первое WhatsApp/email сообщение клиенту 2-3 предложения + ссылка на калькулятор",
+  "offer": "полноценное КП — отправляется после проявления интереса, 6-8 предложений + ссылка на калькулятор",
+  "subject": "тема письма"
 }`;
 
   try {
@@ -250,7 +267,7 @@ ${websiteSection}
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         temperature: 0.7,
-        max_tokens: 1400,
+        max_tokens: 3000,
       }),
     });
     const data = await res.json();
@@ -259,12 +276,23 @@ ${websiteSection}
 
     return NextResponse.json({
       ok: true,
-      offer: parsed.offer ?? "",
-      subject: parsed.subject ?? "",
+      lead_score: parsed.lead_score ?? 0,
+      score_level: parsed.score_level ?? "COLD",
+      score_factors: parsed.score_factors ?? [],
+      deal_potential_min: parsed.deal_potential_min ?? 0,
+      deal_potential_max: parsed.deal_potential_max ?? 0,
       business_summary: parsed.business_summary ?? "",
       product_categories: parsed.product_categories ?? [],
       pain_points: parsed.pain_points ?? [],
       pain_analysis: parsed.pain_analysis ?? "",
+      selected_product: parsed.selected_product ?? "",
+      product_reason: parsed.product_reason ?? "",
+      offer_options: parsed.offer_options ?? [],
+      attack_plan: parsed.attack_plan ?? null,
+      call_script: parsed.call_script ?? "",
+      message_short: parsed.message_short ?? "",
+      offer: parsed.offer ?? "",
+      subject: parsed.subject ?? "",
       website_analyzed: analyzed,
       website_url: websiteUrl || null,
       contacts_found: {
