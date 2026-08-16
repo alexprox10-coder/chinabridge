@@ -2,15 +2,17 @@
 import { useState, useEffect } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 
-type WfKey = "wb-email-discovery" | "wb-vk-phones";
+type WfKey = "wb-seller-parser" | "wb-email-discovery" | "wb-vk-phones";
 type WfStatus = "idle" | "running" | "done" | "error";
 
 function useWorkflowRunner() {
   const [status, setStatus] = useState<Record<WfKey, WfStatus>>({
+    "wb-seller-parser": "idle",
     "wb-email-discovery": "idle",
     "wb-vk-phones": "idle",
   });
   const [results, setResults] = useState<Record<WfKey, string>>({
+    "wb-seller-parser": "",
     "wb-email-discovery": "",
     "wb-vk-phones": "",
   });
@@ -175,8 +177,43 @@ export default function OutreachLeadsPage() {
         {/* WB Automation */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
           <h2 className="text-white font-semibold mb-1">WB Автоматизация</h2>
-          <p className="text-slate-500 text-xs mb-4">Автоматически тянет контакты из базы WB продавцов и добавляет в очередь рассылки</p>
+          <p className="text-slate-500 text-xs mb-4">Сначала собери продавцов (ШАГ 1), потом запусти поиск контактов (ШАГ 2 / 3)</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* WB Seller Parser */}
+            <div className="bg-slate-800/60 border border-orange-900/40 rounded-xl p-4 flex flex-col gap-3 sm:col-span-2">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">🕷️</span>
+                  <span className="text-white font-medium text-sm">Собрать WB продавцов</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-orange-900/50 text-orange-400">ШАГ 1</span>
+                </div>
+                <p className="text-slate-500 text-xs">Парсит топ WB продавцов по 8 категориям через публичный поиск Wildberries. Скорит по количеству отзывов и сохраняет в базу. Запускай раз в неделю.</p>
+              </div>
+              <button
+                onClick={() => run("wb-seller-parser")}
+                disabled={status["wb-seller-parser"] === "running"}
+                className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium transition border ${
+                  status["wb-seller-parser"] === "running"
+                    ? "bg-slate-700 border-slate-600 text-slate-400 cursor-not-allowed"
+                    : status["wb-seller-parser"] === "done"
+                    ? "bg-emerald-900/30 border-emerald-700 text-emerald-400 hover:bg-emerald-900/50"
+                    : status["wb-seller-parser"] === "error"
+                    ? "bg-red-900/30 border-red-700 text-red-400 hover:bg-red-900/50"
+                    : "bg-orange-900/20 border-orange-800 text-orange-400 hover:bg-orange-900/40"
+                }`}
+              >
+                {status["wb-seller-parser"] === "running" && "⏳ Запускаю..."}
+                {status["wb-seller-parser"] === "done" && "✓ Запущен — результат придёт в Telegram"}
+                {status["wb-seller-parser"] === "error" && "✗ Ошибка"}
+                {status["wb-seller-parser"] === "idle" && "▶ Запустить парсер (≈3-5 мин)"}
+              </button>
+              {results["wb-seller-parser"] && (
+                <p className={`text-xs ${status["wb-seller-parser"] === "error" ? "text-red-400" : "text-emerald-400"}`}>
+                  {results["wb-seller-parser"]}
+                </p>
+              )}
+            </div>
+
             {/* Email Discovery */}
             <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 flex flex-col gap-3">
               <div>

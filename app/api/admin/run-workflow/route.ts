@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const WORKFLOWS: Record<string, { webhook: string; name: string }> = {
+  "wb-seller-parser":   { webhook: `${N8N_BASE}/webhook/wb-seller-parser`,   name: "WB Seller Parser" },
   "wb-email-discovery": { webhook: `${N8N_BASE}/webhook/wb-email-discovery`, name: "WB → Email Discovery" },
   "wb-vk-phones":       { webhook: `${N8N_BASE}/webhook/wb-vk-phones`,       name: "WB → VK Phone Audience" },
 };
