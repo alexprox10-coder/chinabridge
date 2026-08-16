@@ -153,6 +153,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, imported, total: leads.length });
   }
 
+  // ── DEBUG: показывает формат ответа n8n rows API ─────────────────────────
+  if (action === "debug_rows") {
+    if (!N8N_KEY) return NextResponse.json({ error: "N8N_API_KEY not configured" }, { status: 500 });
+    const r = await fetch(
+      `${N8N_BASE}/api/v1/data-tables/${WB_TABLE_ID}/rows?take=2`,
+      { headers: { "X-N8N-API-KEY": N8N_KEY } },
+    ).catch(() => null);
+    if (!r?.ok) return NextResponse.json({ error: "fetch_failed", status: r?.status }, { status: 502 });
+    const json = await r.json();
+    return NextResponse.json({ ok: true, keys: Object.keys(json), sample: json });
+  }
+
   // ── DEDUPE: удаляет дублирующиеся строки по company ──────────────────────
   if (action === "dedupe") {
     if (!N8N_KEY) return NextResponse.json({ error: "N8N_API_KEY not configured" }, { status: 500 });
@@ -168,7 +180,7 @@ export async function POST(req: NextRequest) {
       ).catch(() => null);
       if (!r?.ok) break;
       const json = await r.json();
-      const items: { id: string; data: Record<string, unknown> }[] = json.rows ?? json.data ?? [];
+      const items: { id: string; data: Record<string, unknown> }[] = json.rows ?? json.data ?? json.items ?? [];
       allRows.push(...items);
       if (items.length < PAGE) break;
       page++;
