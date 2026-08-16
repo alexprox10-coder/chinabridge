@@ -24,10 +24,17 @@ export function SalesChatClient() {
   const [streamText, setStreamText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const autoStarted = useRef(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamText]);
+
+  useEffect(() => {
+    if (autoStarted.current) return;
+    autoStarted.current = true;
+    send("Дай мне полный брифинг на сегодня: список горячих лидов из базы, для каждого — что предложить и что написать, плюс 3-5 главных задач на день.");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = async (text?: string) => {
     const content = (text ?? input).trim();
