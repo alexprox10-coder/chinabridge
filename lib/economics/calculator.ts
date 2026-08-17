@@ -5,8 +5,7 @@ import type {
 } from '@/lib/calculator/types';
 import { getMarketplace, calcMarketplaceLogisticsPerUnit } from './marketplaces';
 
-const CNY_RATE = () => Number(process.env.CNY_TO_RUB ?? '12.5');
-const USD_RATE = () => Number(process.env.USD_TO_RUB ?? '92');
+import { getSystemRates } from './rates';
 
 export interface EconomicsInput {
   unitPrice:      number;
@@ -137,6 +136,8 @@ function computeTargetPrice(
   adSpend:      number,
   mpLogisticsTotal: number,
   priceCurrency: 'CNY' | 'USD',
+  usdRate:      number,
+  cnyRate:      number,
   targetMargin = 0.25,
 ): TargetPrice {
   // Для целевой маржи targetMargin:
@@ -150,7 +151,7 @@ function computeTargetPrice(
   const numerator = grossRev * (1 - targetMargin - commFrac) - deliveryRub - mpLogisticsTotal - adSpend;
   const maxPurchaseTotalRub = Math.max(0, numerator);
   const maxPurchaseUnitRub  = maxPurchaseTotalRub / qty / 1.2; // без таможни
-  const maxPurchaseCny      = priceCurrency === 'CNY' ? maxPurchaseUnitRub / rate : maxPurchaseUnitRub / (USD_RATE() / CNY_RATE());
+  const maxPurchaseCny      = priceCurrency === 'CNY' ? maxPurchaseUnitRub / rate : maxPurchaseUnitRub / (usdRate / cnyRate);
   const maxPurchaseUsd      = priceCurrency === 'USD' ? maxPurchaseUnitRub / rate : undefined;
 
   // Минимальная цена продажи при текущей закупке для targetMargin
@@ -205,8 +206,7 @@ function computeSupplierRisk(moq?: number): SupplierRiskResult {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export async function calculateUnitEconomics(input: EconomicsInput): Promise<EconomicsOutput> {
-  const cnyRate = CNY_RATE();
-  const usdRate = USD_RATE();
+  const { cny: cnyRate, usd: usdRate, mp_commissions } = await getSystemRates();
   const rate    = input.priceCurrency === 'CNY' ? cnyRate : usdRate;
 
   const {
@@ -227,7 +227,8 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
 
   // Определяем комиссию и логистику маркетплейса
   const mp = marketplaceId ? getMarketplace(marketplaceId) : undefined;
-  const commissionPct = input.commissionPct ?? mp?.commission_pct ?? 15;
+  const dbCommission = marketplaceId ? mp_commissions[marketplaceId] : undefined;
+  const commissionPct = input.commissionPct ?? dbCommission ?? mp?.commission_pct ?? 15;
   const mpLogPerUnit  = mp
     ? calcMarketplaceLogisticsPerUnit(mp, weightKg ?? 0.5, salePrice)
     : 0;
@@ -268,7 +269,7 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
 
   // Расширенные метрики
   const productScore  = computeProductScore(marginPct, roiPct, unitPriceRub, salePrice, deliveryRub + mpLogPerUnit, moq ?? 0);
-  const targetPrice   = computeTargetPrice(unitPrice, rate, salePrice, qty, commissionPct, deliveryRub, adSpend, mpLogTotal, priceCurrency);
+  const targetPrice   = computeTargetPrice(unitPrice, rate, salePrice, qty, commissionPct, deliveryRub, adSpend, mpLogTotal, priceCurrency, usdRate, cnyRate);
   const supplierRisk  = computeSupplierRisk(moq);
 
   // Three scenarios: цена продажи ±15%, себестоимость ±5%

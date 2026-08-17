@@ -7,8 +7,6 @@ import type { EconomicsResult } from '@/lib/calculator/types';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-const CNY_RATE = Number(process.env.CNY_TO_RUB ?? '12.5');
-const USD_RATE = Number(process.env.USD_TO_RUB ?? '92');
 const DAILY_LIMIT = 2;
 
 function getIp(req: NextRequest): string {
@@ -72,6 +70,9 @@ export async function POST(req: NextRequest) {
       { status: 429 },
     );
   }
+
+  const { getSystemRates } = await import('@/lib/economics/rates');
+  const { cny: CNY_RATE, usd: USD_RATE } = await getSystemRates();
 
   const qty             = Math.max(1, parseInt(body.quantity ?? '1') || 1);
   const commission      = parseFloat(body.marketplace_commission ?? '0');

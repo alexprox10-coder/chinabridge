@@ -4,6 +4,165 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import type { PricingRule, RuleType, CustomerType, TransportType } from "@/lib/rate-engine/types";
 import { calculateMargin } from "@/lib/rate-engine/margin-calculator";
 
+interface MpRate {
+  id: string; label: string; icon: string;
+  commission_pct: number; default_pct: number;
+  commission_note: string; updated_at: string | null; is_overridden: boolean;
+}
+
+interface FxRate { value: number; updated_at: string | null; }
+
+function ExchangeRatesPanel() {
+  const [cny, setCny] = useState<FxRate | null>(null);
+  const [usd, setUsd] = useState<FxRate | null>(null);
+  const [cbr, setCbr] = useState<{ cny: number; usd: number } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin/finance/rates/sync")
+      .then(r => r.json())
+      .then(d => {
+        if (d.stored?.cny_rate) setCny(d.stored.cny_rate);
+        if (d.stored?.usd_rate) setUsd(d.stored.usd_rate);
+        if (d.cbr) setCbr(d.cbr);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function syncNow() {
+    setSyncing(true); setMsg("");
+    const r = await fetch("/api/admin/finance/rates/sync", { method: "POST" }).then(r => r.json()).catch(() => ({ ok: false }));
+    if (r.ok) {
+      setCny({ value: r.rates.cny, updated_at: r.synced_at });
+      setUsd({ value: r.rates.usd, updated_at: r.synced_at });
+      setCbr(r.rates);
+      setMsg("Курсы обновлены из ЦБ РФ");
+    } else {
+      setMsg("Ошибка синхронизации с ЦБ РФ");
+    }
+    setSyncing(false);
+  }
+
+  return (
+    <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-white font-semibold text-sm">Курсы валют (ЦБ РФ)</h3>
+          <p className="text-slate-500 text-xs mt-0.5">Используются во всех калькуляторах. Обновляются автоматически в 07:00 UTC.</p>
+        </div>
+        <button
+          onClick={syncNow} disabled={syncing}
+          className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition flex items-center gap-1.5"
+        >
+          {syncing ? "⏳" : "🔄"} Синхронизировать
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { label: "🇨🇳 CNY / RUB", stored: cny, cbr_val: cbr?.cny },
+          { label: "🇺🇸 USD / RUB", stored: usd, cbr_val: cbr?.usd },
+        ].map(({ label, stored, cbr_val }) => (
+          <div key={label} className="bg-slate-800 rounded-lg p-3">
+            <div className="text-slate-400 text-xs mb-1">{label}</div>
+            <div className="text-white text-xl font-mono font-bold">
+              {stored ? stored.value.toFixed(4) : "—"}
+            </div>
+            {cbr_val && stored && Math.abs(cbr_val - stored.value) > 0.001 && (
+              <div className="text-yellow-400 text-xs mt-1">ЦБ сейчас: {cbr_val.toFixed(4)}</div>
+            )}
+            {stored?.updated_at && (
+              <div className="text-slate-600 text-xs mt-1">
+                {new Date(stored.updated_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {msg && <p className={`text-xs mt-2 ${msg.includes("Ошибка") ? "text-red-400" : "text-green-400"}`}>{msg}</p>}
+    </div>
+  );
+}
+
+function MarketplaceRatesPanel() {
+  const [rates, setRates] = useState<MpRate[]>([]);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editVal, setEditVal] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const r = await fetch("/api/admin/finance/marketplace-rates").then(r => r.json()).catch(() => ({ data: [] }));
+    setRates(r.data ?? []);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function save(id: string) {
+    const v = parseFloat(editVal);
+    if (isNaN(v) || v < 0 || v > 100) return;
+    setSaving(true);
+    await fetch("/api/admin/finance/marketplace-rates", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, commission_pct: v }),
+    });
+    setSaving(false);
+    setEditing(null);
+    load();
+  }
+
+  return (
+    <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 mb-6">
+      <div className="mb-4">
+        <h3 className="text-white font-semibold text-sm">Комиссии маркетплейсов</h3>
+        <p className="text-slate-500 text-xs mt-0.5">Изменения применяются в калькуляторе мгновенно, без деплоя.</p>
+      </div>
+      <div className="space-y-2">
+        {rates.map(mp => (
+          <div key={mp.id} className="flex items-center gap-3 bg-slate-800 rounded-lg px-4 py-2.5">
+            <span className="text-lg w-7 shrink-0">{mp.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-white text-sm font-medium">{mp.label}</div>
+              <div className="text-slate-500 text-xs truncate">{mp.commission_note}</div>
+            </div>
+            {editing === mp.id ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <input
+                  type="number" value={editVal} onChange={e => setEditVal(e.target.value)}
+                  className="w-20 bg-slate-700 border border-slate-600 text-white text-sm rounded px-2 py-1 text-right"
+                  min={0} max={100} step={0.1} autoFocus
+                />
+                <span className="text-slate-400 text-sm">%</span>
+                <button onClick={() => save(mp.id)} disabled={saving}
+                  className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-medium rounded transition">
+                  {saving ? "..." : "✓"}
+                </button>
+                <button onClick={() => setEditing(null)} className="px-2 py-1 text-slate-400 hover:text-white text-xs transition">✕</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-right">
+                  <div className="text-white font-mono font-semibold">{mp.commission_pct}%</div>
+                  {mp.is_overridden && (
+                    <div className="text-slate-500 text-xs">по умолч. {mp.default_pct}%</div>
+                  )}
+                </div>
+                {mp.is_overridden && (
+                  <span className="px-1.5 py-0.5 bg-amber-900/40 text-amber-400 text-xs rounded">изм.</span>
+                )}
+                <button onClick={() => { setEditing(mp.id); setEditVal(String(mp.commission_pct)); }}
+                  className="text-slate-400 hover:text-white text-xs transition">
+                  Изм.
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const BLANK: Partial<PricingRule> = {
   name: "", rule_type: "markup", value: 25, status: "active", priority: 99,
 };
@@ -106,6 +265,9 @@ export default function PricingPage() {
     <div className="min-h-screen bg-slate-950">
       <AdminNav />
       <main className="max-w-6xl mx-auto px-4 py-8">
+
+        <ExchangeRatesPanel />
+        <MarketplaceRatesPanel />
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
