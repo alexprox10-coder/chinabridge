@@ -28,13 +28,8 @@ async function fetchCBRRates(): Promise<{ cny: number; usd: number; date: string
   }
 }
 
-async function upsertRate(
-  sql: ReturnType<typeof neon>,
-  key: string,
-  value: string,
-  label: string,
-  now: string,
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function upsertRate(sql: any, key: string, value: string, label: string, now: string) {
   await sql`
     WITH upd AS (
       UPDATE finance_settings SET value = ${value}, updated_at = ${now}

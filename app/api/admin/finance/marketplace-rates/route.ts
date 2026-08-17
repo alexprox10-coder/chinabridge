@@ -7,12 +7,8 @@ export const dynamic = 'force-dynamic';
 
 const TENANT = 'tenant-chinabridge';
 
-async function upsertMpRate(
-  sql: ReturnType<typeof neon>,
-  mpId: string,
-  commission: number,
-  now: string,
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function upsertMpRate(sql: any, mpId: string, commission: number, now: string) {
   const key = `mp_${mpId}_commission`;
   const label = `Комиссия маркетплейса ${mpId.toUpperCase()} (%)`;
   await sql`
