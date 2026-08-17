@@ -6,22 +6,22 @@ const GROUPS = [
   {
     label: "CRM",
     items: [
-      { href: "/admin/dashboard",        label: "Дашборд",        icon: "📊" },
-      { href: "/admin/pipeline",         label: "Воронка",        icon: "🗂" },
-      { href: "/admin/leads",            label: "Лиды",           icon: "👥" },
-      { href: "/admin/outreach-leads",   label: "Email Outreach", icon: "📧" },
-      { href: "/admin/proposals",        label: "Расчёты",        icon: "📋" },
-      { href: "/admin/messages",         label: "Сообщения",      icon: "💬" },
-      { href: "/admin/finance",          label: "Финансы",        icon: "💰" },
+      { href: "/admin/dashboard",           label: "Дашборд",        icon: "📊" },
+      { href: "/admin/pipeline",            label: "Воронка",        icon: "🗂" },
+      { href: "/admin/leads",               label: "Лиды",           icon: "👥" },
+      { href: "/admin/outreach-leads",      label: "Email Outreach", icon: "📧" },
+      { href: "/admin/market-intelligence", label: "Поиск лидов",    icon: "🎯" },
+      { href: "/admin/proposals",           label: "Расчёты",        icon: "📋" },
+      { href: "/admin/messages",            label: "Сообщения",      icon: "💬" },
+      { href: "/admin/finance",             label: "Финансы",        icon: "💰" },
     ],
   },
   {
     label: "AI & Аналитика",
     items: [
-      { href: "/admin/marketing",           label: "Маркетинг AI", icon: "📣" },
-      { href: "/admin/content",             label: "Контент AI",   icon: "✍️" },
-      { href: "/admin/market-intelligence", label: "Поиск лидов",  icon: "🎯" },
-      { href: "/admin/ai-company",          label: "AI Кабинет",   icon: "🤖" },
+      { href: "/admin/marketing",  label: "Маркетинг AI", icon: "📣" },
+      { href: "/admin/content",    label: "Контент AI",   icon: "✍️" },
+      { href: "/admin/ai-company", label: "AI Кабинет",   icon: "🤖" },
     ],
   },
   {
