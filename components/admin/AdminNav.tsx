@@ -6,40 +6,40 @@ const GROUPS = [
   {
     label: "CRM",
     items: [
-      { href: "/admin/dashboard",  label: "Дашборд",   icon: "📊" },
-      { href: "/admin/pipeline",   label: "Воронка",    icon: "🗂" },
-      { href: "/admin/leads",            label: "Лиды",          icon: "👥" },
+      { href: "/admin/dashboard",        label: "Дашборд",        icon: "📊" },
+      { href: "/admin/pipeline",         label: "Воронка",        icon: "🗂" },
+      { href: "/admin/leads",            label: "Лиды",           icon: "👥" },
       { href: "/admin/outreach-leads",   label: "Email Outreach", icon: "📧" },
       { href: "/admin/proposals",        label: "Расчёты",        icon: "📋" },
-    ],
-  },
-  {
-    label: "Операции",
-    items: [
-      { href: "/admin/messages",   label: "Сообщения",  icon: "💬" },
-      { href: "/admin/finance",    label: "Финансы",    icon: "💰" },
-      { href: "/admin/rates",      label: "Тарифы",     icon: "💱" },
-      { href: "/admin/routes",     label: "Маршруты",   icon: "🗺" },
-      { href: "/admin/services",   label: "Услуги",     icon: "📦" },
-      { href: "/admin/pricing",    label: "Наценки",    icon: "🏷" },
+      { href: "/admin/messages",         label: "Сообщения",      icon: "💬" },
+      { href: "/admin/finance",          label: "Финансы",        icon: "💰" },
     ],
   },
   {
     label: "AI & Аналитика",
     items: [
-      { href: "/admin/marketing",           label: "Маркетинг AI",   icon: "📣" },
-      { href: "/admin/content",             label: "Контент AI",     icon: "✍️" },
-      { href: "/admin/market-intelligence", label: "Поиск лидов",   icon: "🎯" },
-      { href: "/admin/ai-company",          label: "AI Кабинет",     icon: "🤖" },
+      { href: "/admin/marketing",           label: "Маркетинг AI", icon: "📣" },
+      { href: "/admin/content",             label: "Контент AI",   icon: "✍️" },
+      { href: "/admin/market-intelligence", label: "Поиск лидов",  icon: "🎯" },
+      { href: "/admin/ai-company",          label: "AI Кабинет",   icon: "🤖" },
+    ],
+  },
+  {
+    label: "Конфигурация",
+    items: [
+      { href: "/admin/rates",    label: "Тарифы",   icon: "💱" },
+      { href: "/admin/routes",   label: "Маршруты", icon: "🗺" },
+      { href: "/admin/services", label: "Услуги",   icon: "📦" },
+      { href: "/admin/pricing",  label: "Наценки",  icon: "🏷" },
     ],
   },
   {
     label: "Платформа",
     items: [
-      { href: "/admin/tenants",    label: "Клиенты",    icon: "🏢" },
-      { href: "/admin/platform",   label: "Платформа",  icon: "🚀" },
-      { href: "/admin/settings",   label: "Настройки",  icon: "⚙️" },
-      { href: "/admin/blog",       label: "Блог",       icon: "✍️" },
+      { href: "/admin/tenants",  label: "Клиенты",   icon: "🏢" },
+      { href: "/admin/platform", label: "Платформа", icon: "🚀" },
+      { href: "/admin/settings", label: "Настройки", icon: "⚙️" },
+      { href: "/admin/blog",     label: "Блог",      icon: "✍️" },
     ],
   },
 ];
