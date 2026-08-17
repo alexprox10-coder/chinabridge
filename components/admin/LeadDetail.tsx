@@ -2,6 +2,95 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CRMLead, LeadStatus, LeadPriority } from "@/lib/crm/types";
+
+interface AiSummary {
+  score: number;
+  level: "HOT" | "WARM" | "COLD";
+  dealMin: number;
+  dealMax: number;
+  dealProbability: number;
+  nextAction: string;
+  contacts: { phones: string[]; emails: string[]; whatsapp: string | null; telegram: string | null };
+}
+
+function AiCommandCenter({ ai, leadPhone, leadId, onContactLogged }: {
+  ai: AiSummary;
+  leadPhone?: string;
+  leadId: number;
+  onContactLogged?: () => void;
+}) {
+  const borderMap = { HOT: "border-red-700/50 bg-red-950/10", WARM: "border-amber-700/50 bg-amber-950/10", COLD: "border-blue-700/50 bg-blue-950/10" };
+  const scoreMap  = { HOT: "text-red-400", WARM: "text-amber-400", COLD: "text-blue-400" };
+  const badgeMap  = { HOT: "bg-red-600", WARM: "bg-amber-600", COLD: "bg-blue-700" };
+
+  async function logContact(channel: string) {
+    await fetch(`/api/admin/leads/${leadId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contact_logged: channel }),
+    });
+    onContactLogged?.();
+  }
+
+  const phone = ai.contacts.phones[0] || leadPhone;
+  const whatsapp = ai.contacts.whatsapp;
+  const email = ai.contacts.emails[0];
+
+  return (
+    <div className={`border rounded-xl p-4 space-y-3 ${borderMap[ai.level]}`}>
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <span className={`text-4xl font-black leading-none ${scoreMap[ai.level]}`}>{ai.score}</span>
+          <div>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white ${badgeMap[ai.level]}`}>{ai.level}</span>
+            <p className="text-xs text-slate-500 mt-0.5">Lead Score</p>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 space-y-1">
+          {ai.dealMin > 0 && (
+            <p className="text-xs text-slate-400">
+              Потенциал: <span className="text-white font-medium">${ai.dealMin.toLocaleString()}–${ai.dealMax.toLocaleString()}</span>
+              <span className="text-slate-600 ml-1">· AI estimate</span>
+            </p>
+          )}
+          {ai.dealProbability > 0 && (
+            <p className="text-xs text-slate-400">
+              Вероятность сделки:{" "}
+              <span className={`font-medium ${ai.dealProbability >= 50 ? "text-emerald-400" : "text-amber-400"}`}>
+                {ai.dealProbability}%
+              </span>
+            </p>
+          )}
+          {ai.nextAction && (
+            <p className="text-xs text-slate-300">
+              <span className="text-slate-500">Цель: </span>{ai.nextAction}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        {phone && (
+          <a href={`tel:${phone.replace(/\s/g, "")}`} onClick={() => logContact("phone")}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 hover:bg-green-600/30 border border-green-600/30 text-green-400 rounded-lg text-xs transition">
+            📞 Позвонить
+          </a>
+        )}
+        {whatsapp && (
+          <a href={whatsapp} target="_blank" rel="noreferrer" onClick={() => logContact("whatsapp")}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-600/30 text-emerald-400 rounded-lg text-xs transition">
+            💬 WhatsApp
+          </a>
+        )}
+        {email && (
+          <a href={`mailto:${email}`} onClick={() => logContact("email")}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/30 text-blue-400 rounded-lg text-xs transition">
+            ✉ Email
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
 import { ProposalButton } from "@/components/admin/ProposalButton";
 import { FinanceTab }    from "@/components/admin/finance/FinanceTab";
 import { DocumentsTab } from "@/components/admin/documents/DocumentsTab";
@@ -14,8 +103,8 @@ import {
 } from "@/lib/crm/types";
 
 const ALL_STATUSES: LeadStatus[] = [
-  "NEW","CONTACTED","QUALIFICATION","CALCULATION",
-  "OFFER_SENT","NEGOTIATION","PAYMENT","DELIVERY","SUCCESS","LOST",
+  "NEW","RESEARCHED","CONTACTED","QUALIFICATION","CALCULATION",
+  "OFFER_SENT","NEGOTIATION","WAITING_CLIENT","PAYMENT","DELIVERY","SUCCESS","LOST",
 ];
 const ALL_PRIORITIES: LeadPriority[] = ["HOT","WARM","COLD"];
 
@@ -52,6 +141,7 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
   const [saved, setSaved] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [aiSummary, setAiSummary] = useState<AiSummary | null>(null);
 
   async function handleDelete() {
     if (!confirmDelete) { setConfirmDelete(true); return; }
@@ -121,6 +211,16 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
           <ProposalButton leadId={lead.id} leadName={lead.name || "Клиент"} />
         </div>
       </div>
+
+      {/* AI Command Center */}
+      {aiSummary && (
+        <AiCommandCenter
+          ai={aiSummary}
+          leadPhone={lead.phone}
+          leadId={lead.id}
+          onContactLogged={() => router.refresh()}
+        />
+      )}
 
       {/* Main tabs */}
       <div className="flex gap-1 bg-slate-900/60 border border-slate-800 rounded-xl p-1.5 w-fit">
@@ -298,7 +398,10 @@ export function LeadDetail({ lead }: { lead: CRMLead }) {
         </div>
 
         {/* AI analysis — full width below */}
-        <PersonalOfferWidget leadId={lead.id} />
+        <PersonalOfferWidget
+          leadId={lead.id}
+          onAnalysisReady={(summary) => setAiSummary(summary)}
+        />
       </div>}
     </main>
   );

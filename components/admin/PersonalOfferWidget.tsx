@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ScoreFactor {
   label: string;
@@ -100,18 +100,84 @@ function CopyButton({ text, label = "Копировать" }: { text: string; la
   );
 }
 
-export function PersonalOfferWidget({ leadId }: { leadId: number }) {
+interface AnalysisSummary {
+  score: number;
+  level: "HOT" | "WARM" | "COLD";
+  dealMin: number;
+  dealMax: number;
+  dealProbability: number;
+  nextAction: string;
+  contacts: { phones: string[]; emails: string[]; whatsapp: string | null; telegram: string | null };
+}
+
+export function PersonalOfferWidget({
+  leadId,
+  onAnalysisReady,
+}: {
+  leadId: number;
+  onAnalysisReady?: (summary: AnalysisSummary) => void;
+}) {
   const [loading, setLoading] = useState(false);
+  const [loadingCache, setLoadingCache] = useState(true);
   const [result, setResult] = useState<CockpitResult | null>(null);
   const [error, setError] = useState("");
   const [stepIdx, setStepIdx] = useState(0);
   const [activeTab, setActiveTab] = useState<"short" | "full">("short");
   const [scriptOpen, setScriptOpen] = useState(false);
+  const [analyzedAt, setAnalyzedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadCached() {
+      try {
+        const res = await fetch(`/api/admin/leads/${leadId}/offer`);
+        const data = await res.json();
+        if (data.ok && data.cached) {
+          setResult(data as CockpitResult);
+          setAnalyzedAt(data.analyzed_at ?? null);
+          onAnalysisReady?.({
+            score: data.lead_score ?? 0,
+            level: data.score_level ?? "COLD",
+            dealMin: data.deal_potential_min ?? 0,
+            dealMax: data.deal_potential_max ?? 0,
+            dealProbability: data.attack_plan?.deal_probability ?? 0,
+            nextAction: data.attack_plan?.first_goal ?? "",
+            contacts: {
+              phones: data.contacts_found?.phones ?? [],
+              emails: data.contacts_found?.emails ?? [],
+              whatsapp: data.contacts_found?.whatsapp ?? null,
+              telegram: data.contacts_found?.telegram ?? null,
+            },
+          });
+        }
+      } catch {}
+      setLoadingCache(false);
+    }
+    loadCached();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadId]);
+
+  function applyResult(data: CockpitResult & { analyzed_at?: string }) {
+    setResult(data);
+    if (data.analyzed_at) setAnalyzedAt(data.analyzed_at);
+    onAnalysisReady?.({
+      score: data.lead_score ?? 0,
+      level: data.score_level ?? "COLD",
+      dealMin: data.deal_potential_min ?? 0,
+      dealMax: data.deal_potential_max ?? 0,
+      dealProbability: data.attack_plan?.deal_probability ?? 0,
+      nextAction: data.attack_plan?.first_goal ?? "",
+      contacts: {
+        phones: data.contacts_found?.phones ?? [],
+        emails: data.contacts_found?.emails ?? [],
+        whatsapp: data.contacts_found?.whatsapp ?? null,
+        telegram: data.contacts_found?.telegram ?? null,
+      },
+    });
+  }
 
   async function generate() {
     setLoading(true);
     setError("");
-    setResult(null);
     setStepIdx(0);
 
     const interval = setInterval(() => {
@@ -122,7 +188,7 @@ export function PersonalOfferWidget({ leadId }: { leadId: number }) {
       const res = await fetch(`/api/admin/leads/${leadId}/offer`, { method: "POST" });
       const data = await res.json();
       if (data.ok) {
-        setResult(data as CockpitResult);
+        applyResult(data as CockpitResult & { analyzed_at?: string });
       } else {
         setError(data.error ?? "Ошибка генерации");
       }
@@ -153,17 +219,32 @@ export function PersonalOfferWidget({ leadId }: { leadId: number }) {
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">🎯 AI Sales Cockpit</h3>
-        {result?.website_analyzed && (
-          <span className="text-xs bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 px-2 py-0.5 rounded-full">
-            ✓ сайт проанализирован
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">🎯 AI Sales Cockpit</h3>
+          {result?.website_analyzed && (
+            <span className="text-xs bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 px-2 py-0.5 rounded-full">
+              ✓ сайт проанализирован
+            </span>
+          )}
+        </div>
+        {analyzedAt && (
+          <span className="text-xs text-slate-600">
+            {new Date(analyzedAt).toLocaleDateString("ru-RU")} {new Date(analyzedAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
       </div>
 
+      {/* Cache loading spinner */}
+      {loadingCache && !result && !loading && (
+        <div className="flex items-center gap-2 text-xs text-slate-600">
+          <span className="w-3 h-3 border border-slate-700 border-t-slate-500 rounded-full animate-spin" />
+          Загружаю сохранённый анализ...
+        </div>
+      )}
+
       {/* Empty state */}
-      {!result && !loading && (
+      {!result && !loading && !loadingCache && (
         <p className="text-xs text-slate-500 leading-relaxed">
           AI зайдёт на сайт, найдёт контакты, оценит лид по 100-балльной шкале, выявит боли, подберёт продукт и напишет скрипт звонка, сообщение и КП.
         </p>

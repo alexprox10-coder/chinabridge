@@ -2,6 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { getLead } from "@/lib/crm/client";
 import { getLLMConfig } from "@/lib/ai/client";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+let aiColsReady = false;
+async function ensureAiColumns() {
+  if (aiColsReady) return;
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL!);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_lead_score integer`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_score_level text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_score_factors jsonb`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_deal_probability integer`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_potential_min numeric`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_potential_max numeric`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_business_summary text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_pain_points jsonb`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_selected_product text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_attack_plan jsonb`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_call_script text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_contacts_found jsonb`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_message_short text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_offer text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_subject text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_offer_options jsonb`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_website_url text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS ai_analyzed_at text`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS contact_attempts integer DEFAULT 0`;
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS last_contact_at text`;
+    aiColsReady = true;
+  } catch (e) {
+    console.error("[AI cols]", e);
+  }
+}
+
 interface SiteContacts {
   phones: string[];
   emails: string[];
@@ -140,12 +175,64 @@ async function scrapeWebsite(rawUrl: string): Promise<{
   return { content, contacts, analyzed: true };
 }
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  await ensureAiColumns();
+  const { id } = await params;
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL!);
+    const rows = await sql`
+      SELECT ai_lead_score, ai_score_level, ai_score_factors, ai_deal_probability,
+             ai_potential_min, ai_potential_max, ai_business_summary, ai_pain_points,
+             ai_selected_product, ai_attack_plan, ai_call_script, ai_contacts_found,
+             ai_message_short, ai_offer, ai_subject, ai_offer_options, ai_website_url,
+             ai_analyzed_at, contact_attempts, last_contact_at
+      FROM crm_leads WHERE id = ${Number(id)}
+    `;
+    const r = rows[0];
+    if (!r || !r.ai_analyzed_at) return NextResponse.json({ ok: false, cached: false });
+    return NextResponse.json({
+      ok: true,
+      cached: true,
+      lead_score: r.ai_lead_score ?? 0,
+      score_level: r.ai_score_level ?? "COLD",
+      score_factors: r.ai_score_factors ?? [],
+      deal_potential_min: Number(r.ai_potential_min ?? 0),
+      deal_potential_max: Number(r.ai_potential_max ?? 0),
+      business_summary: r.ai_business_summary ?? "",
+      product_categories: [],
+      pain_points: r.ai_pain_points ?? [],
+      pain_analysis: "",
+      selected_product: r.ai_selected_product ?? "",
+      product_reason: "",
+      offer_options: r.ai_offer_options ?? [],
+      attack_plan: r.ai_attack_plan ?? null,
+      call_script: r.ai_call_script ?? "",
+      contacts_found: r.ai_contacts_found ?? { phones: [], emails: [], telegram: null, whatsapp: null, instagram: null, address: null },
+      message_short: r.ai_message_short ?? "",
+      offer: r.ai_offer ?? "",
+      subject: r.ai_subject ?? "",
+      website_analyzed: !!r.ai_website_url,
+      website_url: r.ai_website_url ?? null,
+      analyzed_at: r.ai_analyzed_at,
+      contact_attempts: r.contact_attempts ?? 0,
+      last_contact_at: r.last_contact_at ?? null,
+    });
+  } catch (e) {
+    return NextResponse.json({ ok: false, cached: false, error: String(e) });
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const token = req.cookies.get("cb_admin")?.value || req.cookies.get("cb_tenant_session")?.value;
   if (!token) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  await ensureAiColumns();
 
   const { id } = await params;
   let lead = null;
@@ -274,7 +361,42 @@ ${websiteSection}
     const raw = data.choices?.[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim());
 
+    // Сохранить AI-анализ в БД
+    try {
+      const { neon } = await import("@neondatabase/serverless");
+      const sql = neon(process.env.DATABASE_URL!);
+      const now = new Date().toISOString();
+      const contactsJson = JSON.stringify({ phones: contacts.phones, emails: contacts.emails, telegram: contacts.telegram, whatsapp: contacts.whatsapp, instagram: contacts.instagram, address: contacts.address });
+      await sql`
+        UPDATE crm_leads SET
+          ai_lead_score     = ${parsed.lead_score ?? null},
+          ai_score_level    = ${parsed.score_level ?? null},
+          ai_score_factors  = ${JSON.stringify(parsed.score_factors ?? [])}::jsonb,
+          ai_deal_probability = ${parsed.attack_plan?.deal_probability ?? null},
+          ai_potential_min  = ${parsed.deal_potential_min ?? null},
+          ai_potential_max  = ${parsed.deal_potential_max ?? null},
+          ai_business_summary = ${parsed.business_summary ?? null},
+          ai_pain_points    = ${JSON.stringify(parsed.pain_points ?? [])}::jsonb,
+          ai_selected_product = ${parsed.selected_product ?? null},
+          ai_attack_plan    = ${JSON.stringify(parsed.attack_plan ?? {})}::jsonb,
+          ai_call_script    = ${parsed.call_script ?? null},
+          ai_contacts_found = ${contactsJson}::jsonb,
+          ai_message_short  = ${parsed.message_short ?? null},
+          ai_offer          = ${parsed.offer ?? null},
+          ai_subject        = ${parsed.subject ?? null},
+          ai_offer_options  = ${JSON.stringify(parsed.offer_options ?? [])}::jsonb,
+          ai_website_url    = ${websiteUrl || null},
+          ai_analyzed_at    = ${now},
+          status = CASE WHEN status = 'NEW' THEN 'RESEARCHED' ELSE status END,
+          updated_at        = ${now}
+        WHERE id = ${Number(id)}
+      `;
+    } catch (saveErr) {
+      console.error("[AI save]", saveErr);
+    }
+
     return NextResponse.json({
+      analyzed_at: new Date().toISOString(),
       ok: true,
       lead_score: parsed.lead_score ?? 0,
       score_level: parsed.score_level ?? "COLD",
