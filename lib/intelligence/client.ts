@@ -324,6 +324,97 @@ export async function applyChange(id: number): Promise<{ ok: boolean; message: s
   return { ok: true, message: 'Изменение применено' };
 }
 
+// ── Market Watch ─────────────────────────────────────────────────────────────
+
+export interface MarketWatchItem {
+  id:           number;
+  watch_key:    string;
+  platform:     string;     // 'wb' | 'ozon'
+  query:        string;     // search term on marketplace
+  category:     string;     // human label
+  active:       boolean;
+  avg_price:    number | null;
+  min_price:    number | null;
+  max_price:    number | null;
+  item_count:   number | null;
+  last_checked: string | null;
+  created_at:   string;
+}
+
+export interface CreateMarketWatchInput {
+  watch_key: string;
+  platform:  string;
+  query:     string;
+  category:  string;
+}
+
+async function ensureMarketWatchTable(sql: SQL): Promise<void> {
+  await sql`
+    CREATE TABLE IF NOT EXISTS intel_market_watch (
+      id           SERIAL PRIMARY KEY,
+      watch_key    TEXT NOT NULL UNIQUE,
+      platform     TEXT NOT NULL,
+      query        TEXT NOT NULL,
+      category     TEXT NOT NULL,
+      active       BOOLEAN NOT NULL DEFAULT TRUE,
+      avg_price    NUMERIC,
+      min_price    NUMERIC,
+      max_price    NUMERIC,
+      item_count   INTEGER,
+      last_checked TEXT,
+      created_at   TEXT NOT NULL
+    )
+  `;
+}
+
+export async function getMarketWatchItems(): Promise<MarketWatchItem[]> {
+  const sql = getSql();
+  await ensureMarketWatchTable(sql);
+  const rows = await sql`SELECT * FROM intel_market_watch ORDER BY category ASC`;
+  return rows as MarketWatchItem[];
+}
+
+export async function createMarketWatchItem(input: CreateMarketWatchInput): Promise<MarketWatchItem> {
+  const sql = getSql();
+  await ensureMarketWatchTable(sql);
+  const now = new Date().toISOString();
+  const [row] = await sql`
+    INSERT INTO intel_market_watch (watch_key, platform, query, category, active, created_at)
+    VALUES (${input.watch_key}, ${input.platform}, ${input.query}, ${input.category}, TRUE, ${now})
+    ON CONFLICT (watch_key) DO UPDATE SET
+      platform  = EXCLUDED.platform,
+      query     = EXCLUDED.query,
+      category  = EXCLUDED.category,
+      active    = TRUE
+    RETURNING *
+  `;
+  return row as MarketWatchItem;
+}
+
+export async function updateMarketWatchPrice(
+  watch_key: string,
+  avg_price: number,
+  min_price: number,
+  max_price: number,
+  item_count: number,
+): Promise<MarketWatchItem | null> {
+  const sql = getSql();
+  const now = new Date().toISOString();
+  const rows = await sql`
+    UPDATE intel_market_watch
+    SET avg_price = ${avg_price}, min_price = ${min_price}, max_price = ${max_price},
+        item_count = ${item_count}, last_checked = ${now}
+    WHERE watch_key = ${watch_key}
+    RETURNING *
+  `;
+  return rows.length > 0 ? (rows[0] as MarketWatchItem) : null;
+}
+
+export async function toggleMarketWatchItem(watch_key: string, active: boolean): Promise<void> {
+  const sql = getSql();
+  await sql`UPDATE intel_market_watch SET active = ${active} WHERE watch_key = ${watch_key}`;
+}
+
 // ── Snapshot ──────────────────────────────────────────────────────────────────
 
 export interface FactSnapshot {

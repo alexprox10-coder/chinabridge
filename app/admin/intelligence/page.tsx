@@ -493,7 +493,78 @@ function Empty({ text }: { text: string }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "facts" | "changes" | "sources";
+type Tab = "overview" | "facts" | "changes" | "sources" | "market";
+
+interface MarketWatchItem {
+  id:           number;
+  watch_key:    string;
+  platform:     string;
+  query:        string;
+  category:     string;
+  active:       boolean;
+  avg_price:    number | null;
+  min_price:    number | null;
+  max_price:    number | null;
+  item_count:   number | null;
+  last_checked: string | null;
+}
+
+function MarketTab({ items, loading, onAdd }: { items: MarketWatchItem[]; loading: boolean; onAdd: () => void }) {
+  if (loading) return <Spinner />;
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-400">Мониторинг средних рыночных цен на WB по категориям. n8n обновляет каждую пятницу.</p>
+        <button onClick={onAdd} className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition">
+          + Добавить
+        </button>
+      </div>
+      {items.length === 0 ? (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
+          <div className="text-slate-500 text-sm">Нет отслеживаемых категорий</div>
+          <div className="text-slate-600 text-xs mt-1">Добавьте поисковый запрос для мониторинга цен на WB</div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map(item => (
+            <div key={item.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-400">
+                      {item.platform.toUpperCase()}
+                    </span>
+                    {!item.active && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-slate-700 text-slate-500">Отключён</span>
+                    )}
+                    <span className="text-sm font-medium text-white">{item.category}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">Запрос: «{item.query}»</div>
+                  {item.last_checked && (
+                    <div className="text-xs text-slate-600 mt-0.5">
+                      Проверено: {new Date(item.last_checked).toLocaleDateString("ru-RU")}
+                    </div>
+                  )}
+                </div>
+                {item.avg_price ? (
+                  <div className="text-right shrink-0">
+                    <div className="text-lg font-bold text-white">{item.avg_price.toLocaleString("ru-RU")} ₽</div>
+                    <div className="text-xs text-slate-500">
+                      {item.min_price?.toLocaleString("ru-RU")} — {item.max_price?.toLocaleString("ru-RU")} ₽
+                    </div>
+                    <div className="text-xs text-slate-600">{item.item_count} товаров</div>
+                  </div>
+                ) : (
+                  <div className="text-slate-600 text-xs shrink-0">Нет данных</div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function IntelligencePage() {
   const [tab, setTab]             = useState<Tab>("overview");
@@ -501,6 +572,7 @@ export default function IntelligencePage() {
   const [facts, setFacts]         = useState<IntelFact[]>([]);
   const [changes, setChanges]     = useState<IntelChange[]>([]);
   const [sources, setSources]     = useState<IntelSource[]>([]);
+  const [market, setMarket]       = useState<MarketWatchItem[]>([]);
   const [loading, setLoading]     = useState(true);
   const [initLoading, setInit]    = useState(false);
 
@@ -511,6 +583,7 @@ export default function IntelligencePage() {
       fetch("/api/intelligence/facts").then(r => r.json()).then(r => { if (r?.data) setFacts(r.data); }).catch(() => {}),
       fetch("/api/intelligence/changes").then(r => r.json()).then(r => { if (r?.data) setChanges(r.data); }).catch(() => {}),
       fetch("/api/intelligence/sources").then(r => r.json()).then(r => { if (r?.data) setSources(r.data); }).catch(() => {}),
+      fetch("/api/intelligence/market-watch").then(r => r.json()).then(r => { if (r?.items) setMarket(r.items); }).catch(() => {}),
     ]);
     setLoading(false);
   }, []);
@@ -544,6 +617,7 @@ export default function IntelligencePage() {
     { id: "facts",    label: `Факты${stats ? ` (${stats.facts_total})` : ""}` },
     { id: "changes",  label: pending > 0 ? `Изменения 🔴${pending}` : "Изменения" },
     { id: "sources",  label: "Источники" },
+    { id: "market",   label: `Рынок${market.length > 0 ? ` (${market.length})` : ""}` },
   ];
 
   return (
@@ -626,6 +700,24 @@ export default function IntelligencePage() {
         {tab === "facts" && <FactsTab facts={facts} loading={loading} />}
         {tab === "changes" && <ChangesTab changes={changes} onAction={handleChangeAction} loading={loading} />}
         {tab === "sources" && <SourcesTab sources={sources} loading={loading} />}
+        {tab === "market" && (
+          <MarketTab
+            items={market}
+            loading={loading}
+            onAdd={() => {
+              const cat = prompt("Название категории (например: Наушники TWS)");
+              const query = prompt("Поисковый запрос на WB (например: наушники tws)");
+              if (cat && query) {
+                const key = "MARKET_" + query.toUpperCase().replace(/\s+/g, "_").slice(0, 30);
+                fetch("/api/intelligence/market-watch", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ watch_key: key, platform: "wb", query, category: cat }),
+                }).then(() => loadAll());
+              }
+            }}
+          />
+        )}
 
       </main>
     </div>
