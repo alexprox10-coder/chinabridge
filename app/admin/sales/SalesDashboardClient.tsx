@@ -3,6 +3,25 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
+interface AiScoreGroup {
+  count: number;
+  potentialMin: number;
+  potentialMax: number;
+  avgScore: number;
+}
+
+interface AiFunnelData {
+  scores: { hot: AiScoreGroup; warm: AiScoreGroup; cold: AiScoreGroup; totalEnriched: number };
+  revenue: { totalMin: number; totalMax: number; hotMin: number; hotMax: number };
+  stages: Array<{ status: string; count: number }>;
+  recentEnrichments: Array<{
+    id: number; company: string; name: string;
+    scoreLevel: string; leadScore: number;
+    selectedProduct: string; businessSummary: string; analyzedAt: string;
+  }>;
+  pendingEnrichment: number;
+}
+
 const NAV_TABS = [
   { id: "dashboard", label: "Дашборд", icon: "📊", href: "/admin/sales" },
   { id: "chat",      label: "AI Chat",  icon: "🤖", href: "/admin/sales/chat" },
@@ -71,12 +90,36 @@ const PRIORITY_BADGE = {
   LOW:    "bg-slate-700/50 text-slate-400 border-slate-600",
 };
 
+const STAGE_LABELS: Record<string, string> = {
+  NEW: "Новые", RESEARCHED: "Изучены", CONTACTED: "Контакт",
+  QUALIFICATION: "Квалификация", CALCULATION: "Расчёт",
+  OFFER_SENT: "КП отправлено", NEGOTIATION: "Переговоры",
+  WAITING_CLIENT: "Ожидание", PAYMENT: "Оплата",
+  DELIVERY: "Доставка", SUCCESS: "Успех", LOST: "Отказ",
+};
+
+const SCORE_LEVEL_CONFIG = {
+  HOT:  { label: "🔥 HOT",  color: "bg-red-500",    text: "text-red-400",    bar: "bg-red-500/80" },
+  WARM: { label: "⚡ WARM", color: "bg-amber-500",   text: "text-amber-400",  bar: "bg-amber-500/80" },
+  COLD: { label: "❄️ COLD", color: "bg-blue-500",    text: "text-blue-400",   bar: "bg-blue-500/60" },
+};
+
+function fmt(n: number) {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
+  return `$${n}`;
+}
+
 export function SalesDashboardClient() {
   const [hotCompanies, setHotCompanies] = useState<HotCompany[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [crmStats, setCrmStats] = useState<CrmStats | null>(null);
+  const [aiFunnel, setAiFunnel] = useState<AiFunnelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(true);
+  const [funnelLoading, setFunnelLoading] = useState(true);
+  const [enriching, setEnriching] = useState(false);
+  const [enrichResult, setEnrichResult] = useState<string | null>(null);
   const [done, setDone] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -106,10 +149,42 @@ export function SalesDashboardClient() {
     setTasksLoading(false);
   }, []);
 
+  const loadFunnel = useCallback(async () => {
+    setFunnelLoading(true);
+    try {
+      const res = await fetch("/api/admin/sales/ai-funnel");
+      if (res.ok) setAiFunnel(await res.json());
+    } catch {}
+    setFunnelLoading(false);
+  }, []);
+
+  const triggerEnrich = async () => {
+    setEnriching(true);
+    setEnrichResult(null);
+    try {
+      const res = await fetch("/api/admin/sales/trigger-enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchSize: 5 }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setEnrichResult(`✓ Обработано ${data.processed}: 🔥${data.hot} ⚡${data.warm} ❄️${data.cold} ✗${data.failed}`);
+        loadFunnel();
+      } else {
+        setEnrichResult(`Ошибка: ${data.error ?? "unknown"}`);
+      }
+    } catch (e) {
+      setEnrichResult("Ошибка соединения");
+    }
+    setEnriching(false);
+  };
+
   useEffect(() => {
     loadBriefing();
     loadTasks();
-  }, [loadBriefing, loadTasks]);
+    loadFunnel();
+  }, [loadBriefing, loadTasks, loadFunnel]);
 
   const copy = (text: string, id: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
@@ -130,7 +205,7 @@ export function SalesDashboardClient() {
           <p className="text-slate-500 text-sm mt-0.5">Автоматический брифинг · обновляется при каждом открытии</p>
         </div>
         <button
-          onClick={() => { loadBriefing(); loadTasks(); }}
+          onClick={() => { loadBriefing(); loadTasks(); loadFunnel(); }}
           className="text-sm text-slate-400 hover:text-white border border-slate-700 hover:border-slate-500 px-3 py-1.5 rounded-lg transition"
         >
           ↻ Обновить
@@ -171,6 +246,149 @@ export function SalesDashboardClient() {
           <div>
             <p className="text-amber-300 font-medium text-sm">{crmStats.unanswered} лидов без ответа более 24 часов</p>
             <Link href="/admin/leads?status=NEW" className="text-amber-500 text-xs hover:text-amber-400">Открыть →</Link>
+          </div>
+        </div>
+      )}
+
+      {/* AI Sales Funnel */}
+      <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* HOT/WARM/COLD distribution */}
+        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-white font-semibold text-sm uppercase tracking-wide">🎯 AI Score — воронка обогащения</h2>
+            <div className="flex items-center gap-2">
+              {aiFunnel?.pendingEnrichment ? (
+                <span className="text-xs text-amber-400 bg-amber-900/30 border border-amber-700/50 px-2 py-0.5 rounded-full">
+                  {aiFunnel.pendingEnrichment} ожидают анализа
+                </span>
+              ) : null}
+              <button
+                onClick={triggerEnrich}
+                disabled={enriching}
+                className="text-xs px-3 py-1.5 rounded-lg border border-slate-600 hover:border-red-500 text-slate-400 hover:text-red-300 transition disabled:opacity-40"
+              >
+                {enriching ? "⏳ Анализирую..." : "⚡ Обогатить лиды"}
+              </button>
+            </div>
+          </div>
+
+          {enrichResult && (
+            <div className="mb-3 text-xs px-3 py-2 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
+              {enrichResult}
+            </div>
+          )}
+
+          {funnelLoading ? (
+            <div className="flex gap-1.5 justify-center py-6">
+              {[0,150,300].map(d => (
+                <span key={d} className="w-2 h-2 bg-slate-600 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {(["HOT", "WARM", "COLD"] as const).map(level => {
+                const cfg = SCORE_LEVEL_CONFIG[level];
+                const g = aiFunnel?.scores[level.toLowerCase() as "hot" | "warm" | "cold"];
+                const total = aiFunnel?.scores.totalEnriched ?? 1;
+                const pct = g ? Math.round((g.count / Math.max(total, 1)) * 100) : 0;
+                return (
+                  <div key={level} className="flex items-center gap-3">
+                    <span className={`text-xs font-bold w-16 flex-shrink-0 ${cfg.text}`}>{cfg.label}</span>
+                    <div className="flex-1 h-5 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${cfg.bar}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className={`text-sm font-bold ${cfg.text}`}>{g?.count ?? 0}</span>
+                      <span className="text-slate-600 text-xs w-8 text-right">{pct}%</span>
+                      {g && g.potentialMax > 0 && (
+                        <span className="text-slate-500 text-xs hidden sm:block">
+                          до {fmt(g.potentialMax)}/мес
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                <span>Всего проанализировано: <span className="text-white">{aiFunnel?.scores.totalEnriched ?? 0}</span></span>
+                {aiFunnel && aiFunnel.revenue.totalMax > 0 && (
+                  <span>Потенциал: <span className="text-green-400 font-medium">{fmt(aiFunnel.revenue.totalMin)}–{fmt(aiFunnel.revenue.totalMax)}/мес</span></span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Pipeline stage mini-funnel */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <h2 className="text-white font-semibold text-sm uppercase tracking-wide mb-4">📊 Pipeline по статусам</h2>
+          {funnelLoading ? (
+            <div className="flex gap-1.5 justify-center py-6">
+              {[0,150,300].map(d => (
+                <span key={d} className="w-2 h-2 bg-slate-600 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {(aiFunnel?.stages ?? [])
+                .filter(s => s.count > 0)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 8)
+                .map(s => {
+                  const maxCount = Math.max(...(aiFunnel?.stages.map(x => x.count) ?? [1]));
+                  const pct = Math.round((s.count / maxCount) * 100);
+                  const isSuccess = s.status === "SUCCESS";
+                  const isLost = s.status === "LOST";
+                  const barColor = isSuccess ? "bg-green-500/70" : isLost ? "bg-red-800/50" : "bg-blue-500/40";
+                  return (
+                    <div key={s.status} className="flex items-center gap-2">
+                      <span className="text-slate-500 text-xs w-24 flex-shrink-0 truncate">
+                        {STAGE_LABELS[s.status] ?? s.status}
+                      </span>
+                      <div className="flex-1 h-3.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className={`text-xs font-medium flex-shrink-0 w-5 text-right ${isSuccess ? "text-green-400" : isLost ? "text-red-500" : "text-slate-400"}`}>
+                        {s.count}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Recent enrichments */}
+      {aiFunnel && aiFunnel.recentEnrichments.length > 0 && (
+        <div className="mb-6 bg-slate-900 border border-slate-800 rounded-xl p-5">
+          <h2 className="text-white font-semibold text-sm uppercase tracking-wide mb-3">🤖 Последние AI-анализы</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {aiFunnel.recentEnrichments.map(e => {
+              const cfg = SCORE_LEVEL_CONFIG[e.scoreLevel as keyof typeof SCORE_LEVEL_CONFIG];
+              return (
+                <div key={e.id} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className={`text-xs font-bold ${cfg?.text ?? "text-slate-400"}`}>
+                      {cfg?.label ?? e.scoreLevel}
+                    </span>
+                    {e.leadScore && (
+                      <span className="text-slate-500 text-xs ml-auto">{e.leadScore}</span>
+                    )}
+                  </div>
+                  <p className="text-white text-xs font-medium truncate">{e.company || e.name}</p>
+                  {e.selectedProduct && (
+                    <p className="text-slate-500 text-xs truncate mt-0.5">{e.selectedProduct}</p>
+                  )}
+                  {e.businessSummary && (
+                    <p className="text-slate-600 text-xs mt-1 leading-snug line-clamp-2">{e.businessSummary}</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

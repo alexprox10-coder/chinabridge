@@ -19,6 +19,7 @@ const GROUPS = [
   {
     label: "AI & Аналитика",
     items: [
+      { href: "/admin/sales",         label: "AI Sales",     icon: "🚀" },
       { href: "/admin/intelligence", label: "Intelligence", icon: "🧠" },
       { href: "/admin/marketing",    label: "Маркетинг AI", icon: "📣" },
       { href: "/admin/content",      label: "Контент AI",   icon: "✍️" },
@@ -47,9 +48,9 @@ const GROUPS = [
 
 const MOBILE_SHORTCUTS = [
   { href: "/admin/dashboard",          label: "Дашборд",   icon: "📊" },
+  { href: "/admin/sales",              label: "AI Sales",  icon: "🚀" },
   { href: "/admin/pipeline",           label: "Воронка",   icon: "🗂" },
   { href: "/admin/leads",              label: "Лиды",      icon: "👥" },
-  { href: "/admin/market-intelligence",label: "Поиск",     icon: "🎯" },
 ];
 
 export function AdminNav() {
