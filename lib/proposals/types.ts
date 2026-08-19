@@ -49,16 +49,17 @@ export interface ProposalContext {
 }
 
 export interface ProposalRecord {
-  proposal_id: string;
+  proposal_id:     string;
   proposal_number: string;
-  lead_id: string;
-  lead_name: string;
-  proposal_type: ProposalMode;
-  service_type: string;
-  lead_data: string; // JSON string of LeadSnapshot
-  created_at: string;
-  created_by: string;
-  status: ProposalStatus;
+  lead_id:         string;
+  lead_name:       string;
+  proposal_type:   ProposalMode;
+  service_type:    string;
+  lead_data:       string; // JSON string of LeadSnapshot
+  created_at:      string;
+  created_by:      string;
+  status:          ProposalStatus;
+  intel_snapshot?: string; // JSON: Record<fact_key, FactSnapshot> — зафиксированные коэффициенты на момент генерации КП
 }
 
 export interface CreateProposalRequest {

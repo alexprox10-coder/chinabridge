@@ -138,28 +138,28 @@ function computeTargetPrice(
   priceCurrency: 'CNY' | 'USD',
   usdRate:      number,
   cnyRate:      number,
+  customsRate:  number,
   targetMargin = 0.25,
 ): TargetPrice {
   // Для целевой маржи targetMargin:
   // netProfit = grossRev * targetMargin
   // netProfit = S*q - cost - S*q*c/100 - mpLog - ad
-  // cost = P*q*r*1.2 + delivery  (где 1.2 = 1 + customs 20%)
-  // S*q*(targetMargin) = S*q - P*q*r*1.2 - delivery - S*q*c/100 - mpLog - ad
-  // P = [S*q*(1 - targetMargin - c/100) - delivery - mpLog - ad] / (q*r*1.2)
+  // cost = P*q*r*(1+customs) + delivery
+  // P = [S*q*(1 - targetMargin - c/100) - delivery - mpLog - ad] / (q*r*(1+customs))
+  const customsMult = 1 + customsRate;
   const grossRev  = salePrice * qty;
   const commFrac  = commissionPct / 100;
   const numerator = grossRev * (1 - targetMargin - commFrac) - deliveryRub - mpLogisticsTotal - adSpend;
   const maxPurchaseTotalRub = Math.max(0, numerator);
-  const maxPurchaseUnitRub  = maxPurchaseTotalRub / qty / 1.2; // без таможни
+  const maxPurchaseUnitRub  = maxPurchaseTotalRub / qty / customsMult;
   const maxPurchaseCny      = priceCurrency === 'CNY' ? maxPurchaseUnitRub / rate : maxPurchaseUnitRub / (usdRate / cnyRate);
   const maxPurchaseUsd      = priceCurrency === 'USD' ? maxPurchaseUnitRub / rate : undefined;
 
   // Минимальная цена продажи при текущей закупке для targetMargin
-  // S*q*(1 - targetMargin - c/100) = P*q*r*1.2 + delivery + mpLog + ad
   const denom = 1 - targetMargin - commFrac;
   const purchaseTotalRub = unitPrice * qty * rate;
   const minSalePerUnit = denom > 0.01
-    ? (purchaseTotalRub * 1.2 + deliveryRub + mpLogisticsTotal + adSpend) / (qty * denom)
+    ? (purchaseTotalRub * customsMult + deliveryRub + mpLogisticsTotal + adSpend) / (qty * denom)
     : 0;
 
   const currentAchievable = maxPurchaseCny > 0 && unitPrice <= maxPurchaseCny + 0.01;
@@ -206,7 +206,7 @@ function computeSupplierRisk(moq?: number): SupplierRiskResult {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export async function calculateUnitEconomics(input: EconomicsInput): Promise<EconomicsOutput> {
-  const { cny: cnyRate, usd: usdRate, mp_commissions } = await getSystemRates();
+  const { cny: cnyRate, usd: usdRate, customs_rate, mp_commissions } = await getSystemRates();
   const rate    = input.priceCurrency === 'CNY' ? cnyRate : usdRate;
 
   const {
@@ -253,7 +253,7 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
   // P&L
   const unitPriceRub     = unitPrice * rate;
   const purchaseTotalRub = unitPriceRub * qty;
-  const customsRub       = purchaseTotalRub * 0.20;
+  const customsRub       = purchaseTotalRub * customs_rate;
   const totalCostRub     = purchaseTotalRub + deliveryRub + customsRub + mpLogTotal + otherCosts;
   const unitCostRub      = totalCostRub / qty;
   const grossRevenue     = salePrice * qty;
@@ -269,7 +269,7 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
 
   // Расширенные метрики
   const productScore  = computeProductScore(marginPct, roiPct, unitPriceRub, salePrice, deliveryRub + mpLogPerUnit, moq ?? 0);
-  const targetPrice   = computeTargetPrice(unitPrice, rate, salePrice, qty, commissionPct, deliveryRub, adSpend, mpLogTotal, priceCurrency, usdRate, cnyRate);
+  const targetPrice   = computeTargetPrice(unitPrice, rate, salePrice, qty, commissionPct, deliveryRub, adSpend, mpLogTotal, priceCurrency, usdRate, cnyRate, customs_rate);
   const supplierRisk  = computeSupplierRisk(moq);
 
   // Three scenarios: цена продажи ±15%, себестоимость ±5%

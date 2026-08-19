@@ -23,20 +23,33 @@ export async function POST(req: NextRequest) {
 
   if (!lead) return NextResponse.json({ ok: false, error: 'lead_not_found' }, { status: 404 });
 
+  // Snapshot финансовых коэффициентов на момент генерации КП
+  const SNAPSHOT_KEYS = [
+    'CNY_RATE', 'USD_RATE', 'CUSTOMS_DUTY_DEFAULT',
+    'WB_COMMISSION_STANDARD', 'OZON_COMMISSION_STANDARD',
+    'KASPI_COMMISSION_STANDARD', 'YANDEX_COMMISSION_STANDARD',
+    'CB_MARKUP_PERCENT', 'CB_MIN_MARGIN_PERCENT',
+  ];
+  const { getFactsSnapshot } = await import('@/lib/intelligence/client');
+  const intelSnapshot = await getFactsSnapshot(SNAPSHOT_KEYS).catch(() => ({}));
+
   try {
     const { ctx, buffer } = await generateProposal(lead, mode);
 
     const record: ProposalRecord = {
-      proposal_id: ctx.id,
+      proposal_id:     ctx.id,
       proposal_number: ctx.number,
-      lead_id: String(leadId),
-      lead_name: lead.name ?? '',
-      proposal_type: mode,
-      service_type: ctx.serviceKey,
-      lead_data: JSON.stringify(ctx.lead),
-      created_at: ctx.createdAt,
-      created_by: createdBy,
-      status: 'ready',
+      lead_id:         String(leadId),
+      lead_name:       lead.name ?? '',
+      proposal_type:   mode,
+      service_type:    ctx.serviceKey,
+      lead_data:       JSON.stringify(ctx.lead),
+      created_at:      ctx.createdAt,
+      created_by:      createdBy,
+      status:          'ready',
+      intel_snapshot:  Object.keys(intelSnapshot).length > 0
+        ? JSON.stringify(intelSnapshot)
+        : undefined,
     };
 
     // Fire-and-forget save to n8n (best-effort, non-blocking)

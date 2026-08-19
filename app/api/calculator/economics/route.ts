@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { getSystemRates } = await import('@/lib/economics/rates');
-  const { cny: CNY_RATE, usd: USD_RATE } = await getSystemRates();
+  const { cny: CNY_RATE, usd: USD_RATE, customs_rate: CUSTOMS_RATE } = await getSystemRates();
 
   const qty             = Math.max(1, parseInt(body.quantity ?? '1') || 1);
   const commission      = parseFloat(body.marketplace_commission ?? '0');
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
   // P&L
   const unitPriceRub      = unitPrice * (priceCurrency === 'CNY' ? CNY_RATE : USD_RATE);
   const purchaseTotalRub  = unitPriceRub * qty;
-  const customsRub        = purchaseTotalRub * 0.20;
+  const customsRub        = purchaseTotalRub * CUSTOMS_RATE;
   const totalCostRub      = purchaseTotalRub + deliveryRub + customsRub + otherCosts;
   const unitCostRub       = totalCostRub / qty;
   const grossRevenue      = salePrice * qty;

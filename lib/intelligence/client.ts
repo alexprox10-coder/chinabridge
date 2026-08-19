@@ -324,6 +324,40 @@ export async function applyChange(id: number): Promise<{ ok: boolean; message: s
   return { ok: true, message: 'Изменение применено' };
 }
 
+// ── Snapshot ──────────────────────────────────────────────────────────────────
+
+export interface FactSnapshot {
+  value:      string;
+  valid_from: string;
+  fact_id:    number;
+  label:      string;
+}
+
+export async function getFactsSnapshot(
+  keys: string[],
+): Promise<Record<string, FactSnapshot>> {
+  const sql = getSql();
+  try {
+    const rows = await sql`
+      SELECT id, fact_key, current_value, valid_from, label
+      FROM intel_facts
+      WHERE fact_key = ANY(${keys}::text[])
+    `;
+    const result: Record<string, FactSnapshot> = {};
+    for (const r of rows) {
+      result[String(r.fact_key)] = {
+        value:      String(r.current_value),
+        valid_from: String(r.valid_from),
+        fact_id:    Number(r.id),
+        label:      String(r.label),
+      };
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
 // ── Stats ─────────────────────────────────────────────────────────────────────
 
 export async function getStats(): Promise<IntelStats> {
