@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       AND (
         contact_attempts = 0
         OR contact_attempts IS NULL
-        OR last_contact_at < NOW() - INTERVAL '3 days'
+        OR (last_contact_at IS NOT NULL AND last_contact_at != '' AND last_contact_at::timestamptz < NOW() - INTERVAL '3 days')
       )
     ORDER BY ai_lead_score DESC NULLS LAST, created_at ASC
     LIMIT 20
