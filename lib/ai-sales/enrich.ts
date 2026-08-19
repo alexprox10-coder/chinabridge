@@ -315,7 +315,21 @@ ${websiteSection}
 
     const data = await res.json();
     const raw = data.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim());
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim());
+    } catch {
+      // LLM returned malformed JSON — extract partial fields with regex fallback
+      const scoreMatch = raw.match(/"lead_score"\s*:\s*(\d+)/);
+      const levelMatch = raw.match(/"score_level"\s*:\s*"(HOT|WARM|COLD)"/);
+      const summaryMatch = raw.match(/"business_summary"\s*:\s*"([^"]{10,200})"/);
+      parsed = {
+        lead_score: scoreMatch ? Number(scoreMatch[1]) : 50,
+        score_level: levelMatch?.[1] ?? "WARM",
+        business_summary: summaryMatch?.[1] ?? "Анализ получен частично",
+        selected_product: "DIRECT_IMPORT",
+      };
+    }
 
     const now = new Date().toISOString();
     const contactsJson = JSON.stringify({
