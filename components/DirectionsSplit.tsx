@@ -47,7 +47,7 @@ export default function DirectionsSplit() {
 
             {/* Чипы преимуществ */}
             <ul className="flex flex-wrap gap-2 mb-7">
-              {["AI-поиск товара на 1688", "Расчёт маржи до закупки", "25–35 дней на полку", "Фулфилмент Москва / Алматы"].map(t => (
+              {["AI-поиск товара на 1688", "Расчёт маржи до закупки", "Доставка Китай → РФ / KZ", "Фулфилмент Москва / Алматы"].map(t => (
                 <li key={t} className="px-3 py-1 rounded-full bg-[#00A86B]/8 border border-[#00A86B]/15 text-[#8899aa] text-xs">{t}</li>
               ))}
             </ul>
@@ -156,7 +156,7 @@ export default function DirectionsSplit() {
 
         {/* Нижняя плашка — доверие */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-[#8899aa]">
-          {["500+ поставок с 2019 года", "Работаем с Россией и Казахстаном", "Белый импорт, все документы", "AI на каждом этапе"].map(t => (
+          {["Работаем с 2019 года", "Россия и Казахстан", "Документы и таможня", "AI на каждом этапе"].map(t => (
             <span key={t} className="flex items-center gap-1.5">
               <span className="w-1 h-1 rounded-full bg-[#00A86B]" />{t}
             </span>

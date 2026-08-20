@@ -7,9 +7,9 @@ import Link from "next/link";
 import { trackGAEvent } from "@/lib/analytics/ga";
 
 const checks = [
-  "Товар на полке WB/Ozon за 25–35 дней",
+  "Еженедельные рейсы из Китая в РФ и Казахстан",
   "Поставщик + проверка фабрики в Китае",
-  "Таможня + документы под ключ",
+  "Таможня + документы для WB, Ozon",
   "AI-расчёт маржи до закупки",
 ];
 
@@ -212,7 +212,7 @@ export default function Hero() {
           <div>
             <div className="fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse"/>
-              Работаем с 2019 года · 500+ поставок
+              Работаем с 2019 года
             </div>
 
             <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-5">
@@ -251,7 +251,11 @@ export default function Hero() {
             </div>
 
             <div className="fade-up flex gap-8 mt-10 pt-8 border-t border-[#243a5e]">
-              {[{ v: "500+", l: "успешных поставок" }, { v: "25–35", l: "дней до полки WB" }, { v: "20–40%", l: "экономия vs Alibaba" }].map(s => (
+              {[
+                { v: "2019", l: "год основания" },
+                { v: "50 кг", l: "мин. партия" },
+                { v: "РФ + KZ", l: "направления" },
+              ].map(s => (
                 <div key={s.l}>
                   <div className="text-2xl font-bold">{s.v}</div>
                   <div className="text-xs text-[#8899aa] mt-0.5">{s.l}</div>
