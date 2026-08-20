@@ -482,6 +482,13 @@ export default function AIEconomicsFunnel() {
     return () => clearInterval(id);
   }, [s.step]);
 
+  // Track funnel step entry for analytics
+  useEffect(() => {
+    if (s.step === "preview" && ec) analytics.aiFunnelPreviewShown({ verdict: ec.verdict });
+    if (s.step === "contact")      analytics.aiFunnelContactOpen();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.step]);
+
   const go = (step: Step, extra?: Partial<FunnelState>) =>
     setS(p => ({ ...p, step, error: null, ...extra }));
 
@@ -762,7 +769,6 @@ export default function AIEconomicsFunnel() {
     if (!s.phone.trim() && !s.telegram.trim()) {
       setS(p => ({ ...p, error: "Укажите телефон или Telegram" })); return;
     }
-    analytics.aiFunnelContactOpen();
     go("calculating");
 
     try {
