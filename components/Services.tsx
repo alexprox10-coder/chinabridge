@@ -6,12 +6,60 @@ import { Search, Eye, ShoppingCart, Package, ClipboardCheck, Star } from "lucide
 import { analytics } from "@/lib/analytics";
 
 const services = [
-  { icon: Search, title: "Поиск поставщика", desc: "3–5 проверенных производителей, сравнительная таблица цен.", price: "от 15 000 ₽", hot: false, track: "sourcing" },
-  { icon: Eye, title: "Проверка фабрики", desc: "Выезд на производство, видеоотчёт, сертификаты, мощности.", price: "от 25 000 ₽", hot: false, track: null },
-  { icon: ShoppingCart, title: "Выкуп товара", desc: "Переводим платёж, контролируем производство. Работаем в юанях.", price: "комиссия 5–8%", hot: false, track: null },
-  { icon: Package, title: "Сборные грузы", desc: "Консолидация от 50 кг. Еженедельные отправления.", price: "от 50 кг", hot: true, track: "consolidation" },
-  { icon: ClipboardCheck, title: "Контроль качества", desc: "Инспекция на складе, замеры, комплектность, фотоотчёт.", price: "от 12 000 ₽", hot: false, track: null },
-  { icon: Star, title: "Под ключ", desc: "Поиск → проверка → выкуп → доставка. Один менеджер.", price: "по запросу", hot: false, track: null },
+  {
+    icon: Search,
+    title: "Аудит поставщика",
+    desc: "Находим и проверяем производителей под ваш товар.",
+    items: ["3–5 фабрик на 1688 / Alibaba", "Переговоры и лучшая цена", "Сравнительная таблица цен", "Проверка юридического статуса"],
+    price: "от 15 000 ₽",
+    hot: false,
+    track: "sourcing",
+  },
+  {
+    icon: Eye,
+    title: "Инспекция фабрики",
+    desc: "Физический выезд представителя на производство в Китае.",
+    items: ["Выезд на фабрику лично", "Видеоотчёт + фотодокументация", "Сертификаты и мощности производства", "Соответствие образцу до оплаты"],
+    price: "от 25 000 ₽",
+    hot: false,
+    track: null,
+  },
+  {
+    icon: ShoppingCart,
+    title: "Выкуп товара",
+    desc: "Переводим платёж, контролируем производство. Работаем в юанях.",
+    items: ["Оплата в юанях напрямую фабрике", "Контроль производства и отгрузки", "Без скрытых потерь на конвертации"],
+    price: "комиссия от 4%",
+    hot: false,
+    track: null,
+  },
+  {
+    icon: Package,
+    title: "Сборные грузы",
+    desc: "Консолидация из Иу, Гуанчжоу, Шэньчжэня. Еженедельные отправления.",
+    items: ["Авто: от $2.5/кг · Авиа: от $6/кг", "Минимальная партия — от 50 кг", "Еженедельные рейсы в РФ и Казахстан"],
+    price: "от $2.5/кг",
+    hot: true,
+    track: "consolidation",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Контроль качества",
+    desc: "Инспекция по AQL-стандарту: замеры, комплектность, фотоотчёт.",
+    items: ["Проверка на складе до отправки", "Сравнение с образцом и ТЗ", "Фотоотчёт + заключение Passed/Failed"],
+    price: "от 12 000 ₽",
+    hot: false,
+    track: null,
+  },
+  {
+    icon: Star,
+    title: "Под ключ",
+    desc: "Поиск → аудит → выкуп → доставка → таможня. Один менеджер на весь цикл.",
+    items: ["Полный цикл без вашего участия", "Один контакт — один менеджер", "Отчётность на каждом этапе"],
+    price: "по запросу",
+    hot: false,
+    track: null,
+  },
 ];
 
 export default function Services() {
@@ -60,7 +108,7 @@ export default function Services() {
           {services.map((s, i) => (
             <div key={s.title}
               data-track={s.track ?? undefined}
-              className={`fade-up relative rounded-2xl p-6 hover:-translate-y-1 transition-all duration-200 ${
+              className={`fade-up relative rounded-2xl p-6 flex flex-col hover:-translate-y-1 transition-all duration-200 ${
               s.hot ? "bg-[#00A86B]/10 border border-[#00A86B]/40 glow-green" : "card-glass hover:border-[#00A86B]/30"
             }`} style={{ transitionDelay: `${i * 80}ms` }}>
               {s.hot && (
@@ -72,8 +120,18 @@ export default function Services() {
                 <s.icon className="w-5 h-5 text-[#00A86B]"/>
               </div>
               <h3 className="font-semibold mb-2">{s.title}</h3>
-              <p className="text-sm text-[#8899aa] leading-relaxed mb-4">{s.desc}</p>
-              <div className="text-[#00A86B] font-bold text-sm">{s.price}</div>
+              <p className="text-sm text-[#8899aa] leading-relaxed mb-3">{s.desc}</p>
+              {s.items.length > 0 && (
+                <ul className="flex flex-col gap-1 mb-4">
+                  {s.items.map(item => (
+                    <li key={item} className="flex items-start gap-2 text-xs text-[#8899aa]">
+                      <span className="text-[#00A86B] mt-0.5 flex-shrink-0">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="text-[#00A86B] font-bold text-sm mt-auto">{s.price}</div>
             </div>
           ))}
         </div>
