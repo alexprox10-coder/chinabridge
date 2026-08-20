@@ -439,6 +439,7 @@ export default function AIEconomicsFunnel() {
   const [regName,         setRegName]         = useState("");
   const [regTelegram,     setRegTelegram]     = useState("");
   const [regSubmitting,   setRegSubmitting]   = useState(false);
+  const [calcAfterReg,    setCalcAfterReg]    = useState(false);
 
   // Load usage counters from localStorage on mount
   useEffect(() => {
@@ -446,6 +447,15 @@ export default function AIEconomicsFunnel() {
     if (!isNaN(stored) && stored > 0) setCalcCount(stored);
     if (localStorage.getItem('cb_registered') === 'true') setIsRegistered(true);
   }, []);
+
+  // After registration — auto-resume pending calculation
+  useEffect(() => {
+    if (!isRegistered || !calcAfterReg) return;
+    setCalcAfterReg(false);
+    setShowRegGate(false);
+    // handleCalcRef.current is now updated with isRegistered=true
+    handleCalcRef.current?.();
+  }, [isRegistered, calcAfterReg]);
 
   // Advance analyzing stages every 2.5s (time-based, not marking done until API responds)
   useEffect(() => {
@@ -465,6 +475,7 @@ export default function AIEconomicsFunnel() {
   async function handleCalculate() {
     // Usage gate: 1 free anon → registration → 3 more → paid plan
     if (calcCount >= ANON_LIMIT && !isRegistered) {
+      setCalcAfterReg(true);
       setShowRegGate(true);
       return;
     }
@@ -713,8 +724,7 @@ export default function AIEconomicsFunnel() {
     } catch { /* ignore */ }
 
     setRegSubmitting(false);
-    setShowRegGate(false);
-    go("input");
+    // showRegGate + calcAfterReg cleared by useEffect after isRegistered → true
     analytics.aiFunnelStart();
   }
 
