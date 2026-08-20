@@ -36,13 +36,15 @@ function detectPlatform(url: string): ParsedProduct['source_platform'] {
 
 async function scrape(url: string): Promise<string | null> {
   if (!FIRECRAWL_KEY) return null;
-  const is1688 = url.includes('1688.com');
+  const is1688    = url.includes('1688.com');
+  const isAlibaba = url.includes('alibaba.com');
+  const needsJs   = is1688 || isAlibaba;
   try {
     const body: Record<string, unknown> = {
       url,
       formats:         ['markdown'],
-      onlyMainContent: !is1688,
-      timeout:         is1688 ? 25000 : 12000,
+      onlyMainContent: !needsJs,
+      timeout:         needsJs ? 25000 : 12000,
     };
     if (is1688) {
       body.mobile  = true;
@@ -53,11 +55,20 @@ async function scrape(url: string): Promise<string | null> {
         'Referer':         'https://www.1688.com/',
       };
     }
+    if (isAlibaba) {
+      body.mobile  = true;
+      body.waitFor = 4000;
+      body.headers = {
+        'User-Agent':      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer':         'https://www.alibaba.com/',
+      };
+    }
     const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method:  'POST',
       headers: { Authorization: `Bearer ${FIRECRAWL_KEY}`, 'Content-Type': 'application/json' },
       body:    JSON.stringify(body),
-      signal:  AbortSignal.timeout(is1688 ? 32000 : 16000),
+      signal:  AbortSignal.timeout(needsJs ? 32000 : 16000),
     });
     if (!res.ok) return null;
     const d = await res.json();
