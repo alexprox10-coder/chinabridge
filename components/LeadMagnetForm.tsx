@@ -7,31 +7,14 @@ interface FormState {
   name: string;
   telegram: string;
   product: string;
-  country: string;
-  volume: string;
   agree: boolean;
 }
-
-const VOLUMES = [
-  { value: "under_1000", label: "До $1 000 в месяц" },
-  { value: "1000_10000", label: "$1 000 – $10 000 в месяц" },
-  { value: "over_10000", label: "Более $10 000 в месяц" },
-];
-
-const COUNTRIES = [
-  { value: "", label: "Выберите страну (необязательно)" },
-  { value: "russia", label: "Россия" },
-  { value: "kazakhstan", label: "Казахстан" },
-  { value: "other", label: "Другая" },
-];
 
 export default function LeadMagnetForm() {
   const [form, setForm] = useState<FormState>({
     name: "",
     telegram: "",
     product: "",
-    country: "",
-    volume: "",
     agree: false,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -44,9 +27,7 @@ export default function LeadMagnetForm() {
 
   function validate(): boolean {
     const newErrors: Partial<Record<keyof FormState, string>> = {};
-    if (!form.name.trim()) newErrors.name = "Введите ваше имя";
     if (!form.telegram.trim()) newErrors.telegram = "Введите Telegram";
-    if (!form.product.trim()) newErrors.product = "Укажите товар";
     if (!form.agree) newErrors.agree = "Необходимо согласие";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -64,11 +45,9 @@ export default function LeadMagnetForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name,
+          name:     form.name     || undefined,
           telegram: form.telegram,
-          product: form.product,
-          country: form.country || undefined,
-          volume: form.volume || undefined,
+          product:  form.product  || undefined,
         }),
       });
 
@@ -133,22 +112,17 @@ export default function LeadMagnetForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      {/* Name */}
+      {/* Name — optional */}
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1.5">
-          Имя <span className="text-[#00A86B]">*</span>
-        </label>
+        <label className="block text-sm font-medium text-slate-300 mb-1.5">Имя</label>
         <input
           type="text"
           autoComplete="given-name"
-          placeholder="Как вас зовут?"
+          placeholder="Как вас зовут? (необязательно)"
           value={form.name}
           onChange={(e) => set("name", e.target.value)}
-          className={`w-full bg-[#0d1f3c] border rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A86B] transition-colors ${
-            errors.name ? "border-red-500" : "border-slate-700"
-          }`}
+          className="w-full bg-[#0d1f3c] border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A86B] transition-colors"
         />
-        {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
       </div>
 
       {/* Telegram */}
@@ -169,66 +143,18 @@ export default function LeadMagnetForm() {
         {errors.telegram && <p className="text-red-400 text-xs mt-1">{errors.telegram}</p>}
       </div>
 
-      {/* Product */}
+      {/* Product — optional */}
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-1.5">
-          Что планируете везти из Китая? <span className="text-[#00A86B]">*</span>
+          Что планируете везти из Китая?
         </label>
         <input
           type="text"
           placeholder="Например: электроника, одежда, запчасти"
           value={form.product}
           onChange={(e) => set("product", e.target.value)}
-          className={`w-full bg-[#0d1f3c] border rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A86B] transition-colors ${
-            errors.product ? "border-red-500" : "border-slate-700"
-          }`}
+          className="w-full bg-[#0d1f3c] border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A86B] transition-colors"
         />
-        {errors.product && <p className="text-red-400 text-xs mt-1">{errors.product}</p>}
-      </div>
-
-      {/* Volume */}
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1.5">
-          Планируемый объём закупок
-        </label>
-        <div className="grid grid-cols-1 gap-2">
-          {VOLUMES.map((v) => (
-            <label
-              key={v.value}
-              className={`flex items-center gap-3 cursor-pointer border rounded-xl px-4 py-3 transition-colors ${
-                form.volume === v.value
-                  ? "border-[#00A86B] bg-[#00A86B]/10"
-                  : "border-slate-700 bg-[#0d1f3c] hover:border-slate-500"
-              }`}
-            >
-              <input
-                type="radio"
-                name="volume"
-                value={v.value}
-                checked={form.volume === v.value}
-                onChange={() => set("volume", v.value)}
-                className="accent-[#00A86B]"
-              />
-              <span className="text-sm text-slate-200">{v.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Country */}
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1.5">Страна доставки</label>
-        <select
-          value={form.country}
-          onChange={(e) => set("country", e.target.value)}
-          className="w-full bg-[#0d1f3c] border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A86B] transition-colors text-slate-200"
-        >
-          {COUNTRIES.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* Agree */}
@@ -270,7 +196,7 @@ export default function LeadMagnetForm() {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Получить руководство бесплатно
+            Получить PDF-руководство бесплатно
           </>
         )}
       </button>

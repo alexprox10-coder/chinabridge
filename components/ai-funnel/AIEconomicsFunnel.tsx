@@ -67,6 +67,7 @@ interface FunnelState {
   name:              string;
   phone:             string;
   telegram:          string;
+  whatsapp:          string;
   email:             string;
   // Result
   economics:         EconomicsResult | null;
@@ -86,7 +87,7 @@ interface FunnelState {
 
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Алматы", "Астана"];
 
-const ANON_LIMIT = 3;   // расчётов в день без регистрации
+const ANON_LIMIT = 1;   // расчётов в день без регистрации
 const REG_LIMIT  = 10;  // расчётов в день после регистрации
 
 // Analyzing stages — real stages that match backend process
@@ -415,6 +416,7 @@ export default function AIEconomicsFunnel() {
     name:              "",
     phone:             "",
     telegram:          "",
+    whatsapp:          "",
     email:             "",
     economics:         null,
     delivery:          null,
@@ -766,8 +768,8 @@ export default function AIEconomicsFunnel() {
   // ── Contact submit ──────────────────────────────────────────────────────────
 
   async function handleContactSubmit() {
-    if (!s.phone.trim() && !s.telegram.trim()) {
-      setS(p => ({ ...p, error: "Укажите телефон или Telegram" })); return;
+    if (!s.phone.trim() && !s.telegram.trim() && !s.whatsapp.trim()) {
+      setS(p => ({ ...p, error: "Укажите Telegram, WhatsApp или телефон" })); return;
     }
     go("calculating");
 
@@ -781,6 +783,7 @@ export default function AIEconomicsFunnel() {
           name:           s.name,
           phone:          s.phone,
           telegram:       s.telegram,
+          whatsapp:       s.whatsapp,
           email:          s.email,
           product_name:   ed ? ed.product_name          : s.product.product_name,
           product_link:   ed ? ed.product_link          : s.product.product_link,
@@ -814,7 +817,42 @@ export default function AIEconomicsFunnel() {
 
   // ── Share ───────────────────────────────────────────────────────────────────
 
-  const [copied, setCopied] = useState(false);
+  const [copied,           setCopied]           = useState(false);
+  const [inlineTg,         setInlineTg]         = useState("");
+  const [inlineName,       setInlineName]       = useState("");
+  const [inlineSubmitting, setInlineSubmitting] = useState(false);
+
+  async function handleInlineCapture() {
+    if (!inlineTg.trim()) return;
+    setInlineSubmitting(true);
+    localStorage.setItem('cb_registered', 'true');
+    setIsRegistered(true);
+    try {
+      const ed        = s.extractedData;
+      const unitPrice = ed
+        ? ((ed.unit_price_cny ?? parseFloat(s.product.unit_price_cny)) || 0)
+        : parseFloat(s.product.unit_price_cny) || 0;
+      await fetch("/api/ai-funnel/submit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name:           inlineName,
+          telegram:       inlineTg,
+          product_name:   ed ? ed.product_name          : s.product.product_name,
+          product_link:   ed ? ed.product_link          : s.product.product_link,
+          unit_price:     unitPrice,
+          price_currency: ed ? ed.price_currency        : s.product.price_currency,
+          sale_price:     parseFloat(s.salePrice) || parseFloat(s.product.sale_price) || 0,
+          quantity:       parseInt(s.product.quantity) || 1,
+          marketplace:    s.marketplace,
+          city_to:        s.city_to,
+          weight_kg:      ed
+            ? (ed.weight_kg ?? undefined)
+            : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
+        }),
+      });
+    } catch { /* ignore */ }
+    setInlineSubmitting(false);
+  }
 
   async function handleShare(ec: EconomicsResult) {
     const mp   = s.marketplace_config?.label ?? s.marketplace.toUpperCase();
@@ -855,10 +893,9 @@ export default function AIEconomicsFunnel() {
       <div className="card-glass rounded-2xl p-6 md:p-8 flex flex-col gap-6">
         <div className="text-center">
           <div className="w-14 h-14 rounded-full bg-[#00A86B]/20 border border-[#00A86B]/40 flex items-center justify-center text-2xl mx-auto mb-4">🔓</div>
-          <h2 className="text-xl font-bold text-white mb-2">Зарегистрируйтесь бесплатно</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Расчёт готов — куда прислать?</h2>
           <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-            Вы использовали все 3 бесплатных расчёта на сегодня.<br/>
-            Зарегистрируйтесь и получите <span className="text-white font-semibold">10 расчётов в день</span> бесплатно.
+            Зарегистрируйтесь и получите <span className="text-white font-semibold">10 расчётов в день</span> + полный P&amp;L в Telegram.
           </p>
         </div>
 
@@ -1300,53 +1337,82 @@ export default function AIEconomicsFunnel() {
             ))}
           </div>
 
-          {/* Scenarios */}
-          {ec.scenarios && ec.scenarios.length > 0 && (
-            <ScenariosBlock
-              scenarios={ec.scenarios}
-              active={s.activeScenario}
-              onSwitch={sc => setS(p => ({ ...p, activeScenario: sc }))}
-            />
-          )}
-
-          {/* Full P&L */}
-          <PnlTable ec={ec} delivery={s.delivery}
-            mpLabel={s.marketplace_config?.label}
-            tariffDate={s.marketplace_config?.tariff_date}
-            commissionNote={s.marketplace_config?.commission_note}
-          />
-
-          {/* Product Score */}
-          {ec.product_score && <ProductScoreCard ps={ec.product_score} />}
-
-          {/* Supplier Risk */}
-          {ec.supplier_risk && <SupplierRiskBadge sr={ec.supplier_risk} />}
-
-          {/* Target Price */}
-          {ec.target_price && (
-            <div onClick={() => analytics.targetPriceViewed()}>
-              <TargetPriceCard tp={ec.target_price}
-                currency={s.extractedData?.price_currency ?? s.product.price_currency} />
+          {/* Full analytics: gated for unregistered users */}
+          {isRegistered ? (
+            <>
+              {ec.scenarios && ec.scenarios.length > 0 && (
+                <ScenariosBlock
+                  scenarios={ec.scenarios}
+                  active={s.activeScenario}
+                  onSwitch={sc => setS(p => ({ ...p, activeScenario: sc }))}
+                />
+              )}
+              <PnlTable ec={ec} delivery={s.delivery}
+                mpLabel={s.marketplace_config?.label}
+                tariffDate={s.marketplace_config?.tariff_date}
+                commissionNote={s.marketplace_config?.commission_note}
+              />
+              {ec.product_score && <ProductScoreCard ps={ec.product_score} />}
+              {ec.supplier_risk && <SupplierRiskBadge sr={ec.supplier_risk} />}
+              {ec.target_price && (
+                <div onClick={() => analytics.targetPriceViewed()}>
+                  <TargetPriceCard tp={ec.target_price}
+                    currency={s.extractedData?.price_currency ?? s.product.price_currency} />
+                </div>
+              )}
+              {!s.delivery?.hasRate && (
+                <p className="text-xs text-amber-400/80 bg-amber-900/10 border border-amber-700/20 rounded-xl px-4 py-2">
+                  ⚠️ Стоимость международной доставки уточняется менеджером
+                </p>
+              )}
+              <CorrectionAccordion
+                open={s.showCorrection}
+                correction={s.correction}
+                onToggle={() => {
+                  if (!s.showCorrection) analytics.manualCorrectionOpened();
+                  setS(p => ({ ...p, showCorrection: !p.showCorrection }));
+                }}
+                onChange={setCorrection}
+                onRecalculate={handleRecalculate}
+              />
+            </>
+          ) : (
+            <div className="bg-[#00A86B]/5 border border-[#00A86B]/30 rounded-xl p-5">
+              <p className="text-sm font-semibold text-white mb-1">📩 Получить полный P&amp;L расчёт в Telegram</p>
+              <p className="text-xs text-[#8899aa] mb-3">
+                Пришлём P&amp;L таблицу, Product Score и план оптимизации — бесплатно
+              </p>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={inlineTg}
+                  autoFocus
+                  onChange={e => setInlineTg(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
+                  placeholder="@username"
+                  className={inp()}
+                />
+                <input
+                  type="text"
+                  value={inlineName}
+                  onChange={e => setInlineName(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
+                  placeholder="Ваше имя (необязательно)"
+                  className={inp()}
+                />
+                <button
+                  onClick={handleInlineCapture}
+                  disabled={!inlineTg.trim() || inlineSubmitting}
+                  className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all text-sm"
+                >
+                  {inlineSubmitting ? "Отправляем..." : "📩 Получить полный расчёт бесплатно"}
+                </button>
+              </div>
+              <p className="text-xs text-[#8899aa] mt-2 text-center">
+                Бесплатно · без спама · ответим в течение дня
+              </p>
             </div>
           )}
-
-          {!s.delivery?.hasRate && (
-            <p className="text-xs text-amber-400/80 bg-amber-900/10 border border-amber-700/20 rounded-xl px-4 py-2">
-              ⚠️ Стоимость международной доставки уточняется менеджером
-            </p>
-          )}
-
-          {/* Correction accordion */}
-          <CorrectionAccordion
-            open={s.showCorrection}
-            correction={s.correction}
-            onToggle={() => {
-              if (!s.showCorrection) analytics.manualCorrectionOpened();
-              setS(p => ({ ...p, showCorrection: !p.showCorrection }));
-            }}
-            onChange={setCorrection}
-            onRecalculate={handleRecalculate}
-          />
 
           {/* CTA */}
           <div className="bg-[#00A86B]/5 border border-[#00A86B]/20 rounded-xl p-4">
@@ -1370,7 +1436,7 @@ export default function AIEconomicsFunnel() {
               onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict }); go("contact"); }}
               className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
             >
-              {ec.verdict === "red" ? "📞 Получить решение от менеджера" : ec.verdict === "yellow" ? "📞 Получить план оптимизации" : "📞 Запустить импорт с менеджером"}
+              {ec.verdict === "red" ? "📩 Получить решение от менеджера" : ec.verdict === "yellow" ? "📩 Получить план оптимизации" : "📩 Запустить импорт — получить расчёт в TG"}
             </button>
           </div>
 
@@ -1440,10 +1506,15 @@ export default function AIEconomicsFunnel() {
               placeholder="@username" autoFocus className={inp()} />
           </div>
           <div>
+            <label className="text-xs font-medium text-[#8899aa] block mb-1.5">WhatsApp</label>
+            <input type="tel" value={s.whatsapp} onChange={e => setS(p => ({ ...p, whatsapp: e.target.value }))}
+              placeholder="+7 (999) 000-00-00" className={inp()} />
+          </div>
+          <div>
             <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Телефон</label>
             <input type="tel" value={s.phone} onChange={e => setS(p => ({ ...p, phone: e.target.value }))}
               placeholder="+7 (999) 000-00-00" className={inp()} />
-            <p className="text-[11px] text-[#8899aa] mt-1">* Telegram или телефон — что удобнее</p>
+            <p className="text-[11px] text-[#8899aa] mt-1">* Telegram, WhatsApp или телефон — что удобнее</p>
           </div>
           <div>
             <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Имя</label>
