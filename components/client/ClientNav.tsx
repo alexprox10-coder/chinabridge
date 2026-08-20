@@ -6,6 +6,7 @@ import type { SessionPayload } from "@/lib/client-portal/types";
 const NAV = [
   { href: "/client/dashboard",    label: "Главная",           icon: "🏠" },
   { href: "/client/calculator",   label: "Калькулятор",       icon: "🧮" },
+  { href: "/client/plans",        label: "Тарифы",            icon: "⭐" },
   { href: "/client/orders",       label: "Мои заявки",        icon: "📦" },
   { href: "/client/payments",     label: "Оплаты",            icon: "💱" },
   { href: "/client/documents",    label: "Документы",         icon: "📄" },
