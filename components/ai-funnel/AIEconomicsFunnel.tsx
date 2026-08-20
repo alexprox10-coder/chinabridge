@@ -904,10 +904,10 @@ export default function AIEconomicsFunnel() {
         </div>
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <a
-            href="/#services"
+            href="/client/login?plan=calculator"
             className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
           >
-            📊 Подключить безлимитный доступ
+            📊 Выбрать тариф в кабинете
           </a>
           <a
             href="https://t.me/ChinaBridgeLID_bot"
