@@ -86,8 +86,8 @@ interface FunnelState {
 
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Алматы", "Астана"];
 
-const ANON_LIMIT = 1;   // расчётов без регистрации
-const REG_LIMIT  = 4;   // расчётов после регистрации (1 + 3)
+const ANON_LIMIT = 3;   // расчётов без регистрации
+const REG_LIMIT  = 6;   // расчётов после регистрации (3 + 3)
 
 // Analyzing stages — real stages that match backend process
 const ANALYZE_STAGES = [
@@ -829,7 +829,7 @@ export default function AIEconomicsFunnel() {
           <div className="w-14 h-14 rounded-full bg-[#00A86B]/20 border border-[#00A86B]/40 flex items-center justify-center text-2xl mx-auto mb-4">🔓</div>
           <h2 className="text-xl font-bold text-white mb-2">Зарегистрируйтесь бесплатно</h2>
           <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-            Вы использовали 1 бесплатный расчёт.<br/>
+            Вы использовали все бесплатные расчёты.<br/>
             Зарегистрируйтесь и получите ещё <span className="text-white font-semibold">3 расчёта бесплатно</span> в личном кабинете.
           </p>
         </div>
@@ -891,7 +891,7 @@ export default function AIEconomicsFunnel() {
         <div>
           <h2 className="text-xl font-bold text-white mb-2">Бесплатные расчёты использованы</h2>
           <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-            Вы использовали все 4 бесплатных расчёта. Для безлимитного доступа перейдите на платный план или свяжитесь с менеджером.
+            Вы использовали все 6 бесплатных расчётов. Для безлимитного доступа перейдите на платный план или свяжитесь с менеджером.
           </p>
         </div>
         <div className="flex flex-col gap-3 w-full max-w-xs">
@@ -1030,7 +1030,7 @@ export default function AIEconomicsFunnel() {
             🚀 Рассчитать прибыль
           </button>
 
-          <p className="text-center text-xs text-[#8899aa]">1 расчёт бесплатно · результат за 15 сек · AI-анализ GPT-4o</p>
+          <p className="text-center text-xs text-[#8899aa]">3 расчёта бесплатно · результат за 15 сек · AI-анализ GPT-4o</p>
         </div>
       )}
 
