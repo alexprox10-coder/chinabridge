@@ -5,11 +5,12 @@ const FALLBACK_USD     = 84.54;
 const FALLBACK_CUSTOMS = 0.20; // 20%
 
 // fact_key → mp_commissions key mapping
+// Keys must match the canonical fact_key names in lib/intelligence/seed.ts
 const INTEL_MP_KEYS: Record<string, string> = {
-  WB_COMMISSION_STANDARD:    'wb',
-  OZON_COMMISSION_STANDARD:  'ozon',
-  KASPI_COMMISSION_STANDARD: 'kaspi',
-  YANDEX_COMMISSION_STANDARD:'yandex',
+  WB_GENERAL_COMMISSION:    'wb',
+  OZON_GENERAL_COMMISSION:  'ozon',
+  KASPI_COMMISSION:         'kaspi',
+  YANDEX_FBY_COMMISSION:    'yandex',
 };
 
 export interface SystemRates {

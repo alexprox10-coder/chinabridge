@@ -7,6 +7,7 @@ export const maxDuration = 30;
 
 type CollectSource = 'wb' | 'ozon' | 'kaspi' | 'yandex';
 
+// fact_key must match canonical keys in lib/intelligence/seed.ts
 const SOURCE_CONFIG: Record<CollectSource, {
   fact_key:   string;
   label:      string;
@@ -16,32 +17,32 @@ const SOURCE_CONFIG: Record<CollectSource, {
   prompt:     string;
 }> = {
   wb: {
-    fact_key:   'WB_COMMISSION_STANDARD',
-    label:      'Комиссия WB (стандарт)',
+    fact_key:   'WB_GENERAL_COMMISSION',
+    label:      'Комиссия WB (общие категории)',
     entity:     'Wildberries',
     department: 'WB',
     source_url: 'https://seller.wildberries.ru/dynamic-products',
     prompt:     'Найди на странице стандартную комиссию Wildberries (WB) для продавцов. Верни ТОЛЬКО одно число — процент комиссии (например: 23). Если не нашёл — верни null.',
   },
   ozon: {
-    fact_key:   'OZON_COMMISSION_STANDARD',
-    label:      'Комиссия Ozon (стандарт)',
+    fact_key:   'OZON_GENERAL_COMMISSION',
+    label:      'Комиссия Ozon (общие категории)',
     entity:     'Ozon',
     department: 'OZON',
     source_url: 'https://seller.ozon.ru/app/tariffs',
     prompt:     'Найди на странице стандартную комиссию Ozon для продавцов (FBO или средняя). Верни ТОЛЬКО одно число — процент комиссии (например: 18). Если не нашёл — верни null.',
   },
   kaspi: {
-    fact_key:   'KASPI_COMMISSION_STANDARD',
-    label:      'Комиссия Kaspi (стандарт)',
+    fact_key:   'KASPI_COMMISSION',
+    label:      'Комиссия Kaspi',
     entity:     'Kaspi',
     department: 'GENERAL',
     source_url: 'https://kaspi.kz/seller',
     prompt:     'Найди на странице стандартную комиссию Kaspi для продавцов. Верни ТОЛЬКО одно число — процент комиссии (например: 12.6). Если не нашёл — верни null.',
   },
   yandex: {
-    fact_key:   'YANDEX_COMMISSION_STANDARD',
-    label:      'Комиссия Яндекс Маркет (стандарт)',
+    fact_key:   'YANDEX_FBY_COMMISSION',
+    label:      'Комиссия Яндекс Маркет (FBY)',
     entity:     'Yandex Market',
     department: 'GENERAL',
     source_url: 'https://seller.market.yandex.ru/tariffs',
