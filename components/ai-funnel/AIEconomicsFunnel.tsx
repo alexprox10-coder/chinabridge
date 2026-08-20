@@ -448,8 +448,21 @@ export default function AIEconomicsFunnel() {
       localStorage.removeItem('cb_registered');
       window.history.replaceState({}, '', window.location.pathname);
     }
-    const stored = parseInt(localStorage.getItem('cb_calc_uses') ?? '0', 10);
-    if (!isNaN(stored) && stored > 0) setCalcCount(stored);
+    // Daily reset: stored as JSON {count, date}
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const raw = localStorage.getItem('cb_calc_uses');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.date === today && typeof parsed?.count === 'number') {
+          if (parsed.count > 0) setCalcCount(parsed.count);
+        } else {
+          localStorage.removeItem('cb_calc_uses'); // stale day → reset
+        }
+      }
+    } catch {
+      localStorage.removeItem('cb_calc_uses');
+    }
     if (localStorage.getItem('cb_registered') === 'true') setIsRegistered(true);
   }, []);
 
@@ -543,7 +556,8 @@ export default function AIEconomicsFunnel() {
 
       const newCount = calcCount + 1;
       setCalcCount(newCount);
-      localStorage.setItem('cb_calc_uses', String(newCount));
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('cb_calc_uses', JSON.stringify({ count: newCount, date: today }));
 
       go("preview", {
         economics:          data.economics,
@@ -837,7 +851,7 @@ export default function AIEconomicsFunnel() {
           <div className="w-14 h-14 rounded-full bg-[#00A86B]/20 border border-[#00A86B]/40 flex items-center justify-center text-2xl mx-auto mb-4">🔓</div>
           <h2 className="text-xl font-bold text-white mb-2">Зарегистрируйтесь бесплатно</h2>
           <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-            Вы использовали все бесплатные расчёты.<br/>
+            Вы использовали все 3 бесплатных расчёта на сегодня.<br/>
             Зарегистрируйтесь и получите ещё <span className="text-white font-semibold">3 расчёта бесплатно</span> или оформите подписку в личном кабинете.
           </p>
         </div>
@@ -1038,7 +1052,7 @@ export default function AIEconomicsFunnel() {
             🚀 Рассчитать прибыль
           </button>
 
-          <p className="text-center text-xs text-[#8899aa]">3 расчёта бесплатно · результат за 15 сек · AI-анализ GPT-4o</p>
+          <p className="text-center text-xs text-[#8899aa]">3 расчёта бесплатно в день · результат за 15 сек · AI-анализ GPT-4o</p>
         </div>
       )}
 
