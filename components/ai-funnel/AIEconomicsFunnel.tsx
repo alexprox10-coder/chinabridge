@@ -1063,19 +1063,26 @@ export default function AIEconomicsFunnel() {
             <button onClick={() => go("input")} className="text-xs text-[#8899aa] hover:text-white flex items-center gap-1 mb-3">
               ← Назад
             </button>
-            <div className="flex items-start gap-3 mb-2">
-              <span className="text-xl">⚠️</span>
-              <div>
-                <h2 className="text-lg font-bold text-white">Введите данные вручную</h2>
-                <p className="text-xs text-amber-400/80 mt-0.5">
-                  {s.scrapeError === "FIRECRAWL_NOT_CONFIGURED"
-                    ? "Автоматический анализ временно недоступен"
-                    : s.scrapeError === "SCRAPE_FAILED"
-                    ? "Страница защищена от парсинга (CAPTCHA)"
-                    : "Не удалось автоматически получить данные товара"}
-                </p>
+            {s.scrapeError ? (
+              <div className="flex items-start gap-3 mb-2">
+                <span className="text-xl">⚠️</span>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Введите данные вручную</h2>
+                  <p className="text-xs text-amber-400/80 mt-0.5">
+                    {s.scrapeError === "FIRECRAWL_NOT_CONFIGURED"
+                      ? "Автоматический анализ временно недоступен"
+                      : s.scrapeError === "SCRAPE_FAILED"
+                      ? "Страница защищена от парсинга (CAPTCHA)"
+                      : "Не удалось автоматически получить данные товара"}
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mb-2">
+                <h2 className="text-lg font-bold text-white">Параметры товара</h2>
+                <p className="text-xs text-[#8899aa] mt-0.5">Укажите примерные цены — рассчитаем маржу за 15 секунд</p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4">
@@ -1357,17 +1364,18 @@ export default function AIEconomicsFunnel() {
               onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict }); go("contact"); }}
               className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
             >
-              {ec.verdict === "red" ? "🔍 Найти поставщика дешевле" : ec.verdict === "yellow" ? "📊 Получить план оптимизации" : "🚀 Зафиксировать расчёт"}
+              {ec.verdict === "red" ? "📞 Получить решение от менеджера" : ec.verdict === "yellow" ? "📞 Получить план оптимизации" : "📞 Запустить импорт с менеджером"}
             </button>
           </div>
 
           {ec.verdict === "red" && (
-            <button
-              onClick={() => { analytics.aiFunnelSupplierClick(); analytics.supplierSearchClicked(); window.location.href = "/supplier-finder"; }}
-              className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all"
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank" rel="noopener noreferrer"
+              className="w-full py-2.5 border border-[#243a5e] hover:border-[#229ED9]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all flex items-center justify-center gap-2"
             >
-              🔍 Сразу перейти к поиску поставщиков →
-            </button>
+              ✈️ Написать менеджеру напрямую в Telegram
+            </a>
           )}
 
           {/* Registration nudge after 1st calc */}
