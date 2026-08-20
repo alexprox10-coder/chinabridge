@@ -56,7 +56,7 @@ export default function LeadMagnetForm() {
         return;
       }
 
-      trackGAEvent("leadMagnetSubmit", { source: "LEAD_MAGNET_FREE", volume: form.volume });
+      trackGAEvent("leadMagnetSubmit", { source: "LEAD_MAGNET_FREE" });
       setStatus("success");
     } catch {
       setStatus("error");
