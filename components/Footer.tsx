@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Send, MessageCircle, Mail, MapPin } from "lucide-react";
+import { Send, MessageCircle, Mail, MapPin, Phone } from "lucide-react";
 import { analytics } from "@/lib/analytics";
 
 const navLinks = [
@@ -190,6 +190,27 @@ export default function Footer() {
               <li className="flex items-start gap-2.5 text-sm text-[#8899aa]">
                 <MapPin className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                 <span>Китай (представительство)</span>
+              </li>
+              <li className="flex items-center gap-2.5 text-sm">
+                <Phone className="w-4 h-4 text-accent flex-shrink-0" />
+                <a
+                  href="tel:+79145819661"
+                  className="text-[#8899aa] hover:text-accent transition-colors"
+                  onClick={() => analytics.phoneClick()}
+                >
+                  +7 (914) 581-96-61
+                </a>
+              </li>
+              <li className="flex items-center gap-2.5 text-sm">
+                <MessageCircle className="w-4 h-4 text-[#25D366] flex-shrink-0" />
+                <a
+                  href="https://wa.me/79918825647"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#8899aa] hover:text-[#25D366] transition-colors"
+                >
+                  WhatsApp +7 (991) 882-56-47
+                </a>
               </li>
               <li className="flex items-center gap-2.5 text-sm">
                 <Send className="w-4 h-4 text-accent flex-shrink-0" />

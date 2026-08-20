@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, CheckCircle2, ChevronDown } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, Phone, MessageCircle, Send } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { trackGAEvent } from "@/lib/analytics/ga";
@@ -248,6 +248,22 @@ export default function Hero() {
               >
                 Пакеты запуска
               </Link>
+            </div>
+
+            {/* Quick contacts */}
+            <div className="fade-up flex flex-wrap items-center gap-4 mt-6">
+              <a href="tel:+79145819661" className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-white transition-colors">
+                <Phone className="w-3.5 h-3.5 text-[#00A86B]"/>
+                +7 (914) 581-96-61
+              </a>
+              <a href="https://wa.me/79918825647" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-[#25D366] transition-colors">
+                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]"/>
+                WhatsApp
+              </a>
+              <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-[#229ED9] transition-colors">
+                <Send className="w-3.5 h-3.5 text-[#229ED9]"/>
+                Telegram
+              </a>
             </div>
 
             <div className="fade-up flex gap-8 mt-10 pt-8 border-t border-[#243a5e]">

@@ -274,6 +274,10 @@ function ContactsPage({ ctx }: { ctx: ProposalContext }) {
           <Text style={styles.contactValue}>{CONTACTS.phone}</Text>
         </View>
         <View style={styles.contactRow}>
+          <Text style={styles.contactLabel}>WhatsApp</Text>
+          <Text style={styles.contactValue}>{CONTACTS.whatsapp}</Text>
+        </View>
+        <View style={styles.contactRow}>
           <Text style={styles.contactLabel}>Telegram</Text>
           <Text style={styles.contactValue}>{CONTACTS.telegram}</Text>
         </View>

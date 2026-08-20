@@ -23,8 +23,9 @@ export const COOPERATION_STEPS = [
 ];
 
 export const CONTACTS = {
-  phone: '+7 (XXX) XXX-XX-XX',
-  telegram: '@ChinaBridgeManager',
+  phone: '+7 (914) 581-96-61',
+  whatsapp: '+7 (991) 882-56-47',
+  telegram: '@ChinaBridgeLID_bot',
   email: 'info@chinabridge.pro',
   website: 'chinabridge.pro',
 };
