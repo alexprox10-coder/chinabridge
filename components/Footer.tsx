@@ -251,7 +251,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-[#8899aa]">
-            © {new Date().getFullYear()} ChinaBridge. Все права защищены. ИП Попков Виталий Михайлович
+            © {new Date().getFullYear()} ChinaBridge. Все права защищены. ИНН 280114439648
           </p>
           <div className="flex items-center gap-4">
             <Link href="/client/login" className="text-xs text-[#8899aa] hover:text-white transition-colors">

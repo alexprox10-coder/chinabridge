@@ -122,7 +122,7 @@ export default function AICalculatorPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
-      <div className="min-h-screen bg-[#060f1e] pt-24 pb-24">
+      <div className="min-h-screen bg-[#060f1e] pt-16 sm:pt-24 pb-16 sm:pb-24">
         {/* Background glow */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
           <div className="absolute -left-64 top-1/3 w-[700px] h-[700px] rounded-full bg-[#00A86B]/6 blur-[140px]" />
@@ -130,25 +130,25 @@ export default function AICalculatorPage() {
         </div>
 
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
-          {/* Page header */}
-          <div className="text-center mb-10">
-            <p className="text-[#00A86B] text-xs font-semibold uppercase tracking-widest mb-3">
+          {/* Page header — compact on mobile */}
+          <div className="text-center mb-4 sm:mb-10">
+            <p className="hidden sm:block text-[#00A86B] text-xs font-semibold uppercase tracking-widest mb-3">
               AI Unit Economics
             </p>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
-              Проверьте товар<br className="hidden sm:block" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 sm:mb-4 leading-tight">
+              Проверьте товар
               <span className="bg-gradient-to-r from-[#00A86B] to-[#00d48a] bg-clip-text text-transparent">
-                {" "}перед закупкой из Китая
+                {" "}перед закупкой
               </span>
             </h1>
-            <p className="text-[#8899aa] text-sm leading-relaxed max-w-lg mx-auto">
+            <p className="hidden sm:block text-[#8899aa] text-sm leading-relaxed max-w-lg mx-auto">
               Не покупайте вслепую — вставьте ссылку с 1688 или Alibaba и получите
               реальную маржу с учётом таможни, доставки и комиссии маркетплейса. Бесплатно.
             </p>
           </div>
 
-          {/* Trust badges */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8 text-xs text-[#8899aa]">
+          {/* Trust badges — hidden on mobile to keep form above fold */}
+          <div className="hidden sm:flex flex-wrap justify-center gap-4 mb-8 text-xs text-[#8899aa]">
             {[
               { icon: "🎁", text: "3 расчёта в день бесплатно" },
               { icon: "⚡", text: "Результат за 15 сек" },
