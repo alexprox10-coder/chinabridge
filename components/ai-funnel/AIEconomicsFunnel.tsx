@@ -838,7 +838,7 @@ export default function AIEconomicsFunnel() {
           <h2 className="text-xl font-bold text-white mb-2">Зарегистрируйтесь бесплатно</h2>
           <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
             Вы использовали все бесплатные расчёты.<br/>
-            Зарегистрируйтесь и получите ещё <span className="text-white font-semibold">3 расчёта бесплатно</span> в личном кабинете.
+            Зарегистрируйтесь и получите ещё <span className="text-white font-semibold">3 расчёта бесплатно</span> или оформите подписку в личном кабинете.
           </p>
         </div>
 
