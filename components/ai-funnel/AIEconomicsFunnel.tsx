@@ -644,7 +644,7 @@ export default function AIEconomicsFunnel() {
           go("product", {
             product:     { ...EMPTY_PRODUCT, product_link: url },
             scrapeError: data.code ?? data.reason ?? null,
-            error:       data.message ?? "Не удалось извлечь данные. Введите параметры вручную.",
+            error:       null,
           });
         }
       } catch {
@@ -652,7 +652,7 @@ export default function AIEconomicsFunnel() {
         go("product", {
           product:     { ...EMPTY_PRODUCT, product_link: url },
           scrapeError: "NETWORK_ERROR",
-          error:       "Ошибка сети. Введите параметры товара вручную.",
+          error:       null,
         });
       }
     } else if (s.descInput.trim()) {
@@ -1068,8 +1068,9 @@ export default function AIEconomicsFunnel() {
             <div>
               <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Название товара *</label>
               <input type="text" value={s.product.product_name}
+                autoFocus
                 onChange={e => setProduct("product_name", e.target.value)}
-                placeholder="Органайзер для кухни" className={inp(!s.product.product_name)} />
+                placeholder="Например: Органайзер для кухни" className={inp(!s.product.product_name)} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -1122,7 +1123,12 @@ export default function AIEconomicsFunnel() {
           >
             Далее → Выбрать маркетплейс
           </button>
-          {s.error && <p className="text-red-400 text-xs text-center">{s.error}</p>}
+          {s.error
+            ? <p className="text-red-400 text-xs text-center">{s.error}</p>
+            : (!s.product.product_name || !s.product.unit_price_cny || !s.product.sale_price) && (
+                <p className="text-[#8899aa] text-xs text-center">Заполните поля выше — это займёт 30 секунд</p>
+              )
+          }
         </div>
       )}
 
