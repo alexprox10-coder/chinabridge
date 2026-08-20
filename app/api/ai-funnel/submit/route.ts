@@ -268,8 +268,8 @@ export async function POST(req: NextRequest) {
     cnyRate:      economics.cny_rate,
   });
 
-  // Прямое Telegram-уведомление (через бота)
-  void sendTelegramAlert({
+  // Прямое Telegram-уведомление — await чтобы не обрывалось на Vercel serverless
+  await sendTelegramAlert({
     leadId,
     name:      String(body.name ?? ''),
     phone,
