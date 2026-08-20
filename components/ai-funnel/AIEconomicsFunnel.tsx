@@ -563,12 +563,18 @@ export default function AIEconomicsFunnel() {
     const sale = parseFloat(s.salePrice) || parseFloat(s.product.sale_price);
     if (!sale || sale <= 0) { setAutoCountdown(null); return; }
 
+    // If gate would fire, skip auto-trigger — user selects marketplace manually then clicks Calculate
+    if ((calcCount >= ANON_LIMIT && !isRegistered) || (isRegistered && calcCount >= REG_LIMIT)) {
+      setAutoCountdown(null);
+      return;
+    }
+
     setAutoCountdown(2);
     const t1 = setTimeout(() => setAutoCountdown(1), 1000);
     const t2 = setTimeout(() => { setAutoCountdown(null); handleCalcRef.current?.(); }, 2000);
     return () => { clearTimeout(t1); clearTimeout(t2); setAutoCountdown(null); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s.step, s.marketplace, s.city_to, s.salePrice, s.product.sale_price]);
+  }, [s.step, s.marketplace, s.city_to, s.salePrice, s.product.sale_price, calcCount, isRegistered]);
 
   // ── URL / Description submit ────────────────────────────────────────────────
 
