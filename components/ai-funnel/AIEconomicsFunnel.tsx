@@ -441,8 +441,13 @@ export default function AIEconomicsFunnel() {
   const [regSubmitting,   setRegSubmitting]   = useState(false);
   const [calcAfterReg,    setCalcAfterReg]    = useState(false);
 
-  // Load usage counters from localStorage on mount
+  // Load usage counters from localStorage on mount (reset=1 clears state)
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('reset') === '1') {
+      localStorage.removeItem('cb_calc_uses');
+      localStorage.removeItem('cb_registered');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
     const stored = parseInt(localStorage.getItem('cb_calc_uses') ?? '0', 10);
     if (!isNaN(stored) && stored > 0) setCalcCount(stored);
     if (localStorage.getItem('cb_registered') === 'true') setIsRegistered(true);
