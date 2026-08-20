@@ -568,7 +568,10 @@ export default function AIEconomicsFunnel() {
     const sale = parseFloat(s.salePrice) || parseFloat(s.product.sale_price);
     if (!sale || sale <= 0) { setAutoCountdown(null); return; }
 
-    // If gate would fire, skip auto-trigger — user selects marketplace manually then clicks Calculate
+    // Don't auto-trigger when going back from preview — user wants to change marketplace manually
+    if (s.economics) { setAutoCountdown(null); return; }
+
+    // Don't auto-trigger if gate would fire — user clicks Calculate manually
     if ((calcCount >= ANON_LIMIT && !isRegistered) || (isRegistered && calcCount >= REG_LIMIT)) {
       setAutoCountdown(null);
       return;
