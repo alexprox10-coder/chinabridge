@@ -65,12 +65,99 @@ async function scrapeUrl(url: string): Promise<string> {
   }
 }
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://chinabridge.pro";
+const INTERNAL_KEY = process.env.INTERNAL_API_KEY ?? "";
+
+const MAIN_KEYBOARD = {
+  keyboard: [
+    [{ text: "🔥 Обогатить лиды" }, { text: "📊 Статус воронки" }],
+    [{ text: "/clear" }, { text: "/model" }],
+  ],
+  resize_keyboard: true,
+  persistent: true,
+};
+
 async function tg(method: string, body: object) {
   await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+}
+
+async function runEnrich(chatId: number, batchSize = 5) {
+  await tg("sendChatAction", { chat_id: chatId, action: "typing" });
+  await send(chatId, `⏳ Запускаю обогащение ${batchSize} лидов...`);
+
+  const res = await fetch(`${APP_URL}/api/internal/auto-enrich`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Api-Key": INTERNAL_KEY },
+    body: JSON.stringify({ batchSize }),
+  }).catch(() => null);
+
+  if (!res || !res.ok) {
+    await send(chatId, "❌ Ошибка запуска обогащения. Проверь INTERNAL_API_KEY на Vercel.");
+    return;
+  }
+
+  const d = await res.json();
+
+  if (d.processed === 0) {
+    await send(chatId, "✅ Нет новых лидов для обогащения.");
+    return;
+  }
+
+  const lines: string[] = [
+    `🔥 *AI Auto-Enrich — готово!*`,
+    `📊 Обработано: ${d.processed} лидов`,
+    `🔥 HOT: ${d.hot} | ⚡ WARM: ${d.warm} | ❄️ COLD: ${d.cold}${d.failed ? ` | ✗ Ошибок: ${d.failed}` : ""}`,
+    "",
+  ];
+
+  for (const r of d.results ?? []) {
+    if (!r.ok) continue;
+    const icon = r.scoreLevel === "HOT" ? "🎯" : "📌";
+    const scoreIcon = r.scoreLevel === "HOT" ? "🔥" : "⚡";
+    lines.push(`${icon} *Лид #${r.leadId}* — ${r.leadScore ?? "?"}/100`);
+    if (r.businessSummary) lines.push(`📋 ${r.businessSummary.slice(0, 120)}`);
+    if (r.selectedProduct) lines.push(`💡 ${r.selectedProduct}`);
+    lines.push(`${scoreIcon} ${r.scoreLevel} | [Открыть лид](${APP_URL}/admin/leads?id=${r.leadId})`);
+    lines.push("");
+  }
+
+  await send(chatId, lines.join("\n"));
+}
+
+async function runFunnelStatus(chatId: number) {
+  await tg("sendChatAction", { chat_id: chatId, action: "typing" });
+
+  const res = await fetch(`${APP_URL}/api/internal/follow-up-reminder`, {
+    headers: { "X-Api-Key": INTERNAL_KEY },
+  }).catch(() => null);
+
+  if (!res || !res.ok) {
+    await send(chatId, "❌ Не удалось получить статус воронки.");
+    return;
+  }
+
+  const d = await res.json();
+
+  const lines = [
+    `📊 *Статус AI-воронки*`,
+    `🔥 HOT: ${d.hot} | ⚡ WARM: ${d.warm} | Всего: ${d.total}`,
+    "",
+  ];
+
+  for (const l of (d.leads ?? []).slice(0, 5)) {
+    const icon = l.scoreLevel === "HOT" ? "🔥" : "⚡";
+    lines.push(`${icon} *${l.company || l.name}* — score ${l.leadScore ?? "?"}`);
+    if (l.messageShort) lines.push(`💬 ${l.messageShort.slice(0, 100)}`);
+    if (l.bestContact) lines.push(`📞 ${l.bestContact}`);
+    lines.push(`[Открыть](${APP_URL}/admin/leads?id=${l.id})`);
+    lines.push("");
+  }
+
+  await send(chatId, lines.join("\n"));
 }
 
 async function sendTyping(chatId: number) {
@@ -225,16 +312,23 @@ export async function POST(req: NextRequest) {
 
   // Commands
   if (text === "/start") {
-    await send(
-      chatId,
-      `👋 Привет, ${firstName}!\n\nЯ Claude — твой персональный AI-ассистент.\nПиши любые вопросы — по коду, бизнесу, видео или просто так.\n\n*Команды:*\n/clear — очистить историю диалога\n/model — показать текущую модель\n/id — показать твой chat\\_id`
-    );
+    await tg("sendMessage", {
+      chat_id: chatId,
+      text: `👋 Привет, ${firstName}\\!\n\nЯ Claude — твой персональный AI\\-ассистент\\.\nПиши любые вопросы или используй кнопки ниже\\.\n\n*Команды:*\n/enrich — обогатить следующие 5 лидов\n/funnel — статус AI\\-воронки\n/clear — очистить историю\n/model — текущая модель\n/id — твой chat\\_id`,
+      parse_mode: "MarkdownV2",
+      reply_markup: MAIN_KEYBOARD,
+    });
     return NextResponse.json({ ok: true });
   }
 
   if (text === "/clear") {
     sessions.delete(key);
-    await send(chatId, "🗑 История диалога очищена. Начнём заново.");
+    await tg("sendMessage", {
+      chat_id: chatId,
+      text: "🗑 История диалога очищена\\. Начнём заново\\.",
+      parse_mode: "MarkdownV2",
+      reply_markup: MAIN_KEYBOARD,
+    });
     return NextResponse.json({ ok: true });
   }
 
@@ -245,6 +339,18 @@ export async function POST(req: NextRequest) {
 
   if (text === "/id") {
     await send(chatId, `🆔 Твой chat\\_id: \`${chatId}\``);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Enrich button / command
+  if (text === "🔥 Обогатить лиды" || text === "/enrich") {
+    await runEnrich(chatId, 5);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Funnel status button / command
+  if (text === "📊 Статус воронки" || text === "/funnel") {
+    await runFunnelStatus(chatId);
     return NextResponse.json({ ok: true });
   }
 
