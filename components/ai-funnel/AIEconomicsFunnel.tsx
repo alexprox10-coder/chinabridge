@@ -1030,7 +1030,7 @@ export default function AIEconomicsFunnel() {
             🚀 Рассчитать прибыль
           </button>
 
-          <p className="text-center text-xs text-[#8899aa]">Бесплатно · без регистрации · результат за 15 сек</p>
+          <p className="text-center text-xs text-[#8899aa]">1 расчёт бесплатно · результат за 15 сек · AI-анализ GPT-4o</p>
         </div>
       )}
 

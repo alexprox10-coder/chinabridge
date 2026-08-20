@@ -156,7 +156,7 @@ export default function Calculator() {
                 <span className="text-xl shrink-0">🤖</span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-white leading-tight">AI-анализ товара из Китая</p>
-                  <p className="text-[11px] text-[#8899aa] truncate">Рассчитайте маржу и прибыль — без регистрации</p>
+                  <p className="text-[11px] text-[#8899aa] truncate">Рассчитайте маржу и прибыль — первый расчёт бесплатно</p>
                 </div>
               </div>
               <svg className="w-4 h-4 text-[#8899aa] group-hover:text-[#00A86B] transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
