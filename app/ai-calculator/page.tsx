@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Калькулятор маржи WB и Ozon — расчёт за 15 секунд | ChinaBridge",
     description:
-      "Вставьте ссылку на товар с 1688 → AI рассчитает маржу, ROI, таможню и прибыль на Wildberries, Ozon, Kaspi. Первый расчёт бесплатно.",
+      "Вставьте ссылку на товар с 1688 → AI рассчитает маржу, ROI, таможню и прибыль на Wildberries, Ozon, Kaspi. 3 расчёта в день бесплатно.",
     type:    "website",
     url:     CANONICAL,
     locale:  "ru_RU",

@@ -86,8 +86,8 @@ interface FunnelState {
 
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Алматы", "Астана"];
 
-const ANON_LIMIT = 3;   // расчётов без регистрации
-const REG_LIMIT  = 6;   // расчётов после регистрации (3 + 3)
+const ANON_LIMIT = 3;   // расчётов в день без регистрации
+const REG_LIMIT  = 10;  // расчётов в день после регистрации
 
 // Analyzing stages — real stages that match backend process
 const ANALYZE_STAGES = [
@@ -852,7 +852,7 @@ export default function AIEconomicsFunnel() {
           <h2 className="text-xl font-bold text-white mb-2">Зарегистрируйтесь бесплатно</h2>
           <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
             Вы использовали все 3 бесплатных расчёта на сегодня.<br/>
-            Зарегистрируйтесь и получите ещё <span className="text-white font-semibold">3 расчёта бесплатно</span> или оформите подписку в личном кабинете.
+            Зарегистрируйтесь и получите <span className="text-white font-semibold">10 расчётов в день</span> бесплатно.
           </p>
         </div>
 
@@ -913,7 +913,7 @@ export default function AIEconomicsFunnel() {
         <div>
           <h2 className="text-xl font-bold text-white mb-2">Бесплатные расчёты использованы</h2>
           <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-            Вы использовали все 6 бесплатных расчётов. Для безлимитного доступа перейдите на платный план или свяжитесь с менеджером.
+            Вы использовали 10 расчётов сегодня. Для безлимитного доступа станьте клиентом ChinaBridge или свяжитесь с менеджером.
           </p>
         </div>
         <div className="flex flex-col gap-3 w-full max-w-xs">
