@@ -134,10 +134,10 @@ async function buildOperationsDept(): Promise<DepartmentReport> {
   try {
     const { fetchOperationsData } = await import("./operations/data");
     const { generateOperationsDirectorReport } = await import("./operations/director");
-    const { deals, partners, cargos, documents, clients, kpis, health, risks } =
+    const { deals, partners, cargos, documents, clients, kpis, health, risks, connected } =
       await fetchOperationsData();
     const report = await generateOperationsDirectorReport(
-      health, kpis, deals, partners, cargos, documents, clients, risks,
+      health, kpis, deals, partners, cargos, documents, clients, risks, connected,
     );
     const status = health.status as "GOOD" | "WARNING" | "CRITICAL";
     return {

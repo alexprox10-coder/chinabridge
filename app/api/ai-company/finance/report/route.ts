@@ -11,12 +11,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  const { revenue, costs, profit, unitEconomics, forecast, saas, health } =
+  const { revenue, costs, profit, unitEconomics, forecast, saas, health, isDemo } =
     await fetchFinanceData();
 
   const report = await generateFinanceDirectorReport(
     health, revenue, costs, profit, unitEconomics, forecast, saas,
   );
 
-  return NextResponse.json({ ok: true, report });
+  return NextResponse.json({ ok: true, report, isDemo });
 }

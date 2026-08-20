@@ -119,7 +119,19 @@ export async function generateOperationsDirectorReport(
   documents: DocumentRecord[],
   clients: ClientRecord[],
   risks: RiskAlert[],
+  connected = true,
 ): Promise<OperationsDirectorReport> {
+  if (!connected || deals.length === 0) {
+    return {
+      summary: connected
+        ? "Operations: нет активных сделок в CRM. Добавьте первые сделки для отслеживания."
+        : "Operations: нет подключения к CRM. Данные недоступны.",
+      health: { score: 0, status: "WARNING", positives: [], risks: ["Нет данных"] },
+      kpis, deals: [], partners: [], cargos: [], documents: [], clients: [],
+      risks: [], recommendations: [], topAction: "Добавить первые сделки в CRM",
+      generatedAt: new Date().toISOString(),
+    };
+  }
   if (!OR_KEY) {
     return buildFallback(health, kpis, deals, partners, cargos, documents, clients, risks);
   }

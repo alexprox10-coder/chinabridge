@@ -180,6 +180,8 @@ export interface FinanceData {
   forecast: ReturnType<typeof generateForecast>;
   saas: SaaSMetrics;
   health: ReturnType<typeof calculateFinanceHealth>;
+  /** true when N8N_API_KEY is absent and figures come from smart-mock */
+  isDemo: boolean;
 }
 
 export async function fetchFinanceData(): Promise<FinanceData> {
@@ -200,7 +202,11 @@ export async function fetchFinanceData(): Promise<FinanceData> {
   const forecast      = generateForecast(revenue.mrr, revenue.growth);
   const health        = calculateFinanceHealth(revenue, costs, profit.margin, unitEconomics.ltvToCac);
 
-  return { revenue, costs, profit, unitEconomics, forecast, saas: SAAS_METRICS, health };
+  return {
+    revenue, costs, profit, unitEconomics, forecast,
+    saas: SAAS_METRICS, health,
+    isDemo: !revenue.connected,
+  };
 }
 
 export type { FinanceDirectorReport };

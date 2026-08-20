@@ -3,6 +3,22 @@ import { saveRadarSignal } from "../db";
 
 const FIRECRAWL_KEY = process.env.FIRECRAWL_API_KEY ?? "";
 const OR_KEY        = process.env.OPENROUTER_API_KEY ?? "";
+const TG_TOKEN      = process.env.TELEGRAM_BOT_TOKEN ?? "";
+
+async function getTelegramSubscriberCount(username: string): Promise<number | undefined> {
+  if (!TG_TOKEN || !username) return undefined;
+  try {
+    const res = await fetch(
+      `https://api.telegram.org/bot${TG_TOKEN}/getChatMemberCount?chat_id=@${username}`,
+      { signal: AbortSignal.timeout(5000) },
+    );
+    if (!res.ok) return undefined;
+    const data = await res.json();
+    return data.ok && typeof data.result === "number" ? data.result : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 const COMPETITORS = ["b2bchina.ru", "mastertao.ru", "sinmeng.ru", "rusglobal.ru", "kitatorg.ru"];
 
@@ -69,13 +85,15 @@ export async function runTelegramRadar(tenantId: string): Promise<MIRadarSignal[
   const signals: MIRadarSignal[] = [];
   for (const r of results.filter((x: {url: string}) => x.url?.includes("t.me")).slice(0, 10)) {
     const name = r.url.replace(/https?:\/\/t\.me\//, "").split("/")[0];
-    const { score, analysis } = await aiAnalyze(name, r.description ?? "", "telegram_channel");
+    const [{ score, analysis }, subscribers] = await Promise.all([
+      aiAnalyze(name, r.description ?? "", "telegram_channel"),
+      getTelegramSubscriberCount(name),
+    ]);
     const signal: MIRadarSignal = {
       signalId: `radar-tg-${name}-${Date.now()}`,
       tenantId, type: "telegram_channel", name: `@${name}`,
       description: r.title ?? r.description ?? "", url: r.url,
-      subscribers: Math.floor(Math.random() * 5000) + 500,
-      growth: Math.floor(Math.random() * 20),
+      subscribers,
       activity: "высокая", country: "RU",
       opportunityScore: score, aiAnalysis: analysis,
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
@@ -121,7 +139,6 @@ export async function runTrendRadar(tenantId: string): Promise<MIRadarSignal[]> 
       signalId: `radar-trend-${Date.now()}-${Math.random().toString(36).slice(2,5)}`,
       tenantId, type: "trend", name: q.slice(0, 60),
       description: r.title ?? "", url: r.url ?? "",
-      growth: Math.floor(Math.random() * 40) + 5,
       opportunityScore: score, aiAnalysis: analysis, country: "RU",
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     };
