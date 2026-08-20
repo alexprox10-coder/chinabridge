@@ -346,7 +346,7 @@ ${websiteSection}
         ai_lead_score       = ${parsed.lead_score ?? null},
         ai_score_level      = ${parsed.score_level ?? null},
         ai_score_factors    = ${JSON.stringify(parsed.score_factors ?? [])}::jsonb,
-        ai_deal_probability = ${parsed.attack_plan?.deal_probability ?? null},
+        ai_deal_probability = ${(parsed.attack_plan as Record<string, unknown>)?.deal_probability ?? null},
         ai_potential_min    = ${parsed.deal_potential_min ?? null},
         ai_potential_max    = ${parsed.deal_potential_max ?? null},
         ai_business_summary = ${parsed.business_summary ?? null},
@@ -372,12 +372,12 @@ ${websiteSection}
     return {
       ok: true,
       leadId,
-      scoreLevel: parsed.score_level ?? "COLD",
-      leadScore: parsed.lead_score ?? 0,
-      selectedProduct: parsed.selected_product ?? "",
-      businessSummary: parsed.business_summary ?? "",
-      attackPlan: parsed.attack_plan ?? {},
-      messageShort: parsed.message_short ?? "",
+      scoreLevel: (parsed.score_level as "HOT" | "WARM" | "COLD") ?? "COLD",
+      leadScore: (parsed.lead_score as number) ?? 0,
+      selectedProduct: (parsed.selected_product as string) ?? "",
+      businessSummary: (parsed.business_summary as string) ?? "",
+      attackPlan: (parsed.attack_plan as Record<string, unknown>) ?? {},
+      messageShort: (parsed.message_short as string) ?? "",
     };
   } catch (e) {
     console.error(`[enrich] lead ${leadId}:`, e);
