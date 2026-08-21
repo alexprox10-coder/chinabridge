@@ -122,9 +122,9 @@ export default function AICalculatorPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
-      <div className="min-h-screen bg-[#060f1e] pt-16 sm:pt-24 pb-16 sm:pb-24">
-        {/* Background glow */}
-        <div className="pointer-events-none fixed inset-0 overflow-hidden">
+      <div className="relative min-h-screen bg-[#060f1e] pt-16 sm:pt-24 pb-24 sm:pb-24">
+        {/* Background glow — absolute, not fixed, to avoid CLS */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           <div className="absolute -left-64 top-1/3 w-[700px] h-[700px] rounded-full bg-[#00A86B]/6 blur-[140px]" />
           <div className="absolute -right-40 bottom-1/4 w-[500px] h-[500px] rounded-full bg-[#00A86B]/4 blur-[120px]" />
         </div>
@@ -147,6 +147,26 @@ export default function AICalculatorPage() {
             </p>
           </div>
 
+          {/* ── MOBILE TELEGRAM CTA — above the fold, always visible ── */}
+          <div className="sm:hidden mb-5">
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2.5 w-full py-4 bg-[#229ED9] hover:bg-[#1a8bbf] active:bg-[#1578a8] text-white font-bold rounded-2xl text-sm shadow-lg shadow-[#229ED9]/25 transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="flex-shrink-0">
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+              </svg>
+              Написать менеджеру — бесплатно
+            </a>
+            <div className="flex items-center gap-3 mt-3">
+              <div className="flex-1 h-px bg-[#243a5e]" />
+              <span className="text-[11px] text-[#8899aa]">или рассчитайте сами ↓</span>
+              <div className="flex-1 h-px bg-[#243a5e]" />
+            </div>
+          </div>
+
           {/* Trust badges — hidden on mobile to keep form above fold */}
           <div className="hidden sm:flex flex-wrap justify-center gap-4 mb-8 text-xs text-[#8899aa]">
             {[
@@ -162,8 +182,10 @@ export default function AICalculatorPage() {
             ))}
           </div>
 
-          {/* Funnel */}
-          <AIEconomicsFunnel />
+          {/* Funnel — explicit min-h prevents CLS on hydration */}
+          <div className="min-h-[420px]">
+            <AIEconomicsFunnel />
+          </div>
 
           {/* Social proof */}
           <div className="mt-10 text-center">

@@ -138,7 +138,7 @@ export default function KzForm() {
           </button>
 
           {status === "err" && (
-            <p className="text-red-400 text-xs text-center">Ошибка. Напишите нам в WhatsApp напрямую.</p>
+            <p className="text-red-400 text-xs text-center">Ошибка. Напишите нам в Telegram: @ChinaBridgeLID_bot</p>
           )}
         </form>
 
