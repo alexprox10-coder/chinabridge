@@ -4,21 +4,20 @@ import { usePathname, useRouter } from "next/navigation";
 import type { SessionPayload } from "@/lib/client-portal/types";
 
 const NAV = [
-  { href: "/client/dashboard",    label: "Главная",           icon: "🏠" },
-  { href: "/client/calculator",   label: "Калькулятор",       icon: "🧮" },
-  { href: "/client/plans",        label: "Тарифы",            icon: "⭐" },
-  { href: "/client/orders",       label: "Мои заявки",        icon: "📦" },
-  { href: "/client/payments",     label: "Оплаты",            icon: "💱" },
-  { href: "/client/documents",    label: "Документы",         icon: "📄" },
-  { href: "/client/calculations", label: "История",           icon: "📋" },
-  { href: "/client/profile",      label: "Профиль",           icon: "👤" },
+  { href: "/client/dashboard",    label: "Главная",      icon: "🏠" },
+  { href: "/client/orders",       label: "Мои заявки",   icon: "📦" },
+  { href: "/client/payments",     label: "Оплаты",       icon: "💱" },
+  { href: "/client/documents",    label: "Документы",    icon: "📄" },
+  { href: "/client/messages",     label: "Сообщения",    icon: "💬" },
+  { href: "/client/calculations", label: "История",      icon: "📋" },
+  { href: "/client/profile",      label: "Профиль",      icon: "👤" },
 ];
 
 const AI_NAV = [
-  { href: "/product-finder",    label: "Поиск товаров",         icon: "🔍" },
-  { href: "/supplier-finder",   label: "Поиск поставщиков",     icon: "🏭" },
-  { href: "/knowledge",         label: "FAQ и консультант",      icon: "📚" },
-  { href: "/settings/partners", label: "Партнёрская программа", icon: "🤝" },
+  { href: "/ai-calculator",    label: "AI Калькулятор маржи",  icon: "🤖" },
+  { href: "/client/calculator",label: "Калькулятор доставки",  icon: "🧮" },
+  { href: "/product-finder",   label: "Поиск товаров",         icon: "🔍" },
+  { href: "/supplier-finder",  label: "Поиск поставщиков",     icon: "🏭" },
 ];
 
 export default function ClientNav({ session }: { session: SessionPayload }) {
@@ -92,16 +91,18 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
           })}
         </nav>
 
-        {/* AI для Бизнеса CTA */}
+        {/* Менеджер CTA */}
         <div className="px-3 pb-2">
-          <Link
-            href="/onboarding"
+          <a
+            href="https://t.me/ChinaBridgeLID_bot"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-full flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-md shadow-green-200 group"
           >
-            <span className="text-base">🤖</span>
-            <span className="flex-1">AI для Бизнеса</span>
+            <span className="text-base">✈️</span>
+            <span className="flex-1">Написать менеджеру</span>
             <span className="text-xs opacity-75 group-hover:translate-x-0.5 transition-transform">→</span>
-          </Link>
+          </a>
         </div>
 
         {/* Support */}
@@ -141,7 +142,7 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
 
       {/* ── Mobile bottom bar ─────────────────────────────── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex">
-        {NAV.slice(0, 3).map(({ href, label, icon }) => {
+        {[NAV[0], NAV[1], NAV[4], NAV[6]].map(({ href, label, icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
@@ -156,21 +157,14 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
             </Link>
           );
         })}
-        <Link
-          href="/onboarding"
-          className="flex-1 flex flex-col items-center justify-center py-2 text-xs text-green-600 font-semibold"
-        >
-          <span className="text-lg">🤖</span>
-          <span className="mt-0.5">AI Бизнес</span>
-        </Link>
         <a
-          href="https://t.me/Chinabridge_HELP_24_bot"
+          href="https://t.me/ChinaBridgeLID_bot"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 flex flex-col items-center justify-center py-2 text-xs text-blue-500"
+          className="flex-1 flex flex-col items-center justify-center py-2 text-xs text-green-600 font-semibold"
         >
           <span className="text-lg">✈️</span>
-          <span className="mt-0.5">Поддержка</span>
+          <span className="mt-0.5">Менеджер</span>
         </a>
         <button
           onClick={logout}

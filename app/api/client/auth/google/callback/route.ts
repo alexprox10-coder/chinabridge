@@ -4,6 +4,19 @@ import { createClientToken, CLIENT_COOKIE } from "@/lib/client-portal/auth";
 import { randomUUID } from "crypto";
 import type { ClientRole } from "@/lib/client-portal/types";
 
+async function notifyAdmin(name: string, email: string, via: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID ?? "8979087725";
+  if (!token) return;
+  const text = `🆕 Новая регистрация в ЛК (${via})\n\n👤 Имя: ${name}\n📧 Email: ${email}\n\n🔗 https://chinabridge.pro/admin/registrations`;
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => {});
+}
+
 export const runtime = "nodejs";
 
 function setSessionCookie(res: NextResponse, token: string) {
@@ -96,6 +109,7 @@ export async function GET(req: NextRequest) {
     };
 
     await createClient(newClient); // save to n8n (best-effort)
+    await notifyAdmin(newClient.name, newClient.email, "Google");
 
     const token = await createClientToken({
       clientId: newClient.client_id,
