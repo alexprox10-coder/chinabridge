@@ -5,7 +5,35 @@ import { randomUUID } from "crypto";
 
 export const runtime = "nodejs";
 
+const ipAttempts = new Map<string, { count: number; resetAt: number }>();
+
+async function notifyAdmin(name: string, email: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID ?? "8979087725";
+  if (!token) return;
+  const text = `🆕 Новая регистрация в ЛК\n\n👤 Имя: ${name}\n📧 Email: ${email}\n\n🔗 https://chinabridge.pro/admin/registrations`;
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => {});
+}
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const now = Date.now();
+  const entry = ipAttempts.get(ip);
+  if (entry) {
+    if (now < entry.resetAt && entry.count >= 5) {
+      return NextResponse.json({ error: "too_many_attempts" }, { status: 429 });
+    }
+    if (now >= entry.resetAt) ipAttempts.set(ip, { count: 1, resetAt: now + 3_600_000 });
+    else entry.count++;
+  } else {
+    ipAttempts.set(ip, { count: 1, resetAt: now + 3_600_000 });
+  }
+
   const { name, email, password } = await req.json().catch(() => ({})) as {
     name?: string; email?: string; password?: string;
   };
@@ -33,6 +61,9 @@ export async function POST(req: NextRequest) {
   };
 
   await createClient(newClient);
+
+  // Telegram notification (non-blocking)
+  notifyAdmin(newClient.name, newClient.email).catch(() => {});
 
   const token = await createClientToken({
     clientId,
