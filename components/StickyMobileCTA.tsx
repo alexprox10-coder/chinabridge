@@ -1,14 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 export default function StickyMobileCTA() {
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setVisible(true);
   }, []);
 
   if (!visible) return null;
+  if (pathname === "/ai-calculator") return null;
 
   return (
     <a
