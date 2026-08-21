@@ -79,11 +79,11 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* Onboarding steps — shown only for new clients with no orders */}
-      {orders.length === 0 && <OnboardingSteps isNew={true} />}
-
       {/* Currency rates */}
       <CurrencyRates />
+
+      {/* Onboarding steps — shown only for new clients with no orders */}
+      {orders.length === 0 && <OnboardingSteps isNew={true} />}
 
       {/* AI tools quick access */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
