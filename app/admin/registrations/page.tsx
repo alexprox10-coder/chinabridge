@@ -1,18 +1,32 @@
 "use client";
 import { useState, useEffect } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
-import type { Tenant } from "@/lib/multitenant/types";
+
+interface Client {
+  client_id: string;
+  name: string;
+  email: string;
+  company?: string;
+  phone?: string;
+  telegram?: string;
+  country?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 const COUNTRY_FLAG: Record<string, string> = {
-  RU: "🇷🇺", KZ: "🇰🇿", BY: "🇧🇾", UZ: "🇺🇿", KG: "🇰🇬", AE: "🇦🇪", CN: "🇨🇳", OTHER: "🌍",
+  RU: "🇷🇺", KZ: "🇰🇿", BY: "🇧🇾", UZ: "🇺🇿", OTHER: "🌍",
 };
 
-function fmt(dateStr: string) {
+function fmt(dateStr?: string) {
+  if (!dateStr) return "—";
   const d = new Date(dateStr);
   return d.toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-function daysSince(dateStr: string) {
+function daysSince(dateStr?: string) {
+  if (!dateStr) return "";
   const diff = Date.now() - new Date(dateStr).getTime();
   const days = Math.floor(diff / 86_400_000);
   if (days === 0) return "сегодня";
@@ -21,30 +35,40 @@ function daysSince(dateStr: string) {
 }
 
 export default function RegistrationsPage() {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("/api/platform/tenants")
+    fetch("/api/admin/clients")
       .then(r => r.json())
-      .then(d => { if (d.ok) setTenants(d.tenants); })
+      .then(d => { if (d.ok) setClients(d.clients); })
       .finally(() => setLoading(false));
   }, []);
 
-  const sorted = [...tenants].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  const sorted = [...clients].sort((a, b) => {
+    const ta = new Date(a.created_at ?? 0).getTime();
+    const tb = new Date(b.created_at ?? 0).getTime();
+    return tb - ta;
+  });
 
-  const filtered = sorted.filter(t => {
+  const filtered = sorted.filter(c => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      t.companyName.toLowerCase().includes(q) ||
-      t.owner.toLowerCase().includes(q) ||
-      (t.contactTelegram ?? "").toLowerCase().includes(q)
+      (c.name ?? "").toLowerCase().includes(q) ||
+      (c.email ?? "").toLowerCase().includes(q) ||
+      (c.company ?? "").toLowerCase().includes(q) ||
+      (c.telegram ?? "").toLowerCase().includes(q) ||
+      (c.phone ?? "").toLowerCase().includes(q)
     );
   });
+
+  const today = sorted.filter(c => daysSince(c.created_at) === "сегодня").length;
+  const week  = sorted.filter(c => {
+    if (!c.created_at) return false;
+    return Date.now() - new Date(c.created_at).getTime() < 7 * 86_400_000;
+  }).length;
 
   return (
     <>
@@ -53,24 +77,24 @@ export default function RegistrationsPage() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-white">🆕 Регистрации в ЛК</h1>
-            <p className="text-slate-400 text-sm mt-1">
-              Клиенты, зарегистрировавшиеся через форму личного кабинета
-            </p>
+            <p className="text-slate-400 text-sm mt-1">Клиенты, зарегистрировавшиеся через форму личного кабинета</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="bg-emerald-900/40 text-emerald-300 border border-emerald-700 text-sm font-semibold px-3 py-1 rounded-full">
-              {tenants.length} всего
+              {clients.length} всего
             </span>
             <span className="bg-blue-900/40 text-blue-300 border border-blue-700 text-sm font-semibold px-3 py-1 rounded-full">
-              {sorted.filter(t => daysSince(t.createdAt) === "сегодня" || daysSince(t.createdAt) === "вчера").length} за 2 дня
+              {today} сегодня
+            </span>
+            <span className="bg-purple-900/40 text-purple-300 border border-purple-700 text-sm font-semibold px-3 py-1 rounded-full">
+              {week} за неделю
             </span>
           </div>
         </div>
 
-        {/* Search */}
         <input
           type="text"
-          placeholder="Поиск по компании, email, Telegram..."
+          placeholder="Поиск по имени, email, компании, Telegram..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full max-w-md bg-slate-900 border border-slate-700 text-white placeholder-slate-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
@@ -79,83 +103,99 @@ export default function RegistrationsPage() {
         {loading ? (
           <div className="text-slate-400 text-sm py-12 text-center">Загрузка...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-slate-500 text-sm py-12 text-center">Нет регистраций</div>
+          <div className="text-slate-500 text-sm py-12 text-center">
+            {search ? "Ничего не найдено" : "Регистраций пока нет"}
+          </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-slate-800">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-900/60">
-                  <th className="text-left text-slate-400 font-medium px-5 py-3">Компания</th>
+                  <th className="text-left text-slate-400 font-medium px-5 py-3">Имя / Компания</th>
                   <th className="text-left text-slate-400 font-medium px-5 py-3">Email</th>
+                  <th className="text-left text-slate-400 font-medium px-5 py-3">Телефон</th>
                   <th className="text-left text-slate-400 font-medium px-5 py-3">Telegram</th>
                   <th className="text-left text-slate-400 font-medium px-5 py-3">Страна</th>
-                  <th className="text-left text-slate-400 font-medium px-5 py-3">Зарегистрирован</th>
+                  <th className="text-left text-slate-400 font-medium px-5 py-3">Дата</th>
                   <th className="text-left text-slate-400 font-medium px-5 py-3">Действия</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((t, i) => (
+                {filtered.map((c, i) => (
                   <tr
-                    key={t.id}
+                    key={c.client_id}
                     className={`border-b border-slate-800/60 hover:bg-slate-800/30 transition-colors ${
-                      i === 0 ? "bg-emerald-950/10" : ""
+                      i === 0 && !search ? "bg-emerald-950/10" : ""
                     }`}
                   >
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
-                        {i === 0 && (
+                        {i === 0 && !search && (
                           <span className="text-[10px] bg-emerald-900/60 text-emerald-300 border border-emerald-700 px-1.5 py-0.5 rounded font-bold uppercase">NEW</span>
                         )}
-                        <span className="text-white font-medium">{t.companyName}</span>
+                        <div>
+                          <div className="text-white font-medium">{c.name || "—"}</div>
+                          {c.company && <div className="text-slate-500 text-xs">{c.company}</div>}
+                        </div>
                       </div>
-                      <div className="text-slate-500 text-xs mt-0.5">{t.slug}</div>
                     </td>
                     <td className="px-5 py-4">
-                      <a href={`mailto:${t.owner}`} className="text-blue-400 hover:text-blue-300">
-                        {t.owner}
+                      <a href={`mailto:${c.email}`} className="text-blue-400 hover:text-blue-300 break-all">
+                        {c.email}
                       </a>
                     </td>
                     <td className="px-5 py-4">
-                      {t.contactTelegram ? (
+                      {c.phone ? (
+                        <a href={`tel:${c.phone}`} className="text-slate-300 hover:text-white">{c.phone}</a>
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      {c.telegram ? (
                         <a
-                          href={`https://t.me/${t.contactTelegram.replace(/^@/, "")}`}
+                          href={`https://t.me/${c.telegram.replace(/^@/, "")}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sky-400 hover:text-sky-300"
                         >
-                          {t.contactTelegram.startsWith("@") ? t.contactTelegram : `@${t.contactTelegram}`}
+                          {c.telegram.startsWith("@") ? c.telegram : `@${c.telegram}`}
                         </a>
                       ) : (
                         <span className="text-slate-600">—</span>
                       )}
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-lg" title={t.country}>
-                        {COUNTRY_FLAG[t.country] ?? "🌍"}
-                      </span>
-                      <span className="ml-1.5 text-slate-400 text-xs">{t.country}</span>
+                      {c.country ? (
+                        <>
+                          <span className="text-lg">{COUNTRY_FLAG[c.country] ?? "🌍"}</span>
+                          <span className="ml-1.5 text-slate-400 text-xs">{c.country}</span>
+                        </>
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
                     </td>
                     <td className="px-5 py-4">
-                      <div className="text-white">{fmt(t.createdAt)}</div>
-                      <div className="text-slate-500 text-xs">{daysSince(t.createdAt)}</div>
+                      <div className="text-white text-xs">{fmt(c.created_at)}</div>
+                      <div className="text-slate-500 text-xs">{daysSince(c.created_at)}</div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
-                        {t.contactTelegram && (
+                        {c.telegram && (
                           <a
-                            href={`https://t.me/${t.contactTelegram.replace(/^@/, "")}`}
+                            href={`https://t.me/${c.telegram.replace(/^@/, "")}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs bg-sky-900/40 border border-sky-700 text-sky-300 px-2 py-1 rounded-lg hover:bg-sky-900/60 transition-colors"
+                            className="text-xs bg-sky-900/40 border border-sky-700 text-sky-300 px-2 py-1 rounded-lg hover:bg-sky-900/60 transition-colors whitespace-nowrap"
                           >
                             Написать
                           </a>
                         )}
                         <a
-                          href={`/admin/tenants/${t.id}`}
-                          className="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-700 transition-colors"
+                          href={`mailto:${c.email}`}
+                          className="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-700 transition-colors whitespace-nowrap"
                         >
-                          Профиль
+                          Email
                         </a>
                       </div>
                     </td>

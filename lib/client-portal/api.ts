@@ -113,6 +113,17 @@ async function dtPatch(tableId: string, rowId: number, fields: Record<string, un
 
 // ── Clients ─────────────────────────────────────────────────────────────────
 
+export async function getAllClients(): Promise<ClientAccount[]> {
+  const rows = await dtQuery(CLIENTS_TABLE, [], "created_at") as ClientAccount[];
+  // Deduplicate by email (update-by-insert pattern), keep newest per email
+  const map = new Map<string, ClientAccount>();
+  for (const r of rows) {
+    const key = r.email?.toLowerCase() ?? r.client_id;
+    if (!map.has(key)) map.set(key, r);
+  }
+  return Array.from(map.values());
+}
+
 export async function findClientByEmail(email: string): Promise<ClientAccount | null> {
   // Sort by updated_at so the most-recent version wins (update-by-insert pattern)
   const rows = await dtQuery(CLIENTS_TABLE, [
