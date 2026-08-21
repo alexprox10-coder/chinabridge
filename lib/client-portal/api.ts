@@ -115,13 +115,19 @@ async function dtPatch(tableId: string, rowId: number, fields: Record<string, un
 
 export async function getAllClients(): Promise<ClientAccount[]> {
   const rows = await dtQuery(CLIENTS_TABLE, [], "created_at") as ClientAccount[];
-  // Deduplicate by email (update-by-insert pattern), keep newest per email
+  // Deduplicate by email: explicitly keep the row with the newest created_at
   const map = new Map<string, ClientAccount>();
   for (const r of rows) {
     const key = r.email?.toLowerCase() ?? r.client_id;
-    if (!map.has(key)) map.set(key, r);
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, r);
+    } else {
+      const tNew = new Date(r.created_at ?? 0).getTime();
+      const tOld = new Date(existing.created_at ?? 0).getTime();
+      if (tNew > tOld) map.set(key, r);
+    }
   }
-  // Filter out soft-deleted
   return Array.from(map.values()).filter(c => c.status !== "DELETED");
 }
 
