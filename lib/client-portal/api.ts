@@ -128,7 +128,7 @@ export async function getAllClients(): Promise<ClientAccount[]> {
       if (tNew > tOld) map.set(key, r);
     }
   }
-  return Array.from(map.values()).filter(c => c.status !== "DELETED");
+  return Array.from(map.values()).filter(c => c.status !== "DELETED" && c.status !== "INACTIVE");
 }
 
 export async function softDeleteClient(clientId: string, currentRecord: ClientAccount): Promise<boolean> {
@@ -144,7 +144,7 @@ export async function softDeleteClient(clientId: string, currentRecord: ClientAc
     inn:           currentRecord.inn ?? "",
     country:       currentRecord.country ?? "",
     role:          currentRecord.role ?? "CLIENT",
-    status:        "DELETED",
+    status:        "INACTIVE",
     created_at:    now,
     updated_at:    now,
   });
