@@ -7,6 +7,7 @@ const GROUPS = [
     label: "CRM",
     items: [
       { href: "/admin/dashboard",           label: "Дашборд",        icon: "📊" },
+      { href: "/admin/registrations",       label: "Регистрации ЛК", icon: "🆕" },
       { href: "/admin/pipeline",            label: "Воронка",        icon: "🗂" },
       { href: "/admin/leads",               label: "Лиды",           icon: "👥" },
       { href: "/admin/outreach-leads",      label: "Email Outreach", icon: "📧" },
