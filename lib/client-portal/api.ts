@@ -126,6 +126,7 @@ export async function getAllClients(): Promise<ClientAccount[]> {
 }
 
 export async function softDeleteClient(clientId: string, currentRecord: ClientAccount): Promise<boolean> {
+  const now = new Date().toISOString();
   const result = await dtInsert(CLIENTS_TABLE, {
     client_id:     clientId,
     email:         currentRecord.email,
@@ -138,7 +139,8 @@ export async function softDeleteClient(clientId: string, currentRecord: ClientAc
     country:       currentRecord.country ?? "",
     role:          currentRecord.role ?? "CLIENT",
     status:        "DELETED",
-    updated_at:    new Date().toISOString(),
+    created_at:    now,
+    updated_at:    now,
   });
   return result !== null;
 }
