@@ -664,10 +664,39 @@ export default function AIEconomicsFunnel() {
       }
     } else if (s.descInput.trim()) {
       analytics.aiFunnelDescEntered();
-      // Description path → manual form (can't auto-scrape)
-      go("product", {
-        product: { ...EMPTY_PRODUCT, product_name: s.descInput.trim() },
-      });
+      go("analyzing");
+
+      try {
+        const res  = await fetch("/api/ai-funnel/analyze-text", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ description: s.descInput.trim() }),
+        });
+        const data = await res.json();
+
+        if (data.ok && data.data) {
+          const parsed: ExtractedProduct = {
+            product_name:    data.data.product_name   ?? s.descInput.trim(),
+            unit_price_cny:  data.data.unit_price_cny ?? null,
+            weight_kg:       data.data.weight_kg       ?? null,
+            moq:             data.data.moq             ?? null,
+            price_currency:  "CNY",
+            product_link:    "",
+            source_platform: "description",
+            confidence:      data.data.confidence      ?? { overall: "medium" },
+          };
+          const estimated = estimateSalePrice(parsed.unit_price_cny);
+          setAllStagesDone(true);
+          setTimeout(() => {
+            setAllStagesDone(false);
+            go("marketplace", { extractedData: parsed, salePrice: estimated });
+          }, 400);
+        } else {
+          // AI failed → manual fallback with name pre-filled
+          go("product", { product: { ...EMPTY_PRODUCT, product_name: s.descInput.trim() } });
+        }
+      } catch {
+        go("product", { product: { ...EMPTY_PRODUCT, product_name: s.descInput.trim() } });
+      }
     }
   }
 
@@ -1046,7 +1075,7 @@ export default function AIEconomicsFunnel() {
           <div>
             <p className="text-[#00A86B] text-xs font-semibold uppercase tracking-widest mb-2">AI-анализ товара</p>
             <h2 className="text-xl font-bold text-white mb-1">Проверьте товар до покупки</h2>
-            <p className="text-sm text-[#8899aa]">Вставьте ссылку на 1688 или Alibaba — AI рассчитает прибыль автоматически</p>
+            <p className="text-sm text-[#8899aa]">Вставьте ссылку с 1688 или просто опишите товар — AI рассчитает прибыль за 15 секунд</p>
           </div>
 
           <div>
@@ -1072,7 +1101,7 @@ export default function AIEconomicsFunnel() {
               type="text" value={s.descInput}
               onChange={e => setS(p => ({ ...p, descInput: e.target.value, urlInput: "" }))}
               onKeyDown={e => e.key === "Enter" && (s.urlInput || s.descInput) && handleUrlSubmit()}
-              placeholder='Например: «Органайзер для кухни, 1688»' className={inp()}
+              placeholder='Например: «Наушники TWS» или «Детская одежда 500 шт»' className={inp()}
             />
           </div>
 
