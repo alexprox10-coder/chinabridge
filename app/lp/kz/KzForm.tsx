@@ -183,6 +183,17 @@ export default function KzForm() {
           Нажимая кнопку, вы соглашаетесь с{" "}
           <a href="/privacy" className="underline">политикой конфиденциальности</a>
         </p>
+
+        {/* Link to main site */}
+        <a
+          href="https://chinabridge.pro"
+          className="mt-6 w-full flex items-center justify-center gap-2 border border-white/15 text-white/70 font-medium py-4 rounded-xl text-sm hover:border-white/30 hover:text-white transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          Перейти на полный сайт ChinaBridge
+        </a>
       </main>
     </div>
   );
