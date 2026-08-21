@@ -62,8 +62,8 @@ export async function POST(req: NextRequest) {
 
   await createClient(newClient);
 
-  // Telegram notification (non-blocking)
-  notifyAdmin(newClient.name, newClient.email).catch(() => {});
+  // Telegram notification — awaited so Vercel doesn't kill it before fetch completes
+  await notifyAdmin(newClient.name, newClient.email);
 
   const token = await createClientToken({
     clientId,
