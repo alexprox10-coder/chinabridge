@@ -202,17 +202,6 @@ export default function Footer() {
                 </a>
               </li>
               <li className="flex items-center gap-2.5 text-sm">
-                <MessageCircle className="w-4 h-4 text-[#25D366] flex-shrink-0" />
-                <a
-                  href="https://wa.me/79918825647"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#8899aa] hover:text-[#25D366] transition-colors"
-                >
-                  WhatsApp +7 (991) 882-56-47
-                </a>
-              </li>
-              <li className="flex items-center gap-2.5 text-sm">
                 <Send className="w-4 h-4 text-accent flex-shrink-0" />
                 <a
                   href="https://t.me/ChinaBridgeLID_bot"

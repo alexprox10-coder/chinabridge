@@ -256,10 +256,6 @@ export default function Hero() {
                 <Phone className="w-3.5 h-3.5 text-[#00A86B]"/>
                 +7 (914) 581-96-61
               </a>
-              <a href="https://wa.me/79918825647" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-[#25D366] transition-colors">
-                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]"/>
-                WhatsApp
-              </a>
               <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-[#229ED9] transition-colors">
                 <Send className="w-3.5 h-3.5 text-[#229ED9]"/>
                 Telegram
