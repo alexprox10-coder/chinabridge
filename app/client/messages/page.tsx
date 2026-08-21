@@ -105,9 +105,9 @@ function MessagesView() {
           <button
             type="submit"
             disabled={sending || !text.trim()}
-            className="bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+            className="bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors whitespace-nowrap"
           >
-            {sending ? "..." : "→"}
+            {sending ? "Отправка..." : "Отправить"}
           </button>
         </form>
       </div>

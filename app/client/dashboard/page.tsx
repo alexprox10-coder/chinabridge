@@ -20,21 +20,51 @@ export default async function DashboardPage() {
   const inTransit = orders.filter((o) => o.status === "IN_TRANSIT");
   const recent = [...orders].slice(0, 5);
 
+  const isNewClient = orders.length === 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Добро пожаловать, {session.name.split(" ")[0]}</h1>
-        <p className="text-slate-500 text-sm mt-1">Обзор ваших грузов и заявок</p>
-      </div>
+      {isNewClient ? (
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl px-6 py-6 text-white shadow-md shadow-green-200">
+          <p className="text-green-100 text-sm font-medium mb-1">Личный кабинет ChinaBridge</p>
+          <h1 className="text-2xl font-bold mb-3">Добро пожаловать, {session.name.split(" ")[0]}! 👋</h1>
+          <p className="text-green-100 text-sm mb-4 leading-relaxed max-w-lg">
+            Ваш кабинет готов. Здесь вы будете отслеживать статусы поставок, документы и расчёты.
+            Первый шаг — описать товар менеджеру.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-green-700 font-semibold text-sm rounded-xl hover:bg-green-50 transition-colors shadow-sm"
+            >
+              ✈️ Написать менеджеру
+            </a>
+            <a
+              href="/delivery-calculator"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-700/50 hover:bg-green-700/70 text-white font-semibold text-sm rounded-xl transition-colors"
+            >
+              🧮 Рассчитать доставку
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Добро пожаловать, {session.name.split(" ")[0]}</h1>
+          <p className="text-slate-500 text-sm mt-1">Обзор ваших грузов и заявок</p>
+        </div>
+      )}
 
-      {/* Stats */}
+      {/* Stats — hide for new clients (all zeros look bad) */}
+      {!isNewClient && (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Всего заявок" value={orders.length} icon="📦" />
         <StatCard label="В работе" value={active.length} icon="⚙️" accent />
         <StatCard label="В пути" value={inTransit.length} icon="🚛" />
         <StatCard label="Выполнено" value={completed.length} icon="✅" />
       </div>
+      )}
 
       {/* Unread messages banner */}
       {unread > 0 && (
