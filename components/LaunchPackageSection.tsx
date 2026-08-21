@@ -17,6 +17,7 @@ const PACKAGES = [
     tag: null,
     price: "от 15 000 ₽",
     priceNote: "за партию",
+    meta: "от 50 кг · ~25–35 дней",
     desc: "Первая закупка с нуля. Помогаем выбрать товар и проверить нишу.",
     items: [
       "AI-анализ маржи (до 5 товаров)",
@@ -34,6 +35,7 @@ const PACKAGES = [
     tag: "Популярный",
     price: "от 25 000 ₽",
     priceNote: "за партию",
+    meta: "от 200 кг · ~20–30 дней",
     desc: "Для тех, кто уже продаёт и хочет расширить ассортимент или найти замену поставщику.",
     items: [
       "AI-анализ маржи (без лимита)",
@@ -52,6 +54,7 @@ const PACKAGES = [
     tag: null,
     price: "Индивидуально",
     priceNote: "от 3 партий/мес",
+    meta: "от 500 кг/мес · приоритет",
     desc: "Регулярные закупки, выделенная команда, приоритетные тарифы.",
     items: [
       "Выделенный менеджер в Китае",
@@ -128,6 +131,11 @@ export default function LaunchPackageSection() {
                 <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-widest mb-1">{pkg.name}</p>
                 <p className="text-2xl font-bold text-white">{pkg.price}</p>
                 <p className="text-xs text-[#8899aa]">{pkg.priceNote}</p>
+                {pkg.meta && (
+                  <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#00A86B] bg-[#00A86B]/10 px-2 py-0.5 rounded-full">
+                    📦 {pkg.meta}
+                  </p>
+                )}
               </div>
 
               <p className="text-sm text-[#8899aa] leading-relaxed">{pkg.desc}</p>
