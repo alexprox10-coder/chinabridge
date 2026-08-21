@@ -15,6 +15,7 @@ const navLinks = [
 ];
 
 const pageLinks = [
+  { label: "🇰🇿 Kaspi.kz", href: "/kaspi-china" },
   { label: "Блог", href: "/blog" },
   { label: "Доставка", href: "/delivery" },
   { label: "📦 Фулфилмент", href: "/fulfilment" },
