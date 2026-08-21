@@ -87,8 +87,8 @@ interface FunnelState {
 
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Алматы", "Астана"];
 
-const ANON_LIMIT = 1;   // расчётов в день без регистрации
-const REG_LIMIT  = 10;  // расчётов в день после регистрации
+const ANON_LIMIT = 999; // расчёты бесплатны — цель вытянуть на услуги
+const REG_LIMIT  = 999;
 
 // Analyzing stages — real stages that match backend process
 const ANALYZE_STAGES = [
@@ -500,16 +500,6 @@ export default function AIEconomicsFunnel() {
   // ── Calculation helper (shared by auto and manual) ─────────────────────────
 
   async function handleCalculate() {
-    // Usage gate: 1 free anon → registration → 3 more → paid plan
-    if (calcCount >= ANON_LIMIT && !isRegistered) {
-      setCalcAfterReg(true);
-      setShowRegGate(true);
-      return;
-    }
-    if (isRegistered && calcCount >= REG_LIMIT) {
-      setShowPaywall(true);
-      return;
-    }
 
     const ed = s.extractedData;
     const unitPrice  = ed ? ((ed.unit_price_cny  ?? parseFloat(s.product.unit_price_cny)) || 0)
@@ -593,12 +583,6 @@ export default function AIEconomicsFunnel() {
 
     // Don't auto-trigger when going back from preview — user wants to change marketplace manually
     if (s.economics) { setAutoCountdown(null); return; }
-
-    // Don't auto-trigger if gate would fire — user clicks Calculate manually
-    if ((calcCount >= ANON_LIMIT && !isRegistered) || (isRegistered && calcCount >= REG_LIMIT)) {
-      setAutoCountdown(null);
-      return;
-    }
 
     setAutoCountdown(2);
     const t1 = setTimeout(() => setAutoCountdown(1), 1000);
@@ -1100,7 +1084,7 @@ export default function AIEconomicsFunnel() {
             🚀 Рассчитать прибыль
           </button>
 
-          <p className="text-center text-xs text-[#8899aa]">3 расчёта бесплатно в день · результат за 15 сек · AI-анализ GPT-4o</p>
+          <p className="text-center text-xs text-[#8899aa]">Бесплатно · результат за 15 сек · AI-анализ GPT-4o</p>
         </div>
       )}
 
@@ -1342,97 +1326,96 @@ export default function AIEconomicsFunnel() {
             ))}
           </div>
 
-          {/* Full analytics: gated for unregistered users */}
-          {isRegistered ? (
-            <>
-              {inlineLeadId && (
-                <a
-                  href={`https://t.me/ChinaBridgeLID_bot?start=${inlineLeadId.replace(/-/g, '_')}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-between gap-3 bg-[#229ED9]/10 border border-[#229ED9]/30 rounded-xl px-4 py-3 mb-1 hover:bg-[#229ED9]/20 transition-colors"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-white">✅ Расчёт сохранён — получить в Telegram</p>
-                    <p className="text-xs text-[#8899aa] mt-0.5">Нажмите, откройте бота — расчёт придёт автоматически</p>
-                  </div>
-                  <svg className="w-5 h-5 text-[#229ED9] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </a>
-              )}
-              {ec.scenarios && ec.scenarios.length > 0 && (
-                <ScenariosBlock
-                  scenarios={ec.scenarios}
-                  active={s.activeScenario}
-                  onSwitch={sc => setS(p => ({ ...p, activeScenario: sc }))}
-                />
-              )}
-              <PnlTable ec={ec} delivery={s.delivery}
-                mpLabel={s.marketplace_config?.label}
-                tariffDate={s.marketplace_config?.tariff_date}
-                commissionNote={s.marketplace_config?.commission_note}
-              />
-              {ec.product_score && <ProductScoreCard ps={ec.product_score} />}
-              {ec.supplier_risk && <SupplierRiskBadge sr={ec.supplier_risk} />}
-              {ec.target_price && (
-                <div onClick={() => analytics.targetPriceViewed()}>
-                  <TargetPriceCard tp={ec.target_price}
-                    currency={s.extractedData?.price_currency ?? s.product.price_currency} />
+          {/* Full analytics: always free, no gate */}
+          <>
+            {inlineLeadId && (
+              <a
+                href={`https://t.me/ChinaBridgeLID_bot?start=${inlineLeadId.replace(/-/g, '_')}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 bg-[#229ED9]/10 border border-[#229ED9]/30 rounded-xl px-4 py-3 mb-1 hover:bg-[#229ED9]/20 transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-white">✅ Расчёт сохранён — открыть в Telegram</p>
+                  <p className="text-xs text-[#8899aa] mt-0.5">Нажмите — расчёт придёт прямо в бот</p>
                 </div>
-              )}
-              {!s.delivery?.hasRate && (
-                <p className="text-xs text-amber-400/80 bg-amber-900/10 border border-amber-700/20 rounded-xl px-4 py-2">
-                  ⚠️ Стоимость международной доставки уточняется менеджером
-                </p>
-              )}
-              <CorrectionAccordion
-                open={s.showCorrection}
-                correction={s.correction}
-                onToggle={() => {
-                  if (!s.showCorrection) analytics.manualCorrectionOpened();
-                  setS(p => ({ ...p, showCorrection: !p.showCorrection }));
-                }}
-                onChange={setCorrection}
-                onRecalculate={handleRecalculate}
+                <svg className="w-5 h-5 text-[#229ED9] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+            )}
+            {ec.scenarios && ec.scenarios.length > 0 && (
+              <ScenariosBlock
+                scenarios={ec.scenarios}
+                active={s.activeScenario}
+                onSwitch={sc => setS(p => ({ ...p, activeScenario: sc }))}
               />
-            </>
-          ) : (
-            <div className="bg-[#00A86B]/5 border border-[#00A86B]/30 rounded-xl p-5">
-              <p className="text-sm font-semibold text-white mb-1">📩 Получить полный P&amp;L расчёт в Telegram</p>
-              <p className="text-xs text-[#8899aa] mb-3">
-                Пришлём P&amp;L таблицу, Product Score и план оптимизации — бесплатно
-              </p>
-              <div className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  value={inlineTg}
-                  autoFocus
-                  onChange={e => setInlineTg(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
-                  placeholder="@username"
-                  className={inp()}
-                />
-                <input
-                  type="text"
-                  value={inlineName}
-                  onChange={e => setInlineName(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
-                  placeholder="Ваше имя (необязательно)"
-                  className={inp()}
-                />
-                <button
-                  onClick={handleInlineCapture}
-                  disabled={!inlineTg.trim() || inlineSubmitting}
-                  className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all text-sm"
-                >
-                  {inlineSubmitting ? "Отправляем..." : "📩 Получить полный расчёт бесплатно"}
-                </button>
+            )}
+            <PnlTable ec={ec} delivery={s.delivery}
+              mpLabel={s.marketplace_config?.label}
+              tariffDate={s.marketplace_config?.tariff_date}
+              commissionNote={s.marketplace_config?.commission_note}
+            />
+            {ec.product_score && <ProductScoreCard ps={ec.product_score} />}
+            {ec.supplier_risk && <SupplierRiskBadge sr={ec.supplier_risk} />}
+            {ec.target_price && (
+              <div onClick={() => analytics.targetPriceViewed()}>
+                <TargetPriceCard tp={ec.target_price}
+                  currency={s.extractedData?.price_currency ?? s.product.price_currency} />
               </div>
-              <p className="text-xs text-[#8899aa] mt-2 text-center">
-                Бесплатно · без спама · ответим в течение дня
+            )}
+            {!s.delivery?.hasRate && (
+              <p className="text-xs text-amber-400/80 bg-amber-900/10 border border-amber-700/20 rounded-xl px-4 py-2">
+                ⚠️ Стоимость международной доставки уточняется менеджером
               </p>
-            </div>
-          )}
+            )}
+            <CorrectionAccordion
+              open={s.showCorrection}
+              correction={s.correction}
+              onToggle={() => {
+                if (!s.showCorrection) analytics.manualCorrectionOpened();
+                setS(p => ({ ...p, showCorrection: !p.showCorrection }));
+              }}
+              onChange={setCorrection}
+              onRecalculate={handleRecalculate}
+            />
+            {/* Soft TG CTA — not a gate, just a suggestion */}
+            {!inlineLeadId && (
+              <div className="bg-[#00A86B]/5 border border-[#00A86B]/30 rounded-xl p-4">
+                <p className="text-sm font-semibold text-white mb-1">📩 Сохранить расчёт в Telegram</p>
+                <p className="text-xs text-[#8899aa] mb-3">
+                  Пришлём P&amp;L таблицу и план оптимизации — бесплатно
+                </p>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={inlineTg}
+                    onChange={e => setInlineTg(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
+                    placeholder="@username"
+                    className={inp()}
+                  />
+                  <input
+                    type="text"
+                    value={inlineName}
+                    onChange={e => setInlineName(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
+                    placeholder="Ваше имя (необязательно)"
+                    className={inp()}
+                  />
+                  <button
+                    onClick={handleInlineCapture}
+                    disabled={!inlineTg.trim() || inlineSubmitting}
+                    className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all text-sm"
+                  >
+                    {inlineSubmitting ? "Отправляем..." : "📩 Получить расчёт в Telegram"}
+                  </button>
+                </div>
+                <p className="text-xs text-[#8899aa] mt-2 text-center">
+                  Бесплатно · без спама · ответим в течение дня
+                </p>
+              </div>
+            )}
+          </>
 
           {/* CTA */}
           <div className="bg-[#00A86B]/5 border border-[#00A86B]/20 rounded-xl p-4">
@@ -1468,23 +1451,6 @@ export default function AIEconomicsFunnel() {
             >
               ✈️ Написать менеджеру напрямую в Telegram
             </a>
-          )}
-
-          {/* Registration nudge after 1st calc */}
-          {calcCount >= ANON_LIMIT && !isRegistered && (
-            <div className="rounded-xl border border-[#00A86B]/30 bg-[#00A86B]/5 px-4 py-3 flex items-start gap-3">
-              <span className="text-lg leading-none">🔓</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white mb-0.5">Зарегистрируйтесь — получите ещё 3 расчёта</p>
-                <p className="text-xs text-[#8899aa]">Следующий расчёт откроется после регистрации</p>
-              </div>
-              <button
-                onClick={() => setShowRegGate(true)}
-                className="text-xs font-semibold text-[#00A86B] hover:text-white whitespace-nowrap transition-colors"
-              >
-                Войти →
-              </button>
-            </div>
           )}
 
           <button onClick={() => go("input")} className="text-xs text-[#8899aa] hover:text-white text-center underline">

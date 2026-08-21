@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Калькулятор маржи WB и Ozon — расчёт за 15 секунд | ChinaBridge",
     description:
-      "Вставьте ссылку на товар с 1688 → AI рассчитает маржу, ROI, таможню и прибыль на Wildberries, Ozon, Kaspi. 3 расчёта в день бесплатно.",
+      "Вставьте ссылку на товар с 1688 → AI рассчитает маржу, ROI, таможню и прибыль на Wildberries, Ozon, Kaspi. Бесплатно, без регистрации.",
     type:    "website",
     url:     CANONICAL,
     locale:  "ru_RU",
@@ -150,7 +150,7 @@ export default function AICalculatorPage() {
           {/* Trust badges — hidden on mobile to keep form above fold */}
           <div className="hidden sm:flex flex-wrap justify-center gap-4 mb-8 text-xs text-[#8899aa]">
             {[
-              { icon: "🎁", text: "3 расчёта в день бесплатно" },
+              { icon: "🎁", text: "Бесплатно · без регистрации" },
               { icon: "⚡", text: "Результат за 15 сек" },
               { icon: "🤖", text: "AI-анализ GPT-4o" },
               { icon: "🚀", text: "Реальные данные" },
