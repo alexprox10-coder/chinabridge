@@ -5,6 +5,7 @@ import { getClientOrders, getAllOrders, countUnreadMessages } from "@/lib/client
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/client-portal/types";
 import type { ClientOrder } from "@/lib/client-portal/types";
 import OnboardingSteps from "@/components/client/OnboardingSteps";
+import CurrencyRates from "@/components/client/CurrencyRates";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -80,6 +81,9 @@ export default async function DashboardPage() {
 
       {/* Onboarding steps — shown only for new clients with no orders */}
       {orders.length === 0 && <OnboardingSteps isNew={true} />}
+
+      {/* Currency rates */}
+      <CurrencyRates />
 
       {/* AI tools quick access */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
