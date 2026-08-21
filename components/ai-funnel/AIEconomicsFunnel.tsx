@@ -821,6 +821,7 @@ export default function AIEconomicsFunnel() {
   const [inlineTg,         setInlineTg]         = useState("");
   const [inlineName,       setInlineName]       = useState("");
   const [inlineSubmitting, setInlineSubmitting] = useState(false);
+  const [inlineLeadId,     setInlineLeadId]     = useState("");
 
   async function handleInlineCapture() {
     if (!inlineTg.trim()) return;
@@ -832,7 +833,7 @@ export default function AIEconomicsFunnel() {
       const unitPrice = ed
         ? ((ed.unit_price_cny ?? parseFloat(s.product.unit_price_cny)) || 0)
         : parseFloat(s.product.unit_price_cny) || 0;
-      await fetch("/api/ai-funnel/submit", {
+      const resp = await fetch("/api/ai-funnel/submit", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name:           inlineName,
@@ -850,6 +851,10 @@ export default function AIEconomicsFunnel() {
             : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
         }),
       });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.lead_id) setInlineLeadId(data.lead_id);
+      }
     } catch { /* ignore */ }
     setInlineSubmitting(false);
   }
@@ -1340,6 +1345,21 @@ export default function AIEconomicsFunnel() {
           {/* Full analytics: gated for unregistered users */}
           {isRegistered ? (
             <>
+              {inlineLeadId && (
+                <a
+                  href={`https://t.me/ChinaBridgeLID_bot?start=${inlineLeadId.replace(/-/g, '_')}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 bg-[#229ED9]/10 border border-[#229ED9]/30 rounded-xl px-4 py-3 mb-1 hover:bg-[#229ED9]/20 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-white">✅ Расчёт сохранён — получить в Telegram</p>
+                    <p className="text-xs text-[#8899aa] mt-0.5">Нажмите, откройте бота — расчёт придёт автоматически</p>
+                  </div>
+                  <svg className="w-5 h-5 text-[#229ED9] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+              )}
               {ec.scenarios && ec.scenarios.length > 0 && (
                 <ScenariosBlock
                   scenarios={ec.scenarios}

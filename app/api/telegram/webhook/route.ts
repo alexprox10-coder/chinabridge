@@ -304,13 +304,35 @@ export async function POST(req: NextRequest) {
 
   if (!text) return NextResponse.json({ ok: true });
 
-  // Security
+  // Lead interactions — non-admin users
   if (ALLOWED.length > 0 && !ALLOWED.includes(key)) {
-    await send(chatId, `❌ Доступ запрещён. Твой chat_id: \`${chatId}\``);
+    if (text.startsWith("/start")) {
+      await tg("sendMessage", {
+        chat_id: chatId,
+        text: `👋 Привет, ${firstName}!\n\nВаш расчёт уже у менеджера — мы свяжемся с вами в ближайшее время.\n\nЕсть вопросы? Напишите прямо сюда!`,
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🌐 ChinaBridge", url: "https://chinabridge.pro" },
+            { text: "🔢 Новый расчёт", url: "https://chinabridge.pro/ai-calculator" },
+          ]],
+        },
+      });
+    } else {
+      const managerId = ALLOWED[0];
+      if (managerId) {
+        await tg("sendMessage", {
+          chat_id: managerId,
+          text: `💬 *Вопрос от лида*\n@${message.from?.username ?? firstName} (id: \`${chatId}\`)\n\n${text}`,
+          parse_mode: "Markdown",
+        });
+      }
+      await send(chatId, "✅ Ваше сообщение получено! Менеджер ответит в ближайшее время.");
+    }
     return NextResponse.json({ ok: true });
   }
 
-  // Commands
+  // Admin commands
   if (text === "/start") {
     await tg("sendMessage", {
       chat_id: chatId,
