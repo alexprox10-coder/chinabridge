@@ -27,6 +27,8 @@ interface ProductData {
 
 interface ExtractedProduct {
   product_name:    string;
+  product_name_cn?: string;
+  product_name_en?: string;
   unit_price_cny:  number | null;
   weight_kg:       number | null;
   moq:             number | null;
@@ -675,14 +677,16 @@ export default function AIEconomicsFunnel() {
 
         if (data.ok && data.data) {
           const parsed: ExtractedProduct = {
-            product_name:    data.data.product_name   ?? s.descInput.trim(),
-            unit_price_cny:  data.data.unit_price_cny ?? null,
-            weight_kg:       data.data.weight_kg       ?? null,
-            moq:             data.data.moq             ?? null,
+            product_name:    data.data.product_name    ?? s.descInput.trim(),
+            product_name_cn: data.data.product_name_cn ?? "",
+            product_name_en: data.data.product_name_en ?? "",
+            unit_price_cny:  data.data.unit_price_cny  ?? null,
+            weight_kg:       data.data.weight_kg        ?? null,
+            moq:             data.data.moq              ?? null,
             price_currency:  "CNY",
             product_link:    "",
             source_platform: "description",
-            confidence:      data.data.confidence      ?? { overall: "medium" },
+            confidence:      data.data.confidence       ?? { overall: "medium" },
           };
           const estimated = estimateSalePrice(parsed.unit_price_cny);
           setAllStagesDone(true);
@@ -1343,7 +1347,8 @@ export default function AIEconomicsFunnel() {
 
           {/* Supplier links — shown when user typed product name (no URL) */}
           {s.extractedData?.source_platform === "description" && s.extractedData.product_name && (() => {
-            const q = encodeURIComponent(s.extractedData!.product_name);
+            const cn = encodeURIComponent(s.extractedData!.product_name_cn || s.extractedData!.product_name);
+            const en = encodeURIComponent(s.extractedData!.product_name_en || s.extractedData!.product_name);
             return (
               <div className="rounded-xl border border-[#243a5e] bg-[#0B1F3A] p-4">
                 <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide mb-3">
@@ -1351,7 +1356,7 @@ export default function AIEconomicsFunnel() {
                 </p>
                 <div className="flex flex-col gap-2">
                   <a
-                    href={`https://s.1688.com/selloffer/offerlist.htm?keywords=${q}`}
+                    href={`https://s.1688.com/selloffer/offerlist.htm?keywords=${cn}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-between gap-2 bg-orange-500/10 border border-orange-500/25 rounded-lg px-3 py-2.5 hover:bg-orange-500/20 transition-colors"
                   >
@@ -1359,13 +1364,13 @@ export default function AIEconomicsFunnel() {
                       <span className="text-base">🇨🇳</span>
                       <div>
                         <p className="text-xs font-semibold text-orange-400">1688.com</p>
-                        <p className="text-[10px] text-[#8899aa]">Оптовые цены фабрик</p>
+                        <p className="text-[10px] text-[#8899aa]">Оптовые цены фабрик{s.extractedData!.product_name_cn ? ` · ${s.extractedData!.product_name_cn}` : ""}</p>
                       </div>
                     </div>
                     <svg className="w-4 h-4 text-[#8899aa]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                   </a>
                   <a
-                    href={`https://www.alibaba.com/trade/search?SearchText=${q}`}
+                    href={`https://www.alibaba.com/trade/search?SearchText=${en}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-between gap-2 bg-yellow-500/10 border border-yellow-500/25 rounded-lg px-3 py-2.5 hover:bg-yellow-500/20 transition-colors"
                   >

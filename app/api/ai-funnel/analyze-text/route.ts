@@ -9,6 +9,8 @@ const SYSTEM = `You are a China sourcing expert. Given a product description in 
 Return ONLY valid JSON, no markdown, no explanation:
 {
   "product_name": "short clean product name in Russian",
+  "product_name_cn": "Chinese (Simplified) product name for 1688.com search — 2-4 characters, exact category keyword used on 1688",
+  "product_name_en": "short English product name for Alibaba search",
   "unit_price_cny": <number, typical factory price in CNY on 1688 for 1 unit>,
   "weight_kg": <number, typical weight per unit in kg>,
   "moq": <number, typical minimum order quantity>,
@@ -16,10 +18,10 @@ Return ONLY valid JSON, no markdown, no explanation:
 }
 
 Rules:
+- product_name_cn: use the most common 1688 search keyword in Chinese. E.g. наушники TWS → 蓝牙耳机, кроссовки → 运动鞋, органайзер кухонный → 厨房收纳
 - unit_price_cny: factory wholesale price on 1688, NOT retail. Be realistic.
 - weight_kg: per single unit (not per box)
 - moq: typical MOQ for this product category on 1688
-- If description is very vague, use mid-range estimates
 - Always return numbers, never null`;
 
 export async function POST(req: NextRequest) {
@@ -44,6 +46,8 @@ export async function POST(req: NextRequest) {
       ok: true,
       data: {
         product_name:    String(data.product_name),
+        product_name_cn: String(data.product_name_cn ?? ""),
+        product_name_en: String(data.product_name_en ?? data.product_name),
         unit_price_cny:  Number(data.unit_price_cny),
         weight_kg:       Number(data.weight_kg)  || 0.5,
         moq:             Number(data.moq)        || 1,
