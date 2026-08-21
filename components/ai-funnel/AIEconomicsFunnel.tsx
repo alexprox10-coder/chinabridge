@@ -1341,6 +1341,51 @@ export default function AIEconomicsFunnel() {
             </p>
           </div>
 
+          {/* Supplier links — shown when user typed product name (no URL) */}
+          {s.extractedData?.source_platform === "description" && s.extractedData.product_name && (() => {
+            const q = encodeURIComponent(s.extractedData!.product_name);
+            return (
+              <div className="rounded-xl border border-[#243a5e] bg-[#0B1F3A] p-4">
+                <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide mb-3">
+                  🔍 Найти поставщиков на
+                </p>
+                <div className="flex flex-col gap-2">
+                  <a
+                    href={`https://s.1688.com/selloffer/offerlist.htm?keywords=${q}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 bg-orange-500/10 border border-orange-500/25 rounded-lg px-3 py-2.5 hover:bg-orange-500/20 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🇨🇳</span>
+                      <div>
+                        <p className="text-xs font-semibold text-orange-400">1688.com</p>
+                        <p className="text-[10px] text-[#8899aa]">Оптовые цены фабрик</p>
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 text-[#8899aa]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  </a>
+                  <a
+                    href={`https://www.alibaba.com/trade/search?SearchText=${q}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 bg-yellow-500/10 border border-yellow-500/25 rounded-lg px-3 py-2.5 hover:bg-yellow-500/20 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🌐</span>
+                      <div>
+                        <p className="text-xs font-semibold text-yellow-400">Alibaba.com</p>
+                        <p className="text-[10px] text-[#8899aa]">Международные поставщики</p>
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 text-[#8899aa]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  </a>
+                </div>
+                <p className="text-[10px] text-[#556677] mt-2">
+                  Нашли товар? Вставьте ссылку — пересчитаем с реальной ценой поставщика
+                </p>
+              </div>
+            );
+          })()}
+
           {/* Key metrics */}
           <div className="grid grid-cols-3 gap-3">
             {[
