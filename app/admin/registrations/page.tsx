@@ -56,7 +56,15 @@ export default function RegistrationsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ client_id }),
       });
-      if ((await r.json()).ok) setClients(prev => prev.filter(c => c.client_id !== client_id));
+      const data = await r.json();
+      console.log("[handleDelete] response", data);
+      if (data.ok) {
+        setClients(prev => prev.filter(c => c.client_id !== client_id));
+      } else {
+        alert(`Ошибка удаления: ${data.step ?? data.error ?? "unknown"}`);
+      }
+    } catch (e) {
+      alert(`Ошибка: ${e}`);
     } finally {
       setDeleting(null);
       setConfirmDelete(null);

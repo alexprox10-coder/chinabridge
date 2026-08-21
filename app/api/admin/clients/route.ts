@@ -18,11 +18,15 @@ export async function GET() {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!await isAdmin()) return NextResponse.json({ ok: false }, { status: 401 });
-  const { client_id } = await req.json().catch(() => ({})) as { client_id?: string };
-  if (!client_id) return NextResponse.json({ ok: false, error: "client_id required" }, { status: 400 });
+  if (!await isAdmin()) return NextResponse.json({ ok: false, step: "auth" }, { status: 401 });
+  const body = await req.json().catch(() => ({})) as { client_id?: string };
+  const { client_id } = body;
+  console.log("[DELETE /api/admin/clients] client_id=", client_id);
+  if (!client_id) return NextResponse.json({ ok: false, step: "client_id_missing" }, { status: 400 });
   const client = await getClientById(client_id);
-  if (!client) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+  console.log("[DELETE /api/admin/clients] found client=", client?.email, "status=", client?.status);
+  if (!client) return NextResponse.json({ ok: false, step: "not_found" }, { status: 404 });
   const ok = await softDeleteClient(client_id, client);
-  return NextResponse.json({ ok });
+  console.log("[DELETE /api/admin/clients] softDelete result=", ok);
+  return NextResponse.json({ ok, step: ok ? "done" : "insert_failed" });
 }
