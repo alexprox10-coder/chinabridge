@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import DirectionsSplit from "@/components/DirectionsSplit";
 import HowItWorks from "@/components/HowItWorks";
+import WarehouseGallery from "@/components/WarehouseGallery";
 import ForWhom from "@/components/ForWhom";
 import Advantages from "@/components/Advantages";
 import LaunchPackageSection from "@/components/LaunchPackageSection";
@@ -103,6 +104,7 @@ export default function Home() {
         <DirectionsSplit />
         <LaunchPackageSection />
         <HowItWorks />
+        <WarehouseGallery />
         <ForWhom />
         <Advantages />
         <ImportEcosystemBlock />
