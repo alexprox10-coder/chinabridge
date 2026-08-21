@@ -121,7 +121,26 @@ export async function getAllClients(): Promise<ClientAccount[]> {
     const key = r.email?.toLowerCase() ?? r.client_id;
     if (!map.has(key)) map.set(key, r);
   }
-  return Array.from(map.values());
+  // Filter out soft-deleted
+  return Array.from(map.values()).filter(c => c.status !== "DELETED");
+}
+
+export async function softDeleteClient(clientId: string, currentRecord: ClientAccount): Promise<boolean> {
+  const result = await dtInsert(CLIENTS_TABLE, {
+    client_id:     clientId,
+    email:         currentRecord.email,
+    name:          currentRecord.name,
+    password_hash: currentRecord.password_hash ?? "",
+    company:       currentRecord.company ?? "",
+    phone:         currentRecord.phone ?? "",
+    telegram:      currentRecord.telegram ?? "",
+    inn:           currentRecord.inn ?? "",
+    country:       currentRecord.country ?? "",
+    role:          currentRecord.role ?? "CLIENT",
+    status:        "DELETED",
+    updated_at:    new Date().toISOString(),
+  });
+  return result !== null;
 }
 
 export async function findClientByEmail(email: string): Promise<ClientAccount | null> {

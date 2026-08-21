@@ -38,6 +38,8 @@ export default function RegistrationsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/clients")
@@ -45,6 +47,21 @@ export default function RegistrationsPage() {
       .then(d => { if (d.ok) setClients(d.clients); })
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleDelete(client_id: string) {
+    setDeleting(client_id);
+    try {
+      const r = await fetch("/api/admin/clients", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id }),
+      });
+      if ((await r.json()).ok) setClients(prev => prev.filter(c => c.client_id !== client_id));
+    } finally {
+      setDeleting(null);
+      setConfirmDelete(null);
+    }
+  }
 
   const sorted = [...clients].sort((a, b) => {
     const ta = new Date(a.created_at ?? 0).getTime();
@@ -180,7 +197,7 @@ export default function RegistrationsPage() {
                       <div className="text-slate-500 text-xs">{daysSince(c.created_at)}</div>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {c.telegram && (
                           <a
                             href={`https://t.me/${c.telegram.replace(/^@/, "")}`}
@@ -197,6 +214,31 @@ export default function RegistrationsPage() {
                         >
                           Email
                         </a>
+                        {confirmDelete === c.client_id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleDelete(c.client_id)}
+                              disabled={deleting === c.client_id}
+                              className="text-xs bg-red-900/60 border border-red-700 text-red-300 px-2 py-1 rounded-lg hover:bg-red-900 transition-colors whitespace-nowrap disabled:opacity-50"
+                            >
+                              {deleting === c.client_id ? "..." : "Да, удалить"}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDelete(null)}
+                              className="text-xs text-slate-500 hover:text-slate-300 px-1"
+                            >
+                              Нет
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDelete(c.client_id)}
+                            className="text-xs text-slate-600 hover:text-red-400 px-1 transition-colors"
+                            title="Удалить"
+                          >
+                            🗑
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
