@@ -70,7 +70,7 @@ export interface ClientAccount {
   inn?: string;
   country?: string;
   role: ClientRole;
-  status: "ACTIVE" | "INACTIVE";
+  status: "ACTIVE" | "INACTIVE" | "DELETED";
   created_at: string;
   updated_at: string;
 }
