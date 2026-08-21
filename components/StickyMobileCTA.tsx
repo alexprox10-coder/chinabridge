@@ -5,12 +5,7 @@ export default function StickyMobileCTA() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 4000);
-    const onScroll = () => {
-      if (window.scrollY > 300) setVisible(true);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { clearTimeout(timer); window.removeEventListener("scroll", onScroll); };
+    setVisible(true);
   }, []);
 
   if (!visible) return null;

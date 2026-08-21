@@ -89,6 +89,13 @@ interface FunnelState {
 
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Алматы", "Астана"];
 
+const QUICK_EXAMPLES = [
+  { emoji: "👟", label: "Кроссовки",    product_name: "Кроссовки",          product_name_cn: "运动鞋",   product_name_en: "sneakers",            unit_price_cny: 80,  weight_kg: 0.8,  moq: 10 },
+  { emoji: "👗", label: "Одежда",       product_name: "Одежда",              product_name_cn: "服装",     product_name_en: "clothing",            unit_price_cny: 35,  weight_kg: 0.3,  moq: 50 },
+  { emoji: "🎧", label: "Наушники TWS", product_name: "Наушники TWS",        product_name_cn: "蓝牙耳机", product_name_en: "bluetooth earphones", unit_price_cny: 45,  weight_kg: 0.15, moq: 20 },
+  { emoji: "🧸", label: "Игрушки",      product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
+];
+
 const ANON_LIMIT = 999; // расчёты бесплатны — цель вытянуть на услуги
 const REG_LIMIT  = 999;
 
@@ -704,6 +711,23 @@ export default function AIEconomicsFunnel() {
     }
   }
 
+  function handleQuickExample(ex: typeof QUICK_EXAMPLES[number]) {
+    if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
+    const parsed: ExtractedProduct = {
+      product_name:    ex.product_name,
+      product_name_cn: ex.product_name_cn,
+      product_name_en: ex.product_name_en,
+      unit_price_cny:  ex.unit_price_cny,
+      weight_kg:       ex.weight_kg,
+      moq:             ex.moq,
+      price_currency:  "CNY",
+      product_link:    "",
+      source_platform: "description",
+      confidence:      { overall: "medium" },
+    };
+    go("marketplace", { extractedData: parsed, salePrice: estimateSalePrice(ex.unit_price_cny) });
+  }
+
   // ── Recalculate (correction accordion) ─────────────────────────────────────
 
   async function handleRecalculate() {
@@ -1082,6 +1106,32 @@ export default function AIEconomicsFunnel() {
             <p className="text-sm text-[#8899aa]">Вставьте ссылку с 1688 или просто опишите товар — AI рассчитает прибыль за 15 секунд</p>
           </div>
 
+          {/* Quick examples — instant calculation without URL */}
+          <div>
+            <p className="text-xs text-[#8899aa] mb-2">Или выберите категорию — расчёт мгновенно:</p>
+            <div className="grid grid-cols-2 gap-2">
+              {QUICK_EXAMPLES.map(ex => (
+                <button
+                  key={ex.label}
+                  onClick={() => handleQuickExample(ex)}
+                  className="flex items-center gap-2 bg-white/5 hover:bg-[#00A86B]/15 border border-white/10 hover:border-[#00A86B]/40 rounded-xl px-3 py-2.5 transition-all text-left"
+                >
+                  <span className="text-lg leading-none">{ex.emoji}</span>
+                  <div>
+                    <p className="text-xs font-medium text-white">{ex.label}</p>
+                    <p className="text-[10px] text-[#8899aa]">≈ ¥{ex.unit_price_cny}/шт</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-[#243a5e]" />
+            <span className="text-xs text-[#8899aa]">или введите сами</span>
+            <div className="flex-1 h-px bg-[#243a5e]" />
+          </div>
+
           <div>
             <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Ссылка на товар</label>
             <input
@@ -1095,7 +1145,7 @@ export default function AIEconomicsFunnel() {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-[#243a5e]" />
-            <span className="text-xs text-[#8899aa]">или</span>
+            <span className="text-xs text-[#8899aa]">или опишите текстом</span>
             <div className="flex-1 h-px bg-[#243a5e]" />
           </div>
 

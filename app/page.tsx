@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import DirectionsSplit from "@/components/DirectionsSplit";
 import HowItWorks from "@/components/HowItWorks";
+import KzRatesBanner from "@/components/KzRatesBanner";
 import WarehouseGallery from "@/components/WarehouseGallery";
 import ForWhom from "@/components/ForWhom";
 import Advantages from "@/components/Advantages";
@@ -101,6 +102,7 @@ export default function Home() {
       <main>
         <Header />
         <Hero />
+        <KzRatesBanner />
         <DirectionsSplit />
         <LaunchPackageSection />
         <HowItWorks />
