@@ -7,7 +7,48 @@ import type { TenantCountry } from "@/lib/multitenant/types";
 export const runtime     = "nodejs";
 export const maxDuration = 30;
 
+// Simple in-memory rate limiting: max 3 signups per IP per hour
+const ipAttempts = new Map<string, { count: number; resetAt: number }>();
+
+async function notifyAdminNewRegistration(data: {
+  companyName: string; email: string; country: string; telegram?: string; tenantId: string;
+}) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID ?? "8979087725";
+  if (!token) return;
+
+  const text = `🆕 Новая регистрация в ЛК
+
+🏢 Компания: ${data.companyName}
+📧 Email: ${data.email}
+🌍 Страна: ${data.country}
+${data.telegram ? `💬 Telegram: ${data.telegram}\n` : ""}🆔 Tenant: ${data.tenantId}
+
+🔗 https://chinabridge.pro/admin`;
+
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => {});
+}
+
 export async function POST(req: NextRequest) {
+  // Rate limiting by IP
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const now = Date.now();
+  const entry = ipAttempts.get(ip);
+  if (entry) {
+    if (now < entry.resetAt && entry.count >= 3) {
+      return NextResponse.json({ ok: false, error: "Слишком много попыток. Попробуйте через час." }, { status: 429 });
+    }
+    if (now >= entry.resetAt) ipAttempts.set(ip, { count: 1, resetAt: now + 3_600_000 });
+    else entry.count++;
+  } else {
+    ipAttempts.set(ip, { count: 1, resetAt: now + 3_600_000 });
+  }
+
   let body: Record<string, unknown>;
   try { body = await req.json(); }
   catch { return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
@@ -51,6 +92,15 @@ export async function POST(req: NextRequest) {
       timezone:     "Europe/Moscow",
       brandColor:   "#2563eb",
       pinHash,
+    });
+
+    // Notify admin in Telegram (non-blocking)
+    notifyAdminNewRegistration({
+      companyName: String(companyName),
+      email:       String(email),
+      country:     String(country ?? "RU"),
+      telegram:    telegram ? String(telegram) : undefined,
+      tenantId:    tenant.id,
     });
 
     // Set auth cookies

@@ -26,8 +26,8 @@ const PACKAGES = [
       "Отгрузка на склад FBW/FBO",
       "Сопровождение менеджера",
     ],
-    cta: "Начать с нуля",
-    href: "/free",
+    cta: "Написать в Telegram",
+    href: "https://t.me/ChinaBridgeLID_bot",
     highlight: false,
   },
   {
@@ -45,8 +45,8 @@ const PACKAGES = [
       "Личный менеджер на весь цикл",
       "Консультация по рекламе на МП",
     ],
-    cta: "Запустить партию",
-    href: "/free",
+    cta: "Написать в Telegram",
+    href: "https://t.me/ChinaBridgeLID_bot",
     highlight: true,
   },
   {
@@ -64,7 +64,7 @@ const PACKAGES = [
       "SLA 24 ч на запросы",
     ],
     cta: "Обсудить условия",
-    href: "/free",
+    href: "https://t.me/ChinaBridgeLID_bot",
     highlight: false,
   },
 ];

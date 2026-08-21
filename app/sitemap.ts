@@ -13,6 +13,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     { url: "https://chinabridge.pro", lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
+    { url: "https://chinabridge.pro/ai-calculator", lastModified: new Date(), changeFrequency: "weekly", priority: 0.95 },
+    { url: "https://chinabridge.pro/delivery-calculator", lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: "https://chinabridge.pro/fulfilment", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
     { url: "https://chinabridge.pro/services", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     { url: "https://chinabridge.pro/services/china-delivery", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
     { url: "https://chinabridge.pro/services/1688-buyout", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
