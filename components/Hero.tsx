@@ -242,11 +242,11 @@ export default function Hero() {
                 Рассчитать прибыль <ArrowRight className="w-4 h-4"/>
               </Link>
               <Link
-                href="#launch-package"
+                href="#services"
                 className="btn-outline"
-                onClick={(e) => { e.preventDefault(); trackGAEvent("hero_package_click"); document.querySelector("#launch-package")?.scrollIntoView({ behavior: "smooth" }); }}
+                onClick={(e) => { e.preventDefault(); trackGAEvent("hero_services_click"); document.querySelector("#services")?.scrollIntoView({ behavior: "smooth" }); }}
               >
-                Пакеты запуска
+                Наши услуги
               </Link>
             </div>
 
