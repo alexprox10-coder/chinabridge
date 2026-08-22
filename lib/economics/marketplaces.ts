@@ -147,6 +147,43 @@ export function getCommission(id: string): number {
   return getMarketplace(id)?.commission_pct ?? 15;
 }
 
+// Keyword sets for category detection
+const CLOTHING_KW  = /одежда|платье|брюки|джинсы|куртка|пальто|свитер|рубашка|футболка|блузка|юбка|clothing|dress|pants|jacket|shirt|jeans|sweater|服装|连衣裙|牛仔|外套/i;
+const FOOTWEAR_KW  = /обувь|кроссовки|ботинки|кеды|сандалии|туфли|сапоги|мокасины|тапочки|shoes|sneakers|boots|sandals|slippers|运动鞋|鞋/i;
+const LAPTOP_KW    = /ноутбук|laptop|笔记本/i;
+const PHONE_KW     = /смартфон|iphone|samsung galaxy|xiaomi|honor|realme|oppo|vivo|телефон android|手机|智能手机/i;
+
+/**
+ * Returns the correct commission % for a marketplace based on product category.
+ * Falls back to the marketplace default if no category match.
+ */
+export function detectCommissionPct(
+  marketplaceId: string,
+  productName?: string,
+  productNameEn?: string,
+  productNameCn?: string,
+): number {
+  const mp = getMarketplace(marketplaceId);
+  if (!mp) return 15;
+
+  const text = [productName, productNameEn, productNameCn].filter(Boolean).join(' ');
+
+  if (marketplaceId === 'wb') {
+    if (FOOTWEAR_KW.test(text) || CLOTHING_KW.test(text)) return 43.5;
+    if (LAPTOP_KW.test(text)) return 23.5;
+    return mp.commission_pct; // 23%
+  }
+
+  if (marketplaceId === 'ozon') {
+    if (FOOTWEAR_KW.test(text)) return 50;
+    if (CLOTHING_KW.test(text)) return 22;
+    if (PHONE_KW.test(text))    return 5;
+    return mp.commission_pct; // 18%
+  }
+
+  return mp.commission_pct;
+}
+
 // ₽ за единицу проданного товара (логистика маркетплейса, не доставка из Китая)
 export function calcMarketplaceLogisticsPerUnit(mp: MarketplaceConfig, weightKg = 0.5, salePriceRub = 0): number {
   const base  = mp.logistics_base_rub;

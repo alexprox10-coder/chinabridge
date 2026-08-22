@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { analytics } from "@/lib/analytics";
-import { MARKETPLACES } from "@/lib/economics/marketplaces";
+import { MARKETPLACES, detectCommissionPct } from "@/lib/economics/marketplaces";
 import type {
   EconomicsResult,
   EconomicsScenario,
@@ -534,6 +534,13 @@ export default function AIEconomicsFunnel() {
 
     go("calculating");
 
+    const commissionPct = detectCommissionPct(
+      s.marketplace,
+      pName,
+      ed?.product_name_en ?? undefined,
+      ed?.product_name_cn ?? undefined,
+    );
+
     try {
       const res  = await fetch("/api/ai-funnel/preview", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -546,6 +553,7 @@ export default function AIEconomicsFunnel() {
           city_to:        s.city_to,
           weight_kg:      weightKg,
           product_name:   pName,
+          commission_pct: commissionPct,
           moq,
         }),
       });
@@ -743,6 +751,13 @@ export default function AIEconomicsFunnel() {
 
     go("calculating");
 
+    const recalcCommission = detectCommissionPct(
+      s.marketplace,
+      s.correction.product_name,
+      s.extractedData?.product_name_en ?? undefined,
+      s.extractedData?.product_name_cn ?? undefined,
+    );
+
     try {
       const res  = await fetch("/api/ai-funnel/preview", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -755,6 +770,7 @@ export default function AIEconomicsFunnel() {
           city_to:        s.city_to,
           weight_kg:      s.correction.weight_kg ? parseFloat(s.correction.weight_kg) : undefined,
           product_name:   s.correction.product_name,
+          commission_pct: recalcCommission,
           moq:            s.extractedData?.moq ?? undefined,
         }),
       });
