@@ -252,8 +252,9 @@ export default function Hero() {
 
             {/* Quick contacts */}
             <div className="fade-up flex flex-wrap items-center gap-4 mt-6">
-              <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-[#229ED9] transition-colors">
-                <Send className="w-3.5 h-3.5 text-[#229ED9]"/>
+              <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#229ED9]/15 border border-[#229ED9]/40 text-[#229ED9] font-semibold text-sm hover:bg-[#229ED9]/25 hover:border-[#229ED9]/70 transition-all">
+                <Send className="w-4 h-4 flex-shrink-0"/>
                 Написать менеджеру в Telegram
               </a>
             </div>
