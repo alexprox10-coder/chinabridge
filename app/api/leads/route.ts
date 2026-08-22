@@ -70,7 +70,11 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
   }
 
   // Source whitelist
-  const allowedSources = ["website_form", "website_chat", "api", "LEAD_MAGNET_FREE", "telegram_bot"];
+  const allowedSources = [
+    "website_form", "website_chat", "api", "LEAD_MAGNET_FREE", "telegram_bot",
+    "kaspi_landing", "vk_kz", "VK-KZ", "lp_kz", "b2bchina_landing",
+    "wb_landing", "supplier_landing", "kz_import_landing",
+  ];
   if (!errors.source && !allowedSources.includes(b.source as string)) {
     errors.source = `source must be one of: ${allowedSources.join(", ")}`;
   }
@@ -167,8 +171,10 @@ export async function POST(req: NextRequest) {
     console.error("[POST /api/leads] n8n webhook failed:", err)
   );
 
-  // Fire-and-forget: Telegram notification to manager
-  notifyManagerTelegram(lead).catch(() => {});
+  // Await Telegram — must complete before response or Vercel kills the function
+  await notifyManagerTelegram(lead).catch((err) =>
+    console.error("[POST /api/leads] Telegram failed:", err)
+  );
 
   return NextResponse.json<LeadApiResponse>({ ok: true, id: lead.id }, { status: 201 });
 }
