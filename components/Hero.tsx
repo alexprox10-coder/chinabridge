@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, CheckCircle2, ChevronDown, Phone, MessageCircle, Send } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, MessageCircle, Send } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { trackGAEvent } from "@/lib/analytics/ga";
-import { analytics } from "@/lib/analytics";
 
 const checks = [
   "Еженедельные рейсы из Китая в РФ и Казахстан",
@@ -253,13 +252,9 @@ export default function Hero() {
 
             {/* Quick contacts */}
             <div className="fade-up flex flex-wrap items-center gap-4 mt-6">
-              <a href="tel:+79145819661" onClick={() => analytics.phoneClick()} className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-white transition-colors">
-                <Phone className="w-3.5 h-3.5 text-[#00A86B]"/>
-                +7 (914) 581-96-61
-              </a>
               <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-[#229ED9] transition-colors">
                 <Send className="w-3.5 h-3.5 text-[#229ED9]"/>
-                Telegram
+                Написать менеджеру в Telegram
               </a>
             </div>
 
