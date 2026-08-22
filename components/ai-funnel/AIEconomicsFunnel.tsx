@@ -1340,7 +1340,19 @@ export default function AIEconomicsFunnel() {
                 >
                   <span className="text-lg">{mp.icon}</span>
                   <span>{mp.label}</span>
-                  {mp.commission_pct > 0 && <span className="text-[10px] opacity-70">{mp.commission_pct}%</span>}
+                  {mp.commission_pct > 0 && (() => {
+                    const detected = detectCommissionPct(
+                      mp.id,
+                      s.extractedData?.product_name ?? s.product.product_name,
+                      s.extractedData?.product_name_en ?? undefined,
+                      s.extractedData?.product_name_cn ?? undefined,
+                    );
+                    return (
+                      <span className="text-[10px] opacity-70">
+                        {detected !== mp.commission_pct ? `${detected}%` : `${mp.commission_pct}%`}
+                      </span>
+                    );
+                  })()}
                 </button>
               ))}
             </div>
