@@ -243,17 +243,25 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
     weight:       weightKg,
   }).catch(() => null);
 
-  const hasRate    = !!(cost && cost.sale_price > 0);
-  const deliveryRub = hasRate
+  const hasRate = !!(cost && cost.sale_price > 0);
+  const rateDeliveryRub = hasRate
     ? cost!.currency === 'RUB' ? cost!.sale_price
     : cost!.currency === 'CNY' ? cost!.sale_price * cnyRate
     : cost!.sale_price * usdRate
     : 0;
 
+  // Если нет точной ставки — оцениваем 4 USD/кг (среднее карго Китай→РФ/KZ)
+  const DEFAULT_CARGO_USD_PER_KG = 4;
+  const estimatedDeliveryRub = (weightKg ?? 0.5) * DEFAULT_CARGO_USD_PER_KG * usdRate * qty;
+  const deliveryRub = hasRate ? rateDeliveryRub : estimatedDeliveryRub;
+
   // P&L
   const unitPriceRub     = unitPrice * rate;
   const purchaseTotalRub = unitPriceRub * qty;
-  const customsRub       = purchaseTotalRub * customs_rate;
+
+  // Kaspi (KZ серая схема) — таможня не применяется
+  const isKZ      = marketplaceId === 'kaspi' || countryTo === 'Kazakhstan';
+  const customsRub = isKZ ? 0 : purchaseTotalRub * customs_rate;
   const totalCostRub     = purchaseTotalRub + deliveryRub + customsRub + mpLogTotal + otherCosts;
   const unitCostRub      = totalCostRub / qty;
   const grossRevenue     = salePrice * qty;
@@ -312,13 +320,13 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
     economics,
     priority,
     delivery: {
-      hasRate,
+      hasRate: true, // always true — exact rate or estimate
       deliveryRub:   Math.round(deliveryRub),
-      deliveryCost:  hasRate ? cost!.sale_price        : undefined,
-      currency:      hasRate ? cost!.currency           : undefined,
-      daysMin:       hasRate ? cost!.delivery_days_min  : undefined,
-      daysMax:       hasRate ? cost!.delivery_days_max  : undefined,
-      pricingRule:   hasRate ? cost!.selected_rule_name : undefined,
+      deliveryCost:  hasRate ? cost!.sale_price        : Math.round(deliveryRub),
+      currency:      hasRate ? cost!.currency           : 'RUB',
+      daysMin:       hasRate ? cost!.delivery_days_min  : (isKZ ? 12 : 10),
+      daysMax:       hasRate ? cost!.delivery_days_max  : (isKZ ? 18 : 16),
+      pricingRule:   hasRate ? cost!.selected_rule_name : 'estimate_4usd_kg',
     },
   };
 }

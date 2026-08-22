@@ -109,7 +109,7 @@ const ANALYZE_STAGES = [
 
 // Approximate CNY→RUB for sale price estimation (real rate comes from API)
 const EST_CNY_RATE    = 12.5;
-const MARKUP_MULTIPLE = 3.5;
+const MARKUP_MULTIPLE = 2.5;
 
 function estimateSalePrice(cny: number | null): string {
   if (!cny) return "";
@@ -267,17 +267,23 @@ function ScenariosBlock({
   );
 }
 
-function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote }: {
+function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
   ec: EconomicsResult;
   delivery: FunnelState["delivery"];
   mpLabel?: string;
   tariffDate?: string;
   commissionNote?: string;
+  isKZ?: boolean;
 }) {
+  const deliveryLabel = delivery?.pricingRule === 'estimate_4usd_kg'
+    ? `${fmt(ec.delivery_total_rub)} ₽ (~4$/кг)`
+    : `${fmt(ec.delivery_total_rub)} ₽`;
   const rows: Array<[string, string, boolean?]> = [
     ["🛍️ Закупочная цена (всего)",     `${fmt(ec.purchase_total_rub)} ₽`],
-    ["🚢 Международная доставка",        delivery?.hasRate ? `${fmt(ec.delivery_total_rub)} ₽` : "уточняется"],
-    ["🏛️ Таможня (~20% от закупки)",   `${fmt(ec.customs_rub)} ₽`],
+    ["🚢 Международная доставка",        deliveryLabel],
+    ...(isKZ
+      ? [] as Array<[string, string, boolean?]>
+      : [["🏛️ Таможня (~20% от закупки)", `${fmt(ec.customs_rub)} ₽`] as [string, string]]),
     ["🏪 Логистика МП (FBW/FBO)",        `${fmt(ec.marketplace_logistics_rub)} ₽`],
     [`💳 Комиссия ${mpLabel ?? "МП"}`,   `${fmt(ec.marketplace_fee_rub)} ₽`],
     ["📣 Реклама",                        ec.ad_cost_rub > 0 ? `${fmt(ec.ad_cost_rub)} ₽` : "не задана"],
@@ -1483,6 +1489,7 @@ export default function AIEconomicsFunnel() {
               mpLabel={s.marketplace_config?.label}
               tariffDate={s.marketplace_config?.tariff_date}
               commissionNote={s.marketplace_config?.commission_note}
+              isKZ={s.marketplace === "kaspi"}
             />
             {ec.product_score && <ProductScoreCard ps={ec.product_score} />}
             {ec.supplier_risk && <SupplierRiskBadge sr={ec.supplier_risk} />}
