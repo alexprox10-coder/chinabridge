@@ -1122,15 +1122,9 @@ export default function AIEconomicsFunnel() {
       {/* ── INPUT ──────────────────────────────────────────────────────────────── */}
       {s.step === "input" && (
         <div className="flex flex-col gap-5">
-          <div>
-            <p className="text-[#00A86B] text-xs font-semibold uppercase tracking-widest mb-2">AI-анализ товара</p>
-            <h2 className="text-xl font-bold text-white mb-1">Проверьте товар до покупки</h2>
-            <p className="text-sm text-[#8899aa]">Вставьте ссылку с 1688 или просто опишите товар — AI рассчитает прибыль за 15 секунд</p>
-          </div>
-
           {/* Quick examples — instant calculation without URL */}
           <div>
-            <p className="text-xs text-[#8899aa] mb-2">Или выберите категорию — расчёт мгновенно:</p>
+            <p className="text-xs font-medium text-white mb-2">Выберите категорию — расчёт за 15 сек:</p>
             <div className="grid grid-cols-2 gap-2">
               {QUICK_EXAMPLES.map(ex => (
                 <button
