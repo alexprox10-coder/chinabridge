@@ -7,10 +7,10 @@ import Link from "next/link";
 import { trackGAEvent } from "@/lib/analytics/ga";
 
 const checks = [
-  "Еженедельные рейсы из Китая в РФ и Казахстан",
-  "Поставщик + проверка фабрики в Китае",
-  "Таможня + документы для WB, Ozon",
-  "AI-расчёт маржи до закупки",
+  "ГТД + ЕАЭС-сертификат в комплекте — карточки WB и Kaspi не блокируются",
+  "Оплата поставщику в юанях — Swift не нужен, берём на себя",
+  "Один менеджер: поставщик → доставка → таможня → склад МП",
+  "Гарантированные сроки 10–18 дней, груз застрахован",
 ];
 
 function RouteMap() {
@@ -212,16 +212,16 @@ export default function Hero() {
           <div>
             <div className="fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse"/>
-              Работаем с 2019 года
+              Белый импорт · официальные документы · с 2019 года
             </div>
 
             <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-5">
-              Ваш товар на полке<br/>
-              <span className="text-gradient">WB и Ozon из Китая</span>
+              Вы продаёте —<br/>
+              <span className="text-gradient">мы привозим из Китая</span>
             </h1>
 
             <p className="fade-up text-lg text-[#8899aa] leading-relaxed mb-7 max-w-lg">
-              Находим поставщика, проверяем фабрику, везём, растамаживаем и отправляем на склад маркетплейса. Вы получаете готовый товар — и считаете прибыль.
+              Документы, поставщик, оплата в юанях, таможня — наша работа. Вы получаете товар на складе маркетплейса с полным пакетом документов. Без пяти подрядчиков.
             </p>
 
             <ul className="fade-up flex flex-col gap-2.5 mb-9">
