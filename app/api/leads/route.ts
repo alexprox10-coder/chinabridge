@@ -13,8 +13,8 @@ async function notifyManagerTelegram(lead: Lead): Promise<void> {
     "🔥 *Новый лид на ChinaBridge*",
     "",
     `👤 *Имя:* ${tg(lead.name)}`,
-    `📞 *Телефон:* ${tg(lead.phone)}`,
     lead.telegram ? `✈️ *Telegram:* ${tg(lead.telegram)}` : null,
+    lead.phone ? `📞 *Телефон:* ${tg(lead.phone)}` : null,
     `📦 *Товар:* ${tg(lead.product)}`,
     lead.link ? `🔗 ${tg(lead.link)}` : null,
     lead.weight ? `⚖️ *Вес:* ${tg(lead.weight)}` : null,
@@ -53,7 +53,7 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
   }
 
   // Phone required unless lead-magnet source
-  const noPhoneSource = ["LEAD_MAGNET_FREE", "telegram_bot"].includes(b.source as string);
+  const noPhoneSource = ["LEAD_MAGNET_FREE", "telegram_bot", "phone_click"].includes(b.source as string);
   if (!noPhoneSource) {
     for (const field of REQUIRES_PHONE) {
       if (!b[field] || typeof b[field] !== "string" || !(b[field] as string).trim()) {
@@ -63,7 +63,7 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
   }
 
   // Phone basic check (not required for lead magnet sources)
-  const noPhoneRequired = ["LEAD_MAGNET_FREE", "telegram_bot"].includes(b.source as string);
+  const noPhoneRequired = ["LEAD_MAGNET_FREE", "telegram_bot", "phone_click"].includes(b.source as string);
   if (!noPhoneRequired && !errors.phone && typeof b.phone === "string") {
     const digits = b.phone.replace(/\D/g, "");
     if (digits.length < 10) errors.phone = "phone must have at least 10 digits";
@@ -73,7 +73,7 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
   const allowedSources = [
     "website_form", "website_chat", "api", "LEAD_MAGNET_FREE", "telegram_bot",
     "kaspi_landing", "vk_kz", "VK-KZ", "lp_kz", "b2bchina_landing",
-    "wb_landing", "supplier_landing", "kz_import_landing",
+    "wb_landing", "supplier_landing", "kz_import_landing", "phone_click",
   ];
   if (!errors.source && !allowedSources.includes(b.source as string)) {
     errors.source = `source must be one of: ${allowedSources.join(", ")}`;
@@ -83,7 +83,7 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
 
   const input: LeadInput = {
     name:      (b.name      as string).trim(),
-    phone:     (b.phone     as string).trim(),
+    phone:     typeof b.phone === "string" ? b.phone.trim() : "",
     product:   (b.product   as string).trim(),
     source:    b.source     as LeadInput["source"],
     telegram:  typeof b.telegram  === "string" ? b.telegram.trim()  || undefined : undefined,

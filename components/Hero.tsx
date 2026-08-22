@@ -5,6 +5,7 @@ import { ArrowRight, CheckCircle2, ChevronDown, Phone, MessageCircle, Send } fro
 import Image from "next/image";
 import Link from "next/link";
 import { trackGAEvent } from "@/lib/analytics/ga";
+import { analytics } from "@/lib/analytics";
 
 const checks = [
   "Еженедельные рейсы из Китая в РФ и Казахстан",
@@ -252,7 +253,7 @@ export default function Hero() {
 
             {/* Quick contacts */}
             <div className="fade-up flex flex-wrap items-center gap-4 mt-6">
-              <a href="tel:+79145819661" className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-white transition-colors">
+              <a href="tel:+79145819661" onClick={() => analytics.phoneClick()} className="flex items-center gap-1.5 text-sm text-[#8899aa] hover:text-white transition-colors">
                 <Phone className="w-3.5 h-3.5 text-[#00A86B]"/>
                 +7 (914) 581-96-61
               </a>

@@ -29,7 +29,21 @@ export const analytics = {
   // ── Контакты ──────────────────────────────────────────────────────────────
   telegramClick:  () => fire("telegram_click",    "telegram_click",   { category: "contact" }),
   whatsappClick:  () => fire("whatsapp_click",    "whatsapp_click",   { category: "contact" }),
-  phoneClick:     () => fire("phone_click",       "phone_click",      { category: "contact" }),
+  phoneClick: () => {
+    fire("phone_click", "phone_click", { category: "contact" });
+    if (typeof window !== "undefined") {
+      const page = window.location.pathname;
+      fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "☎️ Клик по телефону",
+          product: `Нажал на номер +7 (914) 581-96-61 — страница: ${page}`,
+          source: "phone_click",
+        }),
+      }).catch(() => {});
+    }
+  },
 
   // ── Услуги (просмотр конкретных карточек) ─────────────────────────────────
   serviceSourcingView:      () => fire("service_sourcing_view",      "service_sourcing_view",      { category: "content" }),
