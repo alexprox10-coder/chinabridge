@@ -58,14 +58,17 @@ export async function POST(req: NextRequest) {
 
   // Forward to manager via notification bot
   if (NOTIFY_BOT_TOKEN && MANAGER_CHAT_ID && text !== "/start") {
-    const tg = (s: string) => s.replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&");
+    const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const replyLink = message.from?.username
+      ? `t.me/${message.from.username}`
+      : `tg://user?id=${chatId}`;
     await fetch(`https://api.telegram.org/bot${NOTIFY_BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: MANAGER_CHAT_ID,
-        text: `💬 *Сообщение от клиента*\n\n👤 ${tg(firstName)} (${tg(username)})\n🆔 chat\\_id: \`${chatId}\`\n\n📝 *Текст:*\n${tg(text)}\n\n[Ответить клиенту](https://t.me/${chatId})`,
-        parse_mode: "MarkdownV2",
+        text: `💬 <b>Сообщение от клиента</b>\n\n👤 ${h(firstName)} (${h(username)})\n🆔 chat_id: <code>${chatId}</code>\n\n📝 <b>Текст:</b>\n${h(text)}\n\n📲 Ответить: ${replyLink}`,
+        parse_mode: "HTML",
       }),
     });
   }
