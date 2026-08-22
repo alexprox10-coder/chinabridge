@@ -56,13 +56,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Forward to manager via notification bot
-  if (NOTIFY_BOT_TOKEN && MANAGER_CHAT_ID && text !== "/start") {
+  // Forward to manager via the same LID bot → manager's personal chat
+  if (LID_BOT_TOKEN && MANAGER_CHAT_ID && text !== "/start") {
     const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const replyLink = message.from?.username
       ? `t.me/${message.from.username}`
       : `tg://user?id=${chatId}`;
-    await fetch(`https://api.telegram.org/bot${NOTIFY_BOT_TOKEN}/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
