@@ -6,10 +6,23 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/client-portal/ty
 import type { ClientOrder } from "@/lib/client-portal/types";
 import OnboardingSteps from "@/components/client/OnboardingSteps";
 import CurrencyRates from "@/components/client/CurrencyRates";
+import { neon } from "@neondatabase/serverless";
 
-export default async function DashboardPage() {
+async function getCalcSubscription(clientId: string): Promise<Date | null> {
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
+    const rows = await sql`
+      SELECT subscribed_until FROM calc_subscriptions
+      WHERE client_id = ${clientId} AND subscribed_until > NOW() LIMIT 1`;
+    return rows[0] ? new Date(rows[0].subscribed_until as string) : null;
+  } catch { return null; }
+}
+
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const session = await getSession();
   if (!session) redirect("/client/login");
+  const params = await searchParams;
+  const justSubscribed = params.subscribed === "calculator";
 
   const [orders, unread] = await Promise.all([
     session.role === "CLIENT" ? getClientOrders(session.clientId) : getAllOrders(),
@@ -22,6 +35,7 @@ export default async function DashboardPage() {
   const recent = [...orders].slice(0, 5);
 
   const isNewClient = orders.length === 0;
+  const calcSub = await getCalcSubscription(session.clientId);
 
   return (
     <div className="space-y-6">
@@ -80,6 +94,53 @@ export default async function DashboardPage() {
       )}
 
       {/* Currency rates */}
+      {/* AI Calculator subscription block */}
+      {(calcSub || justSubscribed) && (
+        <div className="bg-gradient-to-r from-[#00A86B]/15 to-[#00A86B]/5 border border-[#00A86B]/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex-1">
+            {justSubscribed && (
+              <p className="text-[#00A86B] text-xs font-bold uppercase tracking-wider mb-1">Оплата прошла!</p>
+            )}
+            <p className="text-white font-semibold">🧮 AI-калькулятор маржи — подписка активна</p>
+            {calcSub && (
+              <p className="text-[#8899aa] text-sm mt-0.5">
+                Действует до {calcSub.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })} · Безлимитные расчёты
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 shrink-0">
+            <Link
+              href="/ai-calculator"
+              className="bg-[#00A86B] text-white font-semibold px-4 py-2 rounded-xl text-sm text-center"
+            >
+              Открыть калькулятор
+            </Link>
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank" rel="noopener noreferrer"
+              className="text-[#229ED9] text-xs text-center hover:underline"
+            >
+              Нашли хороший товар? Доставим из Китая →
+            </a>
+          </div>
+        </div>
+      )}
+
+      {!calcSub && !justSubscribed && (
+        <div className="border border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white/3">
+          <div className="flex-1">
+            <p className="text-white font-semibold">🧮 AI-калькулятор маржи</p>
+            <p className="text-[#8899aa] text-sm mt-0.5">3 расчёта бесплатно · далее 490₽/мес без лимитов</p>
+          </div>
+          <Link
+            href="/ai-calculator"
+            className="border border-[#00A86B] text-[#00A86B] font-semibold px-4 py-2 rounded-xl text-sm shrink-0"
+          >
+            Попробовать
+          </Link>
+        </div>
+      )}
+
       <CurrencyRates />
 
       {/* Onboarding steps — shown only for new clients with no orders */}
