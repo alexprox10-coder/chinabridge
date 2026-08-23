@@ -659,6 +659,10 @@ export default function AIEconomicsFunnel() {
       const data = await res.json();
 
       if (!data.ok) {
+        if (res.status === 429 || data.error === 'rate_limit') {
+          setShowPaywall(true);
+          return;
+        }
         go("preview", { error: data.message ?? "Ошибка расчёта" });
         return;
       }
@@ -879,6 +883,10 @@ export default function AIEconomicsFunnel() {
       const data = await res.json();
 
       if (!data.ok) {
+        if (res.status === 429 || data.error === 'rate_limit') {
+          setShowPaywall(true);
+          return;
+        }
         go("preview", { error: data.message ?? "Ошибка расчёта" });
         return;
       }

@@ -6,7 +6,7 @@ import { neon }                   from '@neondatabase/serverless';
 export const runtime     = 'nodejs';
 export const maxDuration = 20;
 
-const DAILY_LIMIT = 50;
+const DAILY_LIMIT = 3;
 
 function getIp(req: NextRequest) {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
