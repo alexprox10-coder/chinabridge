@@ -97,7 +97,6 @@ const QUICK_EXAMPLES = [
 ];
 
 const ANON_LIMIT = 3;
-const REG_LIMIT  = 3;
 
 // Analyzing stages — real stages that match backend process
 const ANALYZE_STAGES = [
@@ -540,12 +539,7 @@ export default function AIEconomicsFunnel() {
   const [autoCountdown,  setAutoCountdown]  = useState<number | null>(null);
   const [calcCount,       setCalcCount]       = useState(0);
   const [isRegistered,    setIsRegistered]    = useState(false);
-  const [showRegGate,     setShowRegGate]     = useState(false);
   const [showPaywall,     setShowPaywall]     = useState(false);
-  const [regName,         setRegName]         = useState("");
-  const [regTelegram,     setRegTelegram]     = useState("");
-  const [regSubmitting,   setRegSubmitting]   = useState(false);
-  const [calcAfterReg,    setCalcAfterReg]    = useState(false);
 
   const triggerPaywall = () => {
     try { localStorage.setItem('cb_paywall_active', '1'); } catch {}
@@ -601,15 +595,6 @@ export default function AIEconomicsFunnel() {
       }
     } catch { /* ignore */ }
   }, []);
-
-  // After registration — auto-resume pending calculation
-  useEffect(() => {
-    if (!isRegistered || !calcAfterReg) return;
-    setCalcAfterReg(false);
-    setShowRegGate(false);
-    // handleCalcRef.current is now updated with isRegistered=true
-    handleCalcRef.current?.();
-  }, [isRegistered, calcAfterReg]);
 
   // Advance analyzing stages every 2.5s (time-based, not marking done until API responds)
   useEffect(() => {
@@ -740,8 +725,7 @@ export default function AIEconomicsFunnel() {
   // ── URL / Description submit ────────────────────────────────────────────────
 
   async function handleUrlSubmit() {
-    const limit = isRegistered ? REG_LIMIT : ANON_LIMIT;
-    if (calcCount >= limit) { triggerPaywall(); return; }
+    if (!isRegistered && calcCount >= ANON_LIMIT) { triggerPaywall(); return; }
 
     if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
     const url = s.urlInput.trim();
@@ -924,40 +908,6 @@ export default function AIEconomicsFunnel() {
     }
   }
 
-  // ── Registration gate submit ────────────────────────────────────────────────
-
-  async function handleRegisterSubmit() {
-    if (!regTelegram.trim()) return;
-    setRegSubmitting(true);
-
-    // Unlock immediately (optimistic) — gate is UX-enforced
-    localStorage.setItem('cb_registered', 'true');
-    setIsRegistered(true);
-
-    // Best-effort CRM notification
-    try {
-      await fetch("/api/ai-funnel/submit", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name:           regName,
-          telegram:       regTelegram,
-          product_name:   "Регистрация в калькуляторе",
-          product_link:   "",
-          unit_price:     0,
-          price_currency: "CNY",
-          sale_price:     0,
-          quantity:       1,
-          marketplace:    "wb",
-          city_to:        "Москва",
-        }),
-      });
-    } catch { /* ignore */ }
-
-    setRegSubmitting(false);
-    // showRegGate + calcAfterReg cleared by useEffect after isRegistered → true
-    analytics.aiFunnelStart();
-  }
-
   // ── Contact submit ──────────────────────────────────────────────────────────
 
   async function handleContactSubmit() {
@@ -1083,65 +1033,6 @@ export default function AIEconomicsFunnel() {
     (STEPS_ORDER.indexOf(["analyzing", "calculating"].includes(s.step) ? "marketplace" : s.step) + 1)
     / STEPS_ORDER.length * 100
   );
-
-  // ── Registration gate ────────────────────────────────────────────────────────
-
-  if (showRegGate) {
-    return (
-      <div className="card-glass rounded-2xl p-6 md:p-8 flex flex-col gap-6">
-        <div className="text-center">
-          <div className="w-14 h-14 rounded-full bg-[#00A86B]/20 border border-[#00A86B]/40 flex items-center justify-center text-2xl mx-auto mb-4">🔓</div>
-          <h2 className="text-xl font-bold text-white mb-2">Расчёт готов — куда прислать?</h2>
-          <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-            Зарегистрируйтесь и получите <span className="text-white font-semibold">10 расчётов в день</span> + полный P&amp;L в Telegram.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <div>
-            <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
-              Telegram <span className="text-[#00A86B]">*</span>
-            </label>
-            <input
-              type="text" value={regTelegram} autoFocus
-              onChange={e => setRegTelegram(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && !regSubmitting && regTelegram.trim() && handleRegisterSubmit()}
-              placeholder="@username" className={inp()} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Имя</label>
-            <input
-              type="text" value={regName}
-              onChange={e => setRegName(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && !regSubmitting && regTelegram.trim() && handleRegisterSubmit()}
-              placeholder="Ваше имя" className={inp()} />
-          </div>
-        </div>
-
-        <button
-          onClick={handleRegisterSubmit}
-          disabled={!regTelegram.trim() || regSubmitting}
-          className="w-full py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
-        >
-          {regSubmitting ? "Регистрируем..." : "🚀 Получить 3 расчёта бесплатно"}
-        </button>
-
-        <div className="flex flex-col gap-2 text-center">
-          <p className="text-xs text-[#8899aa]">
-            Нажимая кнопку, вы соглашаетесь с{" "}
-            <a href="/privacy" className="text-[#00A86B] hover:underline">политикой конфиденциальности</a>
-          </p>
-          <a
-            href="https://t.me/ChinaBridgeLID_bot"
-            target="_blank" rel="noopener noreferrer"
-            className="text-xs text-[#8899aa] hover:text-white transition-colors"
-          >
-            Написать менеджеру напрямую →
-          </a>
-        </div>
-      </div>
-    );
-  }
 
   // ── Paid plan paywall ─────────────────────────────────────────────────────────
 
