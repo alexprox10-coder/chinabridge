@@ -547,6 +547,15 @@ export default function AIEconomicsFunnel() {
   const [regSubmitting,   setRegSubmitting]   = useState(false);
   const [calcAfterReg,    setCalcAfterReg]    = useState(false);
 
+  const triggerPaywall = () => {
+    try { localStorage.setItem('cb_paywall_active', '1'); } catch {}
+    triggerPaywall();
+  };
+  const resetPaywall = () => {
+    try { localStorage.removeItem('cb_paywall_active'); } catch {}
+    setShowPaywall(false);
+  };
+
   // Load usage counters from localStorage on mount (reset=1 clears state)
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('reset') === '1') {
@@ -576,8 +585,16 @@ export default function AIEconomicsFunnel() {
       const paidUntil = localStorage.getItem('cb_paid_until');
       if (paidUntil && new Date(paidUntil) > new Date()) {
         setIsRegistered(true); // paid users get unlimited
+        localStorage.removeItem('cb_paywall_active');
       } else if (paidUntil) {
         localStorage.removeItem('cb_paid_until'); // expired
+      }
+    } catch { /* ignore */ }
+
+    // Restore paywall if user left without paying
+    try {
+      if (localStorage.getItem('cb_paywall_active') === '1') {
+        triggerPaywall();
       }
     } catch { /* ignore */ }
   }, []);
@@ -660,7 +677,7 @@ export default function AIEconomicsFunnel() {
 
       if (!data.ok) {
         if (res.status === 429 || data.error === 'rate_limit') {
-          setShowPaywall(true);
+          triggerPaywall();
           return;
         }
         go("preview", { error: data.message ?? "Ошибка расчёта" });
@@ -721,7 +738,7 @@ export default function AIEconomicsFunnel() {
 
   async function handleUrlSubmit() {
     const limit = isRegistered ? REG_LIMIT : ANON_LIMIT;
-    if (calcCount >= limit) { setShowPaywall(true); return; }
+    if (calcCount >= limit) { triggerPaywall(); return; }
 
     if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
     const url = s.urlInput.trim();
@@ -884,7 +901,7 @@ export default function AIEconomicsFunnel() {
 
       if (!data.ok) {
         if (res.status === 429 || data.error === 'rate_limit') {
-          setShowPaywall(true);
+          triggerPaywall();
           return;
         }
         go("preview", { error: data.message ?? "Ошибка расчёта" });
@@ -1127,7 +1144,7 @@ export default function AIEconomicsFunnel() {
 
   if (showPaywall) {
     return (
-      <PaywallBlock onReset={() => setShowPaywall(false)} />
+      <PaywallBlock onReset={resetPaywall} />
     );
   }
 
@@ -1267,7 +1284,20 @@ export default function AIEconomicsFunnel() {
             🚀 Рассчитать прибыль
           </button>
 
-          <p className="text-center text-xs text-[#8899aa]">Бесплатно · результат за 15 сек · AI-анализ GPT-4o</p>
+          {isRegistered ? (
+            <p className="text-center text-xs text-[#00A86B]">✓ Подписка активна · безлимитные расчёты</p>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              {[0, 1, 2].map(i => (
+                <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i < calcCount ? 'bg-[#00A86B]' : 'bg-white/15'}`} />
+              ))}
+              <p className="text-xs text-[#8899aa]">
+                {calcCount >= ANON_LIMIT
+                  ? 'Лимит исчерпан — нужна подписка'
+                  : `Расчёт ${calcCount + 1} из ${ANON_LIMIT} бесплатных · GPT-4o`}
+              </p>
+            </div>
+          )}
         </div>
       )}
 

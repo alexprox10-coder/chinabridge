@@ -57,7 +57,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const result = await parseProductUrl(url);
+  const timeoutPromise = new Promise<{ ok: false; reason: string }>((resolve) =>
+    setTimeout(() => resolve({ ok: false, reason: 'scrape_failed' }), 15_000)
+  );
+  const result = await Promise.race([parseProductUrl(url), timeoutPromise]);
 
   if (!result.ok) {
     const codeMap: Record<string, string> = {

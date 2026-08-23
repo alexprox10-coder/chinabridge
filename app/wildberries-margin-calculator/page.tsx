@@ -123,7 +123,7 @@ export default function WildberriesMarginCalculatorPage() {
               <span className="text-xl">🤖</span>
               <div>
                 <p className="text-white font-bold">AI-калькулятор маржи WB</p>
-                <p className="text-[#8899aa] text-xs">GPT-4o · Бесплатно · Результат за 15 сек</p>
+                <p className="text-[#8899aa] text-xs">GPT-4o · 3 расчёта бесплатно · далее 490₽/мес</p>
               </div>
             </div>
             <AIEconomicsFunnel />
