@@ -1,26 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllFinanceOrders, createFinanceOrder } from "@/lib/finance/api";
 import { calcFinancials } from "@/lib/finance/types";
+import { isAuthorized, getTenantId } from "@/lib/api-auth";
 import { randomUUID } from "crypto";
-import { isAuthorized } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const tenantId = getTenantId(req);
   const { searchParams } = new URL(req.url);
   const leadId = searchParams.get("lead_id");
-  const all = await getAllFinanceOrders();
+  const all = await getAllFinanceOrders(tenantId);
   const filtered = leadId ? all.filter((o) => o.lead_id === leadId) : all;
   return NextResponse.json({ orders: filtered });
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
+    const tenantId = getTenantId(req);
     const body = await req.json();
     const computed = calcFinancials(body);
-    const order = await createFinanceOrder({
+    const order = await createFinanceOrder(tenantId, {
       lead_id:        body.lead_id ?? "",
       order_id:       body.order_id ?? randomUUID(),
       client_id:      body.client_id ?? "",

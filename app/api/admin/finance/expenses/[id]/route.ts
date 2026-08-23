@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateExpense } from "@/lib/finance/api";
+import { isAuthorized } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   try {
     const body = await req.json();

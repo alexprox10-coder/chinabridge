@@ -6,8 +6,6 @@ import type {
 } from "./types";
 import { calcFinancials } from "./types";
 
-const TENANT_ID = "tenant-chinabridge";
-
 // ─── Row mappers ──────────────────────────────────────────────────────────────
 
 function rowToOrder(r: typeof financeOrders.$inferSelect): FinanceOrder {
@@ -102,35 +100,37 @@ function rowToCashFlow(r: typeof cashFlow.$inferSelect): CashFlowEntry {
 
 // ── Finance Orders ────────────────────────────────────────────────────────────
 
-export async function getAllFinanceOrders(): Promise<FinanceOrder[]> {
+export async function getAllFinanceOrders(tenantId: string): Promise<FinanceOrder[]> {
   const db = getDb();
   const rows = await db.select().from(financeOrders)
-    .where(eq(financeOrders.tenantId, TENANT_ID))
+    .where(eq(financeOrders.tenantId, tenantId))
     .orderBy(desc(financeOrders.createdAt));
   return rows.map(rowToOrder);
 }
 
-export async function getFinanceOrderByLead(leadId: string): Promise<FinanceOrder | null> {
+export async function getFinanceOrderByLead(tenantId: string, leadId: string): Promise<FinanceOrder | null> {
   const db = getDb();
   const rows = await db.select().from(financeOrders)
-    .where(and(eq(financeOrders.tenantId, TENANT_ID), eq(financeOrders.leadId, leadId)));
+    .where(and(eq(financeOrders.tenantId, tenantId), eq(financeOrders.leadId, leadId)));
   return rows[0] ? rowToOrder(rows[0]) : null;
 }
 
-export async function getFinanceOrderById(id: number): Promise<FinanceOrder | null> {
+export async function getFinanceOrderById(tenantId: string, id: number): Promise<FinanceOrder | null> {
   const db = getDb();
-  const rows = await db.select().from(financeOrders).where(eq(financeOrders.id, id));
+  const rows = await db.select().from(financeOrders)
+    .where(and(eq(financeOrders.tenantId, tenantId), eq(financeOrders.id, id)));
   return rows[0] ? rowToOrder(rows[0]) : null;
 }
 
 export async function createFinanceOrder(
+  tenantId: string,
   fields: Omit<FinanceOrder, "id" | "tenant_id" | "total_cost" | "gross_profit" | "net_profit" | "margin_percent" | "created_at" | "updated_at">
 ): Promise<FinanceOrder | null> {
   const db = getDb();
   const computed = calcFinancials(fields);
   const now = new Date().toISOString();
   const [row] = await db.insert(financeOrders).values({
-    tenantId:      TENANT_ID,
+    tenantId:      tenantId,
     leadId:        fields.lead_id,
     orderId:       fields.order_id,
     clientId:      fields.client_id,
@@ -156,10 +156,10 @@ export async function createFinanceOrder(
   return row ? rowToOrder(row) : null;
 }
 
-export async function updateFinanceOrder(id: number, fields: Partial<FinanceOrder>): Promise<boolean> {
+export async function updateFinanceOrder(tenantId: string, id: number, fields: Partial<FinanceOrder>): Promise<boolean> {
   try {
     const db = getDb();
-    const current = await getFinanceOrderById(id);
+    const current = await getFinanceOrderById(tenantId, id);
     if (!current) return false;
     const merged = { ...current, ...fields };
     const computed = calcFinancials(merged);
@@ -187,27 +187,28 @@ export async function updateFinanceOrder(id: number, fields: Partial<FinanceOrde
 
 // ── Finance Payments ──────────────────────────────────────────────────────────
 
-export async function getAllPayments(): Promise<FinancePayment[]> {
+export async function getAllPayments(tenantId: string): Promise<FinancePayment[]> {
   const db = getDb();
   const rows = await db.select().from(financePayments)
-    .where(eq(financePayments.tenantId, TENANT_ID))
+    .where(eq(financePayments.tenantId, tenantId))
     .orderBy(desc(financePayments.createdAt));
   return rows.map(rowToPayment);
 }
 
-export async function getPaymentsByLead(leadId: string): Promise<FinancePayment[]> {
+export async function getPaymentsByLead(tenantId: string, leadId: string): Promise<FinancePayment[]> {
   const db = getDb();
   const rows = await db.select().from(financePayments)
-    .where(and(eq(financePayments.tenantId, TENANT_ID), eq(financePayments.leadId, leadId)));
+    .where(and(eq(financePayments.tenantId, tenantId), eq(financePayments.leadId, leadId)));
   return rows.map(rowToPayment);
 }
 
 export async function createPayment(
+  tenantId: string,
   fields: Omit<FinancePayment, "id" | "created_at">
 ): Promise<FinancePayment | null> {
   const db = getDb();
   const [row] = await db.insert(financePayments).values({
-    tenantId:       TENANT_ID,
+    tenantId:       tenantId,
     paymentId:      fields.payment_id,
     leadId:         fields.lead_id,
     orderId:        fields.order_id,
@@ -241,27 +242,28 @@ export async function updatePayment(id: number, fields: Partial<FinancePayment>)
 
 // ── Finance Expenses ──────────────────────────────────────────────────────────
 
-export async function getAllExpenses(): Promise<FinanceExpense[]> {
+export async function getAllExpenses(tenantId: string): Promise<FinanceExpense[]> {
   const db = getDb();
   const rows = await db.select().from(financeExpenses)
-    .where(eq(financeExpenses.tenantId, TENANT_ID))
+    .where(eq(financeExpenses.tenantId, tenantId))
     .orderBy(desc(financeExpenses.createdAt));
   return rows.map(rowToExpense);
 }
 
-export async function getExpensesByLead(leadId: string): Promise<FinanceExpense[]> {
+export async function getExpensesByLead(tenantId: string, leadId: string): Promise<FinanceExpense[]> {
   const db = getDb();
   const rows = await db.select().from(financeExpenses)
-    .where(and(eq(financeExpenses.tenantId, TENANT_ID), eq(financeExpenses.leadId, leadId)));
+    .where(and(eq(financeExpenses.tenantId, tenantId), eq(financeExpenses.leadId, leadId)));
   return rows.map(rowToExpense);
 }
 
 export async function createExpense(
+  tenantId: string,
   fields: Omit<FinanceExpense, "id" | "created_at">
 ): Promise<FinanceExpense | null> {
   const db = getDb();
   const [row] = await db.insert(financeExpenses).values({
-    tenantId:       TENANT_ID,
+    tenantId:       tenantId,
     expenseId:      fields.expense_id,
     leadId:         fields.lead_id,
     orderId:        fields.order_id,
@@ -291,15 +293,15 @@ export async function updateExpense(id: number, fields: Partial<FinanceExpense>)
 
 // ── Finance Settings ──────────────────────────────────────────────────────────
 
-export async function getFinanceSettings(): Promise<FinanceSetting[]> {
+export async function getFinanceSettings(tenantId: string): Promise<FinanceSetting[]> {
   const db = getDb();
   const rows = await db.select().from(financeSettings)
-    .where(eq(financeSettings.tenantId, TENANT_ID));
+    .where(eq(financeSettings.tenantId, tenantId));
   return rows.map(rowToSetting);
 }
 
-export async function getSettingValue(key: string, fallback = "1"): Promise<string> {
-  const all = await getFinanceSettings();
+export async function getSettingValue(tenantId: string, key: string, fallback = "1"): Promise<string> {
+  const all = await getFinanceSettings(tenantId);
   return all.find((s) => s.key === key)?.value ?? fallback;
 }
 
@@ -314,27 +316,28 @@ export async function updateSetting(id: number, value: string): Promise<boolean>
 
 // ── Cash Flow ─────────────────────────────────────────────────────────────────
 
-export async function getAllCashFlow(): Promise<CashFlowEntry[]> {
+export async function getAllCashFlow(tenantId: string): Promise<CashFlowEntry[]> {
   const db = getDb();
   const rows = await db.select().from(cashFlow)
-    .where(eq(cashFlow.tenantId, TENANT_ID))
+    .where(eq(cashFlow.tenantId, tenantId))
     .orderBy(desc(cashFlow.createdAt));
   return rows.map(rowToCashFlow);
 }
 
-export async function getCashFlowByLead(leadId: string): Promise<CashFlowEntry[]> {
+export async function getCashFlowByLead(tenantId: string, leadId: string): Promise<CashFlowEntry[]> {
   const db = getDb();
   const rows = await db.select().from(cashFlow)
-    .where(and(eq(cashFlow.tenantId, TENANT_ID), eq(cashFlow.leadId, leadId)));
+    .where(and(eq(cashFlow.tenantId, tenantId), eq(cashFlow.leadId, leadId)));
   return rows.map(rowToCashFlow);
 }
 
 export async function createCashFlowEntry(
+  tenantId: string,
   fields: Omit<CashFlowEntry, "id" | "created_at">
 ): Promise<CashFlowEntry | null> {
   const db = getDb();
   const [row] = await db.insert(cashFlow).values({
-    tenantId:        TENANT_ID,
+    tenantId:        tenantId,
     cashflowId:      fields.cashflow_id,
     type:            fields.type,
     category:        fields.category,
@@ -366,11 +369,11 @@ export interface FinanceReport {
   cashflow_balance:  Record<string, number>;
 }
 
-export async function getFinanceReport(): Promise<FinanceReport> {
+export async function getFinanceReport(tenantId: string): Promise<FinanceReport> {
   const [orders, payments, cf] = await Promise.all([
-    getAllFinanceOrders(),
-    getAllPayments(),
-    getAllCashFlow(),
+    getAllFinanceOrders(tenantId),
+    getAllPayments(tenantId),
+    getAllCashFlow(tenantId),
   ]);
 
   const total_revenue    = orders.reduce((s, o) => s + (o.client_price ?? 0), 0);

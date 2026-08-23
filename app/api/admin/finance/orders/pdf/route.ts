@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFinanceOrderByLead, getPaymentsByLead, getExpensesByLead } from "@/lib/finance/api";
+import { isAuthorized, getTenantId } from "@/lib/api-auth";
 import { CURRENCY_SYMBOLS, PAYMENT_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/finance/types";
 import type { FinanceCurrency } from "@/lib/finance/types";
 import {
@@ -232,14 +233,16 @@ function FinancePDF({
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const tenantId = getTenantId(req);
   const { searchParams } = new URL(req.url);
   const leadId = searchParams.get("lead_id");
   if (!leadId) return NextResponse.json({ error: "lead_id required" }, { status: 400 });
 
   const [order, payments, expenses] = await Promise.all([
-    getFinanceOrderByLead(leadId),
-    getPaymentsByLead(leadId),
-    getExpensesByLead(leadId),
+    getFinanceOrderByLead(tenantId, leadId),
+    getPaymentsByLead(tenantId, leadId),
+    getExpensesByLead(tenantId, leadId),
   ]);
 
   if (!order) return NextResponse.json({ error: "Finance record not found. Create it first." }, { status: 404 });

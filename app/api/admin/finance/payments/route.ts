@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllPayments, createPayment } from "@/lib/finance/api";
+import { isAuthorized, getTenantId } from "@/lib/api-auth";
 import { randomUUID } from "crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const tenantId = getTenantId(req);
   const { searchParams } = new URL(req.url);
   const leadId = searchParams.get("lead_id");
-  const all = await getAllPayments();
+  const all = await getAllPayments(tenantId);
   const filtered = leadId ? all.filter((p) => p.lead_id === leadId) : all;
   return NextResponse.json({ payments: filtered });
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
+    const tenantId = getTenantId(req);
     const body = await req.json();
-    const payment = await createPayment({
+    const payment = await createPayment(tenantId, {
       payment_id:       randomUUID(),
       lead_id:          body.lead_id ?? "",
       order_id:         body.order_id ?? "",

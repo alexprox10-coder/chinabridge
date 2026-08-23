@@ -38,7 +38,7 @@ export async function getCurrentTenant(): Promise<Tenant | null> {
 export async function isSuperAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
   const val = cookieStore.get(SUPER_ADMIN_COOKIE)?.value;
-  return val === process.env.SUPER_ADMIN_SECRET || val === "dev-super-admin";
+  return !!(val && process.env.SUPER_ADMIN_SECRET && val === process.env.SUPER_ADMIN_SECRET);
 }
 
 export async function requireSuperAdmin(): Promise<boolean> {

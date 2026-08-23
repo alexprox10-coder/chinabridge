@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllExpenses, createExpense } from "@/lib/finance/api";
+import { isAuthorized, getTenantId } from "@/lib/api-auth";
 import { randomUUID } from "crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const tenantId = getTenantId(req);
   const { searchParams } = new URL(req.url);
   const leadId = searchParams.get("lead_id");
-  const all = await getAllExpenses();
+  const all = await getAllExpenses(tenantId);
   const filtered = leadId ? all.filter((e) => e.lead_id === leadId) : all;
   return NextResponse.json({ expenses: filtered });
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
+    const tenantId = getTenantId(req);
     const body = await req.json();
-    const expense = await createExpense({
+    const expense = await createExpense(tenantId, {
       expense_id:       randomUUID(),
       lead_id:          body.lead_id ?? "",
       order_id:         body.order_id ?? "",
