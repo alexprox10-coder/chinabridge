@@ -43,9 +43,9 @@ export default async function FinanceDashboardPage() {
   let cashflow: CashFlowEntry[] = [];
   try {
     [orders, payments, cashflow] = await Promise.all([
-      getAllFinanceOrders(),
-      getAllPayments(),
-      getAllCashFlow(),
+      getAllFinanceOrders("tenant-chinabridge"),
+      getAllPayments("tenant-chinabridge"),
+      getAllCashFlow("tenant-chinabridge"),
     ]);
   } catch {}
 

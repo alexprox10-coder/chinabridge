@@ -14,7 +14,7 @@ function fmtDate(dt: string) {
 
 export default async function FinanceOrdersPage() {
   let orders: FinanceOrder[] = [];
-  try { orders = await getAllFinanceOrders(); } catch {}
+  try { orders = await getAllFinanceOrders("tenant-chinabridge"); } catch {}
   const sym = (cur: FinanceCurrency) => CURRENCY_SYMBOLS[cur] ?? "$";
 
   return (

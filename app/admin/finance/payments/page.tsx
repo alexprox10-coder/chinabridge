@@ -19,7 +19,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default async function FinancePaymentsPage() {
   let payments: FinancePayment[] = [];
-  try { payments = await getAllPayments(); } catch {}
+  try { payments = await getAllPayments("tenant-chinabridge"); } catch {}
   const sym = (cur: string) => CURRENCY_SYMBOLS[cur as FinanceCurrency] ?? "$";
 
   const totalPaid    = payments.filter((p) => p.status === "paid").reduce((s, p) => s + (p.amount ?? 0), 0);

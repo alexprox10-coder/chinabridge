@@ -34,7 +34,7 @@ export default async function FinanceReportsPage() {
   let report: FinanceReport = EMPTY_REPORT;
   let orders: FinanceOrder[] = [];
   try {
-    [report, orders] = await Promise.all([getFinanceReport(), getAllFinanceOrders()]);
+    [report, orders] = await Promise.all([getFinanceReport("tenant-chinabridge"), getAllFinanceOrders("tenant-chinabridge")]);
   } catch {}
 
   // By month (last 12 months)

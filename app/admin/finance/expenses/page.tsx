@@ -13,7 +13,7 @@ function fmtDate(dt: string) {
 
 export default async function FinanceExpensesPage() {
   let expenses: FinanceExpense[] = [];
-  try { expenses = await getAllExpenses(); } catch {}
+  try { expenses = await getAllExpenses("tenant-chinabridge"); } catch {}
   const sym = (cur: string) => CURRENCY_SYMBOLS[cur as FinanceCurrency] ?? "$";
 
   const totalByCategory: Record<string, number> = {};

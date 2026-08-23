@@ -9,7 +9,7 @@ export const revalidate = 0;
 
 export default async function FinanceSettingsPage() {
   let settings: FinanceSetting[] = [];
-  try { settings = await getFinanceSettings(); } catch {}
+  try { settings = await getFinanceSettings("tenant-chinabridge"); } catch {}
   return (
     <div className="min-h-screen bg-slate-950">
       <AdminNav />
