@@ -1,6 +1,6 @@
 "use client";
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 const OAUTH_ERRORS: Record<string, string> = {
   oauth_failed: "Ошибка авторизации через Google. Попробуйте снова.",
@@ -21,7 +21,6 @@ function GoogleIcon() {
 }
 
 function LoginRegisterForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [mode, setMode] = useState<"login" | "register">("login");
 
@@ -51,8 +50,7 @@ function LoginRegisterForm() {
         body: JSON.stringify({ email, password }),
       });
       if (res.ok) {
-        router.push(params.get("from") ?? "/client/dashboard");
-        router.refresh();
+        window.location.href = params.get("from") ?? "/client/dashboard";
       } else {
         setError("Неверный email или пароль");
       }
@@ -78,8 +76,7 @@ function LoginRegisterForm() {
         body: JSON.stringify({ name: regName, email: regEmail, password: regPassword }),
       });
       if (res.ok) {
-        router.push("/client/dashboard");
-        router.refresh();
+        window.location.href = "/client/dashboard";
       } else {
         const data = await res.json().catch(() => ({})) as { error?: string };
         if (data.error === "email_taken") {

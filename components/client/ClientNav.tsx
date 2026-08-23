@@ -9,7 +9,8 @@ const NAV = [
   { href: "/client/payments",     label: "Оплаты",       icon: "💱" },
   { href: "/client/documents",    label: "Документы",    icon: "📄" },
   { href: "/client/messages",     label: "Сообщения",    icon: "💬" },
-  { href: "/client/calculations", label: "История",      icon: "📋" },
+  { href: "/client/calculations", label: "Расчёты",      icon: "📋" },
+  { href: "/client/plans",        label: "Тарифы",       icon: "⭐" },
   { href: "/client/profile",      label: "Профиль",      icon: "👤" },
 ];
 
@@ -113,7 +114,7 @@ export default function ClientNav({ session }: { session: SessionPayload }) {
             rel="noopener noreferrer"
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
           >
-            <span>✈️</span> Поддержка
+            <span>💬</span> Поддержка
           </a>
         </div>
 
