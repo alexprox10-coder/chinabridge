@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import AIEconomicsFunnel from "@/components/ai-funnel/AIEconomicsFunnel";
 
 const CANONICAL = "https://chinabridge.pro/wildberries-margin-calculator";
 
@@ -116,25 +117,16 @@ export default function WildberriesMarginCalculatorPage() {
             </p>
           </div>
 
-          {/* CTA card */}
-          <div className="bg-gradient-to-br from-[#00A86B]/10 to-[#060f1e] border border-[#00A86B]/30 rounded-2xl p-6 mb-10">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-2xl">🤖</span>
+          {/* Embedded calculator */}
+          <div className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">🤖</span>
               <div>
                 <p className="text-white font-bold">AI-калькулятор маржи WB</p>
                 <p className="text-[#8899aa] text-xs">GPT-4o · Бесплатно · Результат за 15 сек</p>
               </div>
             </div>
-            <p className="text-[#8899aa] text-sm mb-4 leading-relaxed">
-              Единственный калькулятор, который считает полную юнит-экономику с учётом закупочной
-              цены в Китае, доставки, таможни и комиссий WB — всё в одном расчёте.
-            </p>
-            <Link
-              href="/ai-calculator"
-              className="inline-flex items-center justify-center gap-2 bg-[#00A86B] hover:bg-[#009960] text-white font-bold px-6 py-3.5 rounded-xl text-sm w-full sm:w-auto transition-colors"
-            >
-              ⚡ Рассчитать маржу бесплатно
-            </Link>
+            <AIEconomicsFunnel />
           </div>
 
           {/* Formula */}
