@@ -51,7 +51,7 @@ export default function FloatingContact() {
 
       {/* Popup */}
       {open && (
-        <div className="fixed bottom-20 right-4 z-50 w-72 bg-[#0d1e36] border border-[#1e3a5f] rounded-2xl shadow-2xl shadow-black/60 overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
+        <div className="fixed bottom-20 left-4 sm:left-auto sm:right-4 sm:bottom-28 z-50 w-72 bg-[#0d1e36] border border-[#1e3a5f] rounded-2xl shadow-2xl shadow-black/60 overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
           <div className="bg-[#00A86B]/10 border-b border-[#00A86B]/20 px-4 py-3 flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-white">Получить консультацию</p>
@@ -130,7 +130,7 @@ export default function FloatingContact() {
       {/* Floating button */}
       <button
         onClick={() => { setOpen(o => !o); trackGAEvent("floatingContactOpen", { source: "FLOATING_BUTTON" }); }}
-        className="fixed bottom-5 right-4 z-50 flex items-center gap-2.5 bg-[#00A86B] hover:bg-[#009060] active:scale-95 text-white text-sm font-semibold pl-4 pr-5 py-3 rounded-full shadow-xl shadow-[#00A86B]/30 transition-all duration-200 group"
+        className="fixed bottom-5 left-4 sm:left-auto sm:right-4 sm:bottom-24 z-50 flex items-center gap-2.5 bg-[#00A86B] hover:bg-[#009060] active:scale-95 text-white text-sm font-semibold pl-4 pr-5 py-3 rounded-full shadow-xl shadow-[#00A86B]/30 transition-all duration-200 group"
         aria-label="Получить консультацию"
       >
         {open ? (
