@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { trackGAEvent } from "@/lib/analytics/ga";
+import { trackVkGoal } from "@/components/analytics/VkPixel";
 
 interface FormState {
   name: string;
@@ -57,6 +58,7 @@ export default function LeadMagnetForm() {
       }
 
       trackGAEvent("leadMagnetSubmit", { source: "LEAD_MAGNET_FREE" });
+      trackVkGoal("lead");
       setStatus("success");
     } catch {
       setStatus("error");
