@@ -103,10 +103,10 @@ export default function GtdCompareBlock() {
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
               ChinaBridge&nbsp;
-              <span className="text-gradient">vs «сборный» стек</span>
+              <span className="text-gradient">vs «сделать самому»</span>
             </h2>
             <p className="text-[#8899aa] text-base max-w-xl mx-auto">
-              MPStats + байер + карго + таможенный брокер — на каждом этапе свой подрядчик, своя ответственность, свой ценник
+              WeChat-байер + карго-компания + таможенный брокер — на каждом этапе свой подрядчик, своя ответственность, свой ценник
             </p>
           </div>
 
@@ -123,8 +123,8 @@ export default function GtdCompareBlock() {
                   </th>
                   <th className="px-4 py-3 text-center">
                     <div className="inline-flex flex-col items-center gap-1">
-                      <span className="text-[#8899aa] font-bold text-base">«Сборный» стек</span>
-                      <span className="text-[10px] text-[#8899aa] bg-white/5 px-2 py-0.5 rounded-full">4 подрядчика</span>
+                      <span className="text-[#8899aa] font-bold text-base">«Сделать самому»</span>
+                      <span className="text-[10px] text-[#8899aa] bg-white/5 px-2 py-0.5 rounded-full">байер + карго + брокер</span>
                     </div>
                   </th>
                 </tr>
