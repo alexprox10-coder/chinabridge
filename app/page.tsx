@@ -7,6 +7,7 @@ import KzRatesBanner from "@/components/KzRatesBanner";
 import WarehouseGallery from "@/components/WarehouseGallery";
 import ForWhom from "@/components/ForWhom";
 import Advantages from "@/components/Advantages";
+import GtdCompareBlock from "@/components/GtdCompareBlock";
 import ImportEcosystemBlock from "@/components/ImportEcosystemBlock";
 import Services from "@/components/Services";
 import Directions from "@/components/Directions";
@@ -107,6 +108,7 @@ export default function Home() {
         <WarehouseGallery />
         <ForWhom />
         <Advantages />
+        <GtdCompareBlock />
         <ImportEcosystemBlock />
         <Services />
         <Directions />
