@@ -31,15 +31,27 @@ function calcServiceCost(
   return service.price_value;
 }
 
-function applyRules(cost: number, rules: PricingRule[]): number {
+function applyRules(cost: number, rules: PricingRule[], weight?: number): number {
+  // Apply only the single best-matching rule for the cargo weight.
+  // Skipping customer_type-specific rules (VIP etc.) since input has no customer context.
+  const matching = rules
+    .filter(r => r.status === 'active' && !r.customer_type)
+    .filter(r => {
+      if (!weight) return true;
+      const aboveMin = !r.min_weight || r.min_weight === 0 || weight >= r.min_weight;
+      const belowMax = !r.max_weight || r.max_weight >= 999999 || weight <= r.max_weight;
+      return aboveMin && belowMax;
+    })
+    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+
+  const rule = matching[0];
+  if (!rule) return Math.round(cost * 100) / 100;
+
   let result = cost;
-  const active = rules.filter(r => r.status === 'active');
-  for (const rule of active) {
-    if (rule.rule_type === 'margin' || rule.rule_type === 'markup') {
-      result = result * (1 + rule.value / 100);
-    } else if (rule.rule_type === 'discount') {
-      result = result * (1 - rule.value / 100);
-    }
+  if (rule.rule_type === 'margin' || rule.rule_type === 'markup') {
+    result = cost * (1 + rule.value / 100);
+  } else if (rule.rule_type === 'discount') {
+    result = cost * (1 - rule.value / 100);
   }
   return Math.round(result * 100) / 100;
 }
@@ -60,7 +72,18 @@ export async function calculateDeliveryCost(input: CalculationInput): Promise<Ca
 
   // Base transport cost
   let baseCost = 0;
-  if (matchedRate) {
+  if (transport_type === 'sea' && matchedRate?.rate_type === 'FIXED') {
+    // FCL rates ($4250/$6500) apply only to full containers (≥5 CBM or ≥2000 kg).
+    // For smaller cargo, estimate LCL (сборный): max($2.5/kg, $150/CBM), min $200.
+    const vol = input.volume ?? 0;
+    const wt = input.weight ?? 0;
+    const isFCL = vol >= 5 || wt >= 2000;
+    if (isFCL) {
+      baseCost = calcBaseCost(matchedRate, input);
+    } else {
+      baseCost = Math.max(200, Math.max(wt * 2.5, vol * 150));
+    }
+  } else if (matchedRate) {
     baseCost = calcBaseCost(matchedRate, input);
   }
 
@@ -79,7 +102,7 @@ export async function calculateDeliveryCost(input: CalculationInput): Promise<Ca
     }
   }
 
-  const transport_cost = applyRules(baseCost, rules);
+  const transport_cost = applyRules(baseCost, rules, input.weight);
   const total_cost = Math.round((transport_cost + additionalCost) * 100) / 100;
 
   const delivery_days_min = matchedRoute?.delivery_days_min ?? matchedRate?.delivery_days_min;
