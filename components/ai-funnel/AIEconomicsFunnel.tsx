@@ -96,8 +96,8 @@ const QUICK_EXAMPLES = [
   { emoji: "🧸", label: "Игрушки",      product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
 ];
 
-const ANON_LIMIT = 999; // расчёты бесплатны — цель вытянуть на услуги
-const REG_LIMIT  = 999;
+const ANON_LIMIT = 3;
+const REG_LIMIT  = 3;
 
 // Analyzing stages — real stages that match backend process
 const ANALYZE_STAGES = [
@@ -132,6 +132,95 @@ function verdictBg(v?: "green" | "yellow" | "red") {
   return v === "green"  ? "bg-emerald-900/20 border-emerald-700/40" :
          v === "yellow" ? "bg-amber-900/20 border-amber-700/40"     :
                           "bg-red-900/20 border-red-700/40";
+}
+
+// ── Paywall ────────────────────────────────────────────────────────────────
+
+function PaywallBlock({ onReset }: { onReset: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+
+  async function handlePay() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res  = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
+      const data = await res.json();
+      if (!data.ok || !data.paymentLink) throw new Error(data.error ?? "no link");
+      window.location.href = data.paymentLink;
+    } catch (e) {
+      setError("Ошибка оплаты. Попробуйте ещё раз или напишите в Telegram.");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="card-glass rounded-2xl p-6 md:p-8 flex flex-col items-center gap-5 text-center">
+      <div className="w-14 h-14 rounded-full bg-amber-900/30 border border-amber-700/40 flex items-center justify-center text-3xl">
+        🔒
+      </div>
+      <div>
+        <h2 className="text-xl font-bold text-white mb-2">3 бесплатных расчёта использованы</h2>
+        <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
+          Для безлимитного доступа подключите подписку
+        </p>
+      </div>
+
+      {/* Price block */}
+      <div className="w-full max-w-xs bg-[#0B1F3A] border border-[#243a5e] rounded-xl p-4">
+        <p className="text-3xl font-bold text-white mb-1">490 <span className="text-lg text-[#8899aa] font-normal">₽/мес</span></p>
+        <div className="flex flex-col gap-1.5 mt-3 text-left">
+          {["Безлимитные расчёты", "AI-анализ с 1688 и Alibaba", "Все маркетплейсы: WB, Ozon, Kaspi", "История расчётов"].map(f => (
+            <div key={f} className="flex items-center gap-2 text-sm text-[#8899aa]">
+              <span className="text-[#00A86B] text-xs">✓</span> {f}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Payment methods */}
+      <div className="flex items-center gap-2 text-xs text-[#5a7899]">
+        <span>💳 Карта</span>
+        <span>·</span>
+        <span>📱 СБП</span>
+        <span>·</span>
+        <span>🏦 QR</span>
+        <span>·</span>
+        <span>🟡 Тинькофф</span>
+      </div>
+
+      {error && <p className="text-xs text-red-400">{error}</p>}
+
+      <div className="flex flex-col gap-2.5 w-full max-w-xs">
+        <button
+          onClick={handlePay}
+          disabled={loading}
+          className="w-full py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-60 text-white font-bold rounded-xl transition-all text-sm"
+        >
+          {loading ? "Создаём ссылку..." : "Оплатить 490 ₽/мес"}
+        </button>
+        <div className="flex gap-2">
+          <a
+            href="https://t.me/ChinaBridgeLID_bot"
+            target="_blank" rel="noopener noreferrer"
+            className="flex-1 py-2.5 border border-[#229ED9]/30 hover:border-[#229ED9]/60 text-[#229ED9] text-sm rounded-xl transition-all"
+          >
+            Telegram
+          </a>
+          <a
+            href="https://wa.me/79145889874"
+            target="_blank" rel="noopener noreferrer"
+            className="flex-1 py-2.5 border border-[#25D366]/30 hover:border-[#25D366]/60 text-[#25D366] text-sm rounded-xl transition-all"
+          >
+            WhatsApp
+          </a>
+        </div>
+      </div>
+      <button onClick={onReset} className="text-xs text-[#5a7899] hover:text-white underline">
+        Назад к калькулятору
+      </button>
+    </div>
+  );
 }
 
 // ── Sub-components (unchanged from v1.0) ──────────────────────────────────────
@@ -481,6 +570,16 @@ export default function AIEconomicsFunnel() {
       localStorage.removeItem('cb_calc_uses');
     }
     if (localStorage.getItem('cb_registered') === 'true') setIsRegistered(true);
+
+    // Check paid subscription
+    try {
+      const paidUntil = localStorage.getItem('cb_paid_until');
+      if (paidUntil && new Date(paidUntil) > new Date()) {
+        setIsRegistered(true); // paid users get unlimited
+      } else if (paidUntil) {
+        localStorage.removeItem('cb_paid_until'); // expired
+      }
+    } catch { /* ignore */ }
   }, []);
 
   // After registration — auto-resume pending calculation
@@ -617,6 +716,9 @@ export default function AIEconomicsFunnel() {
   // ── URL / Description submit ────────────────────────────────────────────────
 
   async function handleUrlSubmit() {
+    const limit = isRegistered ? REG_LIMIT : ANON_LIMIT;
+    if (calcCount >= limit) { setShowPaywall(true); return; }
+
     if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
     const url = s.urlInput.trim();
 
@@ -1017,42 +1119,7 @@ export default function AIEconomicsFunnel() {
 
   if (showPaywall) {
     return (
-      <div className="card-glass rounded-2xl p-6 md:p-8 flex flex-col items-center gap-6 text-center min-h-[360px] justify-center">
-        <div className="w-16 h-16 rounded-full bg-amber-900/30 border border-amber-700/40 flex items-center justify-center text-3xl">
-          ⭐
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-white mb-2">Бесплатные расчёты использованы</h2>
-          <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-            Вы использовали 10 расчётов сегодня. Для безлимитного доступа станьте клиентом ChinaBridge или свяжитесь с менеджером.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 w-full max-w-xs">
-          <a
-            href="/client/login?plan=calculator"
-            className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
-          >
-            📊 Выбрать тариф в кабинете
-          </a>
-          <div className="flex gap-2">
-            <a
-              href="https://t.me/ChinaBridgeLID_bot"
-              target="_blank" rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-[#229ED9]/30 hover:border-[#229ED9]/60 text-[#229ED9] text-sm rounded-xl transition-all"
-            >
-              Telegram
-            </a>
-            <a
-              href="https://wa.me/79145889874"
-              target="_blank" rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-[#25D366]/30 hover:border-[#25D366]/60 text-[#25D366] text-sm rounded-xl transition-all"
-            >
-              WhatsApp
-            </a>
-          </div>
-        </div>
-        <p className="text-xs text-[#8899aa]">Менеджер свяжется в течение 15 минут</p>
-      </div>
+      <PaywallBlock onReset={() => setShowPaywall(false)} />
     );
   }
 
