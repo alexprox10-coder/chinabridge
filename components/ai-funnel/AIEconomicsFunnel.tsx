@@ -1034,13 +1034,22 @@ export default function AIEconomicsFunnel() {
           >
             📊 Выбрать тариф в кабинете
           </a>
-          <a
-            href="https://t.me/ChinaBridgeLID_bot"
-            target="_blank" rel="noopener noreferrer"
-            className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all"
-          >
-            Написать менеджеру в Telegram
-          </a>
+          <div className="flex gap-2">
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank" rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-[#229ED9]/30 hover:border-[#229ED9]/60 text-[#229ED9] text-sm rounded-xl transition-all"
+            >
+              Telegram
+            </a>
+            <a
+              href="https://wa.me/79145889874"
+              target="_blank" rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-[#25D366]/30 hover:border-[#25D366]/60 text-[#25D366] text-sm rounded-xl transition-all"
+            >
+              WhatsApp
+            </a>
+          </div>
         </div>
         <p className="text-xs text-[#8899aa]">Менеджер свяжется в течение 15 минут</p>
       </div>
