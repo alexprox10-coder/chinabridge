@@ -7,39 +7,43 @@ const PLANS = [
     id: "guest",
     name: "Гость",
     badge: null,
-    price: "Бесплатно",
-    period: "навсегда",
-    description: "Попробовать без регистрации",
+    price: "3 расчёта",
+    period: "бесплатно",
+    description: "Без регистрации — сразу считайте",
     features: [
-      "3 расчёта в день",
+      "3 расчёта AI-калькулятора маржи",
       "Маржа, ROI и прибыль/шт",
       "Все маркетплейсы: WB, Ozon, Kaspi, ЯМ",
       "P&L таблица с тарифами маркетплейса",
       "3 сценария: осторожный / базовый / оптимистичный",
+      "Калькулятор доставки — бесплатно",
+      "Поиск товаров — бесплатно",
     ],
-    limits: ["Лимит 3 расчёта в день", "Без истории расчётов"],
+    limits: ["Лимит 3 расчёта (AI-калькулятор маржи)", "Без истории расчётов"],
     cta: { label: "Открыть калькулятор", href: "/ai-calculator", external: false },
     current: false,
     highlight: false,
     color: "slate",
   },
   {
-    id: "registered",
-    name: "Зарегистрированный",
-    badge: "Текущий план",
-    price: "Бесплатно",
-    period: "после регистрации",
-    description: "Больше расчётов каждый день",
+    id: "subscriber",
+    name: "Подписчик",
+    badge: null,
+    price: "490 ₽",
+    period: "в месяц",
+    description: "Безлимитные расчёты маржи",
     features: [
-      "10 расчётов в день",
+      "Безлимитные расчёты AI-калькулятора",
       "Всё из тарифа Гость",
       "AI-анализ ссылок с 1688 / Alibaba",
       "История расчётов в кабинете",
       "Сохранение результатов",
+      "Калькулятор доставки — бесплатно",
+      "Поиск товаров — бесплатно",
     ],
-    limits: ["Лимит 10 расчётов в день"],
-    cta: { label: "Перейти к калькулятору", href: "/client/calculator", external: false },
-    current: true,
+    limits: [],
+    cta: { label: "Подключить за 490 ₽/мес", href: "/ai-calculator", external: false },
+    current: false,
     highlight: false,
     color: "green",
   },
@@ -51,8 +55,8 @@ const PLANS = [
     period: "при работе с нами",
     description: "Полный доступ + реальная закупка",
     features: [
-      "Безлимитные расчёты",
-      "Всё из тарифа Зарегистрированный",
+      "Безлимитные расчёты — бесплатно",
+      "Всё из тарифа Подписчик",
       "Реальные ставки карго (от $2.5/кг)",
       "Менеджер проверит расчёт и найдёт товар",
       "Полный цикл: закупка → доставка → таможня",
@@ -70,7 +74,7 @@ const VS_COMPETITORS = [
   {
     feature: "Цена",
     competitors: "4 000 – 40 000 ₽/мес",
-    chinabridge: "Бесплатно",
+    chinabridge: "Бесплатно / 490 ₽/мес",
     win: true,
   },
   {
@@ -107,7 +111,7 @@ export default function PlansPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Тарифы</h1>
         <p className="text-slate-500 mt-1">
-          AI-калькулятор юнит-экономики бесплатен. Платить не нужно — просто работайте.
+          Калькулятор доставки и поиск товаров — бесплатно. AI-калькулятор маржи: 3 расчёта бесплатно, далее 490 ₽/мес без лимитов.
         </p>
       </div>
 
@@ -176,7 +180,7 @@ export default function PlansPage() {
               <Link
                 href={plan.cta.href}
                 className={`w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-colors ${
-                  plan.current
+                  plan.id === "subscriber"
                     ? "bg-green-500 hover:bg-green-600 text-white"
                     : "bg-slate-100 hover:bg-slate-200 text-slate-700"
                 }`}
@@ -186,6 +190,18 @@ export default function PlansPage() {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Free tools note */}
+      <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 flex gap-3 items-start">
+        <span className="text-blue-500 text-lg mt-0.5">ℹ️</span>
+        <div>
+          <p className="text-sm font-semibold text-slate-800">Что бесплатно всегда</p>
+          <p className="text-sm text-slate-600 mt-1">
+            <strong>Калькулятор доставки</strong> и <strong>Поиск товаров</strong> — без ограничений и без регистрации.
+            Платная подписка (490 ₽/мес) распространяется только на AI-калькулятор юнит-экономики после первых 3 расчётов.
+          </p>
+        </div>
       </div>
 
       {/* VS Competitors */}

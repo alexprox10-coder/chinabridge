@@ -591,9 +591,12 @@ export default function AIEconomicsFunnel() {
       }
     } catch { /* ignore */ }
 
-    // Restore paywall if user left without paying
+    // Restore paywall if user left without paying or Tochka redirected with pay=fail
     try {
-      if (localStorage.getItem('cb_paywall_active') === '1') {
+      const params = new URLSearchParams(window.location.search);
+      const payFailed = params.get('pay') === 'fail' || params.get('pay') === 'cancel';
+      if (localStorage.getItem('cb_paywall_active') === '1' || payFailed) {
+        if (payFailed) window.history.replaceState({}, '', window.location.pathname);
         triggerPaywall();
       }
     } catch { /* ignore */ }
