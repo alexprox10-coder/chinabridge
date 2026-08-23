@@ -7,7 +7,8 @@ const VK_PIXEL_ID = process.env.NEXT_PUBLIC_VK_PIXEL_ID;
 export function trackVkGoal(goal: string) {
   if (typeof window === "undefined") return;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).VK?.Goal(goal);
+  const tmr = (window as any)._tmr;
+  if (tmr) tmr.push({ type: 'reachGoal', id: 3787763, goal });
 }
 
 export default function VkPixel() {
