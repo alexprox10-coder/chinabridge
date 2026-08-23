@@ -549,7 +549,7 @@ export default function AIEconomicsFunnel() {
 
   const triggerPaywall = () => {
     try { localStorage.setItem('cb_paywall_active', '1'); } catch {}
-    triggerPaywall();
+    setShowPaywall(true);
   };
   const resetPaywall = () => {
     try { localStorage.removeItem('cb_paywall_active'); } catch {}
