@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { Factory, Search, Package, TrendingDown } from "lucide-react";
+import { Factory, Search, Package, FileCheck } from "lucide-react";
 
 
 const advantages = [
@@ -28,11 +28,11 @@ const advantages = [
     alt: "Склад с грузами ChinaBridge",
   },
   {
-    icon: TrendingDown,
-    title: "Прямые цены производителей",
-    desc: "Работаем без посредников — напрямую с фабриками на 1688 и через представителя в Китае.",
+    icon: FileCheck,
+    title: "ГТД и документы под ключ",
+    desc: "Выдаём ГТД с номером для листинга на WB и Ozon. Сертификаты качества и тех. паспорта — готово к ЕАЭС-декларации.",
     photo: "/images/delivery.jpg",
-    alt: "Доставка товаров из Китая",
+    alt: "Официальные документы для маркетплейсов",
   },
 ];
 
