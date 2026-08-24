@@ -99,8 +99,8 @@ export async function GET(req: NextRequest) {
 
   if (!LID_BOT_TOKEN) return NextResponse.json({ ok: false, error: "no token" });
 
+  await ensureFunnelTable(process.env.DATABASE_URL!);
   const sql = neon(process.env.DATABASE_URL!);
-  await ensureFunnelTable(sql);
 
   const due = await sql`
     SELECT id, chat_id, first_name, drip_step

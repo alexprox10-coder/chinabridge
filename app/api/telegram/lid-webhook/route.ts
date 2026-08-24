@@ -66,8 +66,8 @@ export async function POST(req: NextRequest) {
     if (isCalcFunnel) {
       // Save to drip funnel
       try {
+        await ensureFunnelTable(process.env.DATABASE_URL!);
         const sql = neon(process.env.DATABASE_URL!);
-        await ensureFunnelTable(sql);
         await sql`
           INSERT INTO funnel_subscribers (chat_id, first_name, source)
           VALUES (${chatId}, ${firstName}, 'calc')

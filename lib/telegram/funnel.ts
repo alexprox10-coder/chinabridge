@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
-export async function ensureFunnelTable(sql: ReturnType<typeof neon>) {
+export async function ensureFunnelTable(dbUrl: string) {
+  const sql = neon(dbUrl);
   await sql`
     CREATE TABLE IF NOT EXISTS funnel_subscribers (
       id            SERIAL PRIMARY KEY,
