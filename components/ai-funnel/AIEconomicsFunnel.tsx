@@ -161,17 +161,32 @@ function PaywallBlock({ onReset }: { onReset: () => void }) {
       <div>
         <h2 className="text-xl font-bold text-white mb-2">3 бесплатных расчёта использованы</h2>
         <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-          Для безлимитного доступа подключите подписку
+          Подключите подписку и считайте без ограничений
         </p>
+      </div>
+
+      {/* Social proof */}
+      <div className="flex items-center gap-2 bg-[#00A86B]/10 border border-[#00A86B]/25 rounded-full px-4 py-1.5">
+        <span className="text-sm">🔥</span>
+        <p className="text-xs text-[#00A86B] font-medium">Уже 50+ селлеров считают прибыль каждый день</p>
       </div>
 
       {/* Price block */}
       <div className="w-full max-w-xs bg-[#0B1F3A] border border-[#243a5e] rounded-xl p-4">
-        <p className="text-3xl font-bold text-white mb-1">490 <span className="text-lg text-[#8899aa] font-normal">₽/мес</span></p>
-        <div className="flex flex-col gap-1.5 mt-3 text-left">
-          {["Безлимитные расчёты", "AI-анализ с 1688 и Alibaba", "Все маркетплейсы: WB, Ozon, Kaspi", "История расчётов"].map(f => (
+        <div className="flex items-baseline justify-center gap-1 mb-1">
+          <p className="text-3xl font-bold text-white">490</p>
+          <span className="text-lg text-[#8899aa] font-normal">₽/мес</span>
+        </div>
+        <p className="text-xs text-[#5a7899] mb-3">≈ 16 ₽/день · дешевле чашки кофе</p>
+        <div className="flex flex-col gap-1.5 text-left">
+          {[
+            "Безлимитные расчёты — без лимитов",
+            "AI-анализ ссылок с 1688 и Alibaba",
+            "Все маркетплейсы: WB, Ozon, Kaspi",
+            "История расчётов в личном кабинете",
+          ].map(f => (
             <div key={f} className="flex items-center gap-2 text-sm text-[#8899aa]">
-              <span className="text-[#00A86B] text-xs">✓</span> {f}
+              <span className="text-[#00A86B] text-xs shrink-0">✓</span> {f}
             </div>
           ))}
         </div>
@@ -179,12 +194,9 @@ function PaywallBlock({ onReset }: { onReset: () => void }) {
 
       {/* Payment methods */}
       <div className="flex items-center gap-2 text-xs text-[#5a7899]">
-        <span>💳 Карта</span>
-        <span>·</span>
-        <span>📱 СБП</span>
-        <span>·</span>
-        <span>🏦 QR</span>
-        <span>·</span>
+        <span>💳 Карта</span><span>·</span>
+        <span>📱 СБП</span><span>·</span>
+        <span>🏦 QR</span><span>·</span>
         <span>🟡 Тинькофф</span>
       </div>
 
@@ -196,7 +208,7 @@ function PaywallBlock({ onReset }: { onReset: () => void }) {
           disabled={loading}
           className="w-full py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-60 text-white font-bold rounded-xl transition-all text-sm"
         >
-          {loading ? "Создаём ссылку..." : "Оплатить 490 ₽/мес"}
+          {loading ? "Создаём ссылку..." : "Подключить за 490 ₽/мес →"}
         </button>
         <div className="flex gap-2">
           <a
@@ -215,6 +227,14 @@ function PaywallBlock({ onReset }: { onReset: () => void }) {
           </a>
         </div>
       </div>
+
+      {/* Trust badges */}
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs text-[#5a7899]">
+        <span>🔓 Отмена в любой момент</span>
+        <span>↩️ Возврат в течение 24 часов</span>
+        <span>🔒 Безопасная оплата</span>
+      </div>
+
       <button onClick={onReset} className="text-xs text-[#5a7899] hover:text-white underline">
         Назад к калькулятору
       </button>
