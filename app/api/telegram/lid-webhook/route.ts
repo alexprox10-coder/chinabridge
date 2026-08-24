@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
-import { ensureFunnelTable } from "../drip-cron/route";
+import { ensureFunnelTable } from "@/lib/telegram/funnel";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

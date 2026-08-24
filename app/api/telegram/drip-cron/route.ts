@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
+import { ensureFunnelTable } from "@/lib/telegram/funnel";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,21 +89,6 @@ const DRIP: Array<{
     daysNext: 0,
   },
 ];
-
-export async function ensureFunnelTable(sql: ReturnType<typeof neon>) {
-  await sql`
-    CREATE TABLE IF NOT EXISTS funnel_subscribers (
-      id            SERIAL PRIMARY KEY,
-      chat_id       BIGINT UNIQUE NOT NULL,
-      first_name    TEXT,
-      source        TEXT DEFAULT 'calc',
-      drip_step     INT DEFAULT 0,
-      subscribed_at TIMESTAMPTZ DEFAULT NOW(),
-      next_drip_at  TIMESTAMPTZ DEFAULT NOW() + INTERVAL '2 days',
-      opted_out     BOOLEAN DEFAULT FALSE
-    )
-  `;
-}
 
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET ?? "";
