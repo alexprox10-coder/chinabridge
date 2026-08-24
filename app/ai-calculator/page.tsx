@@ -164,7 +164,7 @@ export default function AICalculatorPage() {
           </div>
 
           {/* Funnel — explicit min-h prevents CLS on hydration */}
-          <div className="min-h-[420px]">
+          <div id="calculator-top" className="min-h-[420px]">
             <AIEconomicsFunnel />
           </div>
 
@@ -272,8 +272,7 @@ export default function AICalculatorPage() {
               <div className="px-5 py-4 border-t border-[#243a5e] bg-[#00A86B]/5 text-center">
                 <p className="text-xs text-[#8899aa] mb-3">Рассчитайте <span className="text-white font-semibold">ваш товар</span> за 15 секунд — бесплатно</p>
                 <a
-                  href="#"
-                  onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  href="#calculator-top"
                   className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl text-sm transition-all"
                 >
                   🚀 Рассчитать свой товар ↑
