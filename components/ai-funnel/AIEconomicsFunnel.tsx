@@ -171,13 +171,13 @@ function TgSubscribeBanner() {
         >×</button>
       </div>
       <a
-        href="https://t.me/ChinaBridgeLID_bot?start=calc"
+        href="https://t.me/chinabridgeline"
         target="_blank"
         rel="noopener noreferrer"
         onClick={handleSubscribe}
         className="w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
       >
-        Подписаться в Telegram →
+        Подписаться на канал →
       </a>
     </div>
   );
