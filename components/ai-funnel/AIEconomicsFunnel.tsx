@@ -133,6 +133,56 @@ function verdictBg(v?: "green" | "yellow" | "red") {
                           "bg-red-900/20 border-red-700/40";
 }
 
+// ── Telegram subscribe banner ──────────────────────────────────────────────
+
+function TgSubscribeBanner() {
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("cb_tg_subscribed") === "1") setDismissed(true);
+    } catch { /* ignore */ }
+  }, []);
+
+  if (dismissed) return null;
+
+  function handleSubscribe() {
+    try { localStorage.setItem("cb_tg_subscribed", "1"); } catch { /* ignore */ }
+    setDismissed(true);
+  }
+
+  function handleDismiss() {
+    try { localStorage.setItem("cb_tg_subscribed", "1"); } catch { /* ignore */ }
+    setDismissed(true);
+  }
+
+  return (
+    <div className="rounded-xl border border-[#229ED9]/25 bg-[#229ED9]/5 p-4 flex flex-col gap-3">
+      <div className="flex items-start gap-3">
+        <span className="text-xl mt-0.5">📬</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white">Получите кейс и ставки карго в Telegram</p>
+          <p className="text-xs text-[#8899aa] mt-0.5">Пришлём реальный кейс с цифрами через 2 дня — без спама, отписка в 1 клик</p>
+        </div>
+        <button
+          onClick={handleDismiss}
+          className="text-[#5a7899] hover:text-white text-lg leading-none flex-shrink-0 mt-0.5"
+          aria-label="Закрыть"
+        >×</button>
+      </div>
+      <a
+        href="https://t.me/ChinaBridgeLID_bot?start=calc"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleSubscribe}
+        className="w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
+      >
+        Подписаться в Telegram →
+      </a>
+    </div>
+  );
+}
+
 // ── Paywall ────────────────────────────────────────────────────────────────
 
 function PaywallBlock({ onReset }: { onReset: () => void }) {
@@ -1638,6 +1688,9 @@ export default function AIEconomicsFunnel() {
               ✈️ Написать менеджеру напрямую в Telegram
             </a>
           )}
+
+          {/* Telegram drip funnel CTA */}
+          <TgSubscribeBanner />
 
           <button onClick={() => go("input")} className="text-xs text-[#8899aa] hover:text-white text-center underline">
             Рассчитать другой товар
