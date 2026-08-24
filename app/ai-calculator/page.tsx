@@ -180,6 +180,112 @@ export default function AICalculatorPage() {
             </div>
           </div>
 
+          {/* ── SAMPLE RESULT — показываем что получит пользователь ─────────────── */}
+          <div className="mt-14">
+            <div className="text-center mb-6">
+              <p className="text-xs font-semibold text-[#00A86B] uppercase tracking-widest mb-2">Пример расчёта</p>
+              <h2 className="text-xl font-bold text-white">Вот что вы получите за 15 секунд</h2>
+              <p className="text-sm text-[#8899aa] mt-1">Наушники TWS Bluetooth с 1688 → Wildberries</p>
+            </div>
+
+            {/* Result card */}
+            <div className="rounded-2xl border border-[#243a5e] overflow-hidden bg-[#0B1F3A]/60 backdrop-blur-sm">
+
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-[#243a5e] flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-[#8899aa]">Наушники TWS Bluetooth 5.3</p>
+                  <p className="text-sm font-semibold text-white mt-0.5">¥38/шт · 100 штук · Wildberries · Москва</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-[10px] text-[#8899aa] uppercase mb-0.5">Product Score</p>
+                  <p className="text-xl font-bold text-emerald-400">7.4<span className="text-xs text-[#8899aa] font-normal"> /10</span></p>
+                </div>
+              </div>
+
+              {/* Scenario tabs */}
+              <div className="flex border-b border-[#243a5e]">
+                {[
+                  { label: "Осторожный", margin: "18.3%", roi: "59%", profit: "+34 700 ₽", color: "text-amber-400" },
+                  { label: "Базовый",    margin: "28.6%", roi: "107%", profit: "+57 200 ₽", color: "text-emerald-400", active: true },
+                  { label: "Оптимистич.", margin: "36.1%", roi: "159%", profit: "+72 200 ₽", color: "text-emerald-400" },
+                ].map(t => (
+                  <div key={t.label} className={`flex-1 py-2.5 px-1 text-center border-b-2 ${t.active ? "border-[#00A86B] bg-[#00A86B]/10" : "border-transparent"}`}>
+                    <p className={`text-[10px] font-medium ${t.active ? "text-[#00A86B]" : "text-[#8899aa]"}`}>{t.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Key metrics */}
+              <div className="grid grid-cols-3 divide-x divide-[#243a5e] border-b border-[#243a5e]">
+                {[
+                  { label: "Маржа", value: "28.6%", color: "text-emerald-400" },
+                  { label: "ROI",   value: "107%",  color: "text-white" },
+                  { label: "Прибыль", value: "+57 200 ₽", color: "text-emerald-400" },
+                ].map(m => (
+                  <div key={m.label} className="py-3 text-center">
+                    <p className="text-[10px] text-[#8899aa] uppercase mb-0.5">{m.label}</p>
+                    <p className={`text-base font-bold ${m.color}`}>{m.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* P&L breakdown */}
+              <div className="divide-y divide-[#243a5e]/60">
+                {[
+                  { label: "Цена продажи (WB)",        value: "1 990 ₽",  color: "text-white" },
+                  { label: "Закупка (¥38 × 6.8 + тамож.)", value: "−396 ₽", color: "text-[#8899aa]" },
+                  { label: "Доставка из Китая (карго)", value: "−148 ₽",  color: "text-[#8899aa]" },
+                  { label: "Комиссия WB 23%",           value: "−458 ₽",  color: "text-[#8899aa]" },
+                  { label: "Логистика FBW",             value: "−87 ₽",   color: "text-[#8899aa]" },
+                  { label: "Реклама (5%)",               value: "−100 ₽",  color: "text-[#8899aa]" },
+                  { label: "Чистая прибыль / шт",       value: "+572 ₽",  color: "text-emerald-400", bold: true },
+                ].map(row => (
+                  <div key={row.label} className={`flex justify-between items-center px-5 py-2 text-sm ${row.bold ? "bg-[#00A86B]/5" : ""}`}>
+                    <span className="text-[#8899aa] text-xs">{row.label}</span>
+                    <span className={`font-semibold text-xs ${row.color} ${row.bold ? "text-sm" : ""}`}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Score bars */}
+              <div className="px-5 py-4 border-t border-[#243a5e] bg-[#060f1e]/40">
+                <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide mb-3">Оценка товара</p>
+                {[
+                  { label: "Маржа (30%)",     pct: 78 },
+                  { label: "ROI (20%)",        pct: 85 },
+                  { label: "Цена (15%)",       pct: 70 },
+                  { label: "Логистика (15%)",  pct: 90 },
+                  { label: "Поставщик (10%)",  pct: 65 },
+                  { label: "MOQ (10%)",         pct: 80 },
+                ].map(bar => (
+                  <div key={bar.label} className="flex items-center gap-2 text-xs mb-1.5">
+                    <span className="w-32 text-[#8899aa] shrink-0">{bar.label}</span>
+                    <div className="flex-1 h-1.5 bg-[#243a5e] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${bar.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA inside card */}
+              <div className="px-5 py-4 border-t border-[#243a5e] bg-[#00A86B]/5 text-center">
+                <p className="text-xs text-[#8899aa] mb-3">Рассчитайте <span className="text-white font-semibold">ваш товар</span> за 15 секунд — бесплатно</p>
+                <a
+                  href="#"
+                  onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl text-sm transition-all"
+                >
+                  🚀 Рассчитать свой товар ↑
+                </a>
+              </div>
+            </div>
+
+            <p className="text-center text-xs text-[#5a7899] mt-3">
+              * Данные примерные. Реальный расчёт использует актуальный курс юаня и тарифы WB 2026.
+            </p>
+          </div>
+
           {/* Back to main calculator */}
           <div className="mt-8 text-center">
             <a
