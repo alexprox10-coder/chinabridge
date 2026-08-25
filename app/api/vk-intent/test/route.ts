@@ -2,36 +2,33 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+const HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "ru-RU,ru;q=0.9",
+};
+
 export async function GET() {
-  const token = process.env.VK_ACCESS_TOKEN ?? "";
-  if (!token) return NextResponse.json({ error: "VK_ACCESS_TOKEN not set" }, { status: 500 });
+  const query = "карго из китая";
+  const url   = `https://www.avito.ru/rossiya?q=${encodeURIComponent(query)}&s=104`;
 
-  // Test groups.search
-  const gParams = new URLSearchParams({ q: "карго китай", count: "3", type: "group", access_token: token, v: "5.199" });
-  const gRes    = await fetch(`https://api.vk.com/method/groups.search?${gParams}`, { signal: AbortSignal.timeout(10_000) });
-  const gData   = await gRes.json();
+  try {
+    const res  = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(15_000) });
+    const html = await res.text();
 
-  const groupId = gData.response?.items?.[0]?.id;
-  let wallResult = null;
+    const hasItems   = html.includes("data-marker=\"item\"") || html.includes('"items"');
+    const titleMatch = html.match(/data-marker="item-title"[^>]*>([^<]{5,100})</);
+    const blocked    = html.includes("cloudflare") || html.includes("captcha") || res.status === 403;
 
-  if (groupId) {
-    // Test wall.search on first found group
-    const wParams = new URLSearchParams({ owner_id: String(-groupId), query: "карго", count: "3", access_token: token, v: "5.199" });
-    const wRes    = await fetch(`https://api.vk.com/method/wall.search?${wParams}`, { signal: AbortSignal.timeout(10_000) });
-    const wData   = await wRes.json();
-    wallResult = {
-      group_id: groupId,
-      group_name: gData.response.items[0].name,
-      wall_error: wData.error ?? null,
-      wall_items: wData.response?.items?.length ?? 0,
-      sample_text: wData.response?.items?.[0]?.text?.slice(0, 100) ?? null,
-    };
+    return NextResponse.json({
+      http_status:    res.status,
+      html_length:    html.length,
+      avito_blocked:  blocked,
+      has_items:      hasItems,
+      sample_title:   titleMatch?.[1]?.trim() ?? null,
+      url,
+    });
+  } catch (e) {
+    return NextResponse.json({ fetch_error: String(e) }, { status: 500 });
   }
-
-  return NextResponse.json({
-    groups_error:  gData.error ?? null,
-    groups_found:  gData.response?.items?.length ?? 0,
-    first_group:   gData.response?.items?.[0]?.name ?? null,
-    wall_test:     wallResult,
-  });
 }
