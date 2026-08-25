@@ -1,148 +1,74 @@
 import type { VkPost } from "./types";
+import { getVkToken } from "./tokens";
 
-const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+const VK_BASE = "https://api.vk.com/method";
+const VK_V    = "5.199";
+const delay   = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-const FETCH_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-  "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
-  "Accept-Encoding": "gzip, deflate, br",
-};
-
-const AVITO_QUERIES = [
-  "карго из китая",
-  "доставка из китая грузы",
-  "карго агент китай",
-  "поставщик 1688",
-  "оптом из китая доставка",
-  "нужен карго китай",
-  "привезти из китая",
-];
-
-interface AvitoItem {
-  id: number;
-  title: string;
-  description?: string;
-  url?: string;
-  location?: { name?: string };
-  contacts?: { phone?: string };
-  addDate?: string;
+function resolveAuthor(
+  ownerId: number,
+  profiles: Record<string, unknown>[],
+  groups: Record<string, unknown>[],
+): string {
+  if (ownerId < 0) {
+    const g = groups.find(g => Number(g.id) === Math.abs(ownerId));
+    return g ? String(g.name ?? "") : `club${Math.abs(ownerId)}`;
+  }
+  const p = profiles.find(p => Number(p.id) === ownerId);
+  return p ? `${String(p.first_name ?? "")} ${String(p.last_name ?? "")}`.trim() : `id${ownerId}`;
 }
 
-function parseAvitoJson(html: string): AvitoItem[] {
-  // Avito embeds data in <script> with JSON state
-  const patterns = [
-    /window\.__initialData__\s*=\s*"(.+?)";\s*<\/script>/,
-    /"items"\s*:\s*(\[.+?\]),"totalCount"/s,
-    /data-state="([^"]+)"/,
-  ];
-
-  for (const re of patterns) {
-    const m = html.match(re);
-    if (!m) continue;
-    try {
-      let raw = m[1];
-      // sometimes it's URL-encoded
-      if (raw.includes("%7B")) raw = decodeURIComponent(raw);
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed as AvitoItem[];
-      // dig into nested structure
-      const items = parsed?.catalog?.items ?? parsed?.items ?? parsed?.data?.items;
-      if (Array.isArray(items)) return items as AvitoItem[];
-    } catch { /* try next */ }
-  }
-  return [];
-}
-
-function parseAvitoHtml(html: string, query: string): VkPost[] {
-  const posts: VkPost[] = [];
-
-  // Try structured JSON first
-  const items = parseAvitoJson(html);
-  if (items.length > 0) {
-    for (const it of items) {
-      const text = [it.title, it.description].filter(Boolean).join(" — ");
-      if (!text || text.length < 10) continue;
-      posts.push({
-        post_id:       `avito_${it.id}`,
-        text,
-        author_name:   it.location?.name ?? "Avito",
-        author_id:     String(it.id),
-        date:          it.addDate ? Math.floor(new Date(it.addDate).getTime() / 1000) : Math.floor(Date.now() / 1000),
-        link:          it.url ? `https://www.avito.ru${it.url}` : `https://www.avito.ru/rossiya?q=${encodeURIComponent(query)}`,
-        likes_count:   0,
-        reposts_count: 0,
-        query,
-      });
-    }
-    return posts;
-  }
-
-  // Fallback: regex parse raw HTML for item titles and descriptions
-  const itemRe = /data-marker="item"[\s\S]*?data-marker="item-title"[^>]*>([^<]{5,200})<\/[^>]+>[\s\S]*?(?:class="[^"]*description[^"]*"[^>]*>([^<]{0,400}))?/g;
-  const linkRe  = /href="(\/rossiya\/[^"]+\/\d+[^"]*?)"/g;
-  const idRe    = /\/(\d{8,12})(?:\?|$)/;
-
-  let m: RegExpExecArray | null;
-  const links: string[] = [];
-  while ((m = linkRe.exec(html)) !== null) links.push(m[1]);
-
-  let idx = 0;
-  const itemRe2 = /data-marker="item-title"[^>]*>([^<]{5,200})</g;
-  while ((m = itemRe2.exec(html)) !== null) {
-    const title = m[1].trim();
-    const link  = links[idx] ?? "";
-    const idMatch = link.match(idRe);
-    const postId  = idMatch ? idMatch[1] : `avito_${idx}_${Date.now()}`;
-    posts.push({
-      post_id:       `avito_${postId}`,
-      text:          title,
-      author_name:   "Avito",
-      author_id:     postId,
-      date:          Math.floor(Date.now() / 1000),
-      link:          link ? `https://www.avito.ru${link}` : `https://www.avito.ru/rossiya?q=${encodeURIComponent(query)}`,
-      likes_count:   0,
-      reposts_count: 0,
-      query,
-    });
-    idx++;
-  }
-  // suppress unused warning
-  void itemRe;
-
-  return posts;
-}
-
-async function scrapeAvitoQuery(query: string, maxItems: number): Promise<VkPost[]> {
-  const url = `https://www.avito.ru/rossiya?q=${encodeURIComponent(query)}&s=104&counterId=239`;
+async function searchPostsByQuery(query: string, count: number, token: string): Promise<VkPost[]> {
+  const params = new URLSearchParams({
+    q:            query,
+    count:        String(Math.min(count, 200)),
+    access_token: token,
+    v:            VK_V,
+    extended:     "1",
+  });
   try {
-    const res = await fetch(url, { headers: FETCH_HEADERS, signal: AbortSignal.timeout(15_000) });
-    if (!res.ok) return [];
-    const html = await res.text();
-    const posts = parseAvitoHtml(html, query);
-    return posts.slice(0, maxItems);
-  } catch {
-    return [];
-  }
+    const res  = await fetch(`${VK_BASE}/newsfeed.search?${params}`, { signal: AbortSignal.timeout(12_000) });
+    const data = await res.json() as { error?: unknown; response?: { items?: Record<string, unknown>[]; profiles?: Record<string, unknown>[]; groups?: Record<string, unknown>[] } };
+    if (data.error) { console.error("VK API:", data.error); return []; }
+    const items    = data.response?.items    ?? [];
+    const profiles = data.response?.profiles ?? [];
+    const groups   = data.response?.groups   ?? [];
+    return items
+      .filter(item => item.text && String(item.text).length > 10)
+      .map(item => {
+        const ownerId = Number(item.owner_id ?? item.from_id ?? 0);
+        const postId  = Number(item.id ?? 0);
+        return {
+          post_id:       `${ownerId}_${postId}`,
+          text:          String(item.text ?? ""),
+          author_name:   resolveAuthor(ownerId, profiles, groups),
+          author_id:     String(ownerId),
+          date:          Number(item.date ?? Math.floor(Date.now() / 1000)),
+          link:          `https://vk.com/wall${ownerId}_${postId}`,
+          likes_count:   Number((item.likes as Record<string, unknown>)?.count ?? 0),
+          reposts_count: Number((item.reposts as Record<string, unknown>)?.count ?? 0),
+          query,
+        };
+      });
+  } catch { return []; }
 }
 
 export async function scrapeVkIntentPosts(queries: string[], maxItems = 20): Promise<VkPost[]> {
-  // Use Avito intent queries (ignore VK queries parameter, use our curated list)
-  const intentQueries = AVITO_QUERIES.slice(0, queries.length);
-  const all: VkPost[] = [];
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return [];
+
+  const tokenData = await getVkToken(dbUrl);
+  if (!tokenData) return []; // no user token yet — UI shows connect button
+
+  const all:  VkPost[] = [];
   const seen = new Set<string>();
 
-  for (const q of intentQueries) {
-    await delay(1200);
-    const posts = await scrapeAvitoQuery(q, maxItems);
+  for (const query of queries) {
+    if (all.length > 0) await delay(400);
+    const posts = await searchPostsByQuery(query, maxItems, tokenData.access_token);
     for (const p of posts) {
-      if (!seen.has(p.post_id)) {
-        seen.add(p.post_id);
-        all.push(p);
-      }
+      if (!seen.has(p.post_id)) { seen.add(p.post_id); all.push(p); }
     }
-    if (all.length >= maxItems * 3) break;
   }
-
   return all;
 }

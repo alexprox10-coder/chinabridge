@@ -1,16 +1,16 @@
 # Graph Report - chinabridge  (2026-08-25)
 
 ## Corpus Check
-- 687 files · ~976,836 words
+- 688 files · ~977,440 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3950 nodes · 7480 edges · 265 communities (221 shown, 44 thin omitted)
+- 3959 nodes · 7491 edges · 267 communities (223 shown, 44 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 37 edges (avg confidence: 0.59)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `10db1590`
+- Built from commit: `094a4f8c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -24,10 +24,10 @@
 - OperationsDashboard.tsx
 - strategy/data.ts
 - MarketingDashboard.tsx
-- AdminNav.tsx
+- VkAdsDashboard.tsx
 - VkIntentClient.tsx
 - ContentPageClient.tsx
-- Footer.tsx
+- b2bchina-alternative/page.tsx
 - CategoryPage.tsx
 - import-leads/types.ts
 - rate-engine/db.ts
@@ -35,9 +35,9 @@
 - AiOsDashboard.tsx
 - store.ts
 - LeadDetail.tsx
-- market-intelligence/types.ts
+- RadarClient.tsx
 - isAuthorized
-- lib/finance/types.ts
+- AdminNav.tsx
 - getSession
 - CeoDashboard.tsx
 - signup/route.ts
@@ -53,7 +53,7 @@
 - rate-calculator.ts
 - ai/client.ts
 - client-portal/types.ts
-- app/services/page.tsx
+- CTASection.tsx
 - ImportLead
 - documents/types.ts
 - ai-cto/index.ts
@@ -61,39 +61,39 @@
 - getLeads
 - pricing/page.tsx
 - devDependencies
-- sales/data.ts
-- market-intelligence/leads/route.ts
+- SalesDashboard.tsx
+- proposals/page.tsx
 - MarketingPageClient.tsx
 - app/page.tsx
 - AIEconomicsFunnel.tsx
-- isAdminOnly
+- market-intelligence/types.ts
 - Breadcrumbs.tsx
-- china-kazakhstan/page.tsx
+- analytics/index.ts
 - dependencies
 - api/leads/route.ts
 - lead-finder/index.ts
 - ai/types.ts
 - validators.ts
-- PersonalOfferWidget.tsx
+- PlatformDashboard.tsx
 - client-portal/auth.ts
 - market-radar/index.ts
 - partners/db.ts
 - vk-intent/pipeline.ts
 - intelligence/client.ts
-- finance/api.ts
-- PlatformDashboard.tsx
+- settings/route.ts
+- seed/route.ts
 - CeoReportWidget.tsx
 - CurrencyRates.tsx
-- proposals/types.ts
+- generator.ts
 - client/calculator/page.tsx
-- briefing/route.ts
+- getTenantId
 - tochka/route.ts
 - UnifiedLeadsDashboard.tsx
 - SeoClustersClient.tsx
 - economics/route.ts
 - KnowledgeUI.tsx
-- admin/settings/billing/page.tsx
-- seed/route.ts
+- calculator.ts
+- chat/page.tsx
 - enrich.ts
 - free-guide.tsx
 - url-parser.ts
@@ -108,18 +108,18 @@
 - setup/route.ts
 - outreach-leads/page.tsx
 - departments.ts
-- getTenantId
-- tenants/[id]/route.ts
+- finance/api.ts
+- sales/data.ts
 - memory.ts
-- reports/page.tsx
+- isAdminOnly
 - vk-ads/sync/route.ts
-- analytics/index.ts
+- tenants/[id]/route.ts
 - calculator/types.ts
 - WbSellersClient.tsx
-- deal-intelligence/index.ts
+- DealIntelligenceClient.tsx
 - seed-db.ts
 - telegram/webhook/route.ts
-- calculator.ts
+- ai-funnel/submit/route.ts
 - SupplierFinderUI.tsx
 - check/route.ts
 - HhLeadsClient.tsx
@@ -133,13 +133,13 @@
 - client/layout.tsx
 - scripts
 - CtoDashboard.tsx
-- product-finder/page.tsx
+- ProductFinderUI.tsx
 - drizzle-orm
 - marketplace-rates/route.ts
 - articles/route.ts
 - requisites/page.tsx
 - presentation/page.tsx
-- apify-leads/route.ts
+- admin/settings/billing/page.tsx
 - tenant-auth.ts
 - Weekly Priorities
 - CHINABRIDGE — AI OPERATING SYSTEM
@@ -153,20 +153,20 @@
 - SalesCompaniesClient.tsx
 - KPIs by Category
 - client-portal/api.ts
-- Header.tsx
+- Footer.tsx
 - contact-alert/route.ts
 - campaigns/page.tsx
 - china-delivery/page.tsx
-- LeadMagnetForm.tsx
-- app/platform/page.tsx
+- import-leads/leads/route.ts
+- app/services/page.tsx
 - PartnersDashboard.tsx
 - SignupForm.tsx
 - CreateWizard.tsx
-- app/layout.tsx
+- LeadMagnetForm.tsx
 - telegram.ts
 - rates/sync/route.ts
-- sales/tasks/route.ts
-- fulfilment/page.tsx
+- import-leads/status-store.ts
+- knowledge/chat/route.ts
 - client/dashboard/page.tsx
 - content-publish/route.ts
 - free/route.ts
@@ -175,18 +175,18 @@
 - trackGAEvent
 - AiSettings.tsx
 - BillingCenter.tsx
-- knowledge/chat/route.ts
+- supplier-finder/route.ts
 - database.ts
-- ai-sales-agent/route.ts
-- wb-leads/route.ts
+- import-leads/crm.ts
+- supplier-wildberries-china/page.tsx
 - drip-cron/route.ts
 - middleware.ts
 - vercel.json
 - getLLMConfig
 - crm/client.ts
-- b2bchina-alternative/page.tsx
-- generator.ts
-- WarehouseGallery.tsx
+- integrations/page.tsx
+- fonts.ts
+- expenses/[id]/route.ts
 - client/page.tsx
 - crm/page.tsx
 - multitenant/types.ts
@@ -195,7 +195,7 @@
 - checks/crm.ts
 - security.ts
 - Architecture Decision Records (ADR)
-- import-leads/crm.ts
+- marketing/partners/page.tsx
 - trigger-enrich/route.ts
 - Intelligence Agent — Context
 - wb-sellers/route.ts
@@ -206,7 +206,7 @@
 - ai/route.ts
 - marketing-ai/route.ts
 - client/login/page.tsx
-- getAllLeads
+- registrations/page.tsx
 - init/route.ts
 - demo/finance/page.tsx
 - Kazakhstan Import Rules
@@ -214,6 +214,7 @@
 - query-approved.mjs
 - cleanup/leads/route.ts
 - test/route.ts
+- FulfilmentClient.tsx
 - export/route.ts
 - import/route.ts
 - complete/route.ts
@@ -237,7 +238,7 @@
 - AiCompanyOsBlock.tsx
 - Process.tsx
 - validation.ts
-- faq/page.tsx
+- china-blagoveshchensk/page.tsx
 - lucide-react
 - @neondatabase/serverless
 - next.config.ts
@@ -257,12 +258,13 @@
 - seo.ts
 - cbr/route.ts
 - Marketplace Commission Rules
-- product-finder/route.ts
+- china-spb/page.tsx
+- supplier-search/page.tsx
 - ChinaBridge — Business Knowledge
 - Strategy Directory
+- wildberries-margin-calculator/page.tsx
 - notifications/route.ts
-- metrika.ts
-- inspection/page.tsx
+- vk-intent/test/route.ts
 - FAQSection.tsx
 - OnboardingSteps.tsx
 - kaspi-china/layout.tsx
@@ -294,7 +296,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (265 total, 44 thin omitted)
+## Communities (267 total, 44 thin omitted)
 
 ### Community 0 - "content/db.ts"
 Cohesion: 0.06
@@ -332,9 +334,9 @@ Nodes (42): dynamic, loadReport(), StrategyPage(), IMPACT_CFG, POTENTIAL_CFG, PR
 Cohesion: 0.07
 Nodes (44): MarketingDashboard(), PLATFORM_STYLE, PRIORITY_STYLE, Props, STATUS_STYLE, TABS, dynamic, loadReport() (+36 more)
 
-### Community 9 - "AdminNav.tsx"
-Cohesion: 0.05
-Nodes (29): Question, GROUP_COLOR, KwRow, TRAFFIC_COLOR, IntegrationsClient(), STATIC_INTEGRATIONS, VkStatus, Partner (+21 more)
+### Community 9 - "VkAdsDashboard.tsx"
+Cohesion: 0.29
+Nodes (5): AccountData, Campaign, LeadData, LeadForm, VkAdsDashboard()
 
 ### Community 10 - "VkIntentClient.tsx"
 Cohesion: 0.20
@@ -344,17 +346,17 @@ Nodes (7): dynamic, Stats, Tier, TIER_ICON, TIER_STYLE, VkIntentClient(), VkLead
 Cohesion: 0.08
 Nodes (35): CHIP_COLORS, ContentCalendarPage(), dayKey(), parseTimes(), Post, postDate(), Schedule, WEEKDAYS (+27 more)
 
-### Community 12 - "Footer.tsx"
-Cohesion: 0.10
-Nodes (13): jsonLd, metadata, jsonLd, metadata, jsonLd, metadata, niches, steps (+5 more)
+### Community 12 - "b2bchina-alternative/page.tsx"
+Cohesion: 0.40
+Nodes (3): competitors, jsonLd, metadata
 
 ### Community 13 - "CategoryPage.tsx"
 Cohesion: 0.07
 Nodes (15): metadata, metadata, metadata, metadata, metadata, metadata, metadata, metadata (+7 more)
 
 ### Community 14 - "import-leads/types.ts"
-Cohesion: 0.12
-Nodes (29): GET(), maxDuration, POST(), QUICK_OVERRIDES, runtime, analyzeWebsite(), orAnalyze(), scrapeWebsite() (+21 more)
+Cohesion: 0.10
+Nodes (33): POST(), runtime, GET(), maxDuration, POST(), QUICK_OVERRIDES, runtime, analyzeWebsite() (+25 more)
 
 ### Community 15 - "rate-engine/db.ts"
 Cohesion: 0.11
@@ -373,20 +375,20 @@ Cohesion: 0.12
 Nodes (25): WizardForm, GET(), maxDuration, runtime, GET(), isSuperAdmin(), maxDuration, POST() (+17 more)
 
 ### Community 19 - "LeadDetail.tsx"
-Cohesion: 0.10
-Nodes (21): dynamic, revalidate, ALL_STATUSES, COLUMNS, LeadCard(), msAgo(), timeLabel(), AiSummary (+13 more)
+Cohesion: 0.07
+Nodes (27): DashboardPage(), dynamic, revalidate, ALL_STATUSES, COLUMNS, LeadCard(), msAgo(), timeLabel() (+19 more)
 
-### Community 20 - "market-intelligence/types.ts"
-Cohesion: 0.11
-Nodes (16): PIPE_COLORS, SOURCE_ICON, Tab, TEMP_COLORS, dynamic, DEMO_SIGNALS, RadarClient(), Tab (+8 more)
+### Community 20 - "RadarClient.tsx"
+Cohesion: 0.17
+Nodes (9): dynamic, DEMO_SIGNALS, RadarClient(), Tab, TAB_DEFS, TYPE_COLOR, MIRadarSignal, RADAR_TYPE_LABELS (+1 more)
 
 ### Community 21 - "isAuthorized"
-Cohesion: 0.06
-Nodes (40): dynamic, GET(), runtime, dynamic, GET(), runtime, dynamic, GET() (+32 more)
+Cohesion: 0.05
+Nodes (47): dynamic, GET(), runtime, dynamic, PATCH(), runtime, dynamic, GET() (+39 more)
 
-### Community 22 - "lib/finance/types.ts"
-Cohesion: 0.08
-Nodes (39): dynamic, FinanceExpensesPage(), fmtDate(), revalidate, dynamic, FinanceOrdersPage(), fmtDate(), revalidate (+31 more)
+### Community 22 - "AdminNav.tsx"
+Cohesion: 0.06
+Nodes (45): Question, GROUP_COLOR, KwRow, TRAFFIC_COLOR, dynamic, FinanceExpensesPage(), fmtDate(), revalidate (+37 more)
 
 ### Community 23 - "getSession"
 Cohesion: 0.18
@@ -401,8 +403,8 @@ Cohesion: 0.17
 Nodes (17): POST(), runtime, POST(), runtime, ipAttempts, maxDuration, notifyAdminNewRegistration(), POST() (+9 more)
 
 ### Community 26 - "market-intelligence/db.ts"
-Cohesion: 0.22
-Nodes (19): dynamic, MarketIntelligencePage(), dynamic, GET(), getTenantId(), POST(), runtime, ensureMISchema() (+11 more)
+Cohesion: 0.25
+Nodes (17): GET(), dynamic, GET(), getTenantId(), runtime, ensureMISchema(), getLatestReport(), getMILeads() (+9 more)
 
 ### Community 27 - "OnboardingWizard.tsx"
 Cohesion: 0.07
@@ -421,8 +423,8 @@ Cohesion: 0.16
 Nodes (15): auth(), GET(), getDynamicKeywords(), POST(), ensureTable(), GET(), POST(), Competition (+7 more)
 
 ### Community 31 - "document.tsx"
-Cohesion: 0.09
-Nodes (11): DARK, GREY, LIGHT_GREY, RED, styles, WHITE, CONTACTS, COOPERATION_STEPS (+3 more)
+Cohesion: 0.10
+Nodes (10): DARK, GREY, LIGHT_GREY, RED, styles, WHITE, CONTACTS, COOPERATION_STEPS (+2 more)
 
 ### Community 32 - "compilerOptions"
 Cohesion: 0.07
@@ -448,13 +450,13 @@ Nodes (20): maxDuration, POST(), runtime, runConsultant(), runAgent(), runLogist
 Cohesion: 0.10
 Nodes (13): ClientThread, CITIES, CreateOrderForm(), ClientAccount, ClientDocument, ClientMessage, ClientOrder, ORDER_STATUS_COLORS (+5 more)
 
-### Community 38 - "app/services/page.tsx"
-Cohesion: 0.10
-Nodes (17): CITIES, metadata, FAQ, metadata, schema, FAQ, metadata, schema (+9 more)
+### Community 38 - "CTASection.tsx"
+Cohesion: 0.12
+Nodes (15): CITIES, metadata, FAQ, metadata, schema, FAQ, metadata, schema (+7 more)
 
 ### Community 39 - "ImportLead"
-Cohesion: 0.12
-Nodes (12): IMPORTS_LABELS, Props, SCORE_COLORS, STATUS_LABELS, STATUS_STYLES, ACTION_ICON, AiSalesAgentClient(), Recommendation (+4 more)
+Cohesion: 0.11
+Nodes (14): IMPORTS_LABELS, Props, SCORE_COLORS, STATUS_LABELS, STATUS_STYLES, UnifiedLead, ACTION_ICON, AiSalesAgentClient() (+6 more)
 
 ### Community 40 - "documents/types.ts"
 Cohesion: 0.06
@@ -469,8 +471,8 @@ Cohesion: 0.17
 Nodes (14): BlogPage(), metadata, ArticlePage(), generateMetadata(), Props, renderContent(), sitemap(), ArticleCard() (+6 more)
 
 ### Community 43 - "getLeads"
-Cohesion: 0.20
-Nodes (15): DashboardPage(), auth(), ensureTable(), GET(), POST(), DELETE(), dynamic, GET() (+7 more)
+Cohesion: 0.16
+Nodes (20): dynamic, MarketIntelligencePage(), auth(), ensureTable(), GET(), POST(), dynamic, GET() (+12 more)
 
 ### Community 44 - "pricing/page.tsx"
 Cohesion: 0.11
@@ -480,13 +482,13 @@ Nodes (23): BLANK, CUSTOMER_COLORS, CUSTOMER_LABELS, FilterKey, FxRate, MpRate, 
 Cohesion: 0.09
 Nodes (23): dotenv-cli, drizzle-kit, eslint, eslint-config-next, devDependencies, dotenv-cli, drizzle-kit, eslint (+15 more)
 
-### Community 46 - "sales/data.ts"
-Cohesion: 0.07
-Nodes (43): dynamic, loadReport(), metadata, SalesPage(), PRIO, Priority, SalesDashboard(), Tab (+35 more)
+### Community 46 - "SalesDashboard.tsx"
+Cohesion: 0.08
+Nodes (30): dynamic, loadReport(), metadata, SalesPage(), PRIO, Priority, SalesDashboard(), Tab (+22 more)
 
-### Community 47 - "market-intelligence/leads/route.ts"
-Cohesion: 0.31
-Nodes (8): buildMIComment(), dynamic, GET(), getTenantId(), maxDuration, PATCH(), POST(), runtime
+### Community 47 - "proposals/page.tsx"
+Cohesion: 0.25
+Nodes (8): dynamic, MODE_COLORS, ProposalsPage(), revalidate, STATUS_COLORS, STATUS_LABELS, getProposals(), ProposalStatus
 
 ### Community 48 - "MarketingPageClient.tsx"
 Cohesion: 0.11
@@ -494,75 +496,75 @@ Nodes (15): metadata, Analytics, Channel, fmtNum(), fmtPct(), fmtRub(), FunnelSt
 
 ### Community 49 - "app/page.tsx"
 Cohesion: 0.07
-Nodes (11): metadata, schemaOrg, Advantages, Directions, DirectionsSplit(), faqs, CARDS, COMPARISON_ROWS (+3 more)
+Nodes (11): metadata, schemaOrg, Advantages, Directions, faqs, CARDS, COMPARISON_ROWS, GtdCompareBlock() (+3 more)
 
 ### Community 50 - "AIEconomicsFunnel.tsx"
-Cohesion: 0.09
-Nodes (22): jsonLd, metadata, wbRates2026, AIEconomicsFunnel(), ANALYZE_STAGES, CITY_CHIPS, CorrectionData, EMPTY_CORRECTION (+14 more)
+Cohesion: 0.10
+Nodes (19): AIEconomicsFunnel(), ANALYZE_STAGES, CITY_CHIPS, CorrectionData, EMPTY_CORRECTION, EMPTY_PRODUCT, estimateSalePrice(), ExtractedProduct (+11 more)
 
-### Community 51 - "isAdminOnly"
-Cohesion: 0.24
-Nodes (8): dynamic, POST(), runtime, WORKFLOWS, maxDuration, POST(), runtime, isAdminOnly()
+### Community 51 - "market-intelligence/types.ts"
+Cohesion: 0.16
+Nodes (13): PIPE_COLORS, SOURCE_ICON, Tab, TEMP_COLORS, buildMIComment(), dynamic, maxDuration, PATCH() (+5 more)
 
 ### Community 52 - "Breadcrumbs.tsx"
 Cohesion: 0.11
 Nodes (9): metadata, FAQ, metadata, schema, metadata, metadata, Breadcrumbs(), BreadcrumbsProps (+1 more)
 
-### Community 53 - "china-kazakhstan/page.tsx"
-Cohesion: 0.40
-Nodes (3): FAQ, metadata, schema
+### Community 53 - "analytics/index.ts"
+Cohesion: 0.29
+Nodes (8): YandexMetrika(), Cases, analytics, fire(), METRIKA_ID, reachGoal(), trackMetrikaPageView(), Window
 
 ### Community 54 - "dependencies"
 Cohesion: 0.10
 Nodes (21): autoprefixer, clsx, framer-motion, @hookform/resolvers, next, dependencies, autoprefixer, clsx (+13 more)
 
 ### Community 55 - "api/leads/route.ts"
-Cohesion: 0.17
-Nodes (17): dynamic, notifyManagerTelegram(), POST(), REQUIRED, REQUIRES_PHONE, runtime, validate(), LeadData (+9 more)
+Cohesion: 0.18
+Nodes (16): dynamic, notifyManagerTelegram(), POST(), REQUIRED, REQUIRES_PHONE, runtime, validate(), Lead (+8 more)
 
 ### Community 56 - "lead-finder/index.ts"
-Cohesion: 0.24
-Nodes (17): saveMILead(), aiScore(), Contacts, dedup(), extractContacts(), firecrawlSearch(), GOOGLE_QUERIES, heuristic() (+9 more)
+Cohesion: 0.18
+Nodes (19): getTenantId(), POST(), aiScore(), Contacts, dedup(), extractContacts(), firecrawlSearch(), GOOGLE_QUERIES (+11 more)
 
 ### Community 57 - "ai/types.ts"
 Cohesion: 0.12
-Nodes (17): AgentBadge(), CONFIG, ChatInput(), Props, ChatMessage(), Props, ChatWidget, ChatWindow() (+9 more)
+Nodes (18): AgentBadge(), CONFIG, ChatInput(), Props, ChatMessage(), Props, ChatWidget, ChatWindow() (+10 more)
 
 ### Community 58 - "validators.ts"
 Cohesion: 0.16
 Nodes (10): POST(), runtime, POST(), runtime, POST(), runtime, validatePricingRule(), validateRoute() (+2 more)
 
-### Community 59 - "PersonalOfferWidget.tsx"
-Cohesion: 0.18
-Nodes (8): AnalysisSummary, AttackPlan, CockpitResult, ContactsFound, LOADING_STEPS, OfferOption, PersonalOfferWidget(), ScoreFactor
+### Community 59 - "PlatformDashboard.tsx"
+Cohesion: 0.22
+Nodes (7): dynamic, COUNTRY_FLAG, fmtMoney(), PLAN_BADGE, PlatformDashboard(), STATUS_DOT, PlatformMetrics
 
 ### Community 60 - "client-portal/auth.ts"
 Cohesion: 0.21
 Nodes (16): GET(), notifyAdmin(), runtime, setSessionCookie(), ipAttempts, notifyAdmin(), POST(), runtime (+8 more)
 
 ### Community 61 - "market-radar/index.ts"
-Cohesion: 0.19
-Nodes (18): dynamic, GET(), getTenantId(), maxDuration, POST(), runtime, aiAnalyze(), COMPETITORS (+10 more)
+Cohesion: 0.21
+Nodes (18): dynamic, GET(), getTenantId(), maxDuration, POST(), runtime, saveRadarSignal(), aiAnalyze() (+10 more)
 
 ### Community 62 - "partners/db.ts"
 Cohesion: 0.22
 Nodes (14): GET(), runtime, GET(), runtime, GET(), runtime, bootstrap(), getOrCreateLink() (+6 more)
 
 ### Community 63 - "vk-intent/pipeline.ts"
-Cohesion: 0.11
-Nodes (24): dynamic, GET(), maxDuration, runtime, dynamic, maxDuration, POST(), runtime (+16 more)
+Cohesion: 0.09
+Nodes (30): dynamic, GET(), maxDuration, runtime, dynamic, maxDuration, POST(), runtime (+22 more)
 
 ### Community 64 - "intelligence/client.ts"
 Cohesion: 0.13
 Nodes (18): CreateMarketWatchInput, FactSnapshot, MarketWatchItem, SQL, ChangeStatus, ChangeType, Confidence, CrawlFrequency (+10 more)
 
-### Community 65 - "finance/api.ts"
-Cohesion: 0.07
-Nodes (44): FinanceDashboardPage(), dynamic, PATCH(), runtime, FinancePDF(), GET(), dynamic, PATCH() (+36 more)
+### Community 65 - "settings/route.ts"
+Cohesion: 0.24
+Nodes (9): FinanceSettingsPage(), dynamic, GET(), PUT(), runtime, getFinanceSettings(), getSettingValue(), rowToSetting() (+1 more)
 
-### Community 66 - "PlatformDashboard.tsx"
-Cohesion: 0.22
-Nodes (7): dynamic, COUNTRY_FLAG, fmtMoney(), PLAN_BADGE, PlatformDashboard(), STATUS_DOT, PlatformMetrics
+### Community 66 - "seed/route.ts"
+Cohesion: 0.33
+Nodes (7): makeId(), maxDuration, now(), POST(), runtime, ensureSchema(), crmLeads
 
 ### Community 67 - "CeoReportWidget.tsx"
 Cohesion: 0.20
@@ -572,45 +574,45 @@ Nodes (9): Alert, ALERT_STYLE, CeoReport, CeoReportWidget(), Insight, Priority, 
 Cohesion: 0.32
 Nodes (7): CbrResponse, CbrValute, CurrencyRates(), fetchRates(), fmt(), Rates, STATIC_RATES
 
-### Community 69 - "proposals/types.ts"
-Cohesion: 0.14
-Nodes (16): dynamic, MODE_COLORS, ProposalsPage(), revalidate, STATUS_COLORS, STATUS_LABELS, dynamic, GET() (+8 more)
+### Community 69 - "generator.ts"
+Cohesion: 0.10
+Nodes (28): POST(), runtime, dynamic, GET(), runtime, dynamic, GET(), runtime (+20 more)
 
 ### Community 70 - "client/calculator/page.tsx"
 Cohesion: 0.12
 Nodes (15): AI_STEPS, CalculatorPage(), CalcVariant, CATEGORIES, CITIES_FROM, CITY_COUNTRIES, fmtDays(), FormData (+7 more)
 
-### Community 71 - "briefing/route.ts"
-Cohesion: 0.38
-Nodes (6): GET(), isAuthorized(), maxDuration, OfferResult, runtime, selectOffer()
+### Community 71 - "getTenantId"
+Cohesion: 0.12
+Nodes (22): dynamic, GET(), PATCH(), runtime, dynamic, GET(), POST(), runtime (+14 more)
 
 ### Community 72 - "tochka/route.ts"
 Cohesion: 0.23
 Nodes (14): maxDuration, POST(), runtime, ensureLinksTable(), GET(), getSql(), maxDuration, POST() (+6 more)
 
 ### Community 73 - "UnifiedLeadsDashboard.tsx"
-Cohesion: 0.14
-Nodes (15): ACTION_BUTTONS, LeadSystem, MI_TO_UNIFIED, normalizeImport(), normalizeMI(), SOURCE_ICON, STATUS_COLORS, STATUS_LABELS (+7 more)
+Cohesion: 0.15
+Nodes (13): ACTION_BUTTONS, LeadSystem, MI_TO_UNIFIED, normalizeImport(), normalizeMI(), SOURCE_ICON, STATUS_COLORS, STATUS_LABELS (+5 more)
 
 ### Community 74 - "SeoClustersClient.tsx"
 Cohesion: 0.13
 Nodes (12): dynamic, Brief, ClusterGroup, COMP_COLOR, COMP_LABEL, GROUP_LABELS, SeoClustersClient(), Stats (+4 more)
 
 ### Community 75 - "economics/route.ts"
-Cohesion: 0.24
-Nodes (8): checkAndIncrement(), getIp(), maxDuration, POST(), runtime, EconomicsResult, INTEL_MP_KEYS, SystemRates
+Cohesion: 0.21
+Nodes (9): checkAndIncrement(), getIp(), maxDuration, POST(), runtime, EconomicsResult, getSystemRates(), INTEL_MP_KEYS (+1 more)
 
 ### Community 76 - "KnowledgeUI.tsx"
 Cohesion: 0.13
 Nodes (10): metadata, ArticleFull, ArticleSummary, Category, CATEGORY_COLORS, ChatMessage, FAQ_ITEMS, KnowledgeUI() (+2 more)
 
-### Community 77 - "admin/settings/billing/page.tsx"
-Cohesion: 0.31
-Nodes (7): BillingClient(), Plan, PLAN_BTN, PLAN_COLOR, BillingPage(), dynamic, BillingPlan
+### Community 77 - "calculator.ts"
+Cohesion: 0.22
+Nodes (12): EconomicsScenario, ProductScore, SupplierRiskResult, TargetPrice, buildScenario(), calculateUnitEconomics(), computeProductScore(), computeSupplierRisk() (+4 more)
 
-### Community 78 - "seed/route.ts"
-Cohesion: 0.33
-Nodes (7): makeId(), maxDuration, now(), POST(), runtime, ensureSchema(), crmLeads
+### Community 78 - "chat/page.tsx"
+Cohesion: 0.29
+Nodes (5): dynamic, revalidate, Message, PROMPTS, SalesChatClient()
 
 ### Community 79 - "enrich.ts"
 Cohesion: 0.22
@@ -668,41 +670,41 @@ Nodes (11): APIFY_PRESETS, ApifyLead, DORK_TEMPLATES, EMPTY_LEAD, EMPTY_WB, Lead
 Cohesion: 0.46
 Nodes (14): agent(), buildAllDepartments(), buildAnalyticsDept(), buildClientSuccessDept(), buildContentDept(), buildFinanceDept(), buildMarketingDept(), buildOperationsDept() (+6 more)
 
-### Community 93 - "getTenantId"
-Cohesion: 0.12
-Nodes (20): dynamic, GET(), POST(), runtime, dynamic, GET(), POST(), runtime (+12 more)
+### Community 93 - "finance/api.ts"
+Cohesion: 0.08
+Nodes (45): FinanceDashboardPage(), FinanceReportsPage(), dynamic, GET(), POST(), runtime, dynamic, GET() (+37 more)
 
-### Community 94 - "tenants/[id]/route.ts"
-Cohesion: 0.39
-Nodes (7): DELETE(), GET(), isSuperAdmin(), maxDuration, PATCH(), runtime, deleteTenant()
+### Community 94 - "sales/data.ts"
+Cohesion: 0.25
+Nodes (13): maxDuration, POST(), runtime, buildFollowupQueue(), buildPipelineHealth(), buildSalesKPIs(), enhanceLead(), fetchAllSalesData() (+5 more)
 
 ### Community 95 - "memory.ts"
 Cohesion: 0.23
 Nodes (15): dynamic, POST(), runtime, AGENT_LABELS, addMessage(), doHandoff(), ensureTable(), fallback (+7 more)
 
-### Community 96 - "reports/page.tsx"
-Cohesion: 0.12
-Nodes (19): dynamic, EMPTY_REPORT, FinanceReportsPage(), revalidate, dynamic, GET(), POST(), runtime (+11 more)
+### Community 96 - "isAdminOnly"
+Cohesion: 0.24
+Nodes (8): dynamic, POST(), runtime, WORKFLOWS, maxDuration, POST(), runtime, isAdminOnly()
 
 ### Community 97 - "vk-ads/sync/route.ts"
 Cohesion: 0.24
 Nodes (11): GET(), getToken(), leadToContact(), maxDuration, mtGet(), POST(), runSync(), runtime (+3 more)
 
-### Community 98 - "analytics/index.ts"
-Cohesion: 0.21
-Nodes (9): GAInner(), Cases, Services, GA_ID, trackGAPageView(), Window, analytics, fire() (+1 more)
+### Community 98 - "tenants/[id]/route.ts"
+Cohesion: 0.39
+Nodes (7): DELETE(), GET(), isSuperAdmin(), maxDuration, PATCH(), runtime, deleteTenant()
 
 ### Community 99 - "calculator/types.ts"
-Cohesion: 0.12
-Nodes (20): AI_STEPS, CalculatorForm(), CITY_CHIPS, initialFormData, inp(), CalculatorFormData, CalculatorResult, CARGO_TYPE_ICONS (+12 more)
+Cohesion: 0.15
+Nodes (16): AI_STEPS, CalculatorForm(), CITY_CHIPS, initialFormData, inp(), CalculatorFormData, CalculatorResult, CARGO_TYPE_ICONS (+8 more)
 
 ### Community 100 - "WbSellersClient.tsx"
 Cohesion: 0.20
 Nodes (8): dynamic, metadata, BADGE, parseExtra(), WbSellersClient(), КАТ_LABEL, Приоритет, РасширенныеДанные
 
-### Community 101 - "deal-intelligence/index.ts"
-Cohesion: 0.12
-Nodes (13): ALERT_COLORS, DealIntelligenceClient(), RISK_COLORS, dynamic, analyzeDealIntelligence(), calcForecast(), scoreDeal(), STATUS_BASE (+5 more)
+### Community 101 - "DealIntelligenceClient.tsx"
+Cohesion: 0.18
+Nodes (6): ALERT_COLORS, DealIntelligenceClient(), RISK_COLORS, dynamic, DealIntelligenceResult, DealScore
 
 ### Community 102 - "seed-db.ts"
 Cohesion: 0.36
@@ -712,13 +714,13 @@ Nodes (8): n8nBase(), n8nFetch(), n8nKey(), normalize(), seedCreateRow(), seedLi
 Cohesion: 0.27
 Nodes (14): ALLOWED, callAI(), dynamic, extractUrls(), MAIN_KEYBOARD, POST(), runEnrich(), runFunnelStatus() (+6 more)
 
-### Community 104 - "calculator.ts"
-Cohesion: 0.17
-Nodes (19): getAiAnalysis(), maxDuration, POST(), runtime, saveProductAnalysis(), sendTelegramAlert(), buildScenario(), calculateUnitEconomics() (+11 more)
+### Community 104 - "ai-funnel/submit/route.ts"
+Cohesion: 0.27
+Nodes (10): getAiAnalysis(), maxDuration, POST(), runtime, saveProductAnalysis(), sendTelegramAlert(), detectCommissionPct(), getCommission() (+2 more)
 
 ### Community 105 - "SupplierFinderUI.tsx"
-Cohesion: 0.16
-Nodes (11): metadata, EXAMPLES, PRICE_LABELS, QUALITY_LABELS, ScoreBreakdown, SearchQueries, SearchResult, Supplier (+3 more)
+Cohesion: 0.20
+Nodes (10): EXAMPLES, PRICE_LABELS, QUALITY_LABELS, ScoreBreakdown, SearchQueries, SearchResult, Supplier, SupplierFinderUI() (+2 more)
 
 ### Community 106 - "check/route.ts"
 Cohesion: 0.26
@@ -764,9 +766,9 @@ Nodes (10): name, private, scripts, build, dev, lint, seed:rates, start (+2 more
 Cohesion: 0.40
 Nodes (9): CheckRow(), CtoDashboard(), FixResult, fmtDate(), scoreBg(), scoreColor(), SectionCard(), statusBadge() (+1 more)
 
-### Community 118 - "product-finder/page.tsx"
-Cohesion: 0.28
-Nodes (6): metadata, EXAMPLES, fmt(), Product, ProductFinderUI(), SearchResult
+### Community 118 - "ProductFinderUI.tsx"
+Cohesion: 0.40
+Nodes (5): EXAMPLES, fmt(), Product, ProductFinderUI(), SearchResult
 
 ### Community 120 - "marketplace-rates/route.ts"
 Cohesion: 0.33
@@ -780,9 +782,9 @@ Nodes (5): runtime, runtime, Article, ARTICLE_CATEGORIES, ARTICLES
 Cohesion: 0.22
 Nodes (7): AUDIENCE, FEATURES, FORMATS, metadata, PROBLEMS, WHY, PrintButton()
 
-### Community 124 - "apify-leads/route.ts"
-Cohesion: 0.47
-Nodes (5): dynamic, isAuthorized(), POST(), runtime, scoreFromReviews()
+### Community 124 - "admin/settings/billing/page.tsx"
+Cohesion: 0.31
+Nodes (7): BillingClient(), Plan, PLAN_BTN, PLAN_COLOR, BillingPage(), dynamic, BillingPlan
 
 ### Community 125 - "tenant-auth.ts"
 Cohesion: 0.22
@@ -832,9 +834,9 @@ Nodes (11): August (current month), KPIs by Category, Lead Generation, North Sta
 Cohesion: 0.13
 Nodes (23): AdminCalculationsPage(), dynamic, fmtDate(), revalidate, TRANSPORT_LABELS, dynamic, GET(), POST() (+15 more)
 
-### Community 138 - "Header.tsx"
-Cohesion: 0.14
-Nodes (13): metadata, metadata, FAQS, metadata, STEPS, generateMetadata(), getPage(), SeoPage (+5 more)
+### Community 138 - "Footer.tsx"
+Cohesion: 0.07
+Nodes (25): jsonLd, metadata, metadata, metadata, metadata, jsonLd, metadata, FAQS (+17 more)
 
 ### Community 139 - "contact-alert/route.ts"
 Cohesion: 0.50
@@ -848,13 +850,13 @@ Nodes (8): buildUtm(), Campaign, CampaignsPage(), CHANNEL_ICONS, CHANNELS, slugi
 Cohesion: 0.40
 Nodes (3): FAQ, metadata, schema
 
-### Community 142 - "LeadMagnetForm.tsx"
-Cohesion: 0.22
-Nodes (6): benefits, faqs, jsonLd, metadata, FormState, LeadMagnetForm()
+### Community 142 - "import-leads/leads/route.ts"
+Cohesion: 0.48
+Nodes (6): buildImportComment(), GET(), isAuthorized(), PATCH(), runtime, updateLeadStatus()
 
-### Community 143 - "app/platform/page.tsx"
-Cohesion: 0.17
-Nodes (9): AUDIENCE, FAQ, FEATURES, FORMATS, PROBLEMS, SAAS_PLANS, ADVANTAGES, Calculator() (+1 more)
+### Community 143 - "app/services/page.tsx"
+Cohesion: 0.12
+Nodes (12): AUDIENCE, FAQ, FEATURES, FORMATS, PROBLEMS, SAAS_PLANS, metadata, SERVICE_LINKS (+4 more)
 
 ### Community 144 - "PartnersDashboard.tsx"
 Cohesion: 0.29
@@ -868,9 +870,9 @@ Nodes (4): metadata, COUNTRIES, EMPLOYEES, SignupForm()
 Cohesion: 0.14
 Nodes (10): AI_MODULES, COUNTRIES, CreateWizard(), CURRENCIES, INDUSTRIES, PRESET_COLORS, STEPS, TIMEZONES (+2 more)
 
-### Community 147 - "app/layout.tsx"
-Cohesion: 0.21
-Nodes (6): inter, metadata, trackVkGoal(), VkPixel(), alertManager(), FloatingContact()
+### Community 147 - "LeadMagnetForm.tsx"
+Cohesion: 0.11
+Nodes (12): benefits, faqs, jsonLd, metadata, inter, metadata, trackVkGoal(), VkPixel() (+4 more)
 
 ### Community 148 - "telegram.ts"
 Cohesion: 0.36
@@ -880,13 +882,13 @@ Nodes (8): checkBotApi(), checkBotCredentials(), checkTelegramBot(), sendTelegra
 Cohesion: 0.43
 Nodes (6): dynamic, fetchCBRRates(), GET(), POST(), runtime, upsertRate()
 
-### Community 150 - "sales/tasks/route.ts"
+### Community 150 - "import-leads/status-store.ts"
 Cohesion: 0.47
-Nodes (5): fallbackTasks(), GET(), isAuthorized(), maxDuration, runtime
+Nodes (8): DELETE(), deleteLeadPermanently(), ensureTable(), getDeletedLeadIds(), getLeadStatuses(), markLeadDeleted(), setLeadStatus(), sql
 
-### Community 151 - "fulfilment/page.tsx"
-Cohesion: 0.25
-Nodes (6): FulfilmentClient(), MARKETS, SERVICES, STEPS, WAREHOUSES, metadata
+### Community 151 - "knowledge/chat/route.ts"
+Cohesion: 0.40
+Nodes (5): maxDuration, POST(), runtime, saveQuestion(), ALL_KNOWLEDGE
 
 ### Community 152 - "client/dashboard/page.tsx"
 Cohesion: 0.17
@@ -909,8 +911,8 @@ Cohesion: 0.29
 Nodes (5): DOC_TYPES, DOCS, STATUS_LABEL, STATUS_STYLE, TYPE_COLORS
 
 ### Community 157 - "trackGAEvent"
-Cohesion: 0.15
-Nodes (12): checks, Hero(), HowItWorks(), STEPS, ImportEcosystemBlock(), partnerCards, stages, whyCards (+4 more)
+Cohesion: 0.12
+Nodes (17): GAInner(), DirectionsSplit(), checks, Hero(), HowItWorks(), STEPS, ImportEcosystemBlock(), partnerCards (+9 more)
 
 ### Community 158 - "AiSettings.tsx"
 Cohesion: 0.33
@@ -920,21 +922,21 @@ Nodes (4): AiConfig, AiSettings(), PROVIDERS, metadata
 Cohesion: 0.33
 Nodes (4): BillingCenter(), INVOICES, PLANS, metadata
 
-### Community 160 - "knowledge/chat/route.ts"
-Cohesion: 0.40
-Nodes (5): maxDuration, POST(), runtime, saveQuestion(), ALL_KNOWLEDGE
+### Community 160 - "supplier-finder/route.ts"
+Cohesion: 0.47
+Nodes (5): checkLimit(), getIp(), maxDuration, POST(), runtime
 
 ### Community 161 - "database.ts"
 Cohesion: 0.57
 Nodes (6): checkConnection(), checkDatabase(), checkQueryPerf(), CntRow, countTable(), sql
 
-### Community 162 - "ai-sales-agent/route.ts"
-Cohesion: 0.36
-Nodes (7): analyzeLeadsWithAI(), GET(), isAuthorized(), LeadRecommendation, maxDuration, POST(), runtime
+### Community 162 - "import-leads/crm.ts"
+Cohesion: 0.10
+Nodes (28): analyzeLeadsWithAI(), GET(), isAuthorized(), LeadRecommendation, maxDuration, POST(), runtime, dynamic (+20 more)
 
-### Community 163 - "wb-leads/route.ts"
-Cohesion: 0.60
-Nodes (4): GET(), isAuthorized(), POST(), runtime
+### Community 163 - "supplier-wildberries-china/page.tsx"
+Cohesion: 0.33
+Nodes (4): jsonLd, metadata, niches, steps
 
 ### Community 164 - "drip-cron/route.ts"
 Cohesion: 0.22
@@ -949,20 +951,24 @@ Cohesion: 0.29
 Nodes (6): buildCommand, crons, devCommand, framework, installCommand, outputDirectory
 
 ### Community 167 - "getLLMConfig"
-Cohesion: 0.12
-Nodes (19): ensureTable(), GET(), POST(), isAuthorized(), maxDuration, POST(), runtime, fallbackOffer() (+11 more)
+Cohesion: 0.09
+Nodes (25): ensureTable(), GET(), POST(), GET(), isAuthorized(), maxDuration, OfferResult, runtime (+17 more)
 
 ### Community 168 - "crm/client.ts"
-Cohesion: 0.10
-Nodes (30): dynamic, LeadPage(), revalidate, DELETE(), dynamic, GET(), PATCH(), runtime (+22 more)
+Cohesion: 0.09
+Nodes (33): dynamic, LeadPage(), revalidate, dynamic, isAuthorized(), POST(), runtime, scoreFromReviews() (+25 more)
 
-### Community 169 - "b2bchina-alternative/page.tsx"
+### Community 169 - "integrations/page.tsx"
 Cohesion: 0.40
-Nodes (3): competitors, jsonLd, metadata
+Nodes (3): IntegrationsClient(), STATIC_INTEGRATIONS, VkStatus
 
-### Community 170 - "generator.ts"
-Cohesion: 0.15
-Nodes (17): dynamic, GET(), runtime, generateProposal(), generateProposalNumber(), ProposalDocument(), ROBOTO_BOLD_B64, ROBOTO_LIGHT_B64 (+9 more)
+### Community 170 - "fonts.ts"
+Cohesion: 0.70
+Nodes (3): ROBOTO_BOLD_B64, ROBOTO_LIGHT_B64, ROBOTO_REGULAR_B64
+
+### Community 171 - "expenses/[id]/route.ts"
+Cohesion: 0.50
+Nodes (4): dynamic, PATCH(), runtime, updateExpense()
 
 ### Community 172 - "client/page.tsx"
 Cohesion: 0.33
@@ -996,9 +1002,9 @@ Nodes (6): checkCronSecretSet(), checkJwtEnvSet(), checkProtected(), checkSecuri
 Cohesion: 0.20
 Nodes (9): ADR-001: intel_facts as Single Source of Truth for Market Data, ADR-002: Chat Sessions Persisted in Neon DB, ADR-003: No void async() on Vercel Serverless, ADR-004: RU and KZ Always Separate Calculation Contexts, ADR-005: OpenRouter as LLM Provider with Fallback, ADR-006: lib/knowledge/index.ts for ChinaBridge Service Prices Only, ADR-007: Operations CEO AI Uses Real CRM Data, ADR-008: Finance Module Shows isDemo Warning When N8N Not Connected (+1 more)
 
-### Community 180 - "import-leads/crm.ts"
-Cohesion: 0.25
-Nodes (14): POST(), runtime, deleteLeadPermanently(), dtInsert(), dtQuery(), isDuplicateWebsite(), saveLead(), ensureTable() (+6 more)
+### Community 180 - "marketing/partners/page.tsx"
+Cohesion: 0.33
+Nodes (4): Partner, PLATFORMS, STATUS_COLORS, STATUSES
 
 ### Community 181 - "trigger-enrich/route.ts"
 Cohesion: 0.40
@@ -1028,9 +1034,9 @@ Nodes (12): DELETE(), dynamic, GET(), isAdmin(), runtime, GET(), PATCH(), runtim
 Cohesion: 0.50
 Nodes (4): buildSystemPrompt(), maxDuration, POST(), runtime
 
-### Community 191 - "getAllLeads"
-Cohesion: 0.16
-Nodes (16): dynamic, GET(), maxDuration, GET(), isAuthorized(), POST(), runtime, buildImportComment() (+8 more)
+### Community 191 - "registrations/page.tsx"
+Cohesion: 0.47
+Nodes (5): Client, COUNTRY_FLAG, daysSince(), fmt(), RegistrationsPage()
 
 ### Community 192 - "init/route.ts"
 Cohesion: 0.28
@@ -1048,6 +1054,10 @@ Nodes (8): ⚠️ CRITICAL COMPLIANCE RULE, Grey Scheme Mechanics (for internal 
 Cohesion: 0.40
 Nodes (4): client, env, envFile, miLeads
 
+### Community 201 - "FulfilmentClient.tsx"
+Cohesion: 0.33
+Nodes (5): FulfilmentClient(), MARKETS, SERVICES, STEPS, WAREHOUSES
+
 ### Community 205 - "Customer Success Agent — Context"
 Cohesion: 0.25
 Nodes (7): Compliance (same as sales), Customer Success Agent — Context, Data It Reads, Message Tone, Purpose, Triggers for Outreach, What to Track
@@ -1056,9 +1066,9 @@ Nodes (7): Compliance (same as sales), Customer Success Agent — Context, Data 
 Cohesion: 0.67
 Nodes (3): escapeNonAscii(), POST(), runtime
 
-### Community 230 - "faq/page.tsx"
-Cohesion: 0.29
-Nodes (5): FAQ_CUSTOMS, FAQ_DELIVERY, FAQ_MARKETPLACE, FAQ_SUPPLIERS, metadata
+### Community 230 - "china-blagoveshchensk/page.tsx"
+Cohesion: 0.40
+Nodes (3): FAQ, metadata, schema
 
 ### Community 245 - "ai-funnel/route.ts"
 Cohesion: 0.50
@@ -1096,50 +1106,50 @@ Nodes (5): dynamic, fetchCbrRates(), maxDuration, POST(), runtime
 Cohesion: 0.29
 Nodes (6): How intel_facts overrides hardcoded values, Kaspi.kz (Kazakhstan), Marketplace Commission Rules, Ozon, Wildberries (WB), Yandex Market
 
-### Community 255 - "product-finder/route.ts"
-Cohesion: 0.47
-Nodes (5): checkLimit(), getIp(), maxDuration, POST(), runtime
+### Community 255 - "china-spb/page.tsx"
+Cohesion: 0.40
+Nodes (3): FAQ, metadata, schema
+
+### Community 256 - "supplier-search/page.tsx"
+Cohesion: 0.40
+Nodes (3): FAQ, metadata, schema
 
 ### Community 257 - "ChinaBridge — Business Knowledge"
 Cohesion: 0.50
 Nodes (3): ChinaBridge — Business Knowledge, Files in this directory, How to use this knowledge
 
+### Community 259 - "wildberries-margin-calculator/page.tsx"
+Cohesion: 0.40
+Nodes (3): jsonLd, metadata, wbRates2026
+
 ### Community 260 - "notifications/route.ts"
 Cohesion: 0.50
 Nodes (4): GET(), maxDuration, runtime, generateNotifications()
 
-### Community 262 - "metrika.ts"
-Cohesion: 0.53
-Nodes (4): YandexMetrika(), METRIKA_ID, trackMetrikaPageView(), Window
-
-### Community 265 - "inspection/page.tsx"
-Cohesion: 0.40
-Nodes (3): FAQ, metadata, schema
-
 ### Community 267 - "FAQSection.tsx"
-Cohesion: 0.12
-Nodes (12): FAQ, metadata, schema, FAQ, metadata, schema, FAQ, metadata (+4 more)
+Cohesion: 0.11
+Nodes (14): FAQ, metadata, schema, FAQ, metadata, schema, FAQ_CUSTOMS, FAQ_DELIVERY (+6 more)
 
 ### Community 270 - "OnboardingSteps.tsx"
 Cohesion: 0.40
 Nodes (3): Props, Step, STEPS
 
 ## Knowledge Gaps
-- **1282 isolated node(s):** `dynamic`, `Tier`, `VkLead`, `Stats`, `TIER_STYLE` (+1277 more)
+- **1287 isolated node(s):** `dynamic`, `GROUP_SEARCH_TERMS`, `INTENT_TERMS`, `VkGroup`, `ExtractedPost` (+1282 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **44 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AdminNav()` connect `AdminNav.tsx` to `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `VkIntentClient.tsx`, `ContentPageClient.tsx`, `campaigns/page.tsx`, `SalesCompaniesClient.tsx`, `CreateWizard.tsx`, `LeadDetail.tsx`, `market-intelligence/types.ts`, `lib/finance/types.ts`, `CeoDashboard.tsx`, `market-intelligence/db.ts`, `intelligence/page.tsx`, `rate-engine/types.ts`, `client-portal/types.ts`, `ImportLead`, `crm/client.ts`, `pricing/page.tsx`, `sales/data.ts`, `multitenant/types.ts`, `MarketingPageClient.tsx`, `PlatformDashboard.tsx`, `proposals/types.ts`, `SeoClustersClient.tsx`, `admin/settings/billing/page.tsx`, `ai-cto/db.ts`, `ai-company/page.tsx`, `SalesDashboardClient.tsx`, `outreach-leads/page.tsx`, `reports/page.tsx`, `WbSellersClient.tsx`, `deal-intelligence/index.ts`, `HhLeadsClient.tsx`?**
-  _High betweenness centrality (0.113) - this node is a cross-community bridge._
-- **Why does `isAuthorized()` connect `isAuthorized` to `FinanceDashboard.tsx`, `notifications/route.ts`, `analytics/data.ts`, `content/data.ts`, `OperationsDashboard.tsx`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `strategy/data.ts`, `ceo/report/route.ts`, `lib/finance/types.ts`, `getLeads`, `sales/data.ts`, `partners/db.ts`, `finance/api.ts`, `ai-company/page.tsx`, `setup/route.ts`, `getTenantId`, `reports/page.tsx`, `vk-ads/sync/route.ts`, `check/route.ts`, `vk-ads/campaigns/route.ts`, `product-finder/route.ts`?**
-  _High betweenness centrality (0.057) - this node is a cross-community bridge._
-- **Why does `createLead()` connect `crm/client.ts` to `vk-ads/sync/route.ts`, `partner-portal/api.ts`, `finance/api.ts`, `calculator.ts`, `economics/route.ts`, `getLeads`, `market-intelligence/leads/route.ts`, `api/leads/route.ts`, `apify-leads/route.ts`, `getTenantId`, `getAllLeads`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **What connects `dynamic`, `Tier`, `VkLead` to the rest of the system?**
-  _1282 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `AdminNav()` connect `AdminNav.tsx` to `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `VkIntentClient.tsx`, `ContentPageClient.tsx`, `campaigns/page.tsx`, `VkAdsDashboard.tsx`, `SalesCompaniesClient.tsx`, `CreateWizard.tsx`, `LeadDetail.tsx`, `RadarClient.tsx`, `CeoDashboard.tsx`, `intelligence/page.tsx`, `rate-engine/types.ts`, `client-portal/types.ts`, `ImportLead`, `crm/client.ts`, `integrations/page.tsx`, `getLeads`, `pricing/page.tsx`, `SalesDashboard.tsx`, `proposals/page.tsx`, `MarketingPageClient.tsx`, `multitenant/types.ts`, `marketing/partners/page.tsx`, `PlatformDashboard.tsx`, `registrations/page.tsx`, `SeoClustersClient.tsx`, `chat/page.tsx`, `ai-cto/db.ts`, `ai-company/page.tsx`, `SalesDashboardClient.tsx`, `outreach-leads/page.tsx`, `WbSellersClient.tsx`, `DealIntelligenceClient.tsx`, `HhLeadsClient.tsx`, `admin/settings/billing/page.tsx`?**
+  _High betweenness centrality (0.124) - this node is a cross-community bridge._
+- **Why does `isAuthorized()` connect `isAuthorized` to `FinanceDashboard.tsx`, `notifications/route.ts`, `analytics/data.ts`, `content/data.ts`, `OperationsDashboard.tsx`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `strategy/data.ts`, `ceo/report/route.ts`, `supplier-finder/route.ts`, `expenses/[id]/route.ts`, `SalesDashboard.tsx`, `partners/db.ts`, `settings/route.ts`, `getTenantId`, `ai-company/page.tsx`, `setup/route.ts`, `finance/api.ts`, `sales/data.ts`, `vk-ads/sync/route.ts`, `check/route.ts`, `vk-ads/campaigns/route.ts`?**
+  _High betweenness centrality (0.054) - this node is a cross-community bridge._
+- **Why does `createLead()` connect `crm/client.ts` to `vk-ads/sync/route.ts`, `partner-portal/api.ts`, `getTenantId`, `ai-funnel/submit/route.ts`, `economics/route.ts`, `import-leads/leads/route.ts`, `market-intelligence/types.ts`, `api/leads/route.ts`, `finance/api.ts`?**
+  _High betweenness centrality (0.043) - this node is a cross-community bridge._
+- **What connects `dynamic`, `GROUP_SEARCH_TERMS`, `INTENT_TERMS` to the rest of the system?**
+  _1287 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `content/db.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.055964653902798235 - nodes in this community are weakly interconnected._
 - **Should `marketing/db.ts` be split into smaller, more focused modules?**

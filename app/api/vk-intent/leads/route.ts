@@ -11,9 +11,16 @@ export async function GET(req: NextRequest) {
   if (!dbUrl) return NextResponse.json([]);
 
   const { searchParams } = new URL(req.url);
-  const tier    = searchParams.get("tier") ?? "";
-  const limit   = Math.min(Number(searchParams.get("limit") ?? "50"), 200);
-  const stats   = searchParams.get("stats") === "1";
+  const tier     = searchParams.get("tier") ?? "";
+  const limit    = Math.min(Number(searchParams.get("limit") ?? "50"), 200);
+  const stats    = searchParams.get("stats") === "1";
+  const checkVk  = searchParams.get("check_vk") === "1";
+
+  if (checkVk) {
+    const { getVkToken } = await import("@/lib/vk-intent/tokens");
+    const token = await getVkToken(dbUrl).catch(() => null);
+    return NextResponse.json({ vk_connected: !!token });
+  }
 
   const sql = neon(dbUrl);
   try {
