@@ -197,7 +197,7 @@ export default function VkIntentClient() {
         <div className="text-slate-500 text-sm py-12 text-center animate-pulse">Загрузка…</div>
       ) : leads.length === 0 ? (
         <div className="text-slate-600 text-sm py-12 text-center">
-          Лидов пока нет. Нажмите «Запустить VK Intent Scraper» или дождитесь крона в 11:00 UTC.
+          Лидов пока нет. Нажмите «Запустить VK Intent Scraper» выше.
         </div>
       ) : (
         <div className="space-y-3">
