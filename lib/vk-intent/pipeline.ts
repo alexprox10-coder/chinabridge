@@ -93,7 +93,13 @@ async function sendTgReport(stats: {
   }).catch(() => {});
 }
 
-export async function runIntentPipeline(): Promise<IntentPipelineResult> {
+interface PipelineOptions {
+  postsPerQuery?: number;
+  queriesCount?: number;
+}
+
+export async function runIntentPipeline(opts: PipelineOptions = {}): Promise<IntentPipelineResult> {
+  const { postsPerQuery = 20, queriesCount = 4 } = opts;
   const result: IntentPipelineResult = { scraped: 0, classified: 0, hot: 0, warm: 0, saved: 0, errors: [] };
 
   const dbUrl = process.env.DATABASE_URL;
@@ -104,12 +110,11 @@ export async function runIntentPipeline(): Promise<IntentPipelineResult> {
 
   await ensureTable(dbUrl).catch(e => result.errors.push(`table_error: ${String(e)}`));
 
-  // 4 random queries per run to stay within Apify limits
-  const queries = [...INTENT_QUERIES].sort(() => Math.random() - 0.5).slice(0, 4);
+  const queries = [...INTENT_QUERIES].sort(() => Math.random() - 0.5).slice(0, queriesCount);
 
   let posts: Awaited<ReturnType<typeof scrapeVkIntentPosts>>;
   try {
-    posts = await scrapeVkIntentPosts(queries);
+    posts = await scrapeVkIntentPosts(queries, postsPerQuery);
     result.scraped = posts.length;
   } catch (err) {
     result.errors.push(`scrape_failed: ${String(err)}`);

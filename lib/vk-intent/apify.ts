@@ -73,12 +73,12 @@ async function runActorForQuery(query: string, maxItems = 30): Promise<VkPost[]>
   return [];
 }
 
-export async function scrapeVkIntentPosts(queries: string[]): Promise<VkPost[]> {
+export async function scrapeVkIntentPosts(queries: string[], maxItems = 20): Promise<VkPost[]> {
   const allPosts: VkPost[] = [];
   const seenIds = new Set<string>();
 
   for (const query of queries) {
-    const posts = await runActorForQuery(query, 30).catch(() => []);
+    const posts = await runActorForQuery(query, maxItems).catch(() => []);
     for (const p of posts) {
       if (p.text && !seenIds.has(p.post_id)) {
         seenIds.add(p.post_id);

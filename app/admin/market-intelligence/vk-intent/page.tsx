@@ -20,8 +20,7 @@ export default function VkIntentPage() {
         </div>
 
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-500 flex flex-wrap gap-6">
-          <span>⏱ Крон: ежедневно 11:00 UTC</span>
-          <span>🔍 14 интент-запросов (4 случайных за запуск)</span>
+          <span>🔍 14 интент-запросов (случайная выборка за запуск)</span>
           <span>🤖 Классификатор: Claude Haiku · score 0–100</span>
           <span>🔥 HOT ≥ 70 · 🟡 WARM 40–69</span>
         </div>

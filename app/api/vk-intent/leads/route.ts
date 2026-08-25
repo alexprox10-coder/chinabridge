@@ -39,9 +39,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({}));
+  const postsPerQuery = Math.min(Math.max(Number(body.postsPerQuery ?? 20), 5), 100);
+  const queriesCount  = Math.min(Math.max(Number(body.queriesCount  ??  4), 1),  14);
   try {
-    const result = await runIntentPipeline();
+    const result = await runIntentPipeline({ postsPerQuery, queriesCount });
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });

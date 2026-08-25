@@ -57,7 +57,9 @@ export default function VkIntentClient() {
   const [loading,   setLoading]   = useState(true);
   const [running,   setRunning]   = useState(false);
   const [runResult, setRunResult] = useState("");
-  const [tierFilter, setTierFilter] = useState<string>("");
+  const [tierFilter,    setTierFilter]    = useState<string>("");
+  const [postsPerQuery, setPostsPerQuery] = useState(20);
+  const [queriesCount,  setQueriesCount]  = useState(4);
   const [expanded,  setExpanded]  = useState<number | null>(null);
 
   const load = useCallback(async () => {
@@ -78,7 +80,11 @@ export default function VkIntentClient() {
     setRunning(true);
     setRunResult("");
     try {
-      const res  = await fetch("/api/vk-intent/leads", { method: "POST" });
+      const res  = await fetch("/api/vk-intent/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postsPerQuery, queriesCount }),
+      });
       const data = await res.json();
       if (data.ok) {
         setRunResult(`✅ Спарсено: ${data.scraped} | Классифицировано: ${data.classified} | HOT: ${data.hot} | WARM: ${data.warm} | Сохранено: ${data.saved}${data.errors?.length ? ` | Ошибок: ${data.errors.length}` : ""}`);
@@ -140,6 +146,35 @@ export default function VkIntentClient() {
               {t || "Все"}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* ── Limits ── */}
+      <div className="flex flex-wrap gap-6 bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3">
+        <div className="flex flex-col gap-1 min-w-[200px]">
+          <label className="text-xs text-slate-400">
+            Постов на запрос: <span className="text-white font-bold">{postsPerQuery}</span>
+            <span className="text-slate-600 ml-1">(итого до {postsPerQuery * queriesCount})</span>
+          </label>
+          <input type="range" min={5} max={100} step={5} value={postsPerQuery}
+            onChange={e => setPostsPerQuery(Number(e.target.value))}
+            className="w-full accent-blue-500"
+          />
+          <div className="flex justify-between text-xs text-slate-600"><span>5</span><span>100</span></div>
+        </div>
+        <div className="flex flex-col gap-1 min-w-[200px]">
+          <label className="text-xs text-slate-400">
+            Запросов за сессию: <span className="text-white font-bold">{queriesCount}</span>
+            <span className="text-slate-600 ml-1">из 14</span>
+          </label>
+          <input type="range" min={1} max={14} step={1} value={queriesCount}
+            onChange={e => setQueriesCount(Number(e.target.value))}
+            className="w-full accent-blue-500"
+          />
+          <div className="flex justify-between text-xs text-slate-600"><span>1</span><span>14</span></div>
+        </div>
+        <div className="flex items-center text-xs text-slate-500 self-end pb-1">
+          ~{postsPerQuery * queriesCount} постов → Claude Haiku ~${((postsPerQuery * queriesCount) * 0.001).toFixed(2)} за классификацию
         </div>
       </div>
 
