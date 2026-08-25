@@ -61,6 +61,7 @@ export default function VkIntentClient() {
   const [postsPerQuery, setPostsPerQuery] = useState(20);
   const [queriesCount,  setQueriesCount]  = useState(4);
   const [expanded,  setExpanded]  = useState<number | null>(null);
+  const [diagResult, setDiagResult] = useState<string>("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -75,6 +76,20 @@ export default function VkIntentClient() {
   }, [tierFilter]);
 
   useEffect(() => { load(); }, [load]);
+
+  async function runDiag() {
+    setDiagResult("⏳ Проверяю VK API…");
+    try {
+      const r = await fetch("/api/vk-intent/test").then(x => x.json());
+      if (r.vk_error) {
+        setDiagResult(`❌ VK ошибка ${r.vk_error.error_code}: ${r.vk_error.error_msg}`);
+      } else {
+        setDiagResult(`✅ VK OK · total_count=${r.total_count} · items=${r.items_count} · автор="${r.sample_item?.from_id ?? "—"}"`);
+      }
+    } catch (e) {
+      setDiagResult(`⚠️ ${String(e)}`);
+    }
+  }
 
   async function runScraper() {
     setRunning(true);
@@ -120,6 +135,13 @@ export default function VkIntentClient() {
 
       {/* ── Controls ── */}
       <div className="flex flex-wrap items-center gap-3">
+        <button
+          onClick={runDiag}
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl text-sm font-semibold transition"
+        >
+          🔬 Тест VK API
+        </button>
+
         <button
           onClick={runScraper}
           disabled={running}
@@ -177,6 +199,12 @@ export default function VkIntentClient() {
           ~{postsPerQuery * queriesCount} постов → Claude Haiku ~${((postsPerQuery * queriesCount) * 0.001).toFixed(2)} за классификацию
         </div>
       </div>
+
+      {diagResult && (
+        <div className="text-sm px-4 py-3 rounded-xl border bg-slate-900/80 border-slate-700 text-slate-300 font-mono">
+          {diagResult}
+        </div>
+      )}
 
       {runResult && (
         <div className={`text-sm px-4 py-3 rounded-xl border ${
