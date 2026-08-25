@@ -183,111 +183,143 @@ function TgSubscribeBanner() {
   );
 }
 
-// ── Paywall ────────────────────────────────────────────────────────────────
+// ── Lead Capture (replaces paywall) ───────────────────────────────────────
 
-function PaywallBlock({ onReset }: { onReset: () => void }) {
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+function LeadCaptureBlock({ onUnlock, onReset }: { onUnlock: () => void; onReset: () => void }) {
+  const [tg,         setTg]         = useState("");
+  const [name,       setName]       = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done,       setDone]       = useState(false);
 
-  async function handlePay() {
-    setLoading(true);
-    setError(null);
+  async function handleSubmit() {
+    if (!tg.trim()) return;
+    setSubmitting(true);
     try {
-      const res  = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
-      const data = await res.json();
-      if (!data.ok || !data.paymentLink) throw new Error(data.error ?? "no link");
-      window.location.href = data.paymentLink;
-    } catch (e) {
-      setError("Ошибка оплаты. Попробуйте ещё раз или напишите в Telegram.");
-      setLoading(false);
-    }
+      await fetch("/api/ai-funnel/submit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegram: tg.trim(), name: name.trim(), source: "paywall_unlock" }),
+      });
+    } catch { /* ignore */ }
+    localStorage.setItem("cb_registered", "true");
+    setDone(true);
+    setTimeout(onUnlock, 900);
+    setSubmitting(false);
   }
 
+  const ci = `w-full px-4 py-3 bg-[#060f1e] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl text-sm placeholder:text-[#8899aa] outline-none transition-colors text-white`;
+
   return (
-    <div className="card-glass rounded-2xl p-6 md:p-8 flex flex-col items-center gap-5 text-center">
-      <div className="w-14 h-14 rounded-full bg-amber-900/30 border border-amber-700/40 flex items-center justify-center text-3xl">
-        🔒
-      </div>
-      <div>
-        <h2 className="text-xl font-bold text-white mb-2">3 бесплатных расчёта использованы</h2>
-        <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-          Подключите подписку и считайте без ограничений
+    <div className="card-glass rounded-2xl p-6 md:p-8 flex flex-col gap-5">
+      <div className="text-center">
+        <div className="w-14 h-14 rounded-full bg-[#00A86B]/15 border border-[#00A86B]/30 flex items-center justify-center text-3xl mx-auto mb-3">
+          🚀
+        </div>
+        <h2 className="text-xl font-bold text-white mb-1">Получите безлимитный доступ</h2>
+        <p className="text-sm text-[#8899aa] leading-relaxed">
+          Оставьте Telegram — и считайте без ограничений.<br />Менеджер пришлёт расчёт и ставки доставки.
         </p>
       </div>
 
-      {/* Social proof */}
-      <div className="flex items-center gap-2 bg-[#00A86B]/10 border border-[#00A86B]/25 rounded-full px-4 py-1.5">
+      <div className="flex items-center gap-2 bg-[#00A86B]/10 border border-[#00A86B]/25 rounded-full px-4 py-1.5 justify-center">
         <span className="text-sm">🔥</span>
-        <p className="text-xs text-[#00A86B] font-medium">Уже 50+ селлеров считают прибыль каждый день</p>
+        <p className="text-xs text-[#00A86B] font-medium">50+ селлеров уже считают прибыль каждый день</p>
       </div>
 
-      {/* Price block */}
-      <div className="w-full max-w-xs bg-[#0B1F3A] border border-[#243a5e] rounded-xl p-4">
-        <div className="flex items-baseline justify-center gap-1 mb-1">
-          <p className="text-3xl font-bold text-white">490</p>
-          <span className="text-lg text-[#8899aa] font-normal">₽/мес</span>
+      {done ? (
+        <div className="flex flex-col items-center gap-2 py-4">
+          <div className="w-12 h-12 rounded-full bg-[#00A86B]/20 flex items-center justify-center text-2xl">✅</div>
+          <p className="text-white font-semibold">Доступ открыт!</p>
+          <p className="text-xs text-[#8899aa]">Возвращаемся в калькулятор...</p>
         </div>
-        <p className="text-xs text-[#5a7899] mb-3">≈ 16 ₽/день · дешевле чашки кофе</p>
-        <div className="flex flex-col gap-1.5 text-left">
-          {[
-            "Безлимитные расчёты — без лимитов",
-            "AI-анализ ссылок с 1688 и Alibaba",
-            "Все маркетплейсы: WB, Ozon, Kaspi",
-            "История расчётов в личном кабинете",
-          ].map(f => (
-            <div key={f} className="flex items-center gap-2 text-sm text-[#8899aa]">
-              <span className="text-[#00A86B] text-xs shrink-0">✓</span> {f}
-            </div>
-          ))}
+      ) : (
+        <>
+          <div className="flex flex-col gap-3">
+            <input type="text" value={tg} onChange={e => setTg(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && tg.trim() && handleSubmit()}
+              placeholder="@username в Telegram" autoFocus className={ci} />
+            <input type="text" value={name} onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && tg.trim() && handleSubmit()}
+              placeholder="Ваше имя (необязательно)" className={ci} />
+            <button onClick={handleSubmit} disabled={!tg.trim() || submitting}
+              className="w-full py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all text-sm">
+              {submitting ? "Сохраняем..." : "Получить безлимитный доступ →"}
+            </button>
+          </div>
+          <p className="text-center text-xs text-[#5a7899]">Бесплатно · без спама · отписка в 1 клик</p>
+          <div className="border-t border-[#243a5e]/60 pt-4 flex gap-2">
+            <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+              className="flex-1 py-2.5 border border-[#229ED9]/30 hover:border-[#229ED9]/60 text-[#229ED9] text-sm rounded-xl transition-all text-center">
+              Написать менеджеру
+            </a>
+            <a href="https://wa.me/79145889874" target="_blank" rel="noopener noreferrer"
+              className="flex-1 py-2.5 border border-[#25D366]/30 hover:border-[#25D366]/60 text-[#25D366] text-sm rounded-xl transition-all text-center">
+              WhatsApp
+            </a>
+          </div>
+          <button onClick={onReset} className="text-xs text-[#5a7899] hover:text-white underline text-center">
+            ← Назад к калькулятору
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Exit Intent Popup ─────────────────────────────────────────────────────
+
+function ExitIntentPopup({ onClose, onCapture }: { onClose: () => void; onCapture: (tg: string) => void }) {
+  const [tg,   setTg]   = useState("");
+  const [sent, setSent] = useState(false);
+
+  async function handleSubmit() {
+    if (!tg.trim()) return;
+    setSent(true);
+    onCapture(tg.trim());
+    try {
+      await fetch("/api/ai-funnel/submit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegram: tg.trim(), source: "exit_intent" }),
+      });
+    } catch { /* ignore */ }
+    setTimeout(onClose, 1500);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-sm bg-[#0a1929] border border-[#1e3a5f] rounded-2xl p-6 flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-lg font-bold text-white">Подождите!</p>
+            <p className="text-xs text-[#8899aa] mt-0.5">Пришлём бесплатный расчёт в Telegram</p>
+          </div>
+          <button onClick={onClose} className="text-[#5a7899] hover:text-white text-xl leading-none ml-2">×</button>
         </div>
-      </div>
-
-      {/* Payment methods */}
-      <div className="flex items-center gap-2 text-xs text-[#5a7899]">
-        <span>💳 Карта</span><span>·</span>
-        <span>📱 СБП</span><span>·</span>
-        <span>🏦 QR</span><span>·</span>
-        <span>🟡 Тинькофф</span>
-      </div>
-
-      {error && <p className="text-xs text-red-400">{error}</p>}
-
-      <div className="flex flex-col gap-2.5 w-full max-w-xs">
-        <button
-          onClick={handlePay}
-          disabled={loading}
-          className="w-full py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-60 text-white font-bold rounded-xl transition-all text-sm"
-        >
-          {loading ? "Создаём ссылку..." : "Подключить за 490 ₽/мес →"}
-        </button>
-        <div className="flex gap-2">
-          <a
-            href="https://t.me/ChinaBridgeLID_bot"
-            target="_blank" rel="noopener noreferrer"
-            className="flex-1 py-2.5 border border-[#229ED9]/30 hover:border-[#229ED9]/60 text-[#229ED9] text-sm rounded-xl transition-all"
-          >
-            Telegram
-          </a>
-          <a
-            href="https://wa.me/79145889874"
-            target="_blank" rel="noopener noreferrer"
-            className="flex-1 py-2.5 border border-[#25D366]/30 hover:border-[#25D366]/60 text-[#25D366] text-sm rounded-xl transition-all"
-          >
-            WhatsApp
-          </a>
+        <div className="bg-[#00A86B]/10 border border-[#00A86B]/25 rounded-xl p-3 flex items-start gap-2">
+          <span className="text-base mt-0.5">🎁</span>
+          <p className="text-xs text-[#8899aa] leading-relaxed">
+            Наш менеджер пришлёт <span className="text-white font-semibold">реальные ставки карго</span> и <span className="text-white font-semibold">схему доставки под ваш товар</span> — бесплатно, в течение 15 минут
+          </p>
         </div>
+        {sent ? (
+          <div className="flex flex-col items-center gap-2 py-2">
+            <p className="text-[#00A86B] font-semibold text-sm">✅ Отлично! Ждите сообщение в Telegram</p>
+          </div>
+        ) : (
+          <>
+            <input type="text" value={tg} onChange={e => setTg(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && tg.trim() && handleSubmit()}
+              placeholder="@username в Telegram" autoFocus
+              className="w-full px-4 py-3 bg-[#060f1e] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl text-sm placeholder:text-[#8899aa] outline-none transition-colors text-white" />
+            <button onClick={handleSubmit} disabled={!tg.trim()}
+              className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 text-white font-semibold rounded-xl transition-all text-sm">
+              Получить расчёт бесплатно →
+            </button>
+            <button onClick={onClose} className="text-xs text-[#5a7899] hover:text-white underline text-center">
+              Нет, спасибо
+            </button>
+          </>
+        )}
       </div>
-
-      {/* Trust badges */}
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs text-[#5a7899]">
-        <span>🔓 Отмена в любой момент</span>
-        <span>↩️ Возврат в течение 24 часов</span>
-        <span>🔒 Безопасная оплата</span>
-      </div>
-
-      <button onClick={onReset} className="text-xs text-[#5a7899] hover:text-white underline">
-        Назад к калькулятору
-      </button>
     </div>
   );
 }
@@ -610,6 +642,8 @@ export default function AIEconomicsFunnel() {
   const [calcCount,       setCalcCount]       = useState(0);
   const [isRegistered,    setIsRegistered]    = useState(false);
   const [showPaywall,     setShowPaywall]     = useState(false);
+  const [showExitIntent,  setShowExitIntent]  = useState(false);
+  const exitShownRef = useRef(false);
 
   const triggerPaywall = () => {
     try { localStorage.setItem('cb_paywall_active', '1'); } catch {}
@@ -665,6 +699,19 @@ export default function AIEconomicsFunnel() {
       }
     } catch { /* ignore */ }
   }, []);
+
+  // Exit intent — mouse leaves viewport top
+  useEffect(() => {
+    if (exitShownRef.current) return;
+    function onMouseLeave(e: MouseEvent) {
+      if (e.clientY <= 0 && !exitShownRef.current && !showPaywall) {
+        exitShownRef.current = true;
+        setShowExitIntent(true);
+      }
+    }
+    document.addEventListener("mouseleave", onMouseLeave);
+    return () => document.removeEventListener("mouseleave", onMouseLeave);
+  }, [showPaywall]);
 
   // Advance analyzing stages every 2.5s (time-based, not marking done until API responds)
   useEffect(() => {
@@ -1104,11 +1151,14 @@ export default function AIEconomicsFunnel() {
     / STEPS_ORDER.length * 100
   );
 
-  // ── Paid plan paywall ─────────────────────────────────────────────────────────
+  // ── Lead capture (after 3 free calcs) ────────────────────────────────────────
 
   if (showPaywall) {
     return (
-      <PaywallBlock onReset={resetPaywall} />
+      <LeadCaptureBlock
+        onUnlock={() => { setIsRegistered(true); resetPaywall(); }}
+        onReset={resetPaywall}
+      />
     );
   }
 
@@ -1173,6 +1223,16 @@ export default function AIEconomicsFunnel() {
   // ── Main render ─────────────────────────────────────────────────────────────
 
   return (
+    <>
+    {showExitIntent && (
+      <ExitIntentPopup
+        onClose={() => setShowExitIntent(false)}
+        onCapture={() => {
+          localStorage.setItem("cb_registered", "true");
+          setIsRegistered(true);
+        }}
+      />
+    )}
     <div className="card-glass rounded-2xl p-6 md:p-8">
       {/* Progress */}
       {s.step !== "success" && (
@@ -1604,6 +1664,23 @@ export default function AIEconomicsFunnel() {
                 ⚠️ Стоимость международной доставки уточняется менеджером
               </p>
             )}
+
+            {/* Direct cargo CTA */}
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank" rel="noopener noreferrer"
+              onClick={() => analytics.aiFunnelImportClick?.()}
+              className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#00A86B]/20 to-[#00A86B]/5 border border-[#00A86B]/40 rounded-xl px-4 py-4 hover:from-[#00A86B]/30 hover:border-[#00A86B]/60 transition-all group"
+            >
+              <div>
+                <p className="text-sm font-bold text-white">🚢 Хотите привезти этот товар?</p>
+                <p className="text-xs text-[#8899aa] mt-0.5">Запросить точные ставки доставки из Китая →</p>
+              </div>
+              <svg className="w-5 h-5 text-[#00A86B] flex-shrink-0 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </a>
+
             <CorrectionAccordion
               open={s.showCorrection}
               correction={s.correction}
@@ -1896,5 +1973,6 @@ export default function AIEconomicsFunnel() {
         </div>
       )}
     </div>
+    </>
   );
 }
