@@ -1,76 +1,72 @@
 import type { VkPost } from "./types";
 
-const APIFY_TOKEN = process.env.APIFY_TOKEN ?? "";
-const ACTOR_ID = "maximedupre~vk-posts-scraper";
-const APIFY_BASE = "https://api.apify.com/v2";
+const VK_TOKEN = process.env.VK_ACCESS_TOKEN ?? "";
+const VK_BASE = "https://api.vk.com/method";
+const VK_V = "5.199";
 
-async function getDatasetItems(datasetId: string, query: string): Promise<VkPost[]> {
-  const res = await fetch(
-    `${APIFY_BASE}/datasets/${datasetId}/items?token=${APIFY_TOKEN}&clean=true&limit=50`,
-    { signal: AbortSignal.timeout(10_000) }
-  );
-  if (!res.ok) return [];
-  const items = await res.json();
-  if (!Array.isArray(items)) return [];
-  return items.map((item: Record<string, unknown>) => ({
-    post_id: String(item.id ?? item.post_id ?? `${query}_${Date.now()}_${Math.random()}`),
-    text: String(item.text ?? item.content ?? ""),
-    author_name: String(item.authorName ?? item.owner_name ?? item.author ?? ""),
-    author_id: String(item.authorId ?? item.owner_id ?? ""),
-    date: Number(item.date ?? item.timestamp ?? Math.floor(Date.now() / 1000)),
-    link: String(item.url ?? item.link ?? ""),
-    likes_count: Number(item.likesCount ?? item.likes ?? 0),
-    reposts_count: Number(item.repostsCount ?? item.reposts ?? 0),
-    query,
-  }));
+function buildLink(ownerId: number, postId: number): string {
+  return `https://vk.com/wall${ownerId}_${postId}`;
 }
 
-async function runActorForQuery(query: string, maxItems = 30): Promise<VkPost[]> {
-  if (!APIFY_TOKEN) return [];
+function resolveAuthor(
+  ownerId: number,
+  profiles: Record<string, unknown>[],
+  groups: Record<string, unknown>[],
+): string {
+  if (ownerId < 0) {
+    const g = groups.find(g => Number(g.id) === Math.abs(ownerId));
+    return g ? String(g.name ?? "") : `club${Math.abs(ownerId)}`;
+  }
+  const p = profiles.find(p => Number(p.id) === ownerId);
+  return p ? `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() : `id${ownerId}`;
+}
 
-  // Start actor run
-  let runId: string;
+async function searchPostsByQuery(query: string, count: number): Promise<VkPost[]> {
+  if (!VK_TOKEN) return [];
+
+  const params = new URLSearchParams({
+    q: query,
+    count: String(Math.min(count, 200)),
+    access_token: VK_TOKEN,
+    v: VK_V,
+    extended: "1",
+  });
+
   try {
-    const runRes = await fetch(
-      `${APIFY_BASE}/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, maxItems }),
-        signal: AbortSignal.timeout(15_000),
-      }
-    );
-    if (!runRes.ok) return [];
-    const runData = await runRes.json();
-    runId = runData.data?.id;
-    if (!runId) return [];
+    const res = await fetch(`${VK_BASE}/newsfeed.search?${params}`, {
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data.error) {
+      console.error("VK API error:", data.error);
+      return [];
+    }
+
+    const items: Record<string, unknown>[] = data.response?.items ?? [];
+    const profiles: Record<string, unknown>[] = data.response?.profiles ?? [];
+    const groups: Record<string, unknown>[] = data.response?.groups ?? [];
+
+    return items
+      .filter(item => item.text && String(item.text).length > 10)
+      .map(item => {
+        const ownerId = Number(item.owner_id ?? item.from_id ?? 0);
+        const postId  = Number(item.id ?? 0);
+        return {
+          post_id:       `${ownerId}_${postId}`,
+          text:          String(item.text ?? ""),
+          author_name:   resolveAuthor(ownerId, profiles, groups),
+          author_id:     String(ownerId),
+          date:          Number(item.date ?? Math.floor(Date.now() / 1000)),
+          link:          buildLink(ownerId, postId),
+          likes_count:   Number((item.likes as Record<string, unknown>)?.count ?? 0),
+          reposts_count: Number((item.reposts as Record<string, unknown>)?.count ?? 0),
+          query,
+        };
+      });
   } catch {
     return [];
   }
-
-  // Poll until finished (max 90s)
-  const deadline = Date.now() + 90_000;
-  while (Date.now() < deadline) {
-    await new Promise(r => setTimeout(r, 6_000));
-    try {
-      const statusRes = await fetch(
-        `${APIFY_BASE}/actor-runs/${runId}?token=${APIFY_TOKEN}`,
-        { signal: AbortSignal.timeout(8_000) }
-      );
-      if (!statusRes.ok) continue;
-      const statusData = await statusRes.json();
-      const status = String(statusData.data?.status ?? "");
-      if (status === "SUCCEEDED") {
-        const datasetId = statusData.data?.defaultDatasetId as string | undefined;
-        if (!datasetId) return [];
-        return getDatasetItems(datasetId, query);
-      }
-      if (["FAILED", "ABORTED", "TIMED-OUT"].includes(status)) return [];
-    } catch {
-      // keep polling
-    }
-  }
-  return [];
 }
 
 export async function scrapeVkIntentPosts(queries: string[], maxItems = 20): Promise<VkPost[]> {
@@ -78,9 +74,12 @@ export async function scrapeVkIntentPosts(queries: string[], maxItems = 20): Pro
   const seenIds = new Set<string>();
 
   for (const query of queries) {
-    const posts = await runActorForQuery(query, maxItems).catch(() => []);
+    // VK rate limit ~3 req/sec — выдерживаем паузу
+    if (allPosts.length > 0) await new Promise(r => setTimeout(r, 400));
+
+    const posts = await searchPostsByQuery(query, maxItems);
     for (const p of posts) {
-      if (p.text && !seenIds.has(p.post_id)) {
+      if (!seenIds.has(p.post_id)) {
         seenIds.add(p.post_id);
         allPosts.push(p);
       }
