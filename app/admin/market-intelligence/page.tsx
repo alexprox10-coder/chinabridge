@@ -144,6 +144,29 @@ export default async function MarketIntelligencePage() {
               <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
             </Link>
 
+            {/* VK Intent Leads */}
+            <Link href="/admin/market-intelligence/vk-intent"
+              className="bg-gradient-to-br from-blue-600/20 to-blue-800/10 border border-blue-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">📡</span>
+                <h3 className="text-white font-bold text-base">VK Intent Leads</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-4">Ищет в ВКонтакте пользователей, которые прямо сейчас хотят карго из Китая или поставщика на 1688</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: "Источник",   value: "ВКонтакте (Apify)" },
+                  { label: "Запросов",   value: "14 интент-фраз" },
+                  { label: "Скоринг",    value: "Claude Haiku · HOT/WARM" },
+                ].map(s => (
+                  <div key={s.label} className="flex justify-between text-sm">
+                    <span className="text-slate-500">{s.label}</span>
+                    <span className="text-white font-medium text-xs">{s.value}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
+            </Link>
+
             {/* Deal Intelligence */}
             <Link href="/admin/market-intelligence/deals"
               className="bg-gradient-to-br from-emerald-600/20 to-emerald-800/10 border border-emerald-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
