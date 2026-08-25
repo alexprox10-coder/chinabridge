@@ -141,7 +141,10 @@ export async function runIntentPipeline(opts: PipelineOptions = {}): Promise<Int
     }
   }
 
-  await sendTgReport({ hot: result.hot, warm: result.warm, saved: result.saved, leads: savedLeads });
+  // Telegram report only if there are actual leads
+  if (result.hot > 0 || result.warm > 0) {
+    await sendTgReport({ hot: result.hot, warm: result.warm, saved: result.saved, leads: savedLeads });
+  }
 
   return result;
 }
