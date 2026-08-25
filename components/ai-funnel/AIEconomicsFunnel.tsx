@@ -186,21 +186,37 @@ function TgSubscribeBanner() {
 // ── Paywall ────────────────────────────────────────────────────────────────
 
 function PaywallBlock({ onReset }: { onReset: () => void }) {
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [loading,    setLoading]    = useState(false);
+  const [payError,   setPayError]   = useState<string | null>(null);
+  const [tg,         setTg]         = useState("");
+  const [leadSent,   setLeadSent]   = useState(false);
+  const [leadLoading,setLeadLoading]= useState(false);
 
   async function handlePay() {
     setLoading(true);
-    setError(null);
+    setPayError(null);
     try {
       const res  = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
       const data = await res.json();
       if (!data.ok || !data.paymentLink) throw new Error(data.error ?? "no link");
       window.location.href = data.paymentLink;
     } catch {
-      setError("Ошибка оплаты. Попробуйте ещё раз или напишите в Telegram.");
+      setPayError("Ошибка оплаты. Попробуйте ещё раз.");
       setLoading(false);
     }
+  }
+
+  async function handleLeadSubmit() {
+    if (!tg.trim()) return;
+    setLeadLoading(true);
+    try {
+      await fetch("/api/ai-funnel/submit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegram: tg.trim(), source: "paywall_lead" }),
+      });
+    } catch { /* ignore */ }
+    setLeadSent(true);
+    setLeadLoading(false);
   }
 
   return (
@@ -247,7 +263,7 @@ function PaywallBlock({ onReset }: { onReset: () => void }) {
         <span>🟡 Тинькофф</span>
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {payError && <p className="text-xs text-red-400">{payError}</p>}
 
       <div className="flex flex-col gap-2.5 w-full max-w-xs">
         <button
@@ -257,22 +273,40 @@ function PaywallBlock({ onReset }: { onReset: () => void }) {
         >
           {loading ? "Создаём ссылку..." : "Подключить за 490 ₽/мес →"}
         </button>
-        <div className="flex gap-2">
-          <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
-            className="flex-1 py-2.5 border border-[#229ED9]/30 hover:border-[#229ED9]/60 text-[#229ED9] text-sm rounded-xl transition-all text-center">
-            Telegram
-          </a>
-          <a href="https://wa.me/79145889874" target="_blank" rel="noopener noreferrer"
-            className="flex-1 py-2.5 border border-[#25D366]/30 hover:border-[#25D366]/60 text-[#25D366] text-sm rounded-xl transition-all text-center">
-            WhatsApp
-          </a>
-        </div>
       </div>
 
       <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs text-[#5a7899]">
         <span>🔓 Отмена в любой момент</span>
         <span>↩️ Возврат в течение 24 часов</span>
         <span>🔒 Безопасная оплата</span>
+      </div>
+
+      {/* Secondary: lead capture */}
+      <div className="w-full max-w-xs border-t border-[#243a5e]/60 pt-4 flex flex-col gap-2.5">
+        <p className="text-xs text-[#8899aa] text-center">
+          Не готовы платить? Оставьте Telegram — пришлём расчёт и запишем на консультацию
+        </p>
+        {leadSent ? (
+          <p className="text-sm text-[#00A86B] font-semibold text-center py-2">✅ Отлично! Менеджер напишет вам в ближайшее время</p>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={tg}
+              onChange={e => setTg(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && tg.trim() && handleLeadSubmit()}
+              placeholder="@username"
+              className="flex-1 px-3 py-2.5 bg-[#060f1e] border border-[#243a5e] focus:border-[#229ED9]/60 rounded-xl text-sm placeholder:text-[#8899aa] outline-none transition-colors text-white"
+            />
+            <button
+              onClick={handleLeadSubmit}
+              disabled={!tg.trim() || leadLoading}
+              className="px-4 py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition-all whitespace-nowrap"
+            >
+              {leadLoading ? "..." : "Написать →"}
+            </button>
+          </div>
+        )}
       </div>
 
       <button onClick={onReset} className="text-xs text-[#5a7899] hover:text-white underline">
