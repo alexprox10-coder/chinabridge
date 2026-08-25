@@ -36,6 +36,6 @@
     {
       "path": "/api/telegram/drip-cron",
       "schedule": "0 10 * * *"
-    },
+    }
   ]
 }
