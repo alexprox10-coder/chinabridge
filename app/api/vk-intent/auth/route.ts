@@ -8,7 +8,7 @@ export async function GET() {
   url.searchParams.set("client_id",     CLIENT_ID);
   url.searchParams.set("display",       "page");
   url.searchParams.set("redirect_uri",  REDIRECT_URI);
-  url.searchParams.set("scope",         "offline,wall,groups");
+  url.searchParams.set("scope",         "wall,groups");
   url.searchParams.set("response_type", "code");
   url.searchParams.set("v",             "5.199");
   return NextResponse.redirect(url.toString());
