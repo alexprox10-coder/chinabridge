@@ -6,19 +6,36 @@ const VK_V    = "5.199";
 const delay   = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 // Тематические VK-группы где бизнесмены задают вопросы о Китае
-// Формат: числовой group_id (отрицательный owner_id) или домен группы
+// screen_name взяты из реальных крупных групп VK
 export const TARGET_GROUPS = [
-  // Wildberries продавцы
-  { id: "wildberries_sellers",     label: "WB продавцы" },
-  { id: "wb.sellers",              label: "WB Sellers" },
-  { id: "ozon_sellers",            label: "Ozon продавцы" },
-  { id: "biznes_s_kitaem",         label: "Бизнес с Китаем" },
-  { id: "postavki_iz_kitaya",      label: "Поставки из Китая" },
-  { id: "china_opt",               label: "China Opt" },
-  { id: "import_kitay",            label: "Импорт из Китая" },
-  { id: "marketplace_sellers",     label: "Маркетплейс продавцы" },
-  { id: "wb_ozon_community",       label: "WB/Ozon сообщество" },
+  // Маркетплейсы — продавцы которые закупают в Китае
+  { id: "wb_prodavcy",             label: "WB продавцы" },
+  { id: "wildberries_sellers",     label: "WB Sellers" },
+  { id: "wb_partnerstvo",          label: "WB партнёры" },
+  { id: "ozon_prodavcy",           label: "Ozon продавцы" },
+  { id: "marketplacepro",          label: "Маркетплейс PRO" },
+  { id: "marketplace_wb_ozon",     label: "WB/Ozon сообщество" },
+  { id: "seller_wildberries",      label: "Seller WB" },
+  { id: "ozon_sellers_ru",         label: "Ozon продавцы RU" },
+  // Бизнес с Китаем
+  { id: "business_china",          label: "Business China" },
+  { id: "biznes_kitay",            label: "Бизнес Китай" },
+  { id: "china_business_ru",       label: "Бизнес с Китаем RU" },
+  { id: "china_opt",               label: "China Опт" },
   { id: "kitay_optom",             label: "Китай Оптом" },
+  { id: "china_postavki",          label: "Поставки из Китая" },
+  { id: "zakupki_kitay",           label: "Закупки Китай" },
+  { id: "importkitay",             label: "Импорт из Китая" },
+  // Казахстан — целевой рынок ChinaBridge
+  { id: "biznes_kz",               label: "Бизнес KZ" },
+  { id: "predprinimateli_kz",      label: "Предприниматели KZ" },
+  { id: "kz_business",             label: "KZ Business" },
+  { id: "almaty_biznes",           label: "Алматы бизнес" },
+  // Поставщики и закупки
+  { id: "postavshhiki_kitay",      label: "Поставщики Китай" },
+  { id: "alibaba_1688_ru",         label: "Alibaba 1688 Россия" },
+  { id: "taobao_russia",           label: "Taobao Россия" },
+  { id: "cargo_china",             label: "Карго Китай" },
 ];
 
 // Ключевые слова в комментариях — сигнал что человек ИЩЕТ, а не предлагает
@@ -101,7 +118,7 @@ function isBuyerComment(text: string): boolean {
   return BUYER_INTENT_WORDS.some(w => lower.includes(w));
 }
 
-export async function scrapeGroupComments(maxGroups = 5): Promise<VkPost[]> {
+export async function scrapeGroupComments(maxGroups = 8): Promise<VkPost[]> {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) return [];
 
@@ -109,12 +126,24 @@ export async function scrapeGroupComments(maxGroups = 5): Promise<VkPost[]> {
   const token = tokenData?.access_token ?? process.env.VK_SERVICE_TOKEN ?? "";
   if (!token) return [];
 
+  // Try DB groups first, fall back to hardcoded list
+  let groups: Array<{ id: string; label: string }> = [];
+  try {
+    const { getVkGroups } = await import("./group-tokens");
+    const dbGroups = await getVkGroups(dbUrl);
+    if (dbGroups.length > 0) {
+      groups = dbGroups.map(g => ({ id: g.group_id, label: g.label }));
+    }
+  } catch { /* ignore */ }
+  if (groups.length === 0) groups = TARGET_GROUPS;
+
   const results: VkPost[] = [];
   const seenIds = new Set<string>();
   const now = Math.floor(Date.now() / 1000);
   const maxAge = 7 * 24 * 3600; // 7 days
 
-  const groups = TARGET_GROUPS.slice(0, maxGroups);
+  // Shuffle and take up to maxGroups
+  const shuffled = [...groups].sort(() => Math.random() - 0.5).slice(0, maxGroups);
 
   for (const group of groups) {
     await delay(400);
