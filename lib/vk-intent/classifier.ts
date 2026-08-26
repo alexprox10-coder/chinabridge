@@ -15,9 +15,12 @@ const daysSince = (unixTs: number) =>
   Math.floor((Date.now() / 1000 - unixTs) / 86_400);
 
 async function callClaude(post: VkPost): Promise<ClassifyResult | null> {
-  const key = process.env.ANTHROPIC_API_KEY ?? "";
-  if (!key) return null;
+  // Prefer direct Anthropic key, fall back to OpenRouter
+  const anthropicKey  = process.env.ANTHROPIC_API_KEY ?? "";
+  const openrouterKey = process.env.OPENROUTER_API_KEY ?? "";
+  if (!anthropicKey && !openrouterKey) return null;
 
+  const useOpenRouter = !anthropicKey && !!openrouterKey;
   const age = daysSince(post.date);
   const prompt = `Ты — классификатор лидов для ChinaBridge (карго и поиск поставщиков в Китае).
 
@@ -53,24 +56,34 @@ contactability(10): есть контакты
 HOT≥70, WARM 40-69, COLD 20-39, IRRELEVANT<20`;
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 350,
-        messages: [{ role: "user", content: prompt }],
-      }),
-      signal: AbortSignal.timeout(20_000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text = (data.content?.[0]?.text ?? "").trim();
-    return JSON.parse(text) as ClassifyResult;
+    let res: Response;
+    if (useOpenRouter) {
+      res = await fetch(`${process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1"}/chat/completions`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${openrouterKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash",
+          max_tokens: 350,
+          messages: [{ role: "user", content: prompt }],
+        }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!res.ok) return null;
+      const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+      const text = (data.choices?.[0]?.message?.content ?? "").trim().replace(/```json\n?|\n?```/g, "");
+      return JSON.parse(text) as ClassifyResult;
+    } else {
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "x-api-key": anthropicKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+        body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 350, messages: [{ role: "user", content: prompt }] }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!res.ok) return null;
+      const data = await res.json() as { content?: Array<{ text: string }> };
+      const text = (data.content?.[0]?.text ?? "").trim();
+      return JSON.parse(text) as ClassifyResult;
+    }
   } catch {
     return null;
   }
