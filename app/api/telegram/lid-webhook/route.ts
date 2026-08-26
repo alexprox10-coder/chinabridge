@@ -78,12 +78,26 @@ export async function POST(req: NextRequest) {
         `;
       } catch { /* ignore — don't break the UX */ }
 
+      // Notify manager
+      if (MANAGER_CHAT_ID) {
+        const username = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
+        await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: MANAGER_CHAT_ID,
+            text: `🔔 <b>Лид с калькулятора</b>\n\n👤 ${firstName} (${username})\n🆔 chat_id: <code>${chatId}</code>\n\n📲 Написать: ${message?.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`}`,
+            parse_mode: "HTML",
+          }),
+        });
+      }
+
       await sendMsg(chatId,
-        `👋 Привет, ${firstName}!\n\nОтлично — вы теперь в теме 📬\n\nВ ближайшие дни пришлю:\n• Кейс с реальными цифрами доставки из Китая\n• Наши ставки карго (от $2.5/кг)\n• Спецпредложение для подписчиков\n\nА пока можете рассчитать свой товар 👇`,
+        `👋 Привет, ${firstName}!\n\nВижу, вы только что проверяли товар через AI-калькулятор ChinaBridge 🧮\n\n*Какой товар планируете везти из Китая?*\n\nНапишите — и я сразу передам менеджеру. Он ответит в течение 5 минут с реальной ценой доставки 🚢`,
         {
           reply_markup: {
             inline_keyboard: [[
-              { text: "🔢 Калькулятор маржи", url: "https://chinabridge.pro/ai-calculator" },
+              { text: "📊 Вернуться к расчёту", url: "https://chinabridge.pro/ai-calculator" },
             ]],
           },
         }

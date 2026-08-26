@@ -1673,7 +1673,7 @@ export default function AIEconomicsFunnel() {
           <>
             {inlineLeadId && (
               <a
-                href={`https://t.me/ChinaBridgeLID_bot?start=${inlineLeadId.replace(/-/g, '_')}`}
+                href={`https://t.me/ChinaBridgeLID_bot?start=calc?start=${inlineLeadId.replace(/-/g, '_')}`}
                 target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-between gap-3 bg-[#229ED9]/10 border border-[#229ED9]/30 rounded-xl px-4 py-3 mb-1 hover:bg-[#229ED9]/20 transition-colors"
               >
@@ -1715,7 +1715,7 @@ export default function AIEconomicsFunnel() {
 
             {/* Direct cargo CTA */}
             <a
-              href="https://t.me/ChinaBridgeLID_bot"
+              href="https://t.me/ChinaBridgeLID_bot?start=calc"
               target="_blank" rel="noopener noreferrer"
               onClick={() => analytics.aiFunnelImportClick?.()}
               className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#00A86B]/20 to-[#00A86B]/5 border border-[#00A86B]/40 rounded-xl px-4 py-4 hover:from-[#00A86B]/30 hover:border-[#00A86B]/60 transition-all group"
@@ -1806,7 +1806,7 @@ export default function AIEconomicsFunnel() {
 
           {ec.verdict === "red" && (
             <a
-              href="https://t.me/ChinaBridgeLID_bot"
+              href="https://t.me/ChinaBridgeLID_bot?start=calc"
               target="_blank" rel="noopener noreferrer"
               className="w-full py-2.5 border border-[#243a5e] hover:border-[#229ED9]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all flex items-center justify-center gap-2"
             >
@@ -1974,7 +1974,7 @@ export default function AIEconomicsFunnel() {
               <span className="text-xs text-[#8899aa]">Кейсы и советы →</span>
             </a>
 
-            <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+            <a href="https://t.me/ChinaBridgeLID_bot?start=calc" target="_blank" rel="noopener noreferrer"
               onClick={() => analytics.telegramClick()}
               className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all block"
             >
