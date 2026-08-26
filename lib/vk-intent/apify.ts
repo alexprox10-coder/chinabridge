@@ -41,7 +41,16 @@ async function searchPostsByQuery(query: string, count: number, token: string): 
         if (fromId < 0) return false;
         // Exclude posts from known cargo/service providers (contain Chinese phone or promo signs)
         const txt = String(item.text).toLowerCase();
-        if (txt.includes("+86 ") || txt.includes("whatsapp:") || txt.includes("наш надёжный партнёр")) return false;
+        // Exclude obvious provider/advertiser posts
+        const providerMarkers = [
+          "+86 ", "whatsapp:", "наш надёжный партнёр", "наши услуги", "предлагаем доставку",
+          "работаем с 2", "успешно работаем", "мы осуществляем", "доставка под ключ",
+          "пишите в лс", "пишите нам", "обращайтесь", "звоните", "наш telegram",
+          "наш телеграм", "подпишитесь", "подписывайтесь", "наш канал",
+          "брюки карго", "штаны карго", "джинсы карго", "джоггеры", "одежда оптом",
+          "продажа женских", "продажа мужских", "магазин одежды",
+        ];
+        if (providerMarkers.some(m => txt.includes(m))) return false;
         return true;
       })
       .map(item => {
