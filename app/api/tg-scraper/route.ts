@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -131,21 +130,29 @@ async function scrapeChannel(username: string, since?: Date): Promise<TgMessage[
 // ── Claude Haiku — классификация намерения ─────────────────────────────────────
 async function classifyIntent(text: string): Promise<"HOT" | "WARM" | "COLD"> {
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const res = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 10,
-      messages: [{
-        role: "user",
-        content: `Classify this Telegram message. Reply with ONE word: HOT (person actively looking for cargo/China delivery service RIGHT NOW), WARM (interested but not urgent), or COLD (just news/info/discussion, no buying intent).\n\nMessage: "${text}"`,
-      }],
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key":         process.env.ANTHROPIC_API_KEY ?? "",
+        "anthropic-version": "2023-06-01",
+        "content-type":      "application/json",
+      },
+      body: JSON.stringify({
+        model:      "claude-haiku-4-5-20251001",
+        max_tokens: 10,
+        messages: [{
+          role:    "user",
+          content: `Classify this Telegram message. Reply with ONE word: HOT (person actively looking for cargo/China delivery service RIGHT NOW), WARM (interested but not urgent), or COLD (just news/info/discussion, no buying intent).\n\nMessage: "${text}"`,
+        }],
+      }),
     });
-    const label = (res.content[0] as { text: string }).text.trim().toUpperCase();
+    const data  = await res.json();
+    const label = (data.content?.[0]?.text ?? "").trim().toUpperCase();
     if (label.includes("HOT"))  return "HOT";
     if (label.includes("WARM")) return "WARM";
     return "COLD";
   } catch {
-    return "WARM"; // fallback — лучше переслать чем пропустить
+    return "WARM";
   }
 }
 
