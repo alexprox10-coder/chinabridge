@@ -58,6 +58,44 @@ export async function POST(req: NextRequest) {
 
   if (!text) return NextResponse.json({ ok: true });
 
+  // ── Group / supergroup message monitoring ──────────────────────────────────
+  const chatType = message.chat?.type as string;
+  if (chatType === "group" || chatType === "supergroup") {
+    const HOT_KEYWORDS = [
+      "ищу карго", "карго доставка", "нужна доставка из китая", "доставка из китая",
+      "поставщик из китая", "нужен поставщик", "1688", "alibaba", "алибаба",
+      "растаможка", "таможня", "карго из китая", "везу из китая", "закупка китай",
+      "доставка товара из китая", "freight china", "фулфилмент", "wb поставщик",
+      "ozon поставщик", "маркетплейс китай", "байер китай", "закупщик китай",
+      "cargo china", "cargo доставка", "карго служба", "логистика китай",
+      "отправка из китая", "посредник китай", "выкуп на 1688", "выкуп alibaba",
+    ];
+
+    const lowerText = text.toLowerCase();
+    const matched = HOT_KEYWORDS.find(kw => lowerText.includes(kw));
+
+    if (matched && MANAGER_CHAT_ID) {
+      const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const groupName = h(message.chat?.title ?? "группа");
+      const senderLink = message.from?.username
+        ? `@${message.from.username}`
+        : `tg://user?id=${chatId}`;
+
+      await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: MANAGER_CHAT_ID,
+          text: `🔥 <b>Горячий лид из группы</b>\n\n📢 <b>Группа:</b> ${groupName}\n👤 <b>Автор:</b> ${h(firstName)} (${senderLink})\n\n💬 <b>Сообщение:</b>\n${h(text)}\n\n🔑 <i>Ключ: «${h(matched)}»</i>`,
+          parse_mode: "HTML",
+        }),
+      });
+    }
+
+    // Бот молчит в группе — не отвечает
+    return NextResponse.json({ ok: true });
+  }
+
   // ── /start handler ─────────────────────────────────────────────────────────
   if (text.startsWith("/start")) {
     const param = text.split(" ")[1] ?? "";
