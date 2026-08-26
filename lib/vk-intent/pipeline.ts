@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { INTENT_QUERIES } from "./queries";
 import { scrapeVkIntentPosts } from "./apify";
+import { scrapeGroupComments } from "./group-comments";
 import { scrapeAllTgChannels } from "./telegram";
 import { getTgChannels } from "./tokens";
 import { classifyPost } from "./classifier";
@@ -92,7 +93,10 @@ export async function runIntentPipeline(opts: PipelineOptions = {}): Promise<Int
 
   await ensureTable(dbUrl).catch(e => result.errors.push(`table_error: ${String(e)}`));
 
-  // VK posts (only if user token connected)
+  // VK group comments — main signal source (real buyers asking questions in communities)
+  const groupComments = await scrapeGroupComments(5).catch(() => []);
+
+  // VK newsfeed posts — secondary source (question-style queries only)
   const queries = [...INTENT_QUERIES].sort(() => Math.random() - 0.5).slice(0, queriesCount);
   const vkPosts = await scrapeVkIntentPosts(queries, postsPerQuery).catch(() => []);
 
@@ -102,7 +106,8 @@ export async function runIntentPipeline(opts: PipelineOptions = {}): Promise<Int
     ? await scrapeAllTgChannels(tgChannels).catch(() => [])
     : [];
 
-  const allPosts = [...vkPosts, ...tgPosts];
+  // Comments first (higher quality), then posts
+  const allPosts = [...groupComments, ...vkPosts, ...tgPosts];
   result.scraped = allPosts.length;
 
   if (result.scraped === 0) {
