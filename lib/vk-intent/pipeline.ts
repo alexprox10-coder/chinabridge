@@ -121,7 +121,7 @@ export async function runIntentPipeline(opts: PipelineOptions = {}): Promise<Int
       result.classified++;
       if (lead.tier === "COLD" || lead.tier === "IRRELEVANT") continue;
       // Keep only the highest-score lead per unique author
-      const authorKey = post.author_id || lead.author_link || lead.author_name;
+      const authorKey = String(post.author_id || lead.author_link || lead.author_name);
       const existing = authorBest.get(authorKey);
       if (!existing || lead.score > existing.score) {
         authorBest.set(authorKey, lead);

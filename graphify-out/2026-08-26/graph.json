@@ -1096,19 +1096,6 @@
       "id": "lib_import_leads_types_scoreresult"
     },
     {
-      "label": "SearchResult",
-      "file_type": "code",
-      "source_file": "lib/import-leads/types.ts",
-      "source_location": "L28",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "searchresult",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_types_searchresult"
-    },
-    {
       "label": "Campaign",
       "file_type": "code",
       "source_file": "app/admin/marketing/campaigns/page.tsx",
@@ -1720,6 +1707,19 @@
       "id": "app_admin_content_seo_clusters_seoclustersclient_stats"
     },
     {
+      "label": "SearchResult",
+      "file_type": "code",
+      "source_file": "lib/import-leads/types.ts",
+      "source_location": "L28",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 180,
+      "norm_label": "searchresult",
+      "community_name": "search.ts",
+      "id": "lib_import_leads_types_searchresult"
+    },
+    {
       "label": "AiSummary",
       "file_type": "code",
       "source_file": "components/admin/LeadDetail.tsx",
@@ -1783,6 +1783,58 @@
       "norm_label": "leadstatus",
       "community_name": "LeadDetail.tsx",
       "id": "lib_crm_types_leadstatus"
+    },
+    {
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
+      "source_location": "L36",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "props",
+      "community_name": "ImportLead",
+      "id": "app_admin_import_leads_importleadsdashboard_props"
+    },
+    {
+      "label": "Recommendation",
+      "file_type": "code",
+      "source_file": "app/admin/market-intelligence/ai-sales-agent/AiSalesAgentClient.tsx",
+      "source_location": "L6",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "recommendation",
+      "community_name": "ImportLead",
+      "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient_recommendation"
+    },
+    {
+      "label": "ImportLead",
+      "file_type": "code",
+      "source_file": "lib/import-leads/types.ts",
+      "source_location": "L5",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "importlead",
+      "community_name": "ImportLead",
+      "id": "lib_import_leads_types_importlead"
+    },
+    {
+      "label": "LeadStatus",
+      "file_type": "code",
+      "source_file": "lib/import-leads/types.ts",
+      "source_location": "L2",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "leadstatus",
+      "community_name": "ImportLead",
+      "id": "lib_import_leads_types_leadstatus"
     },
     {
       "label": "CreateFactInput",
@@ -2277,19 +2329,6 @@
       "norm_label": "faqsectionprops",
       "community_name": "FAQSection.tsx",
       "id": "components_seo_faqsection_faqsectionprops"
-    },
-    {
-      "label": "LeadStatus",
-      "file_type": "code",
-      "source_file": "lib/import-leads/types.ts",
-      "source_location": "L2",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 269,
-      "norm_label": "leadstatus",
-      "community_name": "import-leads/crm.ts",
-      "id": "lib_import_leads_types_leadstatus"
     },
     {
       "label": "ActionState",
@@ -3228,32 +3267,6 @@
       "id": "components_seo_servicecard_servicecardprops"
     },
     {
-      "label": "Props",
-      "file_type": "code",
-      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
-      "source_location": "L36",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "props",
-      "community_name": "ImportLead",
-      "id": "app_admin_import_leads_importleadsdashboard_props"
-    },
-    {
-      "label": "Recommendation",
-      "file_type": "code",
-      "source_file": "app/admin/market-intelligence/ai-sales-agent/AiSalesAgentClient.tsx",
-      "source_location": "L6",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "recommendation",
-      "community_name": "ImportLead",
-      "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient_recommendation"
-    },
-    {
       "label": "Stats",
       "file_type": "code",
       "source_file": "app/admin/market-intelligence/ai-sales-agent/AiSalesAgentClient.tsx",
@@ -3263,21 +3276,8 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "stats",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient_stats"
-    },
-    {
-      "label": "ImportLead",
-      "file_type": "code",
-      "source_file": "lib/import-leads/types.ts",
-      "source_location": "L5",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "importlead",
-      "community_name": "ImportLead",
-      "id": "lib_import_leads_types_importlead"
     },
     {
       "label": "Props",
@@ -4379,10 +4379,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_correctiondata",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "correctiondata",
-      "id": "components_ai_funnel_aieconomicsfunnel_correctiondata"
+      "norm_label": "correctiondata"
     },
     {
       "label": "ExtractedProduct",
@@ -4392,10 +4392,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_extractedproduct",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "extractedproduct",
-      "id": "components_ai_funnel_aieconomicsfunnel_extractedproduct"
+      "norm_label": "extractedproduct"
     },
     {
       "label": "FunnelState",
@@ -4405,10 +4405,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_funnelstate",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "funnelstate",
-      "id": "components_ai_funnel_aieconomicsfunnel_funnelstate"
+      "norm_label": "funnelstate"
     },
     {
       "label": "ProductData",
@@ -4418,10 +4418,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_productdata",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "productdata",
-      "id": "components_ai_funnel_aieconomicsfunnel_productdata"
+      "norm_label": "productdata"
     },
     {
       "label": "Step",
@@ -4431,10 +4431,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_step",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "step",
-      "id": "components_ai_funnel_aieconomicsfunnel_step"
+      "norm_label": "step"
     },
     {
       "label": "CreateProposalRequest",
@@ -5198,10 +5198,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_classifier_classifyresult",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "classifyresult",
-      "id": "lib_vk_intent_classifier_classifyresult"
+      "norm_label": "classifyresult"
     },
     {
       "label": "PipelineOptions",
@@ -5211,10 +5211,10 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_pipeline_pipelineoptions",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "pipelineoptions",
-      "id": "lib_vk_intent_pipeline_pipelineoptions"
+      "norm_label": "pipelineoptions"
     },
     {
       "label": "VkToken",
@@ -10834,18 +10834,6 @@
       "id": "app_api_contact_alert_route_sendtelegram"
     },
     {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "app/api/import-leads/route.ts",
-      "source_location": "L7",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "post()",
-      "community_name": "import-leads/types.ts",
-      "id": "app_api_import_leads_route_post"
-    },
-    {
       "label": "GET()",
       "file_type": "code",
       "source_file": "app/api/import-leads/run/route.ts",
@@ -10930,42 +10918,6 @@
       "id": "lib_import_leads_config_getconfig"
     },
     {
-      "label": "dtInsert()",
-      "file_type": "code",
-      "source_file": "lib/import-leads/crm.ts",
-      "source_location": "L31",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "dtinsert()",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_crm_dtinsert"
-    },
-    {
-      "label": "isDuplicateWebsite()",
-      "file_type": "code",
-      "source_file": "lib/import-leads/crm.ts",
-      "source_location": "L89",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "isduplicatewebsite()",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_crm_isduplicatewebsite"
-    },
-    {
-      "label": "saveLead()",
-      "file_type": "code",
-      "source_file": "lib/import-leads/crm.ts",
-      "source_location": "L49",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "savelead()",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_crm_savelead"
-    },
-    {
       "label": "notifyTelegramLead()",
       "file_type": "code",
       "source_file": "lib/import-leads/notify.ts",
@@ -11036,54 +10988,6 @@
       "norm_label": "scorelead()",
       "community_name": "import-leads/types.ts",
       "id": "lib_import_leads_score_scorelead"
-    },
-    {
-      "label": "deduplicateByDomain()",
-      "file_type": "code",
-      "source_file": "lib/import-leads/search.ts",
-      "source_location": "L34",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "deduplicatebydomain()",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_search_deduplicatebydomain"
-    },
-    {
-      "label": "firecrawlSearch()",
-      "file_type": "code",
-      "source_file": "lib/import-leads/search.ts",
-      "source_location": "L6",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "firecrawlsearch()",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_search_firecrawlsearch"
-    },
-    {
-      "label": "searchCompanies()",
-      "file_type": "code",
-      "source_file": "lib/import-leads/search.ts",
-      "source_location": "L66",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "searchcompanies()",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_search_searchcompanies"
-    },
-    {
-      "label": "skipNonTargets()",
-      "file_type": "code",
-      "source_file": "lib/import-leads/search.ts",
-      "source_location": "L48",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "skipnontargets()",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_search_skipnontargets"
     },
     {
       "label": "isAuthorized()",
@@ -11401,13 +11305,13 @@
       "label": "RootLayout()",
       "file_type": "code",
       "source_file": "app/layout.tsx",
-      "source_location": "L47",
+      "source_location": "L44",
       "_callable": true,
       "_origin": "ast",
-      "id": "app_layout_rootlayout",
       "community": 147,
       "community_name": "LeadMagnetForm.tsx",
-      "norm_label": "rootlayout()"
+      "norm_label": "rootlayout()",
+      "id": "app_layout_rootlayout"
     },
     {
       "label": "AnalyticsProvider()",
@@ -13126,42 +13030,6 @@
       "id": "app_api_admin_sales_offer_route_post"
     },
     {
-      "label": "fallbackTasks()",
-      "file_type": "code",
-      "source_file": "app/api/admin/sales/tasks/route.ts",
-      "source_location": "L77",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 167,
-      "norm_label": "fallbacktasks()",
-      "community_name": "getLLMConfig",
-      "id": "app_api_admin_sales_tasks_route_fallbacktasks"
-    },
-    {
-      "label": "GET()",
-      "file_type": "code",
-      "source_file": "app/api/admin/sales/tasks/route.ts",
-      "source_location": "L13",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 167,
-      "norm_label": "get()",
-      "community_name": "getLLMConfig",
-      "id": "app_api_admin_sales_tasks_route_get"
-    },
-    {
-      "label": "isAuthorized()",
-      "file_type": "code",
-      "source_file": "app/api/admin/sales/tasks/route.ts",
-      "source_location": "L9",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 167,
-      "norm_label": "isauthorized()",
-      "community_name": "getLLMConfig",
-      "id": "app_api_admin_sales_tasks_route_isauthorized"
-    },
-    {
       "label": "callAuditLLM()",
       "file_type": "code",
       "source_file": "app/api/audit/route.ts",
@@ -13990,40 +13858,52 @@
       "id": "app_admin_content_seo_clusters_seoclustersclient_seoclustersclient"
     },
     {
-      "label": "ChatWidget()",
+      "label": "deduplicateByDomain()",
       "file_type": "code",
-      "source_file": "components/chat/ChatWidget.tsx",
-      "source_location": "L7",
+      "source_file": "lib/import-leads/search.ts",
+      "source_location": "L34",
       "_callable": true,
       "_origin": "ast",
       "community": 180,
-      "norm_label": "chatwidget()",
-      "community_name": "ChatWidget.tsx",
-      "id": "components_chat_chatwidget_chatwidget"
+      "norm_label": "deduplicatebydomain()",
+      "community_name": "search.ts",
+      "id": "lib_import_leads_search_deduplicatebydomain"
     },
     {
-      "label": "ChatWidgetLoader()",
+      "label": "firecrawlSearch()",
       "file_type": "code",
-      "source_file": "components/chat/ChatWidgetLoader.tsx",
-      "source_location": "L10",
+      "source_file": "lib/import-leads/search.ts",
+      "source_location": "L6",
       "_callable": true,
       "_origin": "ast",
       "community": 180,
-      "norm_label": "chatwidgetloader()",
-      "community_name": "ChatWidget.tsx",
-      "id": "components_chat_chatwidgetloader_chatwidgetloader"
+      "norm_label": "firecrawlsearch()",
+      "community_name": "search.ts",
+      "id": "lib_import_leads_search_firecrawlsearch"
     },
     {
-      "label": "ChatWindow()",
+      "label": "searchCompanies()",
       "file_type": "code",
-      "source_file": "components/chat/ChatWindow.tsx",
-      "source_location": "L27",
+      "source_file": "lib/import-leads/search.ts",
+      "source_location": "L66",
       "_callable": true,
       "_origin": "ast",
       "community": 180,
-      "norm_label": "chatwindow()",
-      "community_name": "ChatWidget.tsx",
-      "id": "components_chat_chatwindow_chatwindow"
+      "norm_label": "searchcompanies()",
+      "community_name": "search.ts",
+      "id": "lib_import_leads_search_searchcompanies"
+    },
+    {
+      "label": "skipNonTargets()",
+      "file_type": "code",
+      "source_file": "lib/import-leads/search.ts",
+      "source_location": "L48",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 180,
+      "norm_label": "skipnontargets()",
+      "community_name": "search.ts",
+      "id": "lib_import_leads_search_skipnontargets"
     },
     {
       "label": "isAuthorized()",
@@ -14482,16 +14362,76 @@
       "id": "app_client_login_page_loginregisterform"
     },
     {
-      "label": "POST()",
+      "label": "ImportLeadsDashboard()",
       "file_type": "code",
-      "source_file": "app/api/ai-funnel/analyze-text/route.ts",
-      "source_location": "L27",
+      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
+      "source_location": "L41",
       "_callable": true,
       "_origin": "ast",
       "community": 191,
-      "community_name": "analyze-text/route.ts",
-      "norm_label": "post()",
-      "id": "app_api_ai_funnel_analyze_text_route_post"
+      "norm_label": "importleadsdashboard()",
+      "community_name": "ImportLead",
+      "id": "app_admin_import_leads_importleadsdashboard_importleadsdashboard"
+    },
+    {
+      "label": "buildImportComment()",
+      "file_type": "code",
+      "source_file": "app/api/import-leads/leads/route.ts",
+      "source_location": "L6",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "buildimportcomment()",
+      "community_name": "ImportLead",
+      "id": "app_api_import_leads_leads_route_buildimportcomment"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "app/api/import-leads/leads/route.ts",
+      "source_location": "L54",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "get()",
+      "community_name": "ImportLead",
+      "id": "app_api_import_leads_leads_route_get"
+    },
+    {
+      "label": "isAuthorized()",
+      "file_type": "code",
+      "source_file": "app/api/import-leads/leads/route.ts",
+      "source_location": "L47",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "isauthorized()",
+      "community_name": "ImportLead",
+      "id": "app_api_import_leads_leads_route_isauthorized"
+    },
+    {
+      "label": "PATCH()",
+      "file_type": "code",
+      "source_file": "app/api/import-leads/leads/route.ts",
+      "source_location": "L63",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "patch()",
+      "community_name": "ImportLead",
+      "id": "app_api_import_leads_leads_route_patch"
+    },
+    {
+      "label": "updateLeadStatus()",
+      "file_type": "code",
+      "source_file": "lib/import-leads/crm.ts",
+      "source_location": "L80",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "updateleadstatus()",
+      "community_name": "ImportLead",
+      "id": "lib_import_leads_crm_updateleadstatus"
     },
     {
       "label": "GET()",
@@ -17064,6 +17004,42 @@
     {
       "label": "GET()",
       "file_type": "code",
+      "source_file": "app/api/admin/hh-leads/route.ts",
+      "source_location": "L14",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 263,
+      "norm_label": "get()",
+      "community_name": "hh-leads/route.ts",
+      "id": "app_api_admin_hh_leads_route_get"
+    },
+    {
+      "label": "isAuthorized()",
+      "file_type": "code",
+      "source_file": "app/api/admin/hh-leads/route.ts",
+      "source_location": "L10",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 263,
+      "norm_label": "isauthorized()",
+      "community_name": "hh-leads/route.ts",
+      "id": "app_api_admin_hh_leads_route_isauthorized"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/admin/hh-leads/route.ts",
+      "source_location": "L21",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 263,
+      "norm_label": "post()",
+      "community_name": "hh-leads/route.ts",
+      "id": "app_api_admin_hh_leads_route_post"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
       "source_file": "app/api/admin/wb-leads/route.ts",
       "source_location": "L14",
       "_callable": true,
@@ -17096,6 +17072,42 @@
       "norm_label": "post()",
       "community_name": "wb-leads/route.ts",
       "id": "app_api_admin_wb_leads_route_post"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/import-leads/route.ts",
+      "source_location": "L7",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 265,
+      "norm_label": "post()",
+      "community_name": "import-leads/route.ts",
+      "id": "app_api_import_leads_route_post"
+    },
+    {
+      "label": "dtInsert()",
+      "file_type": "code",
+      "source_file": "lib/import-leads/crm.ts",
+      "source_location": "L31",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 265,
+      "norm_label": "dtinsert()",
+      "community_name": "import-leads/route.ts",
+      "id": "lib_import_leads_crm_dtinsert"
+    },
+    {
+      "label": "saveLead()",
+      "file_type": "code",
+      "source_file": "lib/import-leads/crm.ts",
+      "source_location": "L49",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 265,
+      "norm_label": "savelead()",
+      "community_name": "import-leads/route.ts",
+      "id": "lib_import_leads_crm_savelead"
     },
     {
       "label": "GET()",
@@ -17170,42 +17182,6 @@
       "id": "app_wildberries_margin_calculator_page_wildberriesmargincalculatorpage"
     },
     {
-      "label": "GET()",
-      "file_type": "code",
-      "source_file": "app/api/admin/hh-leads/route.ts",
-      "source_location": "L14",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 269,
-      "norm_label": "get()",
-      "community_name": "import-leads/crm.ts",
-      "id": "app_api_admin_hh_leads_route_get"
-    },
-    {
-      "label": "isAuthorized()",
-      "file_type": "code",
-      "source_file": "app/api/admin/hh-leads/route.ts",
-      "source_location": "L10",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 269,
-      "norm_label": "isauthorized()",
-      "community_name": "import-leads/crm.ts",
-      "id": "app_api_admin_hh_leads_route_isauthorized"
-    },
-    {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "app/api/admin/hh-leads/route.ts",
-      "source_location": "L21",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 269,
-      "norm_label": "post()",
-      "community_name": "import-leads/crm.ts",
-      "id": "app_api_admin_hh_leads_route_post"
-    },
-    {
       "label": "DELETE()",
       "file_type": "code",
       "source_file": "app/api/admin/leads/route.ts",
@@ -17218,52 +17194,40 @@
       "id": "app_api_admin_leads_route_delete"
     },
     {
-      "label": "buildImportComment()",
+      "label": "fallbackTasks()",
       "file_type": "code",
-      "source_file": "app/api/import-leads/leads/route.ts",
-      "source_location": "L6",
+      "source_file": "app/api/admin/sales/tasks/route.ts",
+      "source_location": "L77",
       "_callable": true,
       "_origin": "ast",
       "community": 269,
-      "norm_label": "buildimportcomment()",
+      "norm_label": "fallbacktasks()",
       "community_name": "import-leads/crm.ts",
-      "id": "app_api_import_leads_leads_route_buildimportcomment"
+      "id": "app_api_admin_sales_tasks_route_fallbacktasks"
     },
     {
       "label": "GET()",
       "file_type": "code",
-      "source_file": "app/api/import-leads/leads/route.ts",
-      "source_location": "L54",
+      "source_file": "app/api/admin/sales/tasks/route.ts",
+      "source_location": "L13",
       "_callable": true,
       "_origin": "ast",
       "community": 269,
       "norm_label": "get()",
       "community_name": "import-leads/crm.ts",
-      "id": "app_api_import_leads_leads_route_get"
+      "id": "app_api_admin_sales_tasks_route_get"
     },
     {
       "label": "isAuthorized()",
       "file_type": "code",
-      "source_file": "app/api/import-leads/leads/route.ts",
-      "source_location": "L47",
+      "source_file": "app/api/admin/sales/tasks/route.ts",
+      "source_location": "L9",
       "_callable": true,
       "_origin": "ast",
       "community": 269,
       "norm_label": "isauthorized()",
       "community_name": "import-leads/crm.ts",
-      "id": "app_api_import_leads_leads_route_isauthorized"
-    },
-    {
-      "label": "PATCH()",
-      "file_type": "code",
-      "source_file": "app/api/import-leads/leads/route.ts",
-      "source_location": "L63",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 269,
-      "norm_label": "patch()",
-      "community_name": "import-leads/crm.ts",
-      "id": "app_api_import_leads_leads_route_patch"
+      "id": "app_api_admin_sales_tasks_route_isauthorized"
     },
     {
       "label": "deleteLeadPermanently()",
@@ -17326,16 +17290,16 @@
       "id": "lib_import_leads_crm_getleadsbystatus"
     },
     {
-      "label": "updateLeadStatus()",
+      "label": "isDuplicateWebsite()",
       "file_type": "code",
       "source_file": "lib/import-leads/crm.ts",
-      "source_location": "L80",
+      "source_location": "L89",
       "_callable": true,
       "_origin": "ast",
       "community": 269,
-      "norm_label": "updateleadstatus()",
+      "norm_label": "isduplicatewebsite()",
       "community_name": "import-leads/crm.ts",
-      "id": "lib_import_leads_crm_updateleadstatus"
+      "id": "lib_import_leads_crm_isduplicatewebsite"
     },
     {
       "label": "ensureTable()",
@@ -18730,6 +18694,18 @@
       "id": "lib_rate_engine_validators_validatecalculationinput"
     },
     {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/ai-funnel/analyze-text/route.ts",
+      "source_location": "L27",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "ai/client.ts",
+      "norm_label": "post()",
+      "id": "app_api_ai_funnel_analyze_text_route_post"
+    },
+    {
       "label": "runConsultant()",
       "file_type": "code",
       "source_file": "lib/ai/agents/consultant.ts",
@@ -19030,18 +19006,6 @@
       "id": "components_seo_servicecard_servicecard"
     },
     {
-      "label": "ImportLeadsDashboard()",
-      "file_type": "code",
-      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
-      "source_location": "L41",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "importleadsdashboard()",
-      "community_name": "ImportLead",
-      "id": "app_admin_import_leads_importleadsdashboard_importleadsdashboard"
-    },
-    {
       "label": "AiSalesAgentClient()",
       "file_type": "code",
       "source_file": "app/admin/market-intelligence/ai-sales-agent/AiSalesAgentClient.tsx",
@@ -19050,7 +19014,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "aisalesagentclient()",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient_aisalesagentclient"
     },
     {
@@ -19062,7 +19026,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "copybutton()",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient_copybutton"
     },
     {
@@ -19074,7 +19038,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "scoremeter()",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient_scoremeter"
     },
     {
@@ -19086,7 +19050,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "aisalesagentpage()",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_page_aisalesagentpage"
     },
     {
@@ -21268,10 +21232,10 @@
       "source_location": "L661",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "aieconomicsfunnel()",
-      "id": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel"
+      "norm_label": "aieconomicsfunnel()"
     },
     {
       "label": "CorrectionAccordion()",
@@ -21280,10 +21244,10 @@
       "source_location": "L570",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_correctionaccordion",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "correctionaccordion()",
-      "id": "components_ai_funnel_aieconomicsfunnel_correctionaccordion"
+      "norm_label": "correctionaccordion()"
     },
     {
       "label": "estimateSalePrice()",
@@ -21292,10 +21256,10 @@
       "source_location": "L113",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_estimatesaleprice",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "estimatesaleprice()",
-      "id": "components_ai_funnel_aieconomicsfunnel_estimatesaleprice"
+      "norm_label": "estimatesaleprice()"
     },
     {
       "label": "ExitIntentPopup()",
@@ -21304,10 +21268,10 @@
       "source_location": "L323",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_exitintentpopup",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "exitintentpopup()",
-      "id": "components_ai_funnel_aieconomicsfunnel_exitintentpopup"
+      "norm_label": "exitintentpopup()"
     },
     {
       "label": "fmt()",
@@ -21316,10 +21280,10 @@
       "source_location": "L120",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_fmt",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "fmt()",
-      "id": "components_ai_funnel_aieconomicsfunnel_fmt"
+      "norm_label": "fmt()"
     },
     {
       "label": "inp()",
@@ -21328,10 +21292,10 @@
       "source_location": "L121",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_inp",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "inp()",
-      "id": "components_ai_funnel_aieconomicsfunnel_inp"
+      "norm_label": "inp()"
     },
     {
       "label": "PaywallBlock()",
@@ -21340,10 +21304,10 @@
       "source_location": "L188",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_paywallblock",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "paywallblock()",
-      "id": "components_ai_funnel_aieconomicsfunnel_paywallblock"
+      "norm_label": "paywallblock()"
     },
     {
       "label": "PnlTable()",
@@ -21352,10 +21316,10 @@
       "source_location": "L513",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_pnltable",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "pnltable()",
-      "id": "components_ai_funnel_aieconomicsfunnel_pnltable"
+      "norm_label": "pnltable()"
     },
     {
       "label": "ProductScoreCard()",
@@ -21364,10 +21328,10 @@
       "source_location": "L396",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_productscorecard",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "productscorecard()",
-      "id": "components_ai_funnel_aieconomicsfunnel_productscorecard"
+      "norm_label": "productscorecard()"
     },
     {
       "label": "ScenariosBlock()",
@@ -21376,10 +21340,10 @@
       "source_location": "L462",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_scenariosblock",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "scenariosblock()",
-      "id": "components_ai_funnel_aieconomicsfunnel_scenariosblock"
+      "norm_label": "scenariosblock()"
     },
     {
       "label": "ScoreBar()",
@@ -21388,10 +21352,10 @@
       "source_location": "L382",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_scorebar",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "scorebar()",
-      "id": "components_ai_funnel_aieconomicsfunnel_scorebar"
+      "norm_label": "scorebar()"
     },
     {
       "label": "SupplierRiskBadge()",
@@ -21400,10 +21364,10 @@
       "source_location": "L417",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_supplierriskbadge",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "supplierriskbadge()",
-      "id": "components_ai_funnel_aieconomicsfunnel_supplierriskbadge"
+      "norm_label": "supplierriskbadge()"
     },
     {
       "label": "TargetPriceCard()",
@@ -21412,10 +21376,10 @@
       "source_location": "L434",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_targetpricecard",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "targetpricecard()",
-      "id": "components_ai_funnel_aieconomicsfunnel_targetpricecard"
+      "norm_label": "targetpricecard()"
     },
     {
       "label": "TgSubscribeBanner()",
@@ -21424,10 +21388,10 @@
       "source_location": "L138",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_tgsubscribebanner",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "tgsubscribebanner()",
-      "id": "components_ai_funnel_aieconomicsfunnel_tgsubscribebanner"
+      "norm_label": "tgsubscribebanner()"
     },
     {
       "label": "verdictBg()",
@@ -21436,10 +21400,10 @@
       "source_location": "L130",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_verdictbg",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "verdictbg()",
-      "id": "components_ai_funnel_aieconomicsfunnel_verdictbg"
+      "norm_label": "verdictbg()"
     },
     {
       "label": "verdictColor()",
@@ -21448,10 +21412,10 @@
       "source_location": "L126",
       "_callable": true,
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_verdictcolor",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "verdictcolor()",
-      "id": "components_ai_funnel_aieconomicsfunnel_verdictcolor"
+      "norm_label": "verdictcolor()"
     },
     {
       "label": "ProposalsPage()",
@@ -22028,6 +21992,42 @@
       "norm_label": "chatmessage()",
       "community_name": "ai/types.ts",
       "id": "components_chat_chatmessage_chatmessage"
+    },
+    {
+      "label": "ChatWidget()",
+      "file_type": "code",
+      "source_file": "components/chat/ChatWidget.tsx",
+      "source_location": "L7",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 57,
+      "norm_label": "chatwidget()",
+      "community_name": "ai/types.ts",
+      "id": "components_chat_chatwidget_chatwidget"
+    },
+    {
+      "label": "ChatWidgetLoader()",
+      "file_type": "code",
+      "source_file": "components/chat/ChatWidgetLoader.tsx",
+      "source_location": "L10",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 57,
+      "norm_label": "chatwidgetloader()",
+      "community_name": "ai/types.ts",
+      "id": "components_chat_chatwidgetloader_chatwidgetloader"
+    },
+    {
+      "label": "ChatWindow()",
+      "file_type": "code",
+      "source_file": "components/chat/ChatWindow.tsx",
+      "source_location": "L27",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 57,
+      "norm_label": "chatwindow()",
+      "community_name": "ai/types.ts",
+      "id": "components_chat_chatwindow_chatwindow"
     },
     {
       "label": "GET()",
@@ -23089,7 +23089,7 @@
       "label": "scrapeVkIntentPosts()",
       "file_type": "code",
       "source_file": "lib/vk-intent/apify.ts",
-      "source_location": "L88",
+      "source_location": "L78",
       "_callable": true,
       "_origin": "ast",
       "id": "lib_vk_intent_apify_scrapevkintentposts",
@@ -23116,10 +23116,10 @@
       "source_location": "L17",
       "_callable": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_classifier_callclaude",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "callclaude()",
-      "id": "lib_vk_intent_classifier_callclaude"
+      "norm_label": "callclaude()"
     },
     {
       "label": "classifyPost()",
@@ -23128,10 +23128,10 @@
       "source_location": "L106",
       "_callable": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_classifier_classifypost",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "classifypost()",
-      "id": "lib_vk_intent_classifier_classifypost"
+      "norm_label": "classifypost()"
     },
     {
       "label": "daysSince()",
@@ -23140,10 +23140,10 @@
       "source_location": "L14",
       "_callable": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_classifier_dayssince",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "dayssince()",
-      "id": "lib_vk_intent_classifier_dayssince"
+      "norm_label": "dayssince()"
     },
     {
       "label": "ensureTable()",
@@ -23152,10 +23152,10 @@
       "source_location": "L9",
       "_callable": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_pipeline_ensuretable",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "ensuretable()",
-      "id": "lib_vk_intent_pipeline_ensuretable"
+      "norm_label": "ensuretable()"
     },
     {
       "label": "runIntentPipeline()",
@@ -23164,10 +23164,10 @@
       "source_location": "L86",
       "_callable": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_pipeline_runintentpipeline",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "runintentpipeline()",
-      "id": "lib_vk_intent_pipeline_runintentpipeline"
+      "norm_label": "runintentpipeline()"
     },
     {
       "label": "saveLead()",
@@ -23176,10 +23176,10 @@
       "source_location": "L34",
       "_callable": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_pipeline_savelead",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "savelead()",
-      "id": "lib_vk_intent_pipeline_savelead"
+      "norm_label": "savelead()"
     },
     {
       "label": "sendTgReport()",
@@ -23188,10 +23188,10 @@
       "source_location": "L53",
       "_callable": true,
       "_origin": "ast",
+      "id": "lib_vk_intent_pipeline_sendtgreport",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "sendtgreport()",
-      "id": "lib_vk_intent_pipeline_sendtgreport"
+      "norm_label": "sendtgreport()"
     },
     {
       "label": "delay()",
@@ -30076,28 +30076,6 @@
       "id": "app_api_contact_alert_route_runtime"
     },
     {
-      "label": "import-leads/route.ts",
-      "file_type": "code",
-      "source_file": "app/api/import-leads/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "import-leads/route.ts",
-      "community_name": "import-leads/types.ts",
-      "id": "app_api_import_leads_route"
-    },
-    {
-      "label": "runtime",
-      "file_type": "code",
-      "source_file": "app/api/import-leads/route.ts",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "runtime",
-      "community_name": "import-leads/types.ts",
-      "id": "app_api_import_leads_route_runtime"
-    },
-    {
       "label": "import-leads/run/route.ts",
       "file_type": "code",
       "source_file": "app/api/import-leads/run/route.ts",
@@ -30217,17 +30195,6 @@
       "norm_label": "stars",
       "community_name": "import-leads/types.ts",
       "id": "lib_import_leads_score_stars"
-    },
-    {
-      "label": "search.ts",
-      "file_type": "code",
-      "source_file": "lib/import-leads/search.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "search.ts",
-      "community_name": "import-leads/types.ts",
-      "id": "lib_import_leads_search"
     },
     {
       "label": "import-leads/types.ts",
@@ -30807,10 +30774,10 @@
       "source_file": "app/layout.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "app_layout",
       "community": 147,
       "community_name": "LeadMagnetForm.tsx",
-      "norm_label": "app/layout.tsx"
+      "norm_label": "app/layout.tsx",
+      "id": "app_layout"
     },
     {
       "label": "inter",
@@ -30818,21 +30785,21 @@
       "source_file": "app/layout.tsx",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "app_layout_inter",
       "community": 147,
       "community_name": "LeadMagnetForm.tsx",
-      "norm_label": "inter"
+      "norm_label": "inter",
+      "id": "app_layout_inter"
     },
     {
       "label": "metadata",
       "file_type": "code",
       "source_file": "app/layout.tsx",
-      "source_location": "L18",
+      "source_location": "L15",
       "_origin": "ast",
-      "id": "app_layout_metadata",
       "community": 147,
       "community_name": "LeadMagnetForm.tsx",
-      "norm_label": "metadata"
+      "norm_label": "metadata",
+      "id": "app_layout_metadata"
     },
     {
       "label": "AnalyticsProvider.tsx",
@@ -32364,39 +32331,6 @@
       "id": "app_api_admin_sales_offer_route_runtime"
     },
     {
-      "label": "sales/tasks/route.ts",
-      "file_type": "code",
-      "source_file": "app/api/admin/sales/tasks/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 167,
-      "norm_label": "sales/tasks/route.ts",
-      "community_name": "getLLMConfig",
-      "id": "app_api_admin_sales_tasks_route"
-    },
-    {
-      "label": "maxDuration",
-      "file_type": "code",
-      "source_file": "app/api/admin/sales/tasks/route.ts",
-      "source_location": "L7",
-      "_origin": "ast",
-      "community": 167,
-      "norm_label": "maxduration",
-      "community_name": "getLLMConfig",
-      "id": "app_api_admin_sales_tasks_route_maxduration"
-    },
-    {
-      "label": "runtime",
-      "file_type": "code",
-      "source_file": "app/api/admin/sales/tasks/route.ts",
-      "source_location": "L6",
-      "_origin": "ast",
-      "community": 167,
-      "norm_label": "runtime",
-      "community_name": "getLLMConfig",
-      "id": "app_api_admin_sales_tasks_route_runtime"
-    },
-    {
       "label": "audit/route.ts",
       "file_type": "code",
       "source_file": "app/api/audit/route.ts",
@@ -33244,37 +33178,15 @@
       "id": "app_admin_content_seo_clusters_seoclustersclient_traffic_label"
     },
     {
-      "label": "ChatWidget.tsx",
+      "label": "search.ts",
       "file_type": "code",
-      "source_file": "components/chat/ChatWidget.tsx",
+      "source_file": "lib/import-leads/search.ts",
       "source_location": "L1",
       "_origin": "ast",
       "community": 180,
-      "norm_label": "chatwidget.tsx",
-      "community_name": "ChatWidget.tsx",
-      "id": "components_chat_chatwidget"
-    },
-    {
-      "label": "ChatWidgetLoader.tsx",
-      "file_type": "code",
-      "source_file": "components/chat/ChatWidgetLoader.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 180,
-      "norm_label": "chatwidgetloader.tsx",
-      "community_name": "ChatWidget.tsx",
-      "id": "components_chat_chatwidgetloader"
-    },
-    {
-      "label": "ChatWidget",
-      "file_type": "code",
-      "source_file": "components/chat/ChatWidgetLoader.tsx",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 180,
-      "norm_label": "chatwidget",
-      "community_name": "ChatWidget.tsx",
-      "id": "components_chat_chatwidgetloader_chatwidget"
+      "norm_label": "search.ts",
+      "community_name": "search.ts",
+      "id": "lib_import_leads_search"
     },
     {
       "label": "trigger-enrich/route.ts",
@@ -33948,37 +33860,81 @@
       "id": "app_client_login_page_oauth_errors"
     },
     {
-      "label": "analyze-text/route.ts",
+      "label": "ImportLeadsDashboard.tsx",
       "file_type": "code",
-      "source_file": "app/api/ai-funnel/analyze-text/route.ts",
+      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
       "source_location": "L1",
       "_origin": "ast",
       "community": 191,
-      "community_name": "analyze-text/route.ts",
-      "norm_label": "analyze-text/route.ts",
-      "id": "app_api_ai_funnel_analyze_text_route"
+      "norm_label": "importleadsdashboard.tsx",
+      "community_name": "ImportLead",
+      "id": "app_admin_import_leads_importleadsdashboard"
     },
     {
-      "label": "maxDuration",
+      "label": "IMPORTS_LABELS",
       "file_type": "code",
-      "source_file": "app/api/ai-funnel/analyze-text/route.ts",
-      "source_location": "L5",
+      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
+      "source_location": "L22",
       "_origin": "ast",
       "community": 191,
-      "community_name": "analyze-text/route.ts",
-      "norm_label": "maxduration",
-      "id": "app_api_ai_funnel_analyze_text_route_maxduration"
+      "norm_label": "imports_labels",
+      "community_name": "ImportLead",
+      "id": "app_admin_import_leads_importleadsdashboard_imports_labels"
+    },
+    {
+      "label": "SCORE_COLORS",
+      "file_type": "code",
+      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
+      "source_location": "L28",
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "score_colors",
+      "community_name": "ImportLead",
+      "id": "app_admin_import_leads_importleadsdashboard_score_colors"
+    },
+    {
+      "label": "STATUS_LABELS",
+      "file_type": "code",
+      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
+      "source_location": "L6",
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "status_labels",
+      "community_name": "ImportLead",
+      "id": "app_admin_import_leads_importleadsdashboard_status_labels"
+    },
+    {
+      "label": "STATUS_STYLES",
+      "file_type": "code",
+      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
+      "source_location": "L14",
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "status_styles",
+      "community_name": "ImportLead",
+      "id": "app_admin_import_leads_importleadsdashboard_status_styles"
+    },
+    {
+      "label": "import-leads/leads/route.ts",
+      "file_type": "code",
+      "source_file": "app/api/import-leads/leads/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 191,
+      "norm_label": "import-leads/leads/route.ts",
+      "community_name": "ImportLead",
+      "id": "app_api_import_leads_leads_route"
     },
     {
       "label": "runtime",
       "file_type": "code",
-      "source_file": "app/api/ai-funnel/analyze-text/route.ts",
-      "source_location": "L4",
+      "source_file": "app/api/import-leads/leads/route.ts",
+      "source_location": "L45",
       "_origin": "ast",
       "community": 191,
-      "community_name": "analyze-text/route.ts",
       "norm_label": "runtime",
-      "id": "app_api_ai_funnel_analyze_text_route_runtime"
+      "community_name": "ImportLead",
+      "id": "app_api_import_leads_leads_route_runtime"
     },
     {
       "label": "init/route.ts",
@@ -38073,6 +38029,28 @@
       "id": "app_services_supplier_search_page_schema"
     },
     {
+      "label": "hh-leads/route.ts",
+      "file_type": "code",
+      "source_file": "app/api/admin/hh-leads/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 263,
+      "norm_label": "hh-leads/route.ts",
+      "community_name": "hh-leads/route.ts",
+      "id": "app_api_admin_hh_leads_route"
+    },
+    {
+      "label": "runtime",
+      "file_type": "code",
+      "source_file": "app/api/admin/hh-leads/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 263,
+      "norm_label": "runtime",
+      "community_name": "hh-leads/route.ts",
+      "id": "app_api_admin_hh_leads_route_runtime"
+    },
+    {
       "label": "wb-leads/route.ts",
       "file_type": "code",
       "source_file": "app/api/admin/wb-leads/route.ts",
@@ -38093,6 +38071,28 @@
       "norm_label": "runtime",
       "community_name": "wb-leads/route.ts",
       "id": "app_api_admin_wb_leads_route_runtime"
+    },
+    {
+      "label": "import-leads/route.ts",
+      "file_type": "code",
+      "source_file": "app/api/import-leads/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 265,
+      "norm_label": "import-leads/route.ts",
+      "community_name": "import-leads/route.ts",
+      "id": "app_api_import_leads_route"
+    },
+    {
+      "label": "runtime",
+      "file_type": "code",
+      "source_file": "app/api/import-leads/route.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 265,
+      "norm_label": "runtime",
+      "community_name": "import-leads/route.ts",
+      "id": "app_api_import_leads_route_runtime"
     },
     {
       "label": "vk-intent/auth/route.ts",
@@ -38315,48 +38315,37 @@
       "id": "app_wildberries_margin_calculator_page_wbrates2026"
     },
     {
-      "label": "hh-leads/route.ts",
+      "label": "sales/tasks/route.ts",
       "file_type": "code",
-      "source_file": "app/api/admin/hh-leads/route.ts",
+      "source_file": "app/api/admin/sales/tasks/route.ts",
       "source_location": "L1",
       "_origin": "ast",
       "community": 269,
-      "norm_label": "hh-leads/route.ts",
+      "norm_label": "sales/tasks/route.ts",
       "community_name": "import-leads/crm.ts",
-      "id": "app_api_admin_hh_leads_route"
+      "id": "app_api_admin_sales_tasks_route"
+    },
+    {
+      "label": "maxDuration",
+      "file_type": "code",
+      "source_file": "app/api/admin/sales/tasks/route.ts",
+      "source_location": "L7",
+      "_origin": "ast",
+      "community": 269,
+      "norm_label": "maxduration",
+      "community_name": "import-leads/crm.ts",
+      "id": "app_api_admin_sales_tasks_route_maxduration"
     },
     {
       "label": "runtime",
       "file_type": "code",
-      "source_file": "app/api/admin/hh-leads/route.ts",
-      "source_location": "L4",
+      "source_file": "app/api/admin/sales/tasks/route.ts",
+      "source_location": "L6",
       "_origin": "ast",
       "community": 269,
       "norm_label": "runtime",
       "community_name": "import-leads/crm.ts",
-      "id": "app_api_admin_hh_leads_route_runtime"
-    },
-    {
-      "label": "import-leads/leads/route.ts",
-      "file_type": "code",
-      "source_file": "app/api/import-leads/leads/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 269,
-      "norm_label": "import-leads/leads/route.ts",
-      "community_name": "import-leads/crm.ts",
-      "id": "app_api_import_leads_leads_route"
-    },
-    {
-      "label": "runtime",
-      "file_type": "code",
-      "source_file": "app/api/import-leads/leads/route.ts",
-      "source_location": "L45",
-      "_origin": "ast",
-      "community": 269,
-      "norm_label": "runtime",
-      "community_name": "import-leads/crm.ts",
-      "id": "app_api_import_leads_leads_route_runtime"
+      "id": "app_api_admin_sales_tasks_route_runtime"
     },
     {
       "label": "import-leads/crm.ts",
@@ -39679,6 +39668,39 @@
       "id": "lib_rate_engine_route_matcher"
     },
     {
+      "label": "analyze-text/route.ts",
+      "file_type": "code",
+      "source_file": "app/api/ai-funnel/analyze-text/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "ai/client.ts",
+      "norm_label": "analyze-text/route.ts",
+      "id": "app_api_ai_funnel_analyze_text_route"
+    },
+    {
+      "label": "maxDuration",
+      "file_type": "code",
+      "source_file": "app/api/ai-funnel/analyze-text/route.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "ai/client.ts",
+      "norm_label": "maxduration",
+      "id": "app_api_ai_funnel_analyze_text_route_maxduration"
+    },
+    {
+      "label": "runtime",
+      "file_type": "code",
+      "source_file": "app/api/ai-funnel/analyze-text/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "ai/client.ts",
+      "norm_label": "runtime",
+      "id": "app_api_ai_funnel_analyze_text_route_runtime"
+    },
+    {
       "label": "consultant.ts",
       "file_type": "code",
       "source_file": "lib/ai/agents/consultant.ts",
@@ -40130,61 +40152,6 @@
       "id": "components_seo_servicecard"
     },
     {
-      "label": "ImportLeadsDashboard.tsx",
-      "file_type": "code",
-      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "importleadsdashboard.tsx",
-      "community_name": "ImportLead",
-      "id": "app_admin_import_leads_importleadsdashboard"
-    },
-    {
-      "label": "IMPORTS_LABELS",
-      "file_type": "code",
-      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
-      "source_location": "L22",
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "imports_labels",
-      "community_name": "ImportLead",
-      "id": "app_admin_import_leads_importleadsdashboard_imports_labels"
-    },
-    {
-      "label": "SCORE_COLORS",
-      "file_type": "code",
-      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
-      "source_location": "L28",
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "score_colors",
-      "community_name": "ImportLead",
-      "id": "app_admin_import_leads_importleadsdashboard_score_colors"
-    },
-    {
-      "label": "STATUS_LABELS",
-      "file_type": "code",
-      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
-      "source_location": "L6",
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "status_labels",
-      "community_name": "ImportLead",
-      "id": "app_admin_import_leads_importleadsdashboard_status_labels"
-    },
-    {
-      "label": "STATUS_STYLES",
-      "file_type": "code",
-      "source_file": "app/admin/import-leads/ImportLeadsDashboard.tsx",
-      "source_location": "L14",
-      "_origin": "ast",
-      "community": 39,
-      "norm_label": "status_styles",
-      "community_name": "ImportLead",
-      "id": "app_admin_import_leads_importleadsdashboard_status_styles"
-    },
-    {
       "label": "AiSalesAgentClient.tsx",
       "file_type": "code",
       "source_file": "app/admin/market-intelligence/ai-sales-agent/AiSalesAgentClient.tsx",
@@ -40192,7 +40159,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "aisalesagentclient.tsx",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient"
     },
     {
@@ -40203,7 +40170,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "action_icon",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient_action_icon"
     },
     {
@@ -40214,7 +40181,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "urgency_style",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_aisalesagentclient_urgency_style"
     },
     {
@@ -40225,7 +40192,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "ai-sales-agent/page.tsx",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_page"
     },
     {
@@ -40236,7 +40203,7 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "dynamic",
-      "community_name": "ImportLead",
+      "community_name": "AiSalesAgentClient.tsx",
       "id": "app_admin_market_intelligence_ai_sales_agent_page_dynamic"
     },
     {
@@ -42203,10 +42170,10 @@
       "source_file": "components/ai-funnel/AIEconomicsFunnel.tsx",
       "source_location": "L1",
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "aieconomicsfunnel.tsx",
-      "id": "components_ai_funnel_aieconomicsfunnel"
+      "norm_label": "aieconomicsfunnel.tsx"
     },
     {
       "label": "ANALYZE_STAGES",
@@ -42214,10 +42181,10 @@
       "source_file": "components/ai-funnel/AIEconomicsFunnel.tsx",
       "source_location": "L102",
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_analyze_stages",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "analyze_stages",
-      "id": "components_ai_funnel_aieconomicsfunnel_analyze_stages"
+      "norm_label": "analyze_stages"
     },
     {
       "label": "CITY_CHIPS",
@@ -42225,10 +42192,10 @@
       "source_file": "components/ai-funnel/AIEconomicsFunnel.tsx",
       "source_location": "L90",
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_city_chips",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "city_chips",
-      "id": "components_ai_funnel_aieconomicsfunnel_city_chips"
+      "norm_label": "city_chips"
     },
     {
       "label": "EMPTY_CORRECTION",
@@ -42236,10 +42203,10 @@
       "source_file": "components/ai-funnel/AIEconomicsFunnel.tsx",
       "source_location": "L656",
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_empty_correction",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "empty_correction",
-      "id": "components_ai_funnel_aieconomicsfunnel_empty_correction"
+      "norm_label": "empty_correction"
     },
     {
       "label": "EMPTY_PRODUCT",
@@ -42247,10 +42214,10 @@
       "source_file": "components/ai-funnel/AIEconomicsFunnel.tsx",
       "source_location": "L651",
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_empty_product",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "empty_product",
-      "id": "components_ai_funnel_aieconomicsfunnel_empty_product"
+      "norm_label": "empty_product"
     },
     {
       "label": "QUICK_EXAMPLES",
@@ -42258,10 +42225,10 @@
       "source_file": "components/ai-funnel/AIEconomicsFunnel.tsx",
       "source_location": "L92",
       "_origin": "ast",
+      "id": "components_ai_funnel_aieconomicsfunnel_quick_examples",
       "community": 50,
       "community_name": "AIEconomicsFunnel.tsx",
-      "norm_label": "quick_examples",
-      "id": "components_ai_funnel_aieconomicsfunnel_quick_examples"
+      "norm_label": "quick_examples"
     },
     {
       "label": "proposals/page.tsx",
@@ -43021,6 +42988,39 @@
       "norm_label": "chatmessage.tsx",
       "community_name": "ai/types.ts",
       "id": "components_chat_chatmessage"
+    },
+    {
+      "label": "ChatWidget.tsx",
+      "file_type": "code",
+      "source_file": "components/chat/ChatWidget.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 57,
+      "norm_label": "chatwidget.tsx",
+      "community_name": "ai/types.ts",
+      "id": "components_chat_chatwidget"
+    },
+    {
+      "label": "ChatWidgetLoader.tsx",
+      "file_type": "code",
+      "source_file": "components/chat/ChatWidgetLoader.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 57,
+      "norm_label": "chatwidgetloader.tsx",
+      "community_name": "ai/types.ts",
+      "id": "components_chat_chatwidgetloader"
+    },
+    {
+      "label": "ChatWidget",
+      "file_type": "code",
+      "source_file": "components/chat/ChatWidgetLoader.tsx",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 57,
+      "norm_label": "chatwidget",
+      "community_name": "ai/types.ts",
+      "id": "components_chat_chatwidgetloader_chatwidget"
     },
     {
       "label": "ChatWindow.tsx",
@@ -43864,10 +43864,10 @@
       "source_file": "lib/vk-intent/classifier.ts",
       "source_location": "L1",
       "_origin": "ast",
+      "id": "lib_vk_intent_classifier",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "classifier.ts",
-      "id": "lib_vk_intent_classifier"
+      "norm_label": "classifier.ts"
     },
     {
       "label": "vk-intent/pipeline.ts",
@@ -43875,10 +43875,10 @@
       "source_file": "lib/vk-intent/pipeline.ts",
       "source_location": "L1",
       "_origin": "ast",
+      "id": "lib_vk_intent_pipeline",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "vk-intent/pipeline.ts",
-      "id": "lib_vk_intent_pipeline"
+      "norm_label": "vk-intent/pipeline.ts"
     },
     {
       "label": "queries.ts",
@@ -43886,21 +43886,21 @@
       "source_file": "lib/vk-intent/queries.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "lib_vk_intent_queries",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "queries.ts"
+      "norm_label": "queries.ts",
+      "id": "lib_vk_intent_queries"
     },
     {
       "label": "INTENT_QUERIES",
       "file_type": "code",
       "source_file": "lib/vk-intent/queries.ts",
-      "source_location": "L3",
+      "source_location": "L2",
       "_origin": "ast",
-      "id": "lib_vk_intent_queries_intent_queries",
       "community": 63,
       "community_name": "vk-intent/pipeline.ts",
-      "norm_label": "intent_queries"
+      "norm_label": "intent_queries",
+      "id": "lib_vk_intent_queries_intent_queries"
     },
     {
       "label": "vk-intent/telegram.ts",
@@ -56720,9 +56720,9 @@
       "source_location": "L1352",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_inp"
+      "target": "components_ai_funnel_aieconomicsfunnel_inp",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -56732,9 +56732,9 @@
       "source_location": "L1624",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_verdictbg"
+      "target": "components_ai_funnel_aieconomicsfunnel_verdictbg",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -56744,9 +56744,9 @@
       "source_location": "L1626",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_verdictcolor"
+      "target": "components_ai_funnel_aieconomicsfunnel_verdictcolor",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -56756,9 +56756,9 @@
       "source_location": "L1685",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_fmt"
+      "target": "components_ai_funnel_aieconomicsfunnel_fmt",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -56780,9 +56780,9 @@
       "source_location": "L951",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_estimatesaleprice"
+      "target": "components_ai_funnel_aieconomicsfunnel_estimatesaleprice",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -56792,9 +56792,9 @@
       "source_location": "L522",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_pnltable",
-      "target": "components_ai_funnel_aieconomicsfunnel_fmt"
+      "target": "components_ai_funnel_aieconomicsfunnel_fmt",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -56804,9 +56804,9 @@
       "source_location": "L491",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_scenariosblock",
-      "target": "components_ai_funnel_aieconomicsfunnel_verdictcolor"
+      "target": "components_ai_funnel_aieconomicsfunnel_verdictcolor",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -56816,9 +56816,9 @@
       "source_location": "L500",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_scenariosblock",
-      "target": "components_ai_funnel_aieconomicsfunnel_fmt"
+      "target": "components_ai_funnel_aieconomicsfunnel_fmt",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -56828,9 +56828,9 @@
       "source_location": "L445",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel_targetpricecard",
-      "target": "components_ai_funnel_aieconomicsfunnel_fmt"
+      "target": "components_ai_funnel_aieconomicsfunnel_fmt",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -65356,8 +65356,20 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "lib/vk-intent/apify.ts",
-      "source_location": "L101",
+      "source_location": "L83",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "lib_vk_intent_apify_scrapevkintentposts",
+      "target": "lib_vk_intent_tokens_getvktoken"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/vk-intent/apify.ts",
+      "source_location": "L91",
       "weight": 1.0,
       "_origin": "ast",
       "source": "lib_vk_intent_apify_scrapevkintentposts",
@@ -65369,7 +65381,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/vk-intent/apify.ts",
-      "source_location": "L102",
+      "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast",
       "source": "lib_vk_intent_apify_scrapevkintentposts",
@@ -65380,20 +65392,8 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "lib/vk-intent/apify.ts",
-      "source_location": "L93",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "lib_vk_intent_apify_scrapevkintentposts",
-      "target": "lib_vk_intent_tokens_getvktoken"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/vk-intent/apify.ts",
-      "source_location": "L76",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast",
       "source": "lib_vk_intent_apify_searchpostsbyquery",
@@ -65408,9 +65408,9 @@
       "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier_callclaude",
-      "target": "lib_vk_intent_classifier_dayssince"
+      "target": "lib_vk_intent_classifier_dayssince",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -65420,9 +65420,9 @@
       "source_location": "L108",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier_classifypost",
-      "target": "lib_vk_intent_classifier_callclaude"
+      "target": "lib_vk_intent_classifier_callclaude",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -65468,9 +65468,9 @@
       "source_location": "L136",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline_runintentpipeline",
-      "target": "lib_vk_intent_pipeline_savelead"
+      "target": "lib_vk_intent_pipeline_savelead",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -65480,9 +65480,9 @@
       "source_location": "L141",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline_runintentpipeline",
-      "target": "lib_vk_intent_pipeline_sendtgreport"
+      "target": "lib_vk_intent_pipeline_sendtgreport",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -65492,9 +65492,9 @@
       "source_location": "L93",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline_runintentpipeline",
-      "target": "lib_vk_intent_pipeline_ensuretable"
+      "target": "lib_vk_intent_pipeline_ensuretable",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -77598,6 +77598,18 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "app/layout.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_layout",
+      "target": "components_floatingcontact_floatingcontact"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "app/lp/kz/page.tsx",
       "source_location": "L2",
       "weight": 1.0,
@@ -78958,9 +78970,9 @@
       "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_analytics_index_analytics"
+      "target": "lib_analytics_index_analytics",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -78970,9 +78982,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_economics_marketplaces_detectcommissionpct"
+      "target": "lib_economics_marketplaces_detectcommissionpct",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -78982,9 +78994,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_economics_marketplaces_marketplaces"
+      "target": "lib_economics_marketplaces_marketplaces",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -78994,9 +79006,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_calculator_types_economicsresult"
+      "target": "lib_calculator_types_economicsresult",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -79006,9 +79018,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_calculator_types_economicsscenario"
+      "target": "lib_calculator_types_economicsscenario",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -79018,9 +79030,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_calculator_types_productscore"
+      "target": "lib_calculator_types_productscore",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -79030,9 +79042,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_calculator_types_supplierriskresult"
+      "target": "lib_calculator_types_supplierriskresult",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -79042,9 +79054,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_calculator_types_targetprice"
+      "target": "lib_calculator_types_targetprice",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85330,9 +85342,9 @@
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier",
-      "target": "lib_vk_intent_types_intentlead"
+      "target": "lib_vk_intent_types_intentlead",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85342,9 +85354,9 @@
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier",
-      "target": "lib_vk_intent_types_intenttier"
+      "target": "lib_vk_intent_types_intenttier",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85354,9 +85366,9 @@
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier",
-      "target": "lib_vk_intent_types_vkpost"
+      "target": "lib_vk_intent_types_vkpost",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85366,9 +85378,9 @@
       "source_location": "L2",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_queries_intent_queries"
+      "target": "lib_vk_intent_queries_intent_queries",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85378,9 +85390,9 @@
       "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_apify_scrapevkintentposts"
+      "target": "lib_vk_intent_apify_scrapevkintentposts",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85390,9 +85402,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_telegram_scrapealltgchannels"
+      "target": "lib_vk_intent_telegram_scrapealltgchannels",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85402,9 +85414,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_tokens_gettgchannels"
+      "target": "lib_vk_intent_tokens_gettgchannels",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85414,9 +85426,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_classifier_classifypost"
+      "target": "lib_vk_intent_classifier_classifypost",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85426,9 +85438,9 @@
       "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_types_intentlead"
+      "target": "lib_vk_intent_types_intentlead",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -85438,9 +85450,9 @@
       "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_types_intentpipelineresult"
+      "target": "lib_vk_intent_types_intentpipelineresult",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -92806,9 +92818,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "app_layout",
-      "target": "components_analytics_analyticsprovider",
-      "confidence_score": 1.0
+      "target": "components_analytics_analyticsprovider"
     },
     {
       "relation": "imports_from",
@@ -92818,9 +92830,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "app_layout",
-      "target": "components_chat_chatwidgetloader",
-      "confidence_score": 1.0
+      "target": "components_chat_chatwidgetloader"
     },
     {
       "relation": "imports_from",
@@ -92830,9 +92842,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "app_layout",
-      "target": "components_floatingcontact",
-      "confidence_score": 1.0
+      "target": "components_floatingcontact"
     },
     {
       "relation": "imports_from",
@@ -94126,9 +94138,9 @@
       "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_analytics_index"
+      "target": "lib_analytics_index",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -94138,9 +94150,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_economics_marketplaces"
+      "target": "lib_economics_marketplaces",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -94150,9 +94162,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "lib_calculator_types"
+      "target": "lib_calculator_types",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -97018,9 +97030,9 @@
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier",
-      "target": "lib_vk_intent_types"
+      "target": "lib_vk_intent_types",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -97030,9 +97042,9 @@
       "source_location": "L2",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_queries"
+      "target": "lib_vk_intent_queries",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -97042,9 +97054,9 @@
       "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_apify"
+      "target": "lib_vk_intent_apify",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -97054,9 +97066,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_telegram"
+      "target": "lib_vk_intent_telegram",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -97066,9 +97078,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_tokens"
+      "target": "lib_vk_intent_tokens",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -97078,9 +97090,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_classifier"
+      "target": "lib_vk_intent_classifier",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -97090,9 +97102,9 @@
       "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_types"
+      "target": "lib_vk_intent_types",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -114880,23 +114892,23 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/layout.tsx",
-      "source_location": "L18",
+      "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "app_layout",
-      "target": "app_layout_metadata",
-      "confidence_score": 1.0
+      "target": "app_layout_metadata"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/layout.tsx",
-      "source_location": "L47",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "app_layout",
-      "target": "app_layout_rootlayout",
-      "confidence_score": 1.0
+      "target": "app_layout_rootlayout"
     },
     {
       "relation": "contains",
@@ -114905,9 +114917,9 @@
       "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "app_layout",
-      "target": "app_layout_inter",
-      "confidence_score": 1.0
+      "target": "app_layout_inter"
     },
     {
       "relation": "contains",
@@ -117677,9 +117689,9 @@
       "source_location": "L102",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_analyze_stages"
+      "target": "components_ai_funnel_aieconomicsfunnel_analyze_stages",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117688,9 +117700,9 @@
       "source_location": "L113",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_estimatesaleprice"
+      "target": "components_ai_funnel_aieconomicsfunnel_estimatesaleprice",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117699,9 +117711,9 @@
       "source_location": "L120",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_fmt"
+      "target": "components_ai_funnel_aieconomicsfunnel_fmt",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117710,9 +117722,9 @@
       "source_location": "L121",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_inp"
+      "target": "components_ai_funnel_aieconomicsfunnel_inp",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117721,9 +117733,9 @@
       "source_location": "L126",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_verdictcolor"
+      "target": "components_ai_funnel_aieconomicsfunnel_verdictcolor",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117732,9 +117744,9 @@
       "source_location": "L130",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_verdictbg"
+      "target": "components_ai_funnel_aieconomicsfunnel_verdictbg",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117743,9 +117755,9 @@
       "source_location": "L138",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_tgsubscribebanner"
+      "target": "components_ai_funnel_aieconomicsfunnel_tgsubscribebanner",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117754,9 +117766,9 @@
       "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_step"
+      "target": "components_ai_funnel_aieconomicsfunnel_step",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117765,9 +117777,9 @@
       "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_productdata"
+      "target": "components_ai_funnel_aieconomicsfunnel_productdata",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117776,9 +117788,9 @@
       "source_location": "L188",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_paywallblock"
+      "target": "components_ai_funnel_aieconomicsfunnel_paywallblock",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117787,9 +117799,9 @@
       "source_location": "L28",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_extractedproduct"
+      "target": "components_ai_funnel_aieconomicsfunnel_extractedproduct",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117798,9 +117810,9 @@
       "source_location": "L323",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_exitintentpopup"
+      "target": "components_ai_funnel_aieconomicsfunnel_exitintentpopup",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117809,9 +117821,9 @@
       "source_location": "L382",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_scorebar"
+      "target": "components_ai_funnel_aieconomicsfunnel_scorebar",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117820,9 +117832,9 @@
       "source_location": "L396",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_productscorecard"
+      "target": "components_ai_funnel_aieconomicsfunnel_productscorecard",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117831,9 +117843,9 @@
       "source_location": "L417",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_supplierriskbadge"
+      "target": "components_ai_funnel_aieconomicsfunnel_supplierriskbadge",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117842,9 +117854,9 @@
       "source_location": "L434",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_targetpricecard"
+      "target": "components_ai_funnel_aieconomicsfunnel_targetpricecard",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117853,9 +117865,9 @@
       "source_location": "L462",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_scenariosblock"
+      "target": "components_ai_funnel_aieconomicsfunnel_scenariosblock",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117864,9 +117876,9 @@
       "source_location": "L47",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_correctiondata"
+      "target": "components_ai_funnel_aieconomicsfunnel_correctiondata",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117875,9 +117887,9 @@
       "source_location": "L513",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_pnltable"
+      "target": "components_ai_funnel_aieconomicsfunnel_pnltable",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117886,9 +117898,9 @@
       "source_location": "L56",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_funnelstate"
+      "target": "components_ai_funnel_aieconomicsfunnel_funnelstate",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117897,9 +117909,9 @@
       "source_location": "L570",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_correctionaccordion"
+      "target": "components_ai_funnel_aieconomicsfunnel_correctionaccordion",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117908,9 +117920,9 @@
       "source_location": "L651",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_empty_product"
+      "target": "components_ai_funnel_aieconomicsfunnel_empty_product",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117919,9 +117931,9 @@
       "source_location": "L656",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_empty_correction"
+      "target": "components_ai_funnel_aieconomicsfunnel_empty_correction",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117930,9 +117942,9 @@
       "source_location": "L661",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel"
+      "target": "components_ai_funnel_aieconomicsfunnel_aieconomicsfunnel",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117941,9 +117953,9 @@
       "source_location": "L90",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_city_chips"
+      "target": "components_ai_funnel_aieconomicsfunnel_city_chips",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -117952,9 +117964,9 @@
       "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "components_ai_funnel_aieconomicsfunnel",
-      "target": "components_ai_funnel_aieconomicsfunnel_quick_examples"
+      "target": "components_ai_funnel_aieconomicsfunnel_quick_examples",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132315,6 +132327,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/vk-intent/apify.ts",
+      "source_location": "L78",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "lib_vk_intent_apify",
+      "target": "lib_vk_intent_apify_scrapevkintentposts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/vk-intent/apify.ts",
       "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
@@ -132325,24 +132348,13 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "lib/vk-intent/apify.ts",
-      "source_location": "L88",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "lib_vk_intent_apify",
-      "target": "lib_vk_intent_apify_scrapevkintentposts",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "lib/vk-intent/classifier.ts",
       "source_location": "L106",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier",
-      "target": "lib_vk_intent_classifier_classifypost"
+      "target": "lib_vk_intent_classifier_classifypost",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132351,9 +132363,9 @@
       "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier",
-      "target": "lib_vk_intent_classifier_dayssince"
+      "target": "lib_vk_intent_classifier_dayssince",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132362,9 +132374,9 @@
       "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier",
-      "target": "lib_vk_intent_classifier_callclaude"
+      "target": "lib_vk_intent_classifier_callclaude",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132373,9 +132385,9 @@
       "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_classifier",
-      "target": "lib_vk_intent_classifier_classifyresult"
+      "target": "lib_vk_intent_classifier_classifyresult",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132384,9 +132396,9 @@
       "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_pipeline_savelead"
+      "target": "lib_vk_intent_pipeline_savelead",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132395,9 +132407,9 @@
       "source_location": "L53",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_pipeline_sendtgreport"
+      "target": "lib_vk_intent_pipeline_sendtgreport",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132406,9 +132418,9 @@
       "source_location": "L84",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_pipeline_pipelineoptions"
+      "target": "lib_vk_intent_pipeline_pipelineoptions",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132417,9 +132429,9 @@
       "source_location": "L86",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_pipeline_runintentpipeline"
+      "target": "lib_vk_intent_pipeline_runintentpipeline",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -132428,20 +132440,20 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "lib_vk_intent_pipeline",
-      "target": "lib_vk_intent_pipeline_ensuretable"
+      "target": "lib_vk_intent_pipeline_ensuretable",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/vk-intent/queries.ts",
-      "source_location": "L3",
+      "source_location": "L2",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "lib_vk_intent_queries",
-      "target": "lib_vk_intent_queries_intent_queries",
-      "confidence_score": 1.0
+      "target": "lib_vk_intent_queries_intent_queries"
     },
     {
       "relation": "contains",
@@ -134564,5 +134576,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d2858ec2d60b297afa10ca1467021f0a02601b6f"
+  "built_at_commit": "bc1953e749b593b702bddf32f637a9bf5ff5b9c2"
 }

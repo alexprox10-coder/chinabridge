@@ -11,7 +11,6 @@ const inter = Inter({
   display: "swap",
   preload: false,
   fallback: ["system-ui", "arial"],
-  display: "swap",
   variable: "--font-inter",
 });
 

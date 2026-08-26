@@ -1,16 +1,16 @@
 # Graph Report - chinabridge  (2026-08-26)
 
 ## Corpus Check
-- 697 files · ~982,985 words
+- 697 files · ~982,897 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4017 nodes · 7586 edges · 271 communities (227 shown, 44 thin omitted)
+- 4017 nodes · 7587 edges · 273 communities (230 shown, 43 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 37 edges (avg confidence: 0.59)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d2858ec2`
+- Built from commit: `bc1953e7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -54,7 +54,7 @@
 - ai/client.ts
 - client-portal/types.ts
 - CTASection.tsx
-- ImportLead
+- AiSalesAgentClient.tsx
 - documents/types.ts
 - ai-cto/index.ts
 - blog/[slug]/page.tsx
@@ -195,7 +195,7 @@
 - checks/crm.ts
 - security.ts
 - Architecture Decision Records (ADR)
-- ChatWidget.tsx
+- search.ts
 - trigger-enrich/route.ts
 - Intelligence Agent — Context
 - wb-sellers/route.ts
@@ -206,7 +206,7 @@
 - ai/route.ts
 - marketing-ai/route.ts
 - client/login/page.tsx
-- analyze-text/route.ts
+- ImportLead
 - init/route.ts
 - demo/finance/page.tsx
 - Kazakhstan Import Rules
@@ -265,7 +265,9 @@
 - china-blagoveshchensk/page.tsx
 - china-spb/page.tsx
 - supplier-search/page.tsx
+- hh-leads/route.ts
 - wb-leads/route.ts
+- import-leads/route.ts
 - FAQSection.tsx
 - wildberries-margin-calculator/page.tsx
 - import-leads/crm.ts
@@ -293,13 +295,13 @@
   app/api/ai-company/sales/platform-leads/route.ts → lib/api-auth.ts
 - `POST()` --calls--> `isAuthorized()`  [EXTRACTED]
   app/api/ai-company/sales/platform-leads/route.ts → lib/api-auth.ts
-- `POST()` --calls--> `callLLM()`  [EXTRACTED]
-  app/api/ai-funnel/analyze-text/route.ts → lib/ai/client.ts
+- `TenantPage()` --calls--> `getTenantById()`  [EXTRACTED]
+  app/admin/tenants/[id]/page.tsx → lib/multitenant/store.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (271 total, 44 thin omitted)
+## Communities (273 total, 43 thin omitted)
 
 ### Community 0 - "content/db.ts"
 Cohesion: 0.06
@@ -358,8 +360,8 @@ Cohesion: 0.07
 Nodes (15): metadata, metadata, metadata, metadata, metadata, metadata, metadata, metadata (+7 more)
 
 ### Community 14 - "import-leads/types.ts"
-Cohesion: 0.10
-Nodes (34): POST(), runtime, GET(), maxDuration, POST(), QUICK_OVERRIDES, runtime, analyzeWebsite() (+26 more)
+Cohesion: 0.14
+Nodes (24): GET(), maxDuration, POST(), QUICK_OVERRIDES, runtime, analyzeWebsite(), orAnalyze(), scrapeWebsite() (+16 more)
 
 ### Community 15 - "rate-engine/db.ts"
 Cohesion: 0.11
@@ -446,8 +448,8 @@ Cohesion: 0.19
 Nodes (18): POST(), runtime, applyRules(), calcBaseCost(), calcServiceCost(), calculateDeliveryCost(), saveCalculation(), getDefaultTransportType() (+10 more)
 
 ### Community 36 - "ai/client.ts"
-Cohesion: 0.25
-Nodes (17): runConsultant(), runAgent(), runLogistic(), runOperator(), runQualification(), runSales(), callLLM(), LLMMessage (+9 more)
+Cohesion: 0.20
+Nodes (20): maxDuration, POST(), runtime, runConsultant(), runAgent(), runLogistic(), runOperator(), runQualification() (+12 more)
 
 ### Community 37 - "client-portal/types.ts"
 Cohesion: 0.10
@@ -457,9 +459,9 @@ Nodes (13): ClientThread, CITIES, CreateOrderForm(), ClientAccount, ClientDocume
 Cohesion: 0.12
 Nodes (15): CITIES, metadata, FAQ, metadata, schema, FAQ, metadata, schema (+7 more)
 
-### Community 39 - "ImportLead"
-Cohesion: 0.12
-Nodes (12): IMPORTS_LABELS, Props, SCORE_COLORS, STATUS_LABELS, STATUS_STYLES, ACTION_ICON, AiSalesAgentClient(), Recommendation (+4 more)
+### Community 39 - "AiSalesAgentClient.tsx"
+Cohesion: 0.22
+Nodes (5): ACTION_ICON, AiSalesAgentClient(), Stats, URGENCY_STYLE, dynamic
 
 ### Community 40 - "documents/types.ts"
 Cohesion: 0.06
@@ -530,8 +532,8 @@ Cohesion: 0.18
 Nodes (19): getTenantId(), POST(), aiScore(), Contacts, dedup(), extractContacts(), firecrawlSearch(), GOOGLE_QUERIES (+11 more)
 
 ### Community 57 - "ai/types.ts"
-Cohesion: 0.17
-Nodes (15): AgentBadge(), CONFIG, ChatInput(), Props, ChatMessage(), Props, Message, Props (+7 more)
+Cohesion: 0.12
+Nodes (17): AgentBadge(), CONFIG, ChatInput(), Props, ChatMessage(), Props, ChatWidget, ChatWindow() (+9 more)
 
 ### Community 58 - "validators.ts"
 Cohesion: 0.16
@@ -954,8 +956,8 @@ Cohesion: 0.29
 Nodes (6): buildCommand, crons, devCommand, framework, installCommand, outputDirectory
 
 ### Community 167 - "getLLMConfig"
-Cohesion: 0.10
-Nodes (24): ensureTable(), GET(), POST(), isAuthorized(), maxDuration, POST(), runtime, fallbackOffer() (+16 more)
+Cohesion: 0.12
+Nodes (19): ensureTable(), GET(), POST(), isAuthorized(), maxDuration, POST(), runtime, fallbackOffer() (+11 more)
 
 ### Community 168 - "crm/client.ts"
 Cohesion: 0.10
@@ -1005,6 +1007,10 @@ Nodes (6): checkCronSecretSet(), checkJwtEnvSet(), checkProtected(), checkSecuri
 Cohesion: 0.20
 Nodes (9): ADR-001: intel_facts as Single Source of Truth for Market Data, ADR-002: Chat Sessions Persisted in Neon DB, ADR-003: No void async() on Vercel Serverless, ADR-004: RU and KZ Always Separate Calculation Contexts, ADR-005: OpenRouter as LLM Provider with Fallback, ADR-006: lib/knowledge/index.ts for ChinaBridge Service Prices Only, ADR-007: Operations CEO AI Uses Real CRM Data, ADR-008: Finance Module Shows isDemo Warning When N8N Not Connected (+1 more)
 
+### Community 180 - "search.ts"
+Cohesion: 0.53
+Nodes (5): deduplicateByDomain(), firecrawlSearch(), searchCompanies(), skipNonTargets(), SearchResult
+
 ### Community 181 - "trigger-enrich/route.ts"
 Cohesion: 0.40
 Nodes (5): dynamic, isAuthorized(), maxDuration, POST(), runtime
@@ -1033,9 +1039,9 @@ Nodes (12): DELETE(), dynamic, GET(), isAdmin(), runtime, GET(), PATCH(), runtim
 Cohesion: 0.50
 Nodes (4): buildSystemPrompt(), maxDuration, POST(), runtime
 
-### Community 191 - "analyze-text/route.ts"
-Cohesion: 0.50
-Nodes (3): maxDuration, POST(), runtime
+### Community 191 - "ImportLead"
+Cohesion: 0.16
+Nodes (14): IMPORTS_LABELS, Props, SCORE_COLORS, STATUS_LABELS, STATUS_STYLES, Recommendation, buildImportComment(), GET() (+6 more)
 
 ### Community 192 - "init/route.ts"
 Cohesion: 0.28
@@ -1129,9 +1135,17 @@ Nodes (3): FAQ, metadata, schema
 Cohesion: 0.40
 Nodes (3): FAQ, metadata, schema
 
+### Community 263 - "hh-leads/route.ts"
+Cohesion: 0.60
+Nodes (4): GET(), isAuthorized(), POST(), runtime
+
 ### Community 264 - "wb-leads/route.ts"
 Cohesion: 0.60
 Nodes (4): GET(), isAuthorized(), POST(), runtime
+
+### Community 265 - "import-leads/route.ts"
+Cohesion: 0.50
+Nodes (4): POST(), runtime, dtInsert(), saveLead()
 
 ### Community 267 - "FAQSection.tsx"
 Cohesion: 0.11
@@ -1142,28 +1156,28 @@ Cohesion: 0.40
 Nodes (3): jsonLd, metadata, wbRates2026
 
 ### Community 269 - "import-leads/crm.ts"
-Cohesion: 0.16
-Nodes (23): GET(), isAuthorized(), POST(), runtime, DELETE(), buildImportComment(), GET(), isAuthorized() (+15 more)
+Cohesion: 0.20
+Nodes (18): DELETE(), fallbackTasks(), GET(), isAuthorized(), maxDuration, runtime, deleteLeadPermanently(), dtQuery() (+10 more)
 
 ### Community 270 - "OnboardingSteps.tsx"
 Cohesion: 0.40
 Nodes (3): Props, Step, STEPS
 
 ## Knowledge Gaps
-- **1306 isolated node(s):** `inter`, `metadata`, `ExtractedPost`, `AnalyticsRow`, `CrmStats` (+1301 more)
+- **1306 isolated node(s):** `Step`, `ProductData`, `ExtractedProduct`, `CorrectionData`, `FunnelState` (+1301 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **44 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **43 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AdminNav()` connect `AdminNav.tsx` to `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `VkIntentClient.tsx`, `ContentPageClient.tsx`, `chat/page.tsx`, `SalesCompaniesClient.tsx`, `campaigns/page.tsx`, `SeoClustersClient.tsx`, `LeadDetail.tsx`, `CreateWizard.tsx`, `CeoDashboard.tsx`, `market-intelligence/db.ts`, `intelligence/page.tsx`, `rate-engine/types.ts`, `client-portal/types.ts`, `ImportLead`, `crm/client.ts`, `registrations/page.tsx`, `pricing/page.tsx`, `sales/data.ts`, `ai-company/page.tsx`, `MarketingPageClient.tsx`, `generator.ts`, `multitenant/types.ts`, `admin/settings/billing/page.tsx`, `RadarClient.tsx`, `DealIntelligenceClient.tsx`, `PlatformDashboard.tsx`, `ai-cto/db.ts`, `TgMonitorClient.tsx`, `SalesDashboardClient.tsx`, `outreach-leads/page.tsx`, `WbSellersClient.tsx`, `marketing/partners/page.tsx`, `integrations/page.tsx`, `HhLeadsClient.tsx`, `VkAdsDashboard.tsx`?**
-  _High betweenness centrality (0.123) - this node is a cross-community bridge._
+- **Why does `AdminNav()` connect `AdminNav.tsx` to `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `VkIntentClient.tsx`, `ContentPageClient.tsx`, `chat/page.tsx`, `SalesCompaniesClient.tsx`, `campaigns/page.tsx`, `SeoClustersClient.tsx`, `LeadDetail.tsx`, `CreateWizard.tsx`, `CeoDashboard.tsx`, `market-intelligence/db.ts`, `intelligence/page.tsx`, `rate-engine/types.ts`, `client-portal/types.ts`, `AiSalesAgentClient.tsx`, `crm/client.ts`, `registrations/page.tsx`, `pricing/page.tsx`, `sales/data.ts`, `ai-company/page.tsx`, `MarketingPageClient.tsx`, `generator.ts`, `multitenant/types.ts`, `admin/settings/billing/page.tsx`, `RadarClient.tsx`, `DealIntelligenceClient.tsx`, `PlatformDashboard.tsx`, `ai-cto/db.ts`, `TgMonitorClient.tsx`, `SalesDashboardClient.tsx`, `outreach-leads/page.tsx`, `WbSellersClient.tsx`, `marketing/partners/page.tsx`, `integrations/page.tsx`, `HhLeadsClient.tsx`, `VkAdsDashboard.tsx`?**
+  _High betweenness centrality (0.128) - this node is a cross-community bridge._
 - **Why does `isAuthorized()` connect `isAuthorized` to `notifications/route.ts`, `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `ceo/report/route.ts`, `getTenantId`, `supplier-finder/route.ts`, `vk-ads/campaigns/route.ts`, `sales/data.ts`, `ai-company/page.tsx`, `settings/route.ts`, `partners/db.ts`, `vk-ads/sync/route.ts`, `setup/route.ts`, `finance/api.ts`, `check/route.ts`, `expenses/[id]/route.ts`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
-- **Why does `createLead()` connect `crm/client.ts` to `partner-portal/api.ts`, `vk-ads/sync/route.ts`, `ai-funnel/submit/route.ts`, `economics/route.ts`, `apify-leads/route.ts`, `import-leads/crm.ts`, `market-intelligence/types.ts`, `api/leads/route.ts`, `getTenantId`, `finance/api.ts`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
-- **What connects `inter`, `metadata`, `ExtractedPost` to the rest of the system?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Why does `createLead()` connect `crm/client.ts` to `partner-portal/api.ts`, `vk-ads/sync/route.ts`, `ai-funnel/submit/route.ts`, `economics/route.ts`, `apify-leads/route.ts`, `market-intelligence/types.ts`, `api/leads/route.ts`, `getTenantId`, `finance/api.ts`, `ImportLead`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **What connects `Step`, `ProductData`, `ExtractedProduct` to the rest of the system?**
   _1306 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `content/db.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.055964653902798235 - nodes in this community are weakly interconnected._
