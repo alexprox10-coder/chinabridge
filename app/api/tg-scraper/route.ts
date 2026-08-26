@@ -7,81 +7,118 @@ export const maxDuration = 60;
 const MONITOR_BOT_TOKEN = process.env.MONITOR_BOT_TOKEN ?? process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
 const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
 const SCRAPER_SECRET    = process.env.SCRAPER_SECRET ?? "chinabridge2026";
-const APIFY_TOKEN       = process.env.APIFY_API_TOKEN ?? "";
 
-// Наш собственный Apify актор (chinabridge/chinabridge-tg-scraper)
-const APIFY_ACTOR_ID = "b6z4impeDxqfo9r4X";
-
-// Публичные каналы (проверено — имеют веб-превью)
+// Публичные каналы с веб-превью (проверено — возвращают посты)
 const TARGETS = [
-  "mpgo_ru",
-  "marketplace_russia",
-  "cargo_china_official",
-  "ozon_seller",
-  "cargo_poizon",
-  "china_seller",
-  "chinadelivery",
-  "poizon_shop_ru",
-  "kargo_rf",
-  "wildberries_sellers",
+  "mpgo_ru", "marketplace_russia", "cargo_china_official",
+  "ozon_seller", "cargo_poizon", "china_seller",
+  "chinadelivery", "poizon_shop_ru", "kargo_rf",
+  "wildberries_sellers", "ozon_wb_biznes", "poizon_cargo",
 ];
 
-const CARGO_KEYWORDS = [
-  "карго", "cargo", "доставка из китая", "доставку из китая",
-  "привезти из китая", "заказать из китая", "везти из китая",
-  "поставщик из китая", "поставщика из китая",
-  "байер", "посредник китай", "1688", "alibaba", "алибаба",
-  "растаможк", "таможн", "выкуп", "фулфилмент",
-  "wb поставщик", "ozon поставщик", "wildberries поставщик",
+// Только фразы с явным намерением КУПИТЬ/НАЙТИ — не слова из новостей
+const INTENT_KEYWORDS = [
+  "ищу карго", "нужен карго", "посоветуйте карго", "порекомендуйте карго",
+  "ищу доставку из китая", "нужна доставка из китая", "как привезти из китая",
+  "ищу поставщика", "нужен поставщик", "посоветуйте поставщика",
+  "ищу байера", "нужен байер", "ищу посредника",
+  "выкуп с 1688", "выкуп на 1688", "выкупить с 1688",
+  "выкуп с alibaba", "выкупить alibaba",
+  "хочу привезти из китая", "буду везти из китая",
+  "кто занимается карго", "кто возит из китая",
+  "нужна растаможка", "помогите с растаможкой",
+  "сколько стоит карго", "карго цена",
 ];
 
-interface ApifyMessage {
-  id?:          number;
-  text?:        string;
-  date?:        string;
-  source_url?:  string;
-  view_count?:  number;
-  sender_name?: string;
-  chat_username?: string;
+interface TgMessage {
+  channel:   string;
+  messageId: string;
+  text:      string;
+  date:      string;
+  views:     string;
+  author:    string;
+  link:      string;
 }
 
-// ── Apify: запустить актор для одного канала ───────────────────────────────────
-async function scrapeViaApify(username: string, days: number): Promise<ApifyMessage[]> {
-  if (!APIFY_TOKEN) return [];
+function stripHtml(s: string): string {
+  return s
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
 
-  const startDate = days === 1 ? "1 day" : `${days} days`;
-
-  try {
-    const res = await fetch(
-      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}&timeout=50`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          telegram_url:    `https://t.me/${username}`,
-          download_medias: "text",
-          max_results:     50,
-          start_date:      startDate,
-        }),
-        signal: AbortSignal.timeout(55000),
-      }
-    );
-
-    if (!res.ok) {
-      console.error(`Apify error for ${username}: ${res.status}`);
-      return [];
-    }
-
-    const items: ApifyMessage[] = await res.json();
-    return Array.isArray(items) ? items : [];
-  } catch (e) {
-    console.error(`Apify timeout/error for ${username}:`, e);
-    return [];
+function parseMessages(html: string, channel: string): TgMessage[] {
+  const messages: TgMessage[] = [];
+  const postRe = /data-post="([^"]+)"/g;
+  let pm: RegExpExecArray | null;
+  const posts: { dataPost: string; idx: number }[] = [];
+  while ((pm = postRe.exec(html)) !== null) {
+    posts.push({ dataPost: pm[1], idx: pm.index });
   }
+  for (let i = 0; i < posts.length; i++) {
+    const chunk = html.slice(posts[i].idx, posts[i + 1]?.idx ?? html.length);
+    const tMatch = chunk.match(/class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+    const text   = tMatch ? stripHtml(tMatch[1]).slice(0, 800) : "";
+    if (!text || text.length < 20) continue;
+    const dMatch = chunk.match(/datetime="([^"]+)"/);
+    const vMatch = chunk.match(/message_views[^>]*>([\w.,]+)</);
+    const aMatch = chunk.match(/from_author[^>]*>([\s\S]*?)<\/span>/);
+    messages.push({
+      channel,
+      messageId: posts[i].dataPost.split("/").pop() ?? "",
+      text,
+      date:   dMatch ? dMatch[1] : "",
+      views:  vMatch ? vMatch[1] : "",
+      author: aMatch ? stripHtml(aMatch[1]) : "",
+      link:   `https://t.me/${posts[i].dataPost}`,
+    });
+  }
+  return messages;
 }
 
-// ── Claude Haiku — классификация намерения ─────────────────────────────────────
-async function classifyIntent(text: string): Promise<"HOT" | "WARM" | "COLD"> {
+async function scrapeChannel(username: string, sinceMs: number): Promise<TgMessage[]> {
+  const results: TgMessage[] = [];
+  let beforeId: number | null = null;
+
+  for (let page = 0; page < 5; page++) {
+    const url = beforeId
+      ? `https://t.me/s/${username}?before=${beforeId}`
+      : `https://t.me/s/${username}`;
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1)" },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) break;
+      const html = await res.text();
+      const msgs  = parseMessages(html, username);
+      if (!msgs.length) break;
+
+      let oldest = Infinity;
+      for (const m of msgs) {
+        const ts = m.date ? new Date(m.date).getTime() : 0;
+        if (ts && ts < sinceMs) continue;
+        // Фильтр: только фразы с намерением
+        const lower = m.text.toLowerCase();
+        if (INTENT_KEYWORDS.some(kw => lower.includes(kw))) {
+          results.push(m);
+        }
+        if (ts && ts < oldest) oldest = ts;
+      }
+
+      if (oldest < sinceMs) break; // все старше нужного периода
+      const ids = msgs.map(m => parseInt(m.messageId)).filter(Boolean);
+      if (!ids.length) break;
+      beforeId = Math.min(...ids);
+      await new Promise(r => setTimeout(r, 400));
+    } catch { break; }
+  }
+  return results;
+}
+
+async function classifyIntent(text: string): Promise<"HOT" | "COLD"> {
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -92,98 +129,71 @@ async function classifyIntent(text: string): Promise<"HOT" | "WARM" | "COLD"> {
       },
       body: JSON.stringify({
         model:      "claude-haiku-4-5-20251001",
-        max_tokens: 10,
+        max_tokens: 5,
         messages: [{
           role:    "user",
-          content: `Classify this Telegram message. Reply ONE word: HOT (person actively seeking cargo/China delivery NOW), WARM (interested, not urgent), COLD (news/info/no buying intent).\n\nMessage: "${text.slice(0, 300)}"`,
+          content: `Is this a REAL person actively looking to buy cargo/delivery service from China RIGHT NOW? Reply HOT or COLD only.\n\n"${text.slice(0, 300)}"`,
         }],
       }),
     });
-    const data  = await res.json();
-    const label = (data.content?.[0]?.text ?? "").trim().toUpperCase();
-    if (label.includes("HOT"))  return "HOT";
-    if (label.includes("WARM")) return "WARM";
-    return "COLD";
+    const data = await res.json();
+    const label = (data.content?.[0]?.text ?? "").toUpperCase();
+    return label.includes("HOT") ? "HOT" : "COLD";
   } catch {
-    return "WARM";
+    return "HOT"; // fallback — лучше переслать
   }
 }
 
-// ── Уведомление менеджеру ──────────────────────────────────────────────────────
-async function notifyManager(msg: ApifyMessage, channel: string, intent: "HOT" | "WARM") {
-  const h = (s: string) => (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const emoji = intent === "HOT" ? "🔥" : "♨️";
-  const label = intent === "HOT" ? "Горячий лид" : "Тёплый лид";
-  const views  = msg.view_count ? `\n👁 <b>Просмотров:</b> ${msg.view_count}` : "";
-  const author = msg.sender_name ? `\n👤 <b>Автор:</b> ${h(msg.sender_name)}` : "";
-  const date   = msg.date ? `\n🕐 ${new Date(msg.date).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })}` : "";
-  const link   = msg.source_url ?? `https://t.me/${channel}`;
+async function notifyManager(msg: TgMessage) {
+  const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const views  = msg.views  ? `\n👁 ${msg.views}` : "";
+  const author = msg.author ? `\n👤 ${h(msg.author)}` : "";
+  const date   = msg.date   ? `\n🕐 ${new Date(msg.date).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })}` : "";
 
   await fetch(`https://api.telegram.org/bot${MONITOR_BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id:                 MANAGER_CHAT_ID,
-      text:                    `${emoji} <b>${label}</b>\n\n📢 <b>@${channel}</b>${author}${views}${date}\n\n💬 ${h(msg.text ?? "")}…\n\n🔗 <a href="${link}">Открыть пост →</a>`,
+      text:                    `🔥 <b>Горячий лид из Telegram</b>\n\n📢 <b>@${msg.channel}</b>${author}${views}${date}\n\n💬 ${h(msg.text)}\n\n🔗 <a href="${msg.link}">Открыть пост →</a>`,
       parse_mode:              "HTML",
       disable_web_page_preview: true,
     }),
   });
 }
 
-// ── Main handler ───────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
-
   if (searchParams.get("secret") !== SCRAPER_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!APIFY_TOKEN) {
-    return NextResponse.json({ error: "APIFY_API_TOKEN not set" }, { status: 500 });
+  const days    = Math.min(parseInt(searchParams.get("days") ?? "7"), 30);
+  const useAI   = searchParams.get("ai") !== "false";
+  const sinceMs = Date.now() - days * 86400000;
+
+  const all: TgMessage[] = [];
+  for (const ch of TARGETS) {
+    const msgs = await scrapeChannel(ch, sinceMs);
+    all.push(...msgs);
   }
 
-  const days  = Math.min(parseInt(searchParams.get("days") ?? "1"), 7);
-  const useAI = searchParams.get("ai") !== "false";
-
-  // Скрапим каналы через Apify — по одному (синхронно) чтобы не перегружать
-  let allMessages: { msg: ApifyMessage; channel: string }[] = [];
-
-  for (const channel of TARGETS) {
-    const items = await scrapeViaApify(channel, days);
-    for (const item of items) {
-      if (!item.text || item.text.length < 15) continue;
-      const lower = item.text.toLowerCase();
-      if (CARGO_KEYWORDS.some(kw => lower.includes(kw))) {
-        allMessages.push({ msg: item, channel });
-      }
-    }
-  }
-
-  // Классифицируем и уведомляем
-  let hotCount = 0, warmCount = 0;
+  let sent = 0;
   const log: object[] = [];
 
-  for (const { msg, channel } of allMessages) {
-    let intent: "HOT" | "WARM" | "COLD" = "WARM";
-    if (useAI) intent = await classifyIntent(msg.text ?? "");
-
-    if (intent !== "COLD") {
-      await notifyManager(msg, channel, intent);
+  for (const msg of all) {
+    const intent = useAI ? await classifyIntent(msg.text) : "HOT";
+    if (intent === "HOT") {
+      await notifyManager(msg);
       await new Promise(r => setTimeout(r, 300));
-      if (intent === "HOT") hotCount++; else warmCount++;
+      sent++;
     }
-
-    log.push({ channel, intent, preview: (msg.text ?? "").slice(0, 100) });
+    log.push({ channel: msg.channel, intent, preview: msg.text.slice(0, 100) });
   }
 
   return NextResponse.json({
-    ok:         true,
-    checked:    TARGETS.length,
-    period:     `${days} day(s)`,
-    candidates: allMessages.length,
-    hot:        hotCount,
-    warm:       warmCount,
-    log,
+    ok: true, checked: TARGETS.length,
+    period: `${days} days`, candidates: all.length,
+    hot: sent, log,
   });
 }

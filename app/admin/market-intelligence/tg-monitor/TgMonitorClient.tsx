@@ -10,7 +10,7 @@ const TARGETS = [
 
 interface LogItem {
   channel: string;
-  intent:  "HOT" | "WARM" | "COLD";
+  intent:  "HOT" | "COLD";
   preview: string;
 }
 
@@ -20,17 +20,15 @@ interface RunResult {
   period:     string;
   candidates: number;
   hot:        number;
-  warm:       number;
   log:        LogItem[];
 }
 
 const INTENT_COLOR: Record<string, string> = {
   HOT:  "bg-red-500/20 text-red-400 border-red-500/30",
-  WARM: "bg-amber-500/20 text-amber-400 border-amber-500/30",
   COLD: "bg-slate-700/40 text-slate-500 border-slate-700",
 };
 
-const INTENT_EMOJI: Record<string, string> = { HOT: "🔥", WARM: "♨️", COLD: "🧊" };
+const INTENT_EMOJI: Record<string, string> = { HOT: "🔥", COLD: "🧊" };
 
 export default function TgMonitorClient() {
   const [days,    setDays]    = useState(1);
@@ -126,12 +124,11 @@ export default function TgMonitorClient() {
         <div className="space-y-4">
 
           {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Каналов проверено", value: result.checked, color: "text-white" },
-              { label: "Кандидатов",        value: result.candidates, color: "text-blue-400" },
-              { label: "HOT лидов",         value: result.hot,  color: "text-red-400" },
-              { label: "WARM лидов",        value: result.warm, color: "text-amber-400" },
+              { label: "Каналов проверено", value: result.checked,    color: "text-white" },
+              { label: "Прошли фильтр",     value: result.candidates, color: "text-blue-400" },
+              { label: "🔥 HOT лидов",      value: result.hot,        color: "text-red-400" },
             ].map(s => (
               <div key={s.label} className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
                 <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
@@ -141,10 +138,10 @@ export default function TgMonitorClient() {
           </div>
 
           {/* Notify banner */}
-          {(result.hot + result.warm) > 0 ? (
+          {result.hot > 0 ? (
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-green-400 text-sm flex items-center gap-2">
               <span>✓</span>
-              {result.hot + result.warm} лидов отправлено в @Monitor24_TG_bot
+              {result.hot} горячих лидов отправлено в @Monitor24_TG_bot
             </div>
           ) : result.candidates === 0 ? (
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-slate-500 text-sm">
