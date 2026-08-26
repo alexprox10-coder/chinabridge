@@ -708,8 +708,9 @@ export default function AIEconomicsFunnel() {
   };
   const resetPaywall = () => {
     try { localStorage.removeItem('cb_paywall_active'); } catch {}
+    go("input", { error: null, scrapeError: null }); // always reset to input — avoids stuck "calculating" state
     setShowPaywall(false);
-    setShowLimitBanner(true); // show sticky payment reminder
+    setShowLimitBanner(true);
   };
 
   // Load usage counters from localStorage on mount (reset=1 clears state)
