@@ -717,7 +717,11 @@ export default function AIEconomicsFunnel() {
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('reset') === '1') {
       localStorage.removeItem('cb_calc_uses');
+      localStorage.removeItem('cb_paywall_active');
+      localStorage.removeItem('cb_paywall_shown');
       localStorage.removeItem('cb_registered');
+      // Also reset server-side IP rate limit
+      fetch('/api/calc/reset', { method: 'POST' }).catch(() => {});
       window.history.replaceState({}, '', window.location.pathname);
     }
     // Daily reset: stored as JSON {count, date}
