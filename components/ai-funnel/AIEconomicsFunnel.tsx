@@ -695,24 +695,21 @@ export default function AIEconomicsFunnel() {
   const [calcCount,       setCalcCount]       = useState(0);
   const [isRegistered,    setIsRegistered]    = useState(false);
   const [showPaywall,     setShowPaywall]     = useState(false);
+  const [showLimitBanner, setShowLimitBanner] = useState(false);
   const [showExitIntent,  setShowExitIntent]  = useState(false);
   const exitShownRef = useRef(false);
 
   const triggerPaywall = () => {
     try {
       localStorage.setItem('cb_paywall_active', '1');
-      localStorage.setItem('cb_paywall_locked', '1'); // permanent lock until paid
+      localStorage.setItem('cb_paywall_shown', '1'); // remember limit was hit
     } catch {}
     setShowPaywall(true);
   };
   const resetPaywall = () => {
-    // Only allow reset if user hasn't hit the limit (paywall wasn't locked)
-    // Locked paywall can only be cleared by subscription
-    try {
-      if (localStorage.getItem('cb_paywall_locked') === '1') return; // prevent bypass
-      localStorage.removeItem('cb_paywall_active');
-    } catch {}
+    try { localStorage.removeItem('cb_paywall_active'); } catch {}
     setShowPaywall(false);
+    setShowLimitBanner(true); // show sticky payment reminder
   };
 
   // Load usage counters from localStorage on mount (reset=1 clears state)
@@ -738,6 +735,9 @@ export default function AIEconomicsFunnel() {
       localStorage.removeItem('cb_calc_uses');
     }
     if (localStorage.getItem('cb_registered') === 'true') setIsRegistered(true);
+    if (localStorage.getItem('cb_paywall_shown') === '1' && localStorage.getItem('cb_registered') !== 'true') {
+      setShowLimitBanner(true);
+    }
 
     // Check paid subscription
     try {
@@ -1291,6 +1291,17 @@ export default function AIEconomicsFunnel() {
           setIsRegistered(true);
         }}
       />
+    )}
+    {showLimitBanner && !isRegistered && (
+      <div className="sticky top-0 z-40 bg-[#0a1929] border-b border-[#1e3a5f] px-4 py-3 flex items-center justify-between gap-4 rounded-t-2xl">
+        <p className="text-sm text-[#8899aa]">⚠️ Бесплатные расчёты закончились — подключите подписку, чтобы продолжить</p>
+        <button
+          onClick={() => { setShowPaywall(true); setShowLimitBanner(false); }}
+          className="shrink-0 px-4 py-1.5 bg-[#00A86B] text-white text-sm font-bold rounded-xl hover:bg-[#00c07a] transition-colors"
+        >
+          490 ₽/мес →
+        </button>
+      </div>
     )}
     <div className="card-glass rounded-2xl p-6 md:p-8">
       {/* Progress */}

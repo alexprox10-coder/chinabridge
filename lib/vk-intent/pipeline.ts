@@ -111,6 +111,8 @@ export async function runIntentPipeline(opts: PipelineOptions = {}): Promise<Int
   }
 
   const savedLeads: IntentLead[] = [];
+  // Deduplicate by author per run — keep only best-score lead per person
+  const authorBest = new Map<string, IntentLead>();
 
   for (const post of allPosts) {
     try {
@@ -118,12 +120,21 @@ export async function runIntentPipeline(opts: PipelineOptions = {}): Promise<Int
       if (!lead) continue;
       result.classified++;
       if (lead.tier === "COLD" || lead.tier === "IRRELEVANT") continue;
-      if (lead.tier === "HOT") result.hot++; else result.warm++;
-      const wasSaved = await saveLead(dbUrl, lead);
-      if (wasSaved) { result.saved++; savedLeads.push(lead); }
+      // Keep only the highest-score lead per unique author
+      const authorKey = post.author_id || lead.author_link || lead.author_name;
+      const existing = authorBest.get(authorKey);
+      if (!existing || lead.score > existing.score) {
+        authorBest.set(authorKey, lead);
+      }
     } catch (err) {
       result.errors.push(`classify_error: ${post.post_id}: ${String(err)}`);
     }
+  }
+
+  for (const lead of authorBest.values()) {
+    if (lead.tier === "HOT") result.hot++; else result.warm++;
+    const wasSaved = await saveLead(dbUrl, lead);
+    if (wasSaved) { result.saved++; savedLeads.push(lead); }
   }
 
   if (result.hot > 0 || result.warm > 0) {
