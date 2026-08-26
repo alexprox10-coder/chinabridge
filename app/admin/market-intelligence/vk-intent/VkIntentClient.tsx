@@ -70,20 +70,27 @@ export default function VkIntentClient() {
   const [channels,   setChannels]   = useState<string[]>([]);
   const [newChannel, setNewChannel] = useState("");
 
+  // VK Groups
+  const [vkGroups,    setVkGroups]    = useState<Array<{ id: number; group_id: string; label: string }>>([]);
+  const [newGroupId,  setNewGroupId]  = useState("");
+  const [newGroupLbl, setNewGroupLbl] = useState("");
+
   // VK connection status
   const [vkConnected, setVkConnected] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const tier = tierFilter ? `&tier=${tierFilter}` : "";
-    const [leadsRes, statsRes, chRes] = await Promise.all([
+    const [leadsRes, statsRes, chRes, grpRes] = await Promise.all([
       fetch(`/api/vk-intent/leads?limit=100${tier}`).then(r => r.json()).catch(() => []),
       fetch("/api/vk-intent/leads?stats=1").then(r => r.json()).catch(() => null),
       fetch("/api/vk-intent/channels").then(r => r.json()).catch(() => []),
+      fetch("/api/vk-intent/groups").then(r => r.json()).catch(() => []),
     ]);
     setLeads(Array.isArray(leadsRes) ? leadsRes : []);
     setStats(statsRes);
     setChannels(Array.isArray(chRes) ? chRes : []);
+    setVkGroups(Array.isArray(grpRes) ? grpRes : []);
     setLoading(false);
   }, [tierFilter]);
 
@@ -178,6 +185,27 @@ export default function VkIntentClient() {
     await load();
   }
 
+  async function addGroup() {
+    const gid = newGroupId.trim().replace(/^https?:\/\/vk\.com\//i, "").replace(/\/$/, "");
+    if (!gid) return;
+    await fetch("/api/vk-intent/groups", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ group_id: gid, label: newGroupLbl.trim() || gid }),
+    });
+    setNewGroupId(""); setNewGroupLbl("");
+    await load();
+  }
+
+  async function removeGroup(gid: string) {
+    await fetch("/api/vk-intent/groups", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ group_id: gid }),
+    });
+    await load();
+  }
+
   const fmtDate = (s: string) => s ? new Date(s).toLocaleDateString("ru", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 
   return (
@@ -247,6 +275,48 @@ export default function VkIntentClient() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── VK Groups ── */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">👥</span>
+            <span className="text-white font-semibold">VK-группы для мониторинга</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400">{vkGroups.length} групп</span>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500">Комментарии в тематических группах — реальные покупатели задают вопросы там, а не в публичных постах</p>
+        <div className="flex gap-2 flex-wrap">
+          <input
+            type="text"
+            value={newGroupId}
+            onChange={e => setNewGroupId(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && addGroup()}
+            placeholder="screen_name или vk.com/group_name"
+            className="flex-1 min-w-[200px] bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+          />
+          <input
+            type="text"
+            value={newGroupLbl}
+            onChange={e => setNewGroupLbl(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && addGroup()}
+            placeholder="Название (необязательно)"
+            className="flex-1 min-w-[150px] bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+          />
+          <button onClick={addGroup} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition">+</button>
+        </div>
+        {vkGroups.length > 0 && (
+          <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+            {vkGroups.map(g => (
+              <span key={g.group_id} className="flex items-center gap-1 px-2 py-0.5 bg-slate-800 border border-slate-700 rounded-full text-xs text-slate-300">
+                <span className="text-slate-500">vk.com/</span>{g.group_id}
+                {g.label && g.label !== g.group_id && <span className="text-slate-600 ml-0.5">· {g.label}</span>}
+                <button onClick={() => removeGroup(g.group_id)} className="text-slate-500 hover:text-red-400 ml-0.5">✕</button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Stats bar ── */}
