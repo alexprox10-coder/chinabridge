@@ -9,8 +9,8 @@ const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
 const SCRAPER_SECRET    = process.env.SCRAPER_SECRET ?? "chinabridge2026";
 const APIFY_TOKEN       = process.env.APIFY_API_TOKEN ?? "";
 
-// Apify actor ID для Telegram Chat Scraper (agentx/telegram-chat-scraper)
-const APIFY_ACTOR_ID = "CTS2Fv7KyZuiQeSJ8";
+// Наш собственный Apify актор (chinabridge/chinabridge-tg-scraper)
+const APIFY_ACTOR_ID = "b6z4impeDxqfo9r4X";
 
 // Публичные каналы (проверено — имеют веб-превью)
 const TARGETS = [
