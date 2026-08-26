@@ -60,19 +60,26 @@ HOT≥70, WARM 40-69, COLD 20-39, IRRELEVANT<20
   try {
     let res: Response;
     if (useOpenRouter) {
+      const model = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
       res = await fetch(`${process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1"}/chat/completions`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${openrouterKey}`, "Content-Type": "application/json" },
+        headers: { "Authorization": `Bearer ${openrouterKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://chinabridge.pro" },
         body: JSON.stringify({
-          model: process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash",
+          model,
           max_tokens: 350,
           messages: [{ role: "user", content: prompt }],
         }),
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(25_000),
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        console.error(`[classifier] OpenRouter ${res.status} model=${model}:`, errBody.slice(0, 300));
+        return null;
+      }
       const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-      const text = (data.choices?.[0]?.message?.content ?? "").trim().replace(/```json\n?|\n?```/g, "");
+      const raw = (data.choices?.[0]?.message?.content ?? "").trim();
+      if (!raw) { console.error("[classifier] empty content from OpenRouter"); return null; }
+      const text = raw.replace(/```json\n?|\n?```/g, "").trim();
       return JSON.parse(text) as ClassifyResult;
     } else {
       res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -86,7 +93,8 @@ HOT≥70, WARM 40-69, COLD 20-39, IRRELEVANT<20
       const text = (data.content?.[0]?.text ?? "").trim();
       return JSON.parse(text) as ClassifyResult;
     }
-  } catch {
+  } catch (e) {
+    console.error("[classifier] exception:", String(e));
     return null;
   }
 }
