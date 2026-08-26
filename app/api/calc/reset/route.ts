@@ -13,12 +13,13 @@ export async function POST(req: NextRequest) {
   try {
     const sql = neon(dbUrl);
     const key = `url:${ip}`;
+    const date = new Date().toISOString().slice(0, 10);
     await sql`
       CREATE TABLE IF NOT EXISTS calc_anon_requests (
         ip text NOT NULL, date text NOT NULL, count integer DEFAULT 1 NOT NULL,
         PRIMARY KEY (ip, date)
       )`;
-    await sql`DELETE FROM calc_anon_requests WHERE ip = ${key} AND date = CURRENT_DATE`;
+    await sql`DELETE FROM calc_anon_requests WHERE ip = ${key} AND date = ${date}`;
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) });
