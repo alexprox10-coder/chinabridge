@@ -5,8 +5,9 @@ import { ensureFunnelTable } from "@/lib/telegram/funnel";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const LID_BOT_TOKEN   = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
-const MANAGER_CHAT_ID = process.env.TELEGRAM_MANAGER_CHAT_ID  ?? "8979087725";
+const LID_BOT_TOKEN     = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
+const MONITOR_BOT_TOKEN = process.env.MONITOR_BOT_TOKEN ?? LID_BOT_TOKEN;
+const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID  ?? "8979087725";
 
 async function sendMsg(chatId: number | string, text: string, extra?: object) {
   await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
         ? `@${message.from.username}`
         : `tg://user?id=${chatId}`;
 
-      await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
+      await fetch(`https://api.telegram.org/bot${MONITOR_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
