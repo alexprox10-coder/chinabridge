@@ -8,20 +8,20 @@ const MONITOR_BOT_TOKEN = process.env.MONITOR_BOT_TOKEN ?? process.env.CHINABRID
 const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
 const SCRAPER_SECRET    = process.env.SCRAPER_SECRET ?? "chinabridge2026";
 
-// Публичные группы и каналы для мониторинга
+// Только публичные КАНАЛЫ с включённым веб-превью (проверено t.me/s/)
 const TARGETS = [
-  "marketp_wildberries",
-  "mpgo_logistics",
-  "kargo0717",
-  "alibiz5_cargo",
-  "cargovik",
-  "dobropost_chat",
-  "sellerswb",
-  "wb_ozon_mp",
-  "china_tovar",
-  "logistic_china",
-  "marketplace_chat_ru",
-  "ozon_sellers_chat",
+  "mpgo_ru",               // 19 постов — MPGO логистика
+  "marketplace_russia",    // 20 постов — маркетплейсы РФ
+  "cargo_china_official",  // 8 постов  — карго официальный
+  "ozon_seller",           // 20 постов — Ozon продавцы
+  "cargo_poizon",          // 20 постов — карго Poizon
+  "china_seller",          // 14 постов — China seller
+  "chinadelivery",         // 10 постов — доставка из Китая
+  "poizon_shop_ru",        // 8 постов  — Poizon Россия
+  "kargo_rf",              // 7 постов  — карго РФ
+  "wildberries_sellers",   // 4 постов  — WB продавцы
+  "ozon_wb_biznes",        // 2 постов  — Ozon/WB бизнес
+  "poizon_cargo",          // 2 постов  — Poizon карго
 ];
 
 // Первичный фильтр — быстрая проверка по ключам (без AI)

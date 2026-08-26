@@ -3,9 +3,9 @@
 import { useState } from "react";
 
 const TARGETS = [
-  "marketp_wildberries", "mpgo_logistics", "kargo0717", "alibiz5_cargo",
-  "cargovik", "dobropost_chat", "sellerswb", "wb_ozon_mp",
-  "china_tovar", "logistic_china", "marketplace_chat_ru", "ozon_sellers_chat",
+  "mpgo_ru", "marketplace_russia", "cargo_china_official", "ozon_seller",
+  "cargo_poizon", "china_seller", "chinadelivery", "poizon_shop_ru",
+  "kargo_rf", "wildberries_sellers", "ozon_wb_biznes", "poizon_cargo",
 ];
 
 interface LogItem {
