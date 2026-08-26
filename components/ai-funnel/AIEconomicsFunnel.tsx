@@ -707,7 +707,11 @@ export default function AIEconomicsFunnel() {
     setShowPaywall(true);
   };
   const resetPaywall = () => {
-    try { localStorage.removeItem('cb_paywall_active'); } catch {}
+    try {
+      localStorage.removeItem('cb_paywall_active');
+      localStorage.removeItem('cb_calc_uses');
+    } catch {}
+    setCalcCount(0); // reset in-memory counter so next submit isn't immediately blocked
     go("input", { error: null, scrapeError: null }); // always reset to input — avoids stuck "calculating" state
     setShowPaywall(false);
     setShowLimitBanner(true);

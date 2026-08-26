@@ -12,7 +12,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const sql = neon(dbUrl);
-    await sql`DELETE FROM calc_anon_requests WHERE ip = ${ip} AND date = CURRENT_DATE`;
+    // Keys are stored with "url:" prefix in analyze-url route
+    const key = `url:${ip}`;
+    await sql`DELETE FROM calc_anon_requests WHERE ip = ${key} AND date = CURRENT_DATE`;
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false });
