@@ -144,6 +144,29 @@ export default async function MarketIntelligencePage() {
               <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
             </Link>
 
+            {/* TG Monitor */}
+            <Link href="/admin/market-intelligence/tg-monitor"
+              className="bg-gradient-to-br from-sky-600/20 to-sky-800/10 border border-sky-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">📡</span>
+                <h3 className="text-white font-bold text-base">Telegram Monitor</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-4">Сканирует 12 публичных групп и каналов, Claude AI классифицирует HOT/WARM лиды и шлёт в бот</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: "Каналов",    value: "12 групп/каналов" },
+                  { label: "Фильтрация", value: "Ключи + Claude Haiku" },
+                  { label: "Уведомления", value: "@Monitor24_TG_bot" },
+                ].map(s => (
+                  <div key={s.label} className="flex justify-between text-sm">
+                    <span className="text-slate-500">{s.label}</span>
+                    <span className="text-white font-medium text-xs">{s.value}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
+            </Link>
+
             {/* VK Intent Leads */}
             <Link href="/admin/market-intelligence/vk-intent"
               className="bg-gradient-to-br from-blue-600/20 to-blue-800/10 border border-blue-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
