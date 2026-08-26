@@ -12,11 +12,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const sql = neon(dbUrl);
-    // Keys are stored with "url:" prefix in analyze-url route
     const key = `url:${ip}`;
+    await sql`
+      CREATE TABLE IF NOT EXISTS calc_anon_requests (
+        ip text NOT NULL, date text NOT NULL, count integer DEFAULT 1 NOT NULL,
+        PRIMARY KEY (ip, date)
+      )`;
     await sql`DELETE FROM calc_anon_requests WHERE ip = ${key} AND date = CURRENT_DATE`;
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ ok: false });
+  } catch (e) {
+    return NextResponse.json({ ok: false, error: String(e) });
   }
 }
