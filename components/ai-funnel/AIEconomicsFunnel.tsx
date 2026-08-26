@@ -697,11 +697,19 @@ export default function AIEconomicsFunnel() {
   const exitShownRef = useRef(false);
 
   const triggerPaywall = () => {
-    try { localStorage.setItem('cb_paywall_active', '1'); } catch {}
+    try {
+      localStorage.setItem('cb_paywall_active', '1');
+      localStorage.setItem('cb_paywall_locked', '1'); // permanent lock until paid
+    } catch {}
     setShowPaywall(true);
   };
   const resetPaywall = () => {
-    try { localStorage.removeItem('cb_paywall_active'); } catch {}
+    // Only allow reset if user hasn't hit the limit (paywall wasn't locked)
+    // Locked paywall can only be cleared by subscription
+    try {
+      if (localStorage.getItem('cb_paywall_locked') === '1') return; // prevent bypass
+      localStorage.removeItem('cb_paywall_active');
+    } catch {}
     setShowPaywall(false);
   };
 
@@ -735,6 +743,7 @@ export default function AIEconomicsFunnel() {
       if (paidUntil && new Date(paidUntil) > new Date()) {
         setIsRegistered(true); // paid users get unlimited
         localStorage.removeItem('cb_paywall_active');
+        localStorage.removeItem('cb_paywall_locked'); // unlock for subscribers
       } else if (paidUntil) {
         localStorage.removeItem('cb_paid_until'); // expired
       }
