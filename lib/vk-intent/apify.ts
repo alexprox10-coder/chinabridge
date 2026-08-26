@@ -34,7 +34,16 @@ async function searchPostsByQuery(query: string, count: number, token: string): 
     const profiles = data.response?.profiles ?? [];
     const groups   = data.response?.groups   ?? [];
     return items
-      .filter(item => item.text && String(item.text).length > 10)
+      .filter(item => {
+        if (!item.text || String(item.text).length < 20) return false;
+        // Exclude company/group posts (negative from_id = group page)
+        const fromId = Number(item.from_id ?? 0);
+        if (fromId < 0) return false;
+        // Exclude posts from known cargo/service providers (contain Chinese phone or promo signs)
+        const txt = String(item.text).toLowerCase();
+        if (txt.includes("+86 ") || txt.includes("whatsapp:") || txt.includes("наш надёжный партнёр")) return false;
+        return true;
+      })
       .map(item => {
         const ownerId = Number(item.owner_id ?? item.from_id ?? 0);
         const postId  = Number(item.id ?? 0);
