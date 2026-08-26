@@ -53,7 +53,7 @@ product_fit(10): 1688/Alibaba/конкретные товары из Китая
 volume(5): упоминание партии/объёма
 contactability(10): есть контакты
 
-HOT≥70, WARM 40-69, COLD 20-39, IRRELEVANT<20
+HOT≥65, WARM 30-64, COLD 15-29, IRRELEVANT<15
 
 ВАЖНО: Если пост — реклама карго-компании, объявление о своих услугах, курс/обучение, новость или контент от провайдера — это IRRELEVANT (score<20). Нас интересуют ТОЛЬКО частные лица и бизнес, которые ИЩУТ карго/доставку/поставщика, а не предлагают.`;
 
@@ -102,7 +102,12 @@ HOT≥70, WARM 40-69, COLD 20-39, IRRELEVANT<20
 export async function classifyPost(post: VkPost): Promise<IntentLead | null> {
   if (!post.text || post.text.length < 15) return null;
   const result = await callClaude(post);
-  if (!result || result.tier === "IRRELEVANT") return null;
+  if (!result) return null;
+  // Re-apply threshold in code (score takes priority over LLM tier label)
+  if (result.score < 15 || result.tier === "IRRELEVANT") return null;
+  if (result.score >= 65) result.tier = "HOT";
+  else if (result.score >= 30) result.tier = "WARM";
+  else if (result.score >= 15) result.tier = "COLD";
 
   return {
     post_id:     post.post_id,
