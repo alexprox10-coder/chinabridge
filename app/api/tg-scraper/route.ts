@@ -178,12 +178,48 @@ async function notifyManager(msg: TgMessage, intent: "HOT" | "WARM") {
   });
 }
 
+// ── Debug handler — один канал, без фильтров ───────────────────────────────────
+async function debugChannel(username: string) {
+  const res = await fetch(`https://t.me/s/${username}`, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+      "Accept-Language": "ru-RU,ru;q=0.9",
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+  const html = await res.text();
+
+  // Простой вытаскиватель текста — без сложного regex
+  const simpleTexts: string[] = [];
+  const re = /class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const t = m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    if (t.length > 10) simpleTexts.push(t.slice(0, 200));
+  }
+
+  return {
+    status:      res.status,
+    htmlLength:  html.length,
+    htmlSample:  html.slice(0, 1500),
+    messagesFound: simpleTexts.length,
+    messages:    simpleTexts.slice(0, 10),
+  };
+}
+
 // ── Main handler ───────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
   if (searchParams.get("secret") !== SCRAPER_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Debug mode: ?debug=1&channel=marketp_wildberries
+  if (searchParams.get("debug") === "1") {
+    const ch = searchParams.get("channel") ?? "marketp_wildberries";
+    const info = await debugChannel(ch);
+    return NextResponse.json(info);
   }
 
   // Параметры: ?days=1 (за сколько дней смотреть, default 1)
