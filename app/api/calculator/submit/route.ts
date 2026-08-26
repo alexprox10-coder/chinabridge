@@ -8,6 +8,32 @@ function escapeNonAscii(s: string): string {
   return s.replace(/[^\x00-\x7F]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 }
 
+async function notifyManagerTelegram(data: {
+  name: string; phone: string; telegram?: string; email?: string;
+  product_name: string; city_to?: string; country_to?: string;
+  weight_kg?: string; quantity?: string; cost?: number; days_min?: number; days_max?: number;
+}) {
+  const token = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN ?? "";
+  const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
+  if (!token) return;
+
+  const h = (s: string) => (s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const dest = [data.city_to, data.country_to].filter(Boolean).join(", ");
+  const costLine = data.cost ? `\n💰 <b>Расчёт:</b> ${data.cost.toFixed(0)} ₽ (${data.days_min}-${data.days_max} дн.)` : "";
+  const contactLine = data.telegram
+    ? `\n📲 Telegram: ${h(data.telegram)}`
+    : data.email ? `\n📧 Email: ${h(data.email)}` : "";
+
+  const text = `🔥 <b>Новая заявка с калькулятора!</b>\n\n👤 <b>${h(data.name)}</b>\n📞 <code>${h(data.phone)}</code>${contactLine}\n📦 <b>Товар:</b> ${h(data.product_name)}\n🗺 <b>Куда:</b> ${h(dest || "—")}\n📏 <b>Вес/кол-во:</b> ${h(data.weight_kg || data.quantity || "—")}${costLine}\n\n⏱ Ответьте в течение 5 минут!`;
+
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => null);
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
 
@@ -120,6 +146,22 @@ export async function POST(req: NextRequest) {
     margin_percent:      hasRate ? cost!.margin_percent : undefined,
     pricing_rule:        hasRate ? cost!.selected_rule_name : undefined,
   }, 'tenant-chinabridge').catch((e) => console.error('[calculator] createLead failed:', e));
+
+  // Direct Telegram notification — does NOT depend on n8n
+  await notifyManagerTelegram({
+    name:         body.name ?? '',
+    phone:        body.phone ?? '',
+    telegram:     body.telegram ?? '',
+    email:        body.email ?? '',
+    product_name: body.product_name ?? '',
+    city_to:      body.city_to ?? '',
+    country_to:   body.country_to ?? '',
+    weight_kg:    body.weight_kg ?? '',
+    quantity:     String(body.quantity ?? ''),
+    cost:         hasRate ? cost!.sale_price : undefined,
+    days_min:     hasRate ? cost!.delivery_days_min : undefined,
+    days_max:     hasRate ? cost!.delivery_days_max : undefined,
+  });
 
   return NextResponse.json({
     ok: true,
