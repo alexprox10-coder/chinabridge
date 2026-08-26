@@ -309,9 +309,11 @@ function PaywallBlock({ onReset }: { onReset: () => void }) {
         )}
       </div>
 
-      <button onClick={onReset} className="text-xs text-[#5a7899] hover:text-white underline">
-        Назад к калькулятору
-      </button>
+      {!leadSent && (
+        <button onClick={onReset} className="text-xs text-[#5a7899] hover:text-white underline">
+          Назад к калькулятору
+        </button>
+      )}
     </div>
   );
 }
