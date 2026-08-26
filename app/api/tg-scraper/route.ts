@@ -44,50 +44,53 @@ interface TgMessage {
   link:      string;
 }
 
+function stripHtml(s: string): string {
+  return s
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
 // ── HTML Parser ────────────────────────────────────────────────────────────────
 function parseMessages(html: string, channel: string): TgMessage[] {
   const messages: TgMessage[] = [];
 
-  // Разбиваем на блоки сообщений
-  const blockRe = /<div[^>]+class="[^"]*tgme_widget_message\b[^"]*"[^>]*data-post="([^"]+)"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/g;
-  let block: RegExpExecArray | null;
+  // Находим все data-post позиции
+  const postRe = /data-post="([^"]+)"/g;
+  let pm: RegExpExecArray | null;
+  const posts: { dataPost: string; idx: number }[] = [];
+  while ((pm = postRe.exec(html)) !== null) {
+    posts.push({ dataPost: pm[1], idx: pm.index });
+  }
 
-  while ((block = blockRe.exec(html)) !== null) {
-    const dataPost = block[1]; // e.g. "channelname/123"
-    const body     = block[2];
+  for (let i = 0; i < posts.length; i++) {
+    const start = posts[i].idx;
+    const end   = posts[i + 1]?.idx ?? html.length;
+    const chunk = html.slice(start, end);
 
-    // Текст сообщения
-    const textMatch = body.match(/<div[^>]+class="[^"]*tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
-    const rawText   = textMatch
-      ? textMatch[1]
-          .replace(/<br\s*\/?>/gi, "\n")
-          .replace(/<[^>]+>/g, "")
-          .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-          .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ")
-          .trim()
-      : "";
-
-    if (!rawText || rawText.length < 15) continue;
+    // Текст
+    const tMatch = chunk.match(/class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+    const text   = tMatch ? stripHtml(tMatch[1]).slice(0, 600) : "";
+    if (!text || text.length < 15) continue;
 
     // Дата
-    const dateMatch = body.match(/<time[^>]+datetime="([^"]+)"/);
-    const date      = dateMatch ? dateMatch[1] : "";
+    const dMatch = chunk.match(/datetime="([^"]+)"/);
+    const date   = dMatch ? dMatch[1] : "";
 
     // Просмотры
-    const viewsMatch = body.match(/<span[^>]+class="[^"]*tgme_widget_message_views[^"]*"[^>]*>([\d.,KkMm]+)<\/span>/);
-    const views      = viewsMatch ? viewsMatch[1] : "";
+    const vMatch = chunk.match(/message_views[^>]*>([\w.,]+)</);
+    const views  = vMatch ? vMatch[1] : "";
 
-    // Автор (виден в группах)
-    const authorMatch = body.match(/<span[^>]+class="[^"]*tgme_widget_message_from_author[^"]*"[^>]*>([\s\S]*?)<\/span>/);
-    const author      = authorMatch
-      ? authorMatch[1].replace(/<[^>]+>/g, "").trim()
-      : "";
+    // Автор
+    const aMatch = chunk.match(/from_author[^>]*>([\s\S]*?)<\/span>/);
+    const author = aMatch ? stripHtml(aMatch[1]) : "";
 
-    const parts     = dataPost.split("/");
-    const messageId = parts[parts.length - 1] ?? "";
-    const link      = `https://t.me/${dataPost}`;
+    const link = `https://t.me/${posts[i].dataPost}`;
+    const messageId = posts[i].dataPost.split("/").pop() ?? "";
 
-    messages.push({ channel, messageId, text: rawText.slice(0, 600), date, views, author, link });
+    messages.push({ channel, messageId, text, date, views, author, link });
   }
 
   return messages;
