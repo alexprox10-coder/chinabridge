@@ -147,10 +147,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'contact_required' }, { status: 400 });
   }
 
+  const source = String(body.source ?? '');
   const unitPrice  = parseFloat(String(body.unit_price  ?? '0'));
   const salePrice  = parseFloat(String(body.sale_price  ?? '0'));
+
+  // Quick-contact sources (paywall/exit) have no price data — handle separately
   if (!unitPrice || !salePrice) {
-    return NextResponse.json({ ok: false, error: 'prices_required' }, { status: 400 });
+    const token  = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN ?? '';
+    const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID ?? '';
+    if (token && chatId) {
+      const contact = telegram || phone;
+      const text = `🔔 <b>Лид с калькулятора (${source || 'form'})</b>\n\n📲 Контакт: <b>${contact}</b>${phone && telegram ? `\n📞 Телефон: ${phone}` : ''}\n\n⚡ Написать сразу: ${telegram.startsWith('@') ? `t.me/${telegram.slice(1)}` : contact}`;
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+        signal: AbortSignal.timeout(8000),
+      }).catch(() => null);
+    }
+    // Save minimal lead to CRM
+    const leadId = `aif-${crypto.randomUUID()}`;
+    await createLead({
+      lead_id: leadId, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      name: String(body.name ?? ''), phone, telegram, email: '',
+      company: '', product: '', product_link: '', category: '', quantity: '', weight: '', volume: '',
+      country_destination: 'Russia', city_destination: '', delivery_type: '', service_type: '',
+      status: 'NEW', priority: 'WARM', estimated_value: 0, manager: '',
+      comment: `source: ${source}`, source: 'LEAD_MAGNET_UNIT_ECONOMICS',
+      utm_source: source, utm_campaign: '',
+    }, 'tenant-chinabridge').catch(() => {});
+    return NextResponse.json({ ok: true, lead_id: leadId });
   }
 
   const marketplaceId = String(body.marketplace ?? 'wb');
