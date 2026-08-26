@@ -48,6 +48,26 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return NextResponse.json({ error: "no db" }, { status: 500 });
+  try {
+    const body = await req.json().catch(() => ({})) as { ids?: number[]; all?: boolean };
+    const sql  = neon(dbUrl);
+    if (body.all) {
+      await sql`DELETE FROM vk_intent_leads`;
+      return NextResponse.json({ ok: true, deleted: "all" });
+    }
+    if (Array.isArray(body.ids) && body.ids.length > 0) {
+      await sql`DELETE FROM vk_intent_leads WHERE id = ANY(${body.ids})`;
+      return NextResponse.json({ ok: true, deleted: body.ids.length });
+    }
+    return NextResponse.json({ error: "pass ids or all:true" }, { status: 400 });
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const postsPerQuery = Math.min(Math.max(Number(body.postsPerQuery ?? 20), 5), 100);

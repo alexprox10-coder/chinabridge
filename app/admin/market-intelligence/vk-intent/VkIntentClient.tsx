@@ -63,6 +63,8 @@ export default function VkIntentClient() {
   const [postsPerQuery, setPostsPerQuery] = useState(20);
   const [queriesCount,  setQueriesCount]  = useState(4);
   const [expanded,  setExpanded]  = useState<number | null>(null);
+  const [selected,  setSelected]  = useState<Set<number>>(new Set());
+  const [deleting,  setDeleting]  = useState(false);
 
   // TG channels
   const [channels,   setChannels]   = useState<string[]>([]);
@@ -133,6 +135,38 @@ export default function VkIntentClient() {
     });
     setNewChannel("");
     await load();
+  }
+
+  function toggleSelect(id: number) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (selected.size === leads.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(leads.map(l => l.id)));
+    }
+  }
+
+  async function deleteSelected() {
+    if (selected.size === 0) return;
+    setDeleting(true);
+    try {
+      await fetch("/api/vk-intent/leads", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...selected] }),
+      });
+      setSelected(new Set());
+      await load();
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function removeChannel(ch: string) {
@@ -299,10 +333,40 @@ export default function VkIntentClient() {
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Bulk actions header */}
+          <div className="flex items-center gap-3 px-1">
+            <input type="checkbox"
+              checked={selected.size === leads.length && leads.length > 0}
+              onChange={toggleAll}
+              className="w-4 h-4 accent-blue-500 cursor-pointer"
+            />
+            <span className="text-slate-400 text-sm">
+              {selected.size > 0 ? `Выбрано: ${selected.size}` : "Выбрать все"}
+            </span>
+            {selected.size > 0 && (
+              <button
+                onClick={deleteSelected}
+                disabled={deleting}
+                className="ml-2 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 border border-red-500/40 text-red-400 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+              >
+                {deleting ? "Удаляю…" : `🗑 Удалить (${selected.size})`}
+              </button>
+            )}
+          </div>
+
           {leads.map(lead => (
-            <div key={lead.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition">
-              <div className="flex flex-wrap items-center gap-3 px-4 py-3 cursor-pointer"
-                onClick={() => setExpanded(expanded === lead.id ? null : lead.id)}>
+            <div key={lead.id} className={`bg-slate-900 border rounded-xl overflow-hidden transition ${
+              selected.has(lead.id) ? "border-blue-600/50" : "border-slate-800 hover:border-slate-700"
+            }`}>
+              <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <input type="checkbox"
+                  checked={selected.has(lead.id)}
+                  onChange={() => toggleSelect(lead.id)}
+                  onClick={e => e.stopPropagation()}
+                  className="w-4 h-4 accent-blue-500 cursor-pointer shrink-0"
+                />
+                <div className="flex flex-wrap items-center gap-3 flex-1 cursor-pointer"
+                  onClick={() => setExpanded(expanded === lead.id ? null : lead.id)}>
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${TIER_STYLE[lead.tier as Tier]}`}>
                   {TIER_ICON[lead.tier as Tier]} {lead.tier}
                 </span>
@@ -318,7 +382,8 @@ export default function VkIntentClient() {
                     {lead.source === "tg" ? "Telegram →" : "ВКонтакте →"}
                   </a>
                 )}
-                <span className="text-slate-600 text-xs">{expanded === lead.id ? "▲" : "▼"}</span>
+                  <span className="text-slate-600 text-xs">{expanded === lead.id ? "▲" : "▼"}</span>
+                </div>
               </div>
 
               {expanded === lead.id && (
