@@ -57,15 +57,17 @@ export async function scrapeVkIntentPosts(queries: string[], maxItems = 20): Pro
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) return [];
 
+  // Try user OAuth token first, fall back to service token
   const tokenData = await getVkToken(dbUrl);
-  if (!tokenData) return []; // no user token yet — UI shows connect button
+  const token = tokenData?.access_token ?? process.env.VK_SERVICE_TOKEN ?? "";
+  if (!token) return []; // no token at all — UI shows connect button
 
   const all:  VkPost[] = [];
   const seen = new Set<string>();
 
   for (const query of queries) {
     if (all.length > 0) await delay(400);
-    const posts = await searchPostsByQuery(query, maxItems, tokenData.access_token);
+    const posts = await searchPostsByQuery(query, maxItems, token);
     for (const p of posts) {
       if (!seen.has(p.post_id)) { seen.add(p.post_id); all.push(p); }
     }

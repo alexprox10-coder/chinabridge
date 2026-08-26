@@ -19,7 +19,9 @@ export async function GET(req: NextRequest) {
   if (checkVk) {
     const { getVkToken } = await import("@/lib/vk-intent/tokens");
     const token = await getVkToken(dbUrl).catch(() => null);
-    return NextResponse.json({ vk_connected: !!token });
+    // Service token also counts as connected
+    const serviceToken = process.env.VK_SERVICE_TOKEN ?? "";
+    return NextResponse.json({ vk_connected: !!token || !!serviceToken });
   }
 
   const sql = neon(dbUrl);
