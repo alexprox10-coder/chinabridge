@@ -599,10 +599,6 @@ export default function AIEconomicsFunnel() {
       localStorage.removeItem('cb_calc_uses');
     }
     if (localStorage.getItem('cb_registered') === 'true') setIsRegistered(true);
-    if (localStorage.getItem('cb_paywall_shown') === '1' && localStorage.getItem('cb_registered') !== 'true') {
-      setShowLimitBanner(true);
-    }
-
     // Check paid subscription
     try {
       const paidUntil = localStorage.getItem('cb_paid_until');

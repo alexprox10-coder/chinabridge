@@ -3,7 +3,8 @@ import { neon } from "@neondatabase/serverless";
 
 let tableReady = false;
 
-async function ensureTable(sql: ReturnType<typeof neon>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureTable(sql: any) {
   if (tableReady) return;
   await sql`
     CREATE TABLE IF NOT EXISTS calculator_leads (
