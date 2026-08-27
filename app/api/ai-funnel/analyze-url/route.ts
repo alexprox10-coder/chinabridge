@@ -5,7 +5,7 @@ import { neon } from '@neondatabase/serverless';
 export const runtime    = 'nodejs';
 export const maxDuration = 30;
 
-const DAILY_LIMIT = 3;
+const DAILY_LIMIT = 999; // temporarily unlimited — re-enable when payment is configured
 
 function getIp(req: NextRequest) {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
