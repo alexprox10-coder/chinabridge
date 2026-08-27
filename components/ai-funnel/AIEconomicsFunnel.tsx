@@ -183,7 +183,7 @@ function TgSubscribeBanner() {
   );
 }
 
-// ── Paywall ────────────────────────────────────────────────────────────────
+// ── Paywall (disabled — dead code, never called) ──────────────────────────
 
 function PaywallBlock({ onReset }: { onReset: () => void }) {
   const [loading,    setLoading]    = useState(false);
