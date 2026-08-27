@@ -43,6 +43,42 @@ export const metadata: Metadata = {
   },
 };
 
+const orgSchema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://chinabridge.pro/#organization",
+      "name": "ChinaBridge",
+      "url": "https://chinabridge.pro",
+      "logo": { "@type": "ImageObject", "url": "https://chinabridge.pro/logo.png" },
+      "description": "Импорт товаров из Китая под ключ в Россию и Казахстан. Доставка, таможня, поиск поставщиков для Wildberries и Ozon.",
+      "foundingDate": "2019",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "availableLanguage": ["Russian"],
+        "email": "info@chinabridge.pro"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "RU",
+        "addressLocality": "Благовещенск",
+        "addressRegion": "Амурская область"
+      },
+      "areaServed": ["RU", "KZ", "BY", "AM"],
+      "sameAs": ["https://t.me/chinabridgeline"]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://chinabridge.pro/#website",
+      "url": "https://chinabridge.pro",
+      "name": "ChinaBridge",
+      "publisher": { "@id": "https://chinabridge.pro/#organization" }
+    }
+  ]
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -50,6 +86,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" suppressHydrationWarning className={inter.variable}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        />
+      </head>
       <body className="bg-background text-foreground antialiased font-sans">
         <AnalyticsProvider />
         {children}

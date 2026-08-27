@@ -26,11 +26,35 @@ export interface CategoryPageData {
   cta_secondary_text: string;
   cta_secondary_href: string;
   related?: { label: string; href: string }[];
+  canonical?: string;
 }
 
 export function CategoryPage({ data }: { data: CategoryPageData }) {
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": data.faq.map(item => ({
+      "@type": "Question",
+      "name": item.q,
+      "acceptedAnswer": { "@type": "Answer", "text": item.a },
+    })),
+  };
+
+  const breadcrumbSchema = data.canonical ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Главная", "item": "https://chinabridge.pro" },
+      { "@type": "ListItem", "position": 2, "name": `${data.h1} ${data.h1highlight}`.trim(), "item": data.canonical },
+    ],
+  } : null;
+
   return (
     <main>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      {breadcrumbSchema && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      )}
       <Header />
       <div className="min-h-screen bg-[#060f1e] pt-24 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-16">
@@ -108,6 +132,33 @@ export function CategoryPage({ data }: { data: CategoryPageData }) {
                   <p className="text-[#8899aa] text-xs mt-1">{tool.desc}</p>
                 </Link>
               ))}
+            </div>
+          </section>
+
+          {/* About ChinaBridge — extra content block for SEO depth */}
+          <section className="card-glass rounded-2xl p-8">
+            <h2 className="text-2xl font-bold text-white mb-4">О ChinaBridge</h2>
+            <div className="space-y-4 text-[#8899aa] text-sm leading-relaxed">
+              <p>
+                ChinaBridge — российская компания с представительством в Китае, работающая с 2019 года.
+                Мы специализируемся на организации полного цикла импорта: от поиска поставщика и проверки фабрики
+                до таможенного оформления и доставки на склад клиента или фулфилмент-центр маркетплейса.
+              </p>
+              <p>
+                За 7 лет работы мы выстроили надёжные партнёрские отношения с перевозчиками, таможенными брокерами
+                и складами в ключевых городах Китая — Гуанчжоу, Иу, Шанхай, Шэньчжэнь, Ханчжоу.
+                Это позволяет нам обеспечивать конкурентные тарифы и стабильные сроки доставки.
+              </p>
+              <p>
+                Мы работаем с продавцами Wildberries, Ozon и Kaspi: помогаем правильно упаковать и маркировать товар
+                по требованиям маркетплейса, получить декларацию соответствия ТР ТС и доставить груз напрямую
+                на фулфилмент-склад. Наши клиенты экономят время и избегают типичных ошибок первой закупки.
+              </p>
+              <p>
+                Минимальная партия для сборного груза — 50 кг. Мы работаем как с начинающими предпринимателями,
+                которые только запускают первую поставку, так и с опытными импортёрами с регулярными контейнерными
+                отправками. Первая консультация бесплатна.
+              </p>
             </div>
           </section>
 

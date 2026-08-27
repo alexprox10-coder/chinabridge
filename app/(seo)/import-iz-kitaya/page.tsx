@@ -69,6 +69,7 @@ export default function Page() {
         cta_primary_href: "/#contact",
         cta_secondary_text: "Рассчитать стоимость",
         cta_secondary_href: "/delivery-calculator",
+        canonical: "https://chinabridge.pro/import-iz-kitaya",
         related: [
           { label: "Доставка из Китая", href: "/dostavka-iz-kitaya" },
           { label: "Растаможка товаров", href: "/rastamozhka" },

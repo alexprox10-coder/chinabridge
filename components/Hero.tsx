@@ -216,8 +216,8 @@ export default function Hero() {
             </div>
 
             <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-5">
-              Вы продаёте —<br/>
-              <span className="text-gradient">мы привозим из Китая</span>
+              Импорт из Китая<br/>
+              <span className="text-gradient">под ключ — вы продаёте</span>
             </h1>
 
             <p className="fade-up text-lg text-[#8899aa] leading-relaxed mb-7 max-w-lg">

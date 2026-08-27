@@ -68,6 +68,7 @@ export default function Page() {
         cta_primary_href: "/#contact",
         cta_secondary_text: "Рассчитать доставку",
         cta_secondary_href: "/delivery-calculator",
+        canonical: "https://chinabridge.pro/rastamozhka",
         related: [
           { label: "Импорт из Китая под ключ", href: "/import-iz-kitaya" },
           { label: "Доставка из Китая", href: "/dostavka-iz-kitaya" },

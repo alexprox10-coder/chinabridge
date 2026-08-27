@@ -70,6 +70,7 @@ export default function Page() {
         cta_primary_href: "/supplier-finder",
         cta_secondary_text: "Получить расчёт",
         cta_secondary_href: "/#contact",
+        canonical: "https://chinabridge.pro/postavschiki-kitaya",
         related: [
           { label: "Импорт из Китая под ключ", href: "/import-iz-kitaya" },
           { label: "Доставка из Китая", href: "/dostavka-iz-kitaya" },
