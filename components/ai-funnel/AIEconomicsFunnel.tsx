@@ -562,7 +562,6 @@ export default function AIEconomicsFunnel() {
   const [showExitIntent,  setShowExitIntent]  = useState(false);
   const exitShownRef = useRef(false);
 
-  const triggerPaywall = () => { /* no-op — paywall disabled */ };
   const resetPaywall = () => { go("input", { error: null, scrapeError: null }); };
 
   // Load usage counters from localStorage on mount (reset=1 clears state)
@@ -615,9 +614,8 @@ export default function AIEconomicsFunnel() {
     try {
       const params = new URLSearchParams(window.location.search);
       const payFailed = params.get('pay') === 'fail' || params.get('pay') === 'cancel';
-      if (localStorage.getItem('cb_paywall_active') === '1' || payFailed) {
-        if (payFailed) window.history.replaceState({}, '', window.location.pathname);
-        triggerPaywall();
+      if (payFailed) {
+        window.history.replaceState({}, '', window.location.pathname);
       }
     } catch { /* ignore */ }
   }, []);
@@ -704,7 +702,7 @@ export default function AIEconomicsFunnel() {
 
       if (!data.ok) {
         if (res.status === 429 || data.error === 'rate_limit') {
-          triggerPaywall();
+          go("preview", { error: "Слишком много запросов — попробуйте через несколько минут" });
           return;
         }
         go("preview", { error: data.message ?? "Ошибка расчёта" });
@@ -764,7 +762,7 @@ export default function AIEconomicsFunnel() {
   // ── URL / Description submit ────────────────────────────────────────────────
 
   async function handleUrlSubmit() {
-    if (!isRegistered && calcCount >= ANON_LIMIT) { triggerPaywall(); return; }
+    if (!isRegistered && calcCount >= ANON_LIMIT) { return; }
 
     if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
     const url = s.urlInput.trim();
@@ -927,7 +925,7 @@ export default function AIEconomicsFunnel() {
 
       if (!data.ok) {
         if (res.status === 429 || data.error === 'rate_limit') {
-          triggerPaywall();
+          go("preview", { error: "Слишком много запросов — попробуйте через несколько минут" });
           return;
         }
         go("preview", { error: data.message ?? "Ошибка расчёта" });
