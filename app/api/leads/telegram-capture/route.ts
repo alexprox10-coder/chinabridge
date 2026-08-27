@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { neon } from "@neondatabase/serverless";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
-const MANAGER_CHAT_ID = process.env.MANAGER_CHAT_ID || "8979087725";
+const MANAGER_CHAT_ID = process.env.TELEGRAM_MANAGER_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "8979087725";
 
 async function notifyManager(username: string, source: string, hint?: string) {
+  if (!BOT_TOKEN) return;
   const sourceLabel = source === "wb-margin-calculator"
     ? "📊 Калькулятор маржи WB"
     : "📦 Калькулятор доставки";
@@ -36,27 +32,21 @@ async function notifyManager(username: string, source: string, hint?: string) {
 export async function POST(req: NextRequest) {
   try {
     const { username, source, contextHint } = await req.json();
-
     if (!username || username.length < 3) {
       return NextResponse.json({ error: "invalid_username" }, { status: 400 });
     }
 
     const clean = username.replace(/^@/, "").trim();
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || null;
 
-    // Save to Supabase
-    const { error } = await supabase.from("calculator_leads").insert({
-      telegram: clean,
-      source,
-      context_hint: contextHint || null,
-      ip: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || null,
-    });
+    const sql = neon(process.env.DATABASE_URL!);
 
-    // Ignore duplicate error (unique constraint on telegram+source)
-    if (error && !error.message.includes("unique")) {
-      console.error("Supabase insert error:", error);
-    }
+    await sql`
+      INSERT INTO calculator_leads (telegram, source, context_hint, ip)
+      VALUES (${clean}, ${source}, ${contextHint || null}, ${ip})
+      ON CONFLICT (telegram, source) DO NOTHING
+    `;
 
-    // Notify manager
     await notifyManager(clean, source, contextHint);
 
     return NextResponse.json({ ok: true });

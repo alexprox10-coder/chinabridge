@@ -1301,17 +1301,7 @@ export default function AIEconomicsFunnel() {
         }}
       />
     )}
-    {showLimitBanner && !isRegistered && (
-      <div className="sticky top-0 z-40 bg-[#0a1929] border-b border-[#1e3a5f] px-4 py-3 flex items-center justify-between gap-4 rounded-t-2xl">
-        <p className="text-sm text-[#8899aa]">⚠️ Бесплатные расчёты закончились — подключите подписку, чтобы продолжить</p>
-        <button
-          onClick={() => { setShowPaywall(true); setShowLimitBanner(false); }}
-          className="shrink-0 px-4 py-1.5 bg-[#00A86B] text-white text-sm font-bold rounded-xl hover:bg-[#00c07a] transition-colors"
-        >
-          490 ₽/мес →
-        </button>
-      </div>
-    )}
+    {/* limit banner removed — unlimited while growing user base */}
     <div className="card-glass rounded-2xl p-6 md:p-8">
       {/* Progress */}
       {s.step !== "success" && (

@@ -130,7 +130,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <div className="border border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white/3">
           <div className="flex-1">
             <p className="text-white font-semibold">🧮 AI-калькулятор маржи</p>
-            <p className="text-[#8899aa] text-sm mt-0.5">3 расчёта бесплатно · далее 490₽/мес без лимитов</p>
+            <p className="text-[#8899aa] text-sm mt-0.5">Бесплатно · без ограничений</p>
           </div>
           <Link
             href="/ai-calculator"
