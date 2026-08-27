@@ -183,141 +183,6 @@ function TgSubscribeBanner() {
   );
 }
 
-// ── Paywall (disabled — dead code, never called) ──────────────────────────
-
-function PaywallBlock({ onReset }: { onReset: () => void }) {
-  const [loading,    setLoading]    = useState(false);
-  const [payError,   setPayError]   = useState<string | null>(null);
-  const [tg,         setTg]         = useState("");
-  const [leadSent,   setLeadSent]   = useState(false);
-  const [leadLoading,setLeadLoading]= useState(false);
-
-  async function handlePay() {
-    setLoading(true);
-    setPayError(null);
-    try {
-      const res  = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
-      const data = await res.json();
-      if (!data.ok || !data.paymentLink) throw new Error(data.error ?? "no link");
-      window.location.href = data.paymentLink;
-    } catch {
-      setPayError("Ошибка оплаты. Попробуйте ещё раз.");
-      setLoading(false);
-    }
-  }
-
-  async function handleLeadSubmit() {
-    if (!tg.trim()) return;
-    setLeadLoading(true);
-    try {
-      await fetch("/api/ai-funnel/submit", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telegram: tg.trim(), source: "paywall_lead" }),
-      });
-    } catch { /* ignore */ }
-    setLeadSent(true);
-    setLeadLoading(false);
-  }
-
-  return (
-    <div className="card-glass rounded-2xl p-6 md:p-8 flex flex-col items-center gap-5 text-center">
-      <div className="w-14 h-14 rounded-full bg-amber-900/30 border border-amber-700/40 flex items-center justify-center text-3xl">
-        🔒
-      </div>
-      <div>
-        <h2 className="text-xl font-bold text-white mb-2">3 бесплатных расчёта использованы</h2>
-        <p className="text-sm text-[#8899aa] max-w-xs mx-auto leading-relaxed">
-          Подключите подписку и считайте без ограничений
-        </p>
-      </div>
-
-      <div className="flex items-center gap-2 bg-[#00A86B]/10 border border-[#00A86B]/25 rounded-full px-4 py-1.5">
-        <span className="text-sm">🔥</span>
-        <p className="text-xs text-[#00A86B] font-medium">Уже 50+ селлеров считают прибыль каждый день</p>
-      </div>
-
-      <div className="w-full max-w-xs bg-[#0B1F3A] border border-[#243a5e] rounded-xl p-4">
-        <div className="flex items-baseline justify-center gap-1 mb-1">
-          <p className="text-3xl font-bold text-white">490</p>
-          <span className="text-lg text-[#8899aa] font-normal">₽/мес</span>
-        </div>
-        <p className="text-xs text-[#5a7899] mb-3">≈ 16 ₽/день · дешевле чашки кофе</p>
-        <div className="flex flex-col gap-1.5 text-left">
-          {[
-            "Безлимитные расчёты — без лимитов",
-            "AI-анализ ссылок с 1688 и Alibaba",
-            "Все маркетплейсы: WB, Ozon, Kaspi",
-            "История расчётов в личном кабинете",
-          ].map(f => (
-            <div key={f} className="flex items-center gap-2 text-sm text-[#8899aa]">
-              <span className="text-[#00A86B] text-xs shrink-0">✓</span> {f}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 text-xs text-[#5a7899]">
-        <span>💳 Карта</span><span>·</span>
-        <span>📱 СБП</span><span>·</span>
-        <span>🏦 QR</span><span>·</span>
-        <span>🟡 Тинькофф</span>
-      </div>
-
-      {payError && <p className="text-xs text-red-400">{payError}</p>}
-
-      <div className="flex flex-col gap-2.5 w-full max-w-xs">
-        <button
-          onClick={handlePay}
-          disabled={loading}
-          className="w-full py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-60 text-white font-bold rounded-xl transition-all text-sm"
-        >
-          {loading ? "Создаём ссылку..." : "Подключить за 490 ₽/мес →"}
-        </button>
-      </div>
-
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs text-[#5a7899]">
-        <span>🔓 Отмена в любой момент</span>
-        <span>↩️ Возврат в течение 24 часов</span>
-        <span>🔒 Безопасная оплата</span>
-      </div>
-
-      {/* Secondary: lead capture */}
-      <div className="w-full max-w-xs border-t border-[#243a5e]/60 pt-4 flex flex-col gap-2.5">
-        <p className="text-xs text-[#8899aa] text-center">
-          Не готовы платить? Оставьте Telegram — пришлём расчёт и запишем на консультацию
-        </p>
-        {leadSent ? (
-          <p className="text-sm text-[#00A86B] font-semibold text-center py-2">✅ Отлично! Менеджер напишет вам в ближайшее время</p>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={tg}
-              onChange={e => setTg(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && tg.trim() && handleLeadSubmit()}
-              placeholder="@username"
-              className="flex-1 px-3 py-2.5 bg-[#060f1e] border border-[#243a5e] focus:border-[#229ED9]/60 rounded-xl text-sm placeholder:text-[#8899aa] outline-none transition-colors text-white"
-            />
-            <button
-              onClick={handleLeadSubmit}
-              disabled={!tg.trim() || leadLoading}
-              className="px-4 py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition-all whitespace-nowrap"
-            >
-              {leadLoading ? "..." : "Написать →"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {!leadSent && (
-        <button onClick={onReset} className="text-xs text-[#5a7899] hover:text-white underline">
-          Назад к калькулятору
-        </button>
-      )}
-    </div>
-  );
-}
-
 // ── Exit Intent Popup ─────────────────────────────────────────────────────
 
 function ExitIntentPopup({ onClose, onCapture }: { onClose: () => void; onCapture: (tg: string) => void }) {
@@ -694,23 +559,11 @@ export default function AIEconomicsFunnel() {
   const [autoCountdown,  setAutoCountdown]  = useState<number | null>(null);
   const [calcCount,       setCalcCount]       = useState(0);
   const [isRegistered,    setIsRegistered]    = useState(false);
-  const [showPaywall,     setShowPaywall]     = useState(false);
-  const [showLimitBanner, setShowLimitBanner] = useState(false);
   const [showExitIntent,  setShowExitIntent]  = useState(false);
   const exitShownRef = useRef(false);
 
-  // Paywall disabled — unlimited free use while growing user base
-  const triggerPaywall = () => { /* no-op */ };
-  const resetPaywall = () => {
-    try {
-      localStorage.removeItem('cb_paywall_active');
-      // Keep cb_calc_uses — counter stays at ANON_LIMIT so next submit re-triggers paywall
-    } catch {}
-    setCalcCount(ANON_LIMIT); // keep limit active so next submit immediately re-triggers paywall
-    go("input", { error: null, scrapeError: null });
-    setShowPaywall(false);
-    setShowLimitBanner(true);
-  };
+  const triggerPaywall = () => { /* no-op — paywall disabled */ };
+  const resetPaywall = () => { go("input", { error: null, scrapeError: null }); };
 
   // Load usage counters from localStorage on mount (reset=1 clears state)
   useEffect(() => {
@@ -777,14 +630,14 @@ export default function AIEconomicsFunnel() {
   useEffect(() => {
     if (exitShownRef.current) return;
     function onMouseLeave(e: MouseEvent) {
-      if (e.clientY <= 0 && !exitShownRef.current && !showPaywall) {
+      if (e.clientY <= 0 && !exitShownRef.current) {
         exitShownRef.current = true;
         setShowExitIntent(true);
       }
     }
     document.addEventListener("mouseleave", onMouseLeave);
     return () => document.removeEventListener("mouseleave", onMouseLeave);
-  }, [showPaywall]);
+  }, []);
 
   // Advance analyzing stages every 2.5s (time-based, not marking done until API responds)
   useEffect(() => {
