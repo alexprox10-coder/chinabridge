@@ -699,13 +699,8 @@ export default function AIEconomicsFunnel() {
   const [showExitIntent,  setShowExitIntent]  = useState(false);
   const exitShownRef = useRef(false);
 
-  const triggerPaywall = () => {
-    try {
-      localStorage.setItem('cb_paywall_active', '1');
-      localStorage.setItem('cb_paywall_shown', '1'); // remember limit was hit
-    } catch {}
-    setShowPaywall(true);
-  };
+  // Paywall disabled — unlimited free use while growing user base
+  const triggerPaywall = () => { /* no-op */ };
   const resetPaywall = () => {
     try {
       localStorage.removeItem('cb_paywall_active');
@@ -719,6 +714,13 @@ export default function AIEconomicsFunnel() {
 
   // Load usage counters from localStorage on mount (reset=1 clears state)
   useEffect(() => {
+    // Always clear stale paywall flags — paywall is disabled
+    try {
+      localStorage.removeItem('cb_paywall_active');
+      localStorage.removeItem('cb_paywall_shown');
+      localStorage.removeItem('cb_paywall_locked');
+    } catch {}
+
     if (new URLSearchParams(window.location.search).get('reset') === '1') {
       localStorage.removeItem('cb_calc_uses');
       localStorage.removeItem('cb_paywall_active');
@@ -1222,13 +1224,7 @@ export default function AIEconomicsFunnel() {
     / STEPS_ORDER.length * 100
   );
 
-  // ── Paywall (after 3 free calcs) ─────────────────────────────────────────────
-
-  if (showPaywall) {
-    return (
-      <PaywallBlock onReset={resetPaywall} />
-    );
-  }
+  // Paywall disabled — unlimited free use
 
   // ── Analyzing loader ────────────────────────────────────────────────────────
 
