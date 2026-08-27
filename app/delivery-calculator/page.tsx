@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CalculatorForm } from "@/components/calculator/CalculatorForm";
+import { TelegramLeadCapture } from "@/components/leads/TelegramLeadCapture";
 
 export const metadata: Metadata = {
   title: "Калькулятор доставки из Китая — ChinaBridge",
@@ -30,6 +31,10 @@ export default function DeliveryCalculatorPage() {
             </p>
           </div>
           <CalculatorForm />
+          <TelegramLeadCapture
+            source="delivery-calculator"
+            contextHint="расчёт доставки из Китая"
+          />
         </div>
       </div>
       <Footer />

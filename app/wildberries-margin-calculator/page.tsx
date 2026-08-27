@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import AIEconomicsFunnel from "@/components/ai-funnel/AIEconomicsFunnel";
+import { TelegramLeadCapture } from "@/components/leads/TelegramLeadCapture";
 
 const CANONICAL = "https://chinabridge.pro/wildberries-margin-calculator";
 
@@ -123,11 +124,58 @@ export default function WildberriesMarginCalculatorPage() {
               <span className="text-xl">🤖</span>
               <div>
                 <p className="text-white font-bold">AI-калькулятор маржи WB</p>
-                <p className="text-[#8899aa] text-xs">GPT-4o · 3 расчёта бесплатно · далее 490₽/мес</p>
+                <p className="text-[#8899aa] text-xs">GPT-4o · расчёт за 15 секунд · бесплатно</p>
               </div>
             </div>
             <AIEconomicsFunnel />
+            <TelegramLeadCapture
+              source="wb-margin-calculator"
+              contextHint="расчёт маржи WB"
+            />
           </div>
+
+          {/* Smart service CTA */}
+          <section className="mb-10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              {
+                icon: "🚚",
+                title: "Доставка под ключ",
+                desc: "Рассчитаем реальную стоимость доставки вашего товара из Китая",
+                cta: "Рассчитать доставку",
+                href: "/delivery-calculator",
+                color: "border-[#243a5e] hover:border-[#00A86B]/40",
+              },
+              {
+                icon: "🏭",
+                title: "Найти поставщика дешевле",
+                desc: "Если маржа не устраивает — найдём производителя с ценой ниже",
+                cta: "AI поиск поставщика",
+                href: "/supplier-finder",
+                color: "border-[#243a5e] hover:border-[#00A86B]/40",
+              },
+              {
+                icon: "📦",
+                title: "Импорт под ключ",
+                desc: "Закупим, проверим качество, доставим и растаможим — вы только продаёте",
+                cta: "Узнать условия",
+                href: "/#contact",
+                color: "border-[#00A86B]/20 hover:border-[#00A86B]/50 bg-[#00A86B]/5",
+              },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className={`block card-glass rounded-2xl p-4 border ${item.color} transition-all group`}
+              >
+                <div className="text-2xl mb-2">{item.icon}</div>
+                <p className="text-white font-semibold text-sm mb-1 group-hover:text-[#00A86B] transition-colors">
+                  {item.title}
+                </p>
+                <p className="text-[#8899aa] text-xs mb-3 leading-relaxed">{item.desc}</p>
+                <span className="text-[#00A86B] text-xs font-semibold">{item.cta} →</span>
+              </a>
+            ))}
+          </section>
 
           {/* Formula */}
           <section className="mb-10">
