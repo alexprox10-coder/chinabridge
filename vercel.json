@@ -39,11 +39,7 @@
     },
     {
       "path": "/api/cron/tender-intelligence",
-      "schedule": "0 */4 * * *"
-    },
-    {
-      "path": "/api/cron/tender-intelligence?mode=digest",
-      "schedule": "0 7 * * *"
+      "schedule": "0 5 * * *"
     }
   ]
 }

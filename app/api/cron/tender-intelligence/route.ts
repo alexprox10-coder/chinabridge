@@ -51,6 +51,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: true, mode: "digest" });
     }
 
+    // Vercel Hobby: one cron per day at 05:00 — collect + digest in single run
+
     if (mode === "test") {
       const stats = await getDailyStats();
       return NextResponse.json({ ok: true, stats });
@@ -190,6 +192,10 @@ export async function GET(req: NextRequest) {
     };
 
     log.push(`[done] ${JSON.stringify(result)}`);
+
+    // Send daily digest after collect (single cron on Hobby plan)
+    await sendDailyDigest().catch(() => {});
+
     return NextResponse.json(result);
 
   } catch (err) {
