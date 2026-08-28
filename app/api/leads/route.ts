@@ -74,6 +74,7 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
     "website_form", "website_chat", "api", "LEAD_MAGNET_FREE", "telegram_bot",
     "kaspi_landing", "vk_kz", "VK-KZ", "lp_kz", "b2bchina_landing",
     "wb_landing", "supplier_landing", "kz_import_landing", "phone_click",
+    "TENDER_INTELLIGENCE",
   ];
   if (!errors.source && !allowedSources.includes(b.source as string)) {
     errors.source = `source must be one of: ${allowedSources.join(", ")}`;
