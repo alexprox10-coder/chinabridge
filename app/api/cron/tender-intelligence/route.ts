@@ -5,7 +5,7 @@
 // Pipeline: Collect → Pre-filter → China Fit → Score → CRM Lead → HOT Alert
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchRecentWinners, preFilterTender } from "@/lib/tender/eis";
+import { fetchRecentWinners, preFilterTender, generateDemoTenders } from "@/lib/tender/eis";
 import { classifyChinaFit } from "@/lib/tender/china-fit";
 import { buildOpportunity } from "@/lib/tender/scorer";
 import {
@@ -62,12 +62,15 @@ export async function GET(req: NextRequest) {
     }
 
     // === COLLECT MODE ===
+    const isDemo = searchParams.get("demo") === "1";
     const { dateFrom, dateTo } = getDateRange(8);
     const log: string[] = [];
 
-    // Phase 1: Collect from ЕИС
-    log.push(`[1] Fetching ЕИС winners ${dateFrom} → ${dateTo}`);
-    const rawTenders = await fetchRecentWinners({ dateFrom, dateTo, pageSize: 100 });
+    // Phase 1: Collect from ЕИС (or use demo data)
+    log.push(`[1] Fetching ЕИС winners ${dateFrom} → ${dateTo}${isDemo ? " [DEMO]" : ""}`);
+    const rawTenders = isDemo
+      ? generateDemoTenders()
+      : await fetchRecentWinners({ dateFrom, dateTo, pageSize: 100 });
     log.push(`[1] Fetched: ${rawTenders.length} procedures`);
 
     // Phase 2: Pre-filter (cheap rules, no AI)

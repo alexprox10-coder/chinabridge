@@ -122,7 +122,6 @@ export async function fetchRecentWinners(options: {
 }): Promise<RawTender[]> {
   const { dateFrom, dateTo, page = 1, pageSize = 50 } = options;
 
-  // ЕИС supports both JSON and HTML responses. We request JSON.
   const params = new URLSearchParams({
     ...SEARCH_PARAMS,
     updateDateFrom: dateFrom,
@@ -133,35 +132,135 @@ export async function fetchRecentWinners(options: {
 
   const url = `${EIS_BASE}/epz/order/extendedsearch/results.html?${params}`;
 
-  const resp = await fetch(url, {
-    headers: {
-      Accept: "application/json, text/json",
-      "Accept-Language": "ru-RU,ru;q=0.9",
-      "User-Agent": "ChinaBridge-TenderIntelligence/1.0 (contact: admin@chinabridge.pro)",
-    },
-    signal: AbortSignal.timeout(20_000),
-  }).catch(() => null);
+  let resp: Response | null = null;
+  try {
+    resp = await fetch(url, {
+      headers: {
+        Accept: "application/json, text/html, */*",
+        "Accept-Language": "ru-RU,ru;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: AbortSignal.timeout(25_000),
+    });
+  } catch (e) {
+    console.error("[EIS] fetch failed:", e);
+    return [];
+  }
 
-  if (!resp?.ok) return [];
+  if (!resp.ok) {
+    console.error(`[EIS] HTTP ${resp.status} from zakupki.gov.ru — likely IP block or maintenance`);
+    return [];
+  }
 
-  // Try JSON parse first; EIS may return HTML — handle both
   const text = await resp.text();
+  console.log(`[EIS] Response: ${resp.status}, Content-Type: ${resp.headers.get("content-type")}, Length: ${text.length}, Preview: ${text.slice(0, 200)}`);
+
   let items: EISSearchItem[] = [];
 
   try {
     const json = JSON.parse(text);
-    // EIS JSON response structure variations
     items = json.data ?? json.results ?? json.orders ?? json.items ?? [];
     if (!Array.isArray(items)) items = [];
   } catch {
-    // EIS returned HTML — extract data via regex fallback
-    // This is a degraded mode; structured API preferred
     items = extractFromHtml(text);
   }
+
+  console.log(`[EIS] Parsed ${items.length} items from response`);
 
   return items
     .map(item => mapItem(item, "eis_44fz"))
     .filter((t): t is RawTender => t !== null);
+}
+
+// Demo mode: generate realistic test tenders to verify the full pipeline
+export function generateDemoTenders(): RawTender[] {
+  const now = new Date().toISOString();
+  return [
+    {
+      tender_id:        "eis-demo-0123456789012",
+      source:           "eis_44fz",
+      purchase_number:  "0123456789012345678",
+      purchase_type:    "Электронный аукцион",
+      law_type:         "44fz",
+      customer:         "ГБОУ Школа №1234 г. Москвы",
+      customer_inn:     "7701234567",
+      customer_region:  "Москва",
+      subject:          "Поставка компьютерного оборудования и периферийных устройств",
+      category:         "ОКПД2 26.20",
+      description:      null,
+      quantity:         50,
+      unit:             "шт",
+      initial_price:    3_200_000,
+      final_price:      2_850_000,
+      currency:         "RUB",
+      publication_date: now,
+      end_date:         null,
+      contract_date:    now,
+      delivery_deadline: 45,
+      delivery_region:  "Москва",
+      winner:           "ООО «ТехноСнаб»",
+      winner_inn:       "7709876543",
+      winner_price:     2_850_000,
+      winner_rank:      1,
+      source_url:       "https://zakupki.gov.ru/epz/order/notice/printForm/view.html?regNumber=0123456789012345678",
+    },
+    {
+      tender_id:        "eis-demo-0234567890123",
+      source:           "eis_44fz",
+      purchase_number:  "0234567890123456789",
+      purchase_type:    "Электронный аукцион",
+      law_type:         "44fz",
+      customer:         "Администрация Екатеринбурга",
+      customer_inn:     "6601234567",
+      customer_region:  "Свердловская область",
+      subject:          "Поставка светодиодных светильников для уличного освещения",
+      category:         "ОКПД2 27.40",
+      description:      null,
+      quantity:         500,
+      unit:             "шт",
+      initial_price:    8_500_000,
+      final_price:      7_200_000,
+      currency:         "RUB",
+      publication_date: now,
+      end_date:         null,
+      contract_date:    now,
+      delivery_deadline: 60,
+      delivery_region:  "Свердловская область",
+      winner:           "ООО «СветТехника»",
+      winner_inn:       "6609876543",
+      winner_price:     7_200_000,
+      winner_rank:      1,
+      source_url:       "https://zakupki.gov.ru/epz/order/notice/printForm/view.html?regNumber=0234567890123456789",
+    },
+    {
+      tender_id:        "eis-demo-0345678901234",
+      source:           "eis_44fz",
+      purchase_number:  "0345678901234567890",
+      purchase_type:    "Электронный аукцион",
+      law_type:         "44fz",
+      customer:         "ГБУЗ Городская больница №5",
+      customer_inn:     "7803456789",
+      customer_region:  "Санкт-Петербург",
+      subject:          "Поставка медицинского оборудования — тонометры, пульсоксиметры",
+      category:         "ОКПД2 32.50",
+      description:      null,
+      quantity:         100,
+      unit:             "шт",
+      initial_price:    1_800_000,
+      final_price:      1_550_000,
+      currency:         "RUB",
+      publication_date: now,
+      end_date:         null,
+      contract_date:    now,
+      delivery_deadline: 30,
+      delivery_region:  "Санкт-Петербург",
+      winner:           "ООО «МедИмпорт»",
+      winner_inn:       "7807654321",
+      winner_price:     1_550_000,
+      winner_rank:      1,
+      source_url:       "https://zakupki.gov.ru/epz/order/notice/printForm/view.html?regNumber=0345678901234567890",
+    },
+  ];
 }
 
 // Fallback: extract minimal data from ЕИС HTML search results

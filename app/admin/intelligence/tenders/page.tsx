@@ -216,9 +216,10 @@ export default function TenderDashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function runCron(mode = "collect") {
+  async function runCron(mode = "collect", demo = false) {
     setRunning(true);
-    const res  = await fetch(`/api/cron/tender-intelligence?mode=${mode}`);
+    const url = `/api/cron/tender-intelligence?mode=${mode}${demo ? "&demo=1" : ""}`;
+    const res  = await fetch(url);
     const data = await res.json();
     alert(JSON.stringify(data, null, 2));
     setRunning(false);
@@ -255,9 +256,13 @@ export default function TenderDashboard() {
               className="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700">
               Digest
             </button>
+            <button onClick={() => runCron("collect", true)} disabled={running}
+              className="px-3 py-1.5 text-xs bg-purple-700 hover:bg-purple-600 text-white rounded-lg font-medium">
+              Demo
+            </button>
             <button onClick={() => runCron("collect")} disabled={running}
               className="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium">
-              {running ? "Сбор..." : "Запустить сбор"}
+              {running ? "Сбор..." : "Сбор ЕИС"}
             </button>
           </div>
         </div>
