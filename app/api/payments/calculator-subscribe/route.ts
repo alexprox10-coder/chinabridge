@@ -9,7 +9,10 @@ const PRICE_RUB = 1990;
 export async function POST(req: NextRequest) {
   const origin      = req.headers.get("origin") ?? "https://chinabridge.pro";
   const redirectUrl = `${origin}/calculator-success`;
-  const failUrl     = `${origin}/client/plans?pay=cancel`;
+  const isLoggedIn  = !!req.cookies.get("cb_client")?.value;
+  const failUrl     = isLoggedIn
+    ? `${origin}/client/plans?pay=cancel`
+    : `${origin}/ai-calculator?pay=cancel`;
 
   try {
     const payment = await createTochkaPayment({
