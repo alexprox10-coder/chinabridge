@@ -106,6 +106,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, preview: true, subscribed: true, rate_limit_remaining: 999, ...calc });
   }
 
+  // Check anonymous paid cookie (set by /api/calc/activate-anon after Tochka payment)
+  const anonPaidUntil = req.cookies.get("cb_anon_paid_until")?.value;
+  if (anonPaidUntil && new Date(anonPaidUntil) > new Date()) {
+    const calc = await runCalc(body);
+    return NextResponse.json({ ok: true, preview: true, subscribed: true, rate_limit_remaining: 999, ...calc });
+  }
+
   // Anonymous / unsubscribed — IP rate limit
   const ip = getIp(req);
   const { allowed, remaining } = await checkRateLimit(ip);

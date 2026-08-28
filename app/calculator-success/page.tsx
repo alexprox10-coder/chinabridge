@@ -17,8 +17,9 @@ export default function CalculatorSuccessPage() {
         const data = await res.json();
         setIsLoggedIn(!!data.clientId);
 
-        // Reset server-side IP rate limit so paid user can calculate immediately
+        // Reset server-side IP rate limit + set anon paid cookie for bypass
         fetch("/api/calc/reset", { method: "POST" }).catch(() => {});
+        fetch("/api/calc/activate-anon", { method: "POST" }).catch(() => {});
 
         // Always set localStorage as fallback
         const until = new Date();
