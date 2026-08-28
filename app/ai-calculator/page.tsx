@@ -145,7 +145,7 @@ export default function AICalculatorPage() {
             </h1>
             <p className="hidden sm:block text-[#8899aa] text-sm leading-relaxed max-w-lg mx-auto">
               Не покупайте вслепую — вставьте ссылку с 1688 или Alibaba и получите
-              реальную маржу с учётом таможни, доставки и комиссии маркетплейса. Бесплатно.
+              реальную маржу с учётом таможни, доставки и комиссии маркетплейса. 3 расчёта бесплатно.
             </p>
           </div>
 
