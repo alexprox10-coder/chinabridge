@@ -4,7 +4,7 @@ import { createTochkaPayment } from "@/lib/tochka/client";
 export const runtime     = "nodejs";
 export const maxDuration = 30;
 
-const PRICE_RUB = 490;
+const PRICE_RUB = 1990;
 
 export async function POST(req: NextRequest) {
   const origin      = req.headers.get("origin") ?? "https://chinabridge.pro";

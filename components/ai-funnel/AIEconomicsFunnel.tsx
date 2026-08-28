@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { analytics } from "@/lib/analytics";
 import { MARKETPLACES, detectCommissionPct } from "@/lib/economics/marketplaces";
+import MarketNewsBar from "@/components/calculator/MarketNewsBar";
 import type {
   EconomicsResult,
   EconomicsScenario,
@@ -523,6 +524,23 @@ function PaywallBlock({
   onClose: () => void;
 }) {
   const isGreen = ec?.verdict === "green";
+  const [paying, setPaying] = useState(false);
+
+  async function handleProPayment(e: React.MouseEvent) {
+    e.preventDefault();
+    setPaying(true);
+    try {
+      const res = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
+      const data = await res.json();
+      if (data.ok && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        window.location.href = "/client/plans";
+      }
+    } catch {
+      window.location.href = "/client/plans";
+    }
+  }
 
   return (
     <div
@@ -624,19 +642,20 @@ function PaywallBlock({
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-[#8899aa] mb-3">
-              <span>✓ 100 расчётов/мес</span>
+              <span>✓ Безлимитные расчёты</span>
               <span>✓ История расчётов</span>
-              <span>✓ Сравнение товаров</span>
-              <span>✓ Экспорт P&L</span>
-              <span>✓ Сохранённые проекты</span>
+              <span>✓ AI-анализ ссылок 1688</span>
+              <span>✓ Сохранение результатов</span>
+              <span>✓ Все маркетплейсы</span>
               <span>✓ AI-сценарии</span>
             </div>
-            <a
-              href="/client/plans"
-              className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
+            <button
+              onClick={handleProPayment}
+              disabled={paying}
+              className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
             >
-              Подключить PRO →
-            </a>
+              {paying ? "Переходим к оплате..." : "Подключить PRO — 1 990 ₽/мес →"}
+            </button>
           </div>
 
           <button
@@ -1297,6 +1316,9 @@ export default function AIEconomicsFunnel() {
       {/* ── INPUT ──────────────────────────────────────────────────────────────── */}
       {s.step === "input" && (
         <div className="flex flex-col gap-5">
+          {/* Market news + currency rates */}
+          <MarketNewsBar />
+
           {/* Quick examples — instant calculation without URL */}
           <div>
             <p className="text-xs font-medium text-white mb-2">Выберите категорию — расчёт за 15 сек:</p>

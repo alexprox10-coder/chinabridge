@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 const PLANS = [
   {
@@ -20,7 +21,7 @@ const PLANS = [
       "Поиск товаров — бесплатно",
     ],
     limits: ["Лимит 3 расчёта (AI-калькулятор маржи)", "Без истории расчётов"],
-    cta: { label: "Открыть калькулятор", href: "/ai-calculator", external: false },
+    cta: { label: "Открыть калькулятор", href: "/ai-calculator", external: false, pay: false },
     current: false,
     highlight: false,
     color: "slate",
@@ -29,7 +30,7 @@ const PLANS = [
     id: "subscriber",
     name: "Подписчик",
     badge: null,
-    price: "490 ₽",
+    price: "1 990 ₽",
     period: "в месяц",
     description: "Безлимитные расчёты маржи",
     features: [
@@ -42,7 +43,7 @@ const PLANS = [
       "Поиск товаров — бесплатно",
     ],
     limits: [],
-    cta: { label: "Подключить за 490 ₽/мес", href: "/ai-calculator", external: false },
+    cta: { label: "Подключить за 1 990 ₽/мес", href: "", external: false, pay: true },
     current: false,
     highlight: false,
     color: "green",
@@ -63,7 +64,7 @@ const PLANS = [
       "Приоритетная поддержка 24/7",
     ],
     limits: [],
-    cta: { label: "Написать менеджеру", href: "https://t.me/ChinaBridgeLID_bot", external: true },
+    cta: { label: "Написать менеджеру", href: "https://t.me/ChinaBridgeLID_bot", external: true, pay: false },
     current: false,
     highlight: true,
     color: "green",
@@ -104,6 +105,25 @@ const VS_COMPETITORS = [
 ];
 
 export default function PlansPage() {
+  const [paying, setPaying] = useState(false);
+
+  async function handleSubscribe() {
+    setPaying(true);
+    try {
+      const res = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
+      const data = await res.json();
+      if (data.ok && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        alert("Не удалось создать ссылку на оплату. Попробуйте ещё раз.");
+        setPaying(false);
+      }
+    } catch {
+      alert("Ошибка. Попробуйте ещё раз.");
+      setPaying(false);
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-10">
 
@@ -111,7 +131,7 @@ export default function PlansPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Тарифы</h1>
         <p className="text-slate-500 mt-1">
-          Калькулятор доставки и поиск товаров — бесплатно. AI-калькулятор маржи: 3 расчёта бесплатно, далее 490 ₽/мес без лимитов.
+          Калькулятор доставки и поиск товаров — бесплатно. AI-калькулятор маржи: 3 расчёта бесплатно, далее 1 990 ₽/мес без лимитов.
         </p>
       </div>
 
@@ -176,14 +196,18 @@ export default function PlansPage() {
               >
                 {plan.cta.label}
               </a>
+            ) : plan.cta.pay ? (
+              <button
+                onClick={handleSubscribe}
+                disabled={paying}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-colors bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white"
+              >
+                {paying ? "Переходим к оплате..." : plan.cta.label}
+              </button>
             ) : (
               <Link
                 href={plan.cta.href}
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-colors ${
-                  plan.id === "subscriber"
-                    ? "bg-green-500 hover:bg-green-600 text-white"
-                    : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                }`}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-colors bg-slate-100 hover:bg-slate-200 text-slate-700"
               >
                 {plan.cta.label}
               </Link>
@@ -199,7 +223,7 @@ export default function PlansPage() {
           <p className="text-sm font-semibold text-slate-800">Что бесплатно всегда</p>
           <p className="text-sm text-slate-600 mt-1">
             <strong>Калькулятор доставки</strong> и <strong>Поиск товаров</strong> — без ограничений и без регистрации.
-            Платная подписка (490 ₽/мес) распространяется только на AI-калькулятор юнит-экономики после первых 3 расчётов.
+            Платная подписка (1 990 ₽/мес) распространяется только на AI-калькулятор юнит-экономики после первых 3 расчётов.
           </p>
         </div>
       </div>
