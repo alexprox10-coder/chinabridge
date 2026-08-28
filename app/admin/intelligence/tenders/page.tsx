@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import AdminNav from "@/components/admin/AdminNav";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 interface TenderOp {
   id: string;

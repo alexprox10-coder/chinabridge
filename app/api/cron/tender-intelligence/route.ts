@@ -126,6 +126,7 @@ export async function GET(req: NextRequest) {
         contact_phone:  null,
         contact_email:  null,
         website:        null,
+        updated_at:     new Date().toISOString(),
       };
 
       const opportunity = await buildOpportunity({ tender, company, fit });
@@ -138,7 +139,6 @@ export async function GET(req: NextRequest) {
 
         const crmLead = await createLead({
           lead_id:         `tender-${tender.purchase_number}`,
-          tenant_id:       "tenant-chinabridge",
           created_at:      new Date().toISOString(),
           updated_at:      new Date().toISOString(),
           name:            tender.winner,
@@ -175,7 +175,8 @@ export async function GET(req: NextRequest) {
       // Phase 8: HOT alert via Telegram
       if (opportunity.status === "HOT") {
         hot_count++;
-        await sendHotAlert(opportunity);
+        const now = new Date().toISOString();
+        await sendHotAlert({ ...opportunity, created_at: now, updated_at: now });
       }
     }
 
