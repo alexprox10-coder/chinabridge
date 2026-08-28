@@ -1592,6 +1592,7 @@ export default function AIEconomicsFunnel() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </a>
+            <p className="text-center text-[11px] text-[#5a7899]">👆 Откроется Telegram — нажмите <b className="text-[#8899aa]">Start</b>, менеджер напишет в течение 5 минут</p>
 
             <CorrectionAccordion
               open={s.showCorrection}
@@ -1838,12 +1839,15 @@ export default function AIEconomicsFunnel() {
               <span className="text-xs text-[#8899aa]">Кейсы и советы →</span>
             </a>
 
-            <a href="https://t.me/ChinaBridgeLID_bot?start=calc" target="_blank" rel="noopener noreferrer"
-              onClick={() => analytics.telegramClick()}
-              className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all block"
-            >
-              Написать менеджеру в Telegram
-            </a>
+            <div className="flex flex-col gap-1">
+              <a href="https://t.me/ChinaBridgeLID_bot?start=calc" target="_blank" rel="noopener noreferrer"
+                onClick={() => analytics.telegramClick()}
+                className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all block text-center"
+              >
+                Написать менеджеру в Telegram
+              </a>
+              <p className="text-center text-[10px] text-[#5a7899]">Откроется Telegram — нажмите <b>Start</b></p>
+            </div>
 
             {/* Share block */}
             <div className="pt-1 border-t border-[#243a5e]/60">
