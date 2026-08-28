@@ -106,20 +106,22 @@ const VS_COMPETITORS = [
 
 export default function PlansPage() {
   const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   async function handleSubscribe() {
     setPaying(true);
+    setPayError(null);
     try {
       const res = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
       const data = await res.json();
       if (data.ok && data.paymentLink) {
         window.location.href = data.paymentLink;
       } else {
-        alert("Не удалось создать ссылку на оплату. Попробуйте ещё раз.");
+        setPayError(data.error ?? "Ошибка оплаты");
         setPaying(false);
       }
-    } catch {
-      alert("Ошибка. Попробуйте ещё раз.");
+    } catch (e) {
+      setPayError(String(e));
       setPaying(false);
     }
   }
@@ -197,13 +199,25 @@ export default function PlansPage() {
                 {plan.cta.label}
               </a>
             ) : plan.cta.pay ? (
-              <button
-                onClick={handleSubscribe}
-                disabled={paying}
-                className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-colors bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white"
-              >
-                {paying ? "Переходим к оплате..." : plan.cta.label}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleSubscribe}
+                  disabled={paying}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-colors bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white"
+                >
+                  {paying ? "Переходим к оплате..." : plan.cta.label}
+                </button>
+                {payError && (
+                  <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700">
+                    <p className="font-semibold mb-1">Ошибка платёжного шлюза:</p>
+                    <p className="font-mono break-all">{payError}</p>
+                    <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+                      className="mt-2 block text-center py-1.5 bg-blue-500 text-white rounded-lg font-semibold">
+                      Написать менеджеру — подключим вручную
+                    </a>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link
                 href={plan.cta.href}

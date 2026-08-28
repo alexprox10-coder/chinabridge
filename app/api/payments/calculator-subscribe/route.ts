@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       operationId: payment.operationId,
     });
   } catch (err) {
+    console.error("[calculator-subscribe] Tochka error:", err);
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }
 }
