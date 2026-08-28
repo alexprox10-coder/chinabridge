@@ -1,5 +1,5 @@
 const BASE          = "https://enter.tochka.com/uapi";
-const CUSTOMER_CODE = process.env.TOCHKA_CUSTOMER_CODE ?? "305892710";
+const CUSTOMER_CODE = process.env.TOCHKA_CUSTOMER_CODE ?? "305862955";
 const MERCHANT_ID   = process.env.TOCHKA_MERCHANT_ID   ?? "200000000042115";
 
 function headers() {
