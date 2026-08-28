@@ -524,22 +524,11 @@ function PaywallBlock({
   onClose: () => void;
 }) {
   const isGreen = ec?.verdict === "green";
-  const [paying, setPaying] = useState(false);
 
-  async function handleProPayment(e: React.MouseEvent) {
+  function handleProPayment(e: React.MouseEvent) {
     e.preventDefault();
-    setPaying(true);
-    try {
-      const res = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
-      const data = await res.json();
-      if (data.ok && data.paymentLink) {
-        window.location.href = data.paymentLink;
-      } else {
-        window.location.href = "/client/plans";
-      }
-    } catch {
-      window.location.href = "/client/plans";
-    }
+    // Middleware redirects unauthenticated users to /client/login?from=/client/plans
+    window.location.href = "/client/plans";
   }
 
   return (
@@ -651,10 +640,9 @@ function PaywallBlock({
             </div>
             <button
               onClick={handleProPayment}
-              disabled={paying}
-              className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
+              className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
             >
-              {paying ? "Переходим к оплате..." : "Подключить PRO — 1 990 ₽/мес →"}
+              Переходим к оплате...
             </button>
           </div>
 
