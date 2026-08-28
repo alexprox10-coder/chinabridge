@@ -75,7 +75,7 @@ const VS_COMPETITORS = [
   {
     feature: "Цена",
     competitors: "4 000 – 40 000 ₽/мес",
-    chinabridge: "Бесплатно / 490 ₽/мес",
+    chinabridge: "Бесплатно / 1 990 ₽/мес",
     win: true,
   },
   {
