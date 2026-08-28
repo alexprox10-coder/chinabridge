@@ -96,7 +96,7 @@ const QUICK_EXAMPLES = [
   { emoji: "🧸", label: "Игрушки",      product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
 ];
 
-const ANON_LIMIT = 999; // temporarily unlimited — re-enable when payment is configured
+const ANON_LIMIT = 3; // 3 free full calculations per day
 
 // Analyzing stages — real stages that match backend process
 const ANALYZE_STAGES = [
@@ -511,6 +511,146 @@ function CorrectionAccordion({
   );
 }
 
+// ── Paywall Modal ─────────────────────────────────────────────────────────────
+
+function PaywallBlock({
+  ec,
+  usedCount,
+  onClose,
+}: {
+  ec: EconomicsResult | null;
+  usedCount: number;
+  onClose: () => void;
+}) {
+  const isGreen = ec?.verdict === "green";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm bg-[#060f1e] border border-[#1e3a5f] rounded-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="relative px-5 pt-5 pb-4 border-b border-[#1e3a5f]">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-[#5a7899] hover:text-white text-xl leading-none"
+          >×</button>
+          <div className="flex items-center gap-3 mb-2">
+            {[0,1,2].map(i => (
+              <div key={i} className="w-2 h-2 rounded-full bg-[#00A86B]" />
+            ))}
+          </div>
+          <p className="text-xs text-[#8899aa] mb-0.5">
+            {usedCount} / {ANON_LIMIT} бесплатных расчётов использовано
+          </p>
+          <h2 className="text-lg font-bold text-white leading-tight">
+            Продолжить анализировать товары?
+          </h2>
+          {ec && (
+            <div className="mt-2 flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
+              <span className="text-xl">{ec.verdict_emoji}</span>
+              <div>
+                <p className="text-xs font-semibold text-white">{ec.verdict_label}</p>
+                <p className="text-[10px] text-[#8899aa]">
+                  Маржа {ec.margin_pct.toFixed(1)}% · ROI {ec.roi_pct.toFixed(0)}% · {Math.round(ec.net_profit_rub / ec.quantity).toLocaleString("ru-RU")} ₽/шт
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Two paths */}
+        <div className="p-4 flex flex-col gap-3">
+          {/* Import path — emphasized when green verdict */}
+          <a
+            href="https://t.me/ChinaBridgeLID_bot?start=calc"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`block rounded-xl border p-4 transition-all hover:scale-[1.02] ${
+              isGreen
+                ? "bg-[#00A86B]/15 border-[#00A86B]/50 hover:border-[#00A86B]/80 hover:bg-[#00A86B]/20"
+                : "bg-white/5 border-[#243a5e] hover:border-[#00A86B]/40"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none mt-0.5">🚢</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-bold text-white">Привезти товар</p>
+                  {isGreen && (
+                    <span className="text-[10px] bg-[#00A86B] text-white rounded-full px-2 py-0.5 font-semibold">
+                      Рекомендуем
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#8899aa] mt-0.5 leading-relaxed">
+                  Менеджер рассчитает поставку, найдёт поставщика и организует доставку под ключ
+                </p>
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-[#8899aa]">
+                  <span>✓ Расчёт за 15 мин</span>
+                  <span>✓ Карго из Китая</span>
+                  <span>✓ Без предоплаты</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-[#00A86B] font-semibold">Открыть Telegram →</span>
+              <p className="text-[10px] text-[#5a7899]">нажмите Start в боте</p>
+            </div>
+          </a>
+
+          {/* PRO path */}
+          <div className={`rounded-xl border p-4 ${
+            !isGreen
+              ? "bg-[#229ED9]/10 border-[#229ED9]/40 hover:border-[#229ED9]/70"
+              : "bg-white/5 border-[#243a5e] hover:border-[#229ED9]/40"
+          } transition-all`}>
+            <div className="flex items-start gap-3 mb-3">
+              <span className="text-2xl leading-none mt-0.5">📊</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-bold text-white">PRO — 1 990 ₽/мес</p>
+                  {!isGreen && (
+                    <span className="text-[10px] bg-[#229ED9] text-white rounded-full px-2 py-0.5 font-semibold">
+                      Рекомендуем
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#8899aa] mt-0.5">Для принятия решений, не только оценки</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-[#8899aa] mb-3">
+              <span>✓ 100 расчётов/мес</span>
+              <span>✓ История расчётов</span>
+              <span>✓ Сравнение товаров</span>
+              <span>✓ Экспорт P&L</span>
+              <span>✓ Сохранённые проекты</span>
+              <span>✓ AI-сценарии</span>
+            </div>
+            <a
+              href="/client/plans"
+              className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
+            >
+              Подключить PRO →
+            </a>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="text-xs text-[#5a7899] hover:text-white underline text-center py-1"
+          >
+            Вернуться к результату
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 const EMPTY_PRODUCT: ProductData = {
@@ -560,23 +700,15 @@ export default function AIEconomicsFunnel() {
   const [calcCount,       setCalcCount]       = useState(0);
   const [isRegistered,    setIsRegistered]    = useState(false);
   const [showExitIntent,  setShowExitIntent]  = useState(false);
+  const [showPaywall,     setShowPaywall]     = useState(false);
   const exitShownRef = useRef(false);
 
   const resetPaywall = () => { go("input", { error: null, scrapeError: null }); };
 
   // Load usage counters from localStorage on mount (reset=1 clears state)
   useEffect(() => {
-    // Always clear stale paywall flags — paywall is disabled
-    try {
-      localStorage.removeItem('cb_paywall_active');
-      localStorage.removeItem('cb_paywall_shown');
-      localStorage.removeItem('cb_paywall_locked');
-    } catch {}
-
     if (new URLSearchParams(window.location.search).get('reset') === '1') {
       localStorage.removeItem('cb_calc_uses');
-      localStorage.removeItem('cb_paywall_active');
-      localStorage.removeItem('cb_paywall_shown');
       localStorage.removeItem('cb_registered');
       // Also reset server-side IP rate limit
       fetch('/api/calc/reset', { method: 'POST' }).catch(() => {});
@@ -603,18 +735,18 @@ export default function AIEconomicsFunnel() {
       const paidUntil = localStorage.getItem('cb_paid_until');
       if (paidUntil && new Date(paidUntil) > new Date()) {
         setIsRegistered(true); // paid users get unlimited
-        localStorage.removeItem('cb_paywall_active');
-        localStorage.removeItem('cb_paywall_locked'); // unlock for subscribers
       } else if (paidUntil) {
         localStorage.removeItem('cb_paid_until'); // expired
       }
     } catch { /* ignore */ }
 
-    // Restore paywall if user left without paying or Tochka redirected with pay=fail
+    // Handle Tochka payment redirect
     try {
       const params = new URLSearchParams(window.location.search);
-      const payFailed = params.get('pay') === 'fail' || params.get('pay') === 'cancel';
-      if (payFailed) {
+      if (params.get('pay') === 'ok') {
+        // Payment succeeded — user already has cb_paid_until in cookie set by server
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (params.get('pay') === 'fail' || params.get('pay') === 'cancel') {
         window.history.replaceState({}, '', window.location.pathname);
       }
     } catch { /* ignore */ }
@@ -702,7 +834,8 @@ export default function AIEconomicsFunnel() {
 
       if (!data.ok) {
         if (res.status === 429 || data.error === 'rate_limit') {
-          go("preview", { error: "Слишком много запросов — попробуйте через несколько минут" });
+          go("preview");
+          setShowPaywall(true);
           return;
         }
         go("preview", { error: data.message ?? "Ошибка расчёта" });
@@ -762,7 +895,7 @@ export default function AIEconomicsFunnel() {
   // ── URL / Description submit ────────────────────────────────────────────────
 
   async function handleUrlSubmit() {
-    if (!isRegistered && calcCount >= ANON_LIMIT) { return; }
+    if (!isRegistered && calcCount >= ANON_LIMIT) { setShowPaywall(true); return; }
 
     if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
     const url = s.urlInput.trim();
@@ -925,7 +1058,8 @@ export default function AIEconomicsFunnel() {
 
       if (!data.ok) {
         if (res.status === 429 || data.error === 'rate_limit') {
-          go("preview", { error: "Слишком много запросов — попробуйте через несколько минут" });
+          go("preview");
+          setShowPaywall(true);
           return;
         }
         go("preview", { error: data.message ?? "Ошибка расчёта" });
@@ -1071,8 +1205,6 @@ export default function AIEconomicsFunnel() {
     / STEPS_ORDER.length * 100
   );
 
-  // Paywall disabled — unlimited free use
-
   // ── Analyzing loader ────────────────────────────────────────────────────────
 
   if (s.step === "analyzing") {
@@ -1144,7 +1276,13 @@ export default function AIEconomicsFunnel() {
         }}
       />
     )}
-    {/* limit banner removed — unlimited while growing user base */}
+    {showPaywall && (
+      <PaywallBlock
+        ec={ec}
+        usedCount={calcCount}
+        onClose={() => setShowPaywall(false)}
+      />
+    )}
     <div className="card-glass rounded-2xl p-6 md:p-8">
       {/* Progress */}
       {s.step !== "success" && (
@@ -1213,24 +1351,29 @@ export default function AIEconomicsFunnel() {
           </div>
 
           <button
-            onClick={handleUrlSubmit}
-            disabled={!s.urlInput.trim() && !s.descInput.trim()}
+            onClick={!isRegistered && calcCount >= ANON_LIMIT ? () => setShowPaywall(true) : handleUrlSubmit}
+            disabled={isRegistered ? (!s.urlInput.trim() && !s.descInput.trim()) : false}
             className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
           >
-            🚀 Рассчитать прибыль
+            {!isRegistered && calcCount >= ANON_LIMIT ? "🔒 Лимит — разблокировать PRO" : "🚀 Рассчитать прибыль"}
           </button>
 
           {isRegistered ? (
-            <p className="text-center text-xs text-[#00A86B]">✓ Подписка активна · безлимитные расчёты</p>
+            <p className="text-center text-xs text-[#00A86B]">✓ PRO активен · безлимитные расчёты</p>
+          ) : calcCount >= ANON_LIMIT ? (
+            <button
+              onClick={() => setShowPaywall(true)}
+              className="w-full py-2 bg-[#229ED9]/10 border border-[#229ED9]/30 hover:border-[#229ED9]/60 rounded-xl text-xs text-[#229ED9] font-semibold transition-colors"
+            >
+              🔒 3/3 бесплатных использованы — разблокировать PRO
+            </button>
           ) : (
             <div className="flex items-center justify-center gap-2">
               {[0, 1, 2].map(i => (
                 <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i < calcCount ? 'bg-[#00A86B]' : 'bg-white/15'}`} />
               ))}
               <p className="text-xs text-[#8899aa]">
-                {calcCount >= ANON_LIMIT
-                  ? 'Лимит исчерпан — нужна подписка'
-                  : `Расчёт ${calcCount + 1} из ${ANON_LIMIT} бесплатных · GPT-4o`}
+                {`Расчёт ${calcCount + 1} из ${ANON_LIMIT} бесплатных · GPT-4o`}
               </p>
             </div>
           )}

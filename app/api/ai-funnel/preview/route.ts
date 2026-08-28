@@ -6,7 +6,7 @@ import { neon }                   from '@neondatabase/serverless';
 export const runtime     = 'nodejs';
 export const maxDuration = 20;
 
-const DAILY_LIMIT = 999; // unlimited while growing user base
+const DAILY_LIMIT = 3; // 3 free calculations, then paywall
 const CLIENT_COOKIE = 'cb_client';
 
 function getIp(req: NextRequest) {
