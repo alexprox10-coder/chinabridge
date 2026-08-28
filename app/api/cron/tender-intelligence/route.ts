@@ -27,12 +27,15 @@ function getDateRange(hoursBack = 6): { dateFrom: string; dateTo: string } {
   return { dateFrom: fmt(from), dateTo: fmt(to) };
 }
 
-// Verify cron secret to prevent unauthorized execution
+// Verify cron secret or admin cookie
 function authOk(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return true; // dev mode
   const header = req.headers.get("authorization");
-  return header === `Bearer ${secret}`;
+  if (header === `Bearer ${secret}`) return true;
+  // Allow authenticated admins to trigger manually from the dashboard
+  const adminCookie = req.cookies.get("cb_admin")?.value;
+  return !!adminCookie;
 }
 
 export async function GET(req: NextRequest) {
