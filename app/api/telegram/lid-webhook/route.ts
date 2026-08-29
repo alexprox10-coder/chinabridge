@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const LID_BOT_TOKEN     = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
 const MONITOR_BOT_TOKEN = process.env.MONITOR_BOT_TOKEN ?? LID_BOT_TOKEN;
+const PARSER_BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN ?? "";  // @ParserLid_n8n_bot
 const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID  ?? "8979087725";
 
 async function sendMsg(chatId: number | string, text: string, extra?: object) {
@@ -117,19 +118,19 @@ export async function POST(req: NextRequest) {
         `;
       } catch { /* ignore — don't break the UX */ }
 
-      // Forward lead to n8n / @ParserLid_n8n_bot
-      const n8nLidUrl = process.env.PARSER_LID_N8N_WEBHOOK
-        ?? `${process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru"}/webhook/chinabridge-lid-tg`;
-      fetch(n8nLidUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id:    chatId,
-          first_name: firstName,
-          username:   message?.from?.username ?? null,
-          source:     "calc_paywall",
-        }),
-      }).catch(() => null);
+      // Notify manager via @ParserLid_n8n_bot
+      if (PARSER_BOT_TOKEN && MANAGER_CHAT_ID) {
+        const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
+        fetch(`https://api.telegram.org/bot${PARSER_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id:    MANAGER_CHAT_ID,
+            text:       `🔔 <b>Лид с калькулятора</b>\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>\n\n📲 Написать: ${message?.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`}`,
+            parse_mode: "HTML",
+          }),
+        }).catch(() => null);
+      }
 
       await sendMsg(chatId,
         `👋 ${firstName}, привет!\n\nЭто ChinaBridge — доставка из Китая в Россию и Казахстан.\n\nНапишите какой товар везёте и откуда — менеджер ответит в течение 5 минут с реальной ценой 📦`,
