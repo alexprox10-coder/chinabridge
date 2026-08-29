@@ -194,6 +194,7 @@ export default function TenderDashboard() {
     status: "", priority: "", stream: "", min_fit: "", min_score: "", page: 1,
   });
   const [running, setRunning] = useState(false);
+  const [runResult, setRunResult] = useState<Record<string, unknown> | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -221,7 +222,7 @@ export default function TenderDashboard() {
     const url = `/api/cron/tender-intelligence?mode=${mode}${demo ? "&demo=1" : ""}`;
     const res  = await fetch(url);
     const data = await res.json();
-    alert(JSON.stringify(data, null, 2));
+    setRunResult(data);
     setRunning(false);
     load();
   }
@@ -266,6 +267,30 @@ export default function TenderDashboard() {
             </button>
           </div>
         </div>
+
+        {/* Run result banner */}
+        {runResult && (
+          <div className="mb-4 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 flex items-start gap-4">
+            <div className="flex-1 flex flex-wrap gap-4 text-xs">
+              {[
+                { label: "Найдено", val: runResult.fetched ?? runResult.pre_filtered },
+                { label: "Сохранено", val: runResult.new_saved },
+                { label: "AI обработано", val: runResult.ai_processed },
+                { label: "🔥 HOT", val: runResult.hot_found },
+                { label: "CRM лидов", val: runResult.crm_created },
+              ].map(({ label, val }) => (
+                <div key={label}>
+                  <span className="text-slate-500">{label}: </span>
+                  <span className="font-bold text-white">{String(val ?? 0)}</span>
+                </div>
+              ))}
+              {runResult.period && (
+                <div><span className="text-slate-500">Период: </span><span className="text-slate-300">{String(runResult.period)}</span></div>
+              )}
+            </div>
+            <button onClick={() => setRunResult(null)} className="text-slate-500 hover:text-white text-lg leading-none">×</button>
+          </div>
+        )}
 
         {/* Stats */}
         {stats && (
