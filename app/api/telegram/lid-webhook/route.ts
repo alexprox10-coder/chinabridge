@@ -117,22 +117,22 @@ export async function POST(req: NextRequest) {
         `;
       } catch { /* ignore — don't break the UX */ }
 
-      // Notify manager
-      if (MANAGER_CHAT_ID) {
-        const username = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
-        await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: MANAGER_CHAT_ID,
-            text: `🔔 <b>Лид с калькулятора</b>\n\n👤 ${firstName} (${username})\n🆔 chat_id: <code>${chatId}</code>\n\n📲 Написать: ${message?.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`}`,
-            parse_mode: "HTML",
-          }),
-        });
-      }
+      // Forward lead to n8n / @ParserLid_n8n_bot
+      const n8nLidUrl = process.env.PARSER_LID_N8N_WEBHOOK
+        ?? `${process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru"}/webhook/chinabridge-lid-tg`;
+      fetch(n8nLidUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id:    chatId,
+          first_name: firstName,
+          username:   message?.from?.username ?? null,
+          source:     "calc_paywall",
+        }),
+      }).catch(() => null);
 
       await sendMsg(chatId,
-        `👋 Привет, ${firstName}!\n\nВижу, вы только что проверяли товар через AI-калькулятор ChinaBridge 🧮\n\n*Какой товар планируете везти из Китая?*\n\nНапишите — и я сразу передам менеджеру. Он ответит в течение 5 минут с реальной ценой доставки 🚢`,
+        `👋 ${firstName}, привет!\n\nЭто ChinaBridge — доставка из Китая в Россию и Казахстан.\n\nНапишите какой товар везёте и откуда — менеджер ответит в течение 5 минут с реальной ценой 📦`,
         {
           reply_markup: {
             inline_keyboard: [[
