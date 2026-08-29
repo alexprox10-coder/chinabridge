@@ -312,10 +312,12 @@ def main():
             if html:
                 partials.extend(parse_search_page(html))
 
-        # Deduplicate across queries
+        # Deduplicate across queries; tag with search_query as subject fallback
         for p in partials:
             if p["reestr"] not in seen_reestr:
                 seen_reestr.add(p["reestr"])
+                if not p.get("subject"):
+                    p["subject"] = query  # fallback so heuristic finds keywords
                 all_partials.append(p)
 
         log.info(f"Query '{query}': pages={total_pages} found={len(partials)}")

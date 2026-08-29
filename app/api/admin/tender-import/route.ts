@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     const fit = await classifyChinaFit(tender);
     ai_processed++;
 
-    if (fit.category === "IRRELEVANT") continue;
+    if (fit.score < 5) continue; // skip only truly zero-score items
 
     const opportunity = await buildOpportunity({ tender, company, fit });
     await saveOpportunity(opportunity);
