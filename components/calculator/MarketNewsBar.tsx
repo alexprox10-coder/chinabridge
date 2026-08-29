@@ -60,7 +60,7 @@ export default function MarketNewsBar() {
         ) : (
           <span className="text-[10px] text-[#5a7899] animate-pulse">Загружаем курсы...</span>
         )}
-        <span className="ml-auto text-[9px] text-[#3a5570] flex-shrink-0">
+        <span className="ml-auto text-[9px] text-[#3a5570] flex-shrink-0" suppressHydrationWarning>
           {rates ? `обновлено ${new Date().toLocaleDateString("ru-RU")}` : ""}
         </span>
       </div>
