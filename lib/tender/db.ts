@@ -277,25 +277,32 @@ export async function getOpportunities(filters: OpportunityFilters = {}): Promis
   const limit = filters.limit ?? 50;
   const offset = ((filters.page ?? 1) - 1) * limit;
 
+  const st  = filters.status   ?? "";
+  const pr  = filters.priority ?? "";
+  const lt  = filters.law_type ?? "";
+  const sm  = filters.stream   ?? "";
+  const mf  = filters.min_fit   ?? 0;
+  const ms  = filters.min_score ?? 0;
+
   const rows = await db`
     SELECT o.*, c.name as company_name, c.repeat_winner as c_repeat, c.win_count_365d
     FROM tender_opportunities o
     LEFT JOIN tender_companies c ON c.inn = o.company_id
     WHERE 1=1
-      AND (${filters.status ?? null} IS NULL OR o.status = ${filters.status ?? null})
-      AND (${filters.priority ?? null} IS NULL OR o.priority = ${filters.priority ?? null})
-      AND (${filters.law_type ?? null} IS NULL OR o.law_type = ${filters.law_type ?? null})
-      AND (${filters.stream ?? null} IS NULL OR o.stream = ${filters.stream ?? null})
-      AND (${filters.min_fit ?? null} IS NULL OR o.china_import_fit >= ${filters.min_fit ?? 0})
-      AND (${filters.min_score ?? null} IS NULL OR o.opportunity_score >= ${filters.min_score ?? 0})
+      AND (${st} = '' OR o.status = ${st})
+      AND (${pr} = '' OR o.priority = ${pr})
+      AND (${lt} = '' OR o.law_type = ${lt})
+      AND (${sm} = '' OR o.stream = ${sm})
+      AND (${mf} = 0 OR o.china_import_fit >= ${mf})
+      AND (${ms} = 0 OR o.opportunity_score >= ${ms})
     ORDER BY o.opportunity_score DESC, o.created_at DESC
     LIMIT ${limit} OFFSET ${offset}`;
 
   const countRows = await db`
     SELECT COUNT(*) AS n FROM tender_opportunities o
     WHERE 1=1
-      AND (${filters.status ?? null} IS NULL OR o.status = ${filters.status ?? null})
-      AND (${filters.priority ?? null} IS NULL OR o.priority = ${filters.priority ?? null})`;
+      AND (${st} = '' OR o.status = ${st})
+      AND (${pr} = '' OR o.priority = ${pr})`;
 
   return {
     rows: rows as unknown as TenderOpportunity[],
