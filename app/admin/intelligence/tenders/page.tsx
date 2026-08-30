@@ -70,45 +70,44 @@ function ScoreBadge({ score }: { score: number }) {
   return <span className={`font-bold ${color}`}>{score}</span>;
 }
 
-interface CompanyInfo {
+interface EnrichResult {
+  ok: boolean;
   inn: string;
-  db: {
-    name: string; region: string | null; contact_phone: string | null;
-    contact_email: string | null; website: string | null;
-    win_count: number; win_count_365d: number; total_amount: number; repeat_winner: boolean;
-  } | null;
-  egrul: {
-    name: string | null; ogrn: string | null; address: string | null;
-    region: string | null; director: string | null; status: string | null; okved: string | null;
-  } | null;
+  contacts: { phone: string | null; email: string | null; website: string | null };
+  rusprofile_url: string | null;
+  egrul: { name: string | null; ogrn: string | null; address: string | null; region: string | null; director: string | null; status: string | null } | null;
+  db: { name: string; win_count: number; win_count_365d: number; total_amount: number; repeat_winner: boolean } | null;
 }
 
 function CompanyPanel({ inn }: { inn: string }) {
-  const [data, setData]     = useState<CompanyInfo | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [editPhone, setEditPhone]   = useState("");
-  const [editEmail, setEditEmail]   = useState("");
-  const [editSite, setEditSite]     = useState("");
-  const [saving, setSaving]         = useState(false);
-  const [saved, setSaved]           = useState(false);
+  const [data, setData]         = useState<EnrichResult | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editSite,  setEditSite]  = useState("");
+  const [saving, setSaving]     = useState(false);
+  const [saved, setSaved]       = useState(false);
 
-  const enrich = async () => {
+  // Auto-load on mount
+  useEffect(() => { enrich(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function enrich() {
     setLoading(true);
     try {
       const r = await fetch(`/api/admin/company-enrich?inn=${inn}`);
-      const j = await r.json() as CompanyInfo & { ok: boolean };
+      const j = await r.json() as EnrichResult;
       if (j.ok) {
         setData(j);
-        setEditPhone(j.db?.contact_phone ?? "");
-        setEditEmail(j.db?.contact_email ?? "");
-        setEditSite(j.db?.website ?? "");
+        setEditPhone(j.contacts.phone   ?? "");
+        setEditEmail(j.contacts.email   ?? "");
+        setEditSite(j.contacts.website  ?? "");
       }
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const save = async () => {
+  async function save() {
     setSaving(true);
     try {
       await fetch("/api/admin/company-enrich", {
@@ -118,12 +117,10 @@ function CompanyPanel({ inn }: { inn: string }) {
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } finally {
-      setSaving(false);
-    }
-  };
+    } finally { setSaving(false); }
+  }
 
-  const name = data?.egrul?.name ?? data?.db?.name ?? null;
+  const name = data?.egrul?.name ?? (data?.db?.name as string | undefined) ?? null;
   const addr = data?.egrul?.address ?? null;
   const dir  = data?.egrul?.director ?? null;
   const ogrn = data?.egrul?.ogrn ?? null;
@@ -132,66 +129,76 @@ function CompanyPanel({ inn }: { inn: string }) {
     <div className="border border-slate-700 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 bg-slate-800/60">
         <span className="text-xs font-semibold text-slate-300">🏢 Компания</span>
-        <div className="flex gap-2">
-          <a href={`https://www.rusprofile.ru/search?query=${inn}`} target="_blank" rel="noopener noreferrer"
-            className="text-xs text-blue-400 hover:text-blue-300 underline">rusprofile</a>
-          <a href={`https://www.spark-interfax.ru/ru/search/results?query=${inn}`} target="_blank" rel="noopener noreferrer"
-            className="text-xs text-slate-400 hover:text-slate-300 underline">spark</a>
+        <div className="flex items-center gap-2">
+          {data?.rusprofile_url && (
+            <a href={data.rusprofile_url} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-blue-400 hover:text-blue-300 underline">rusprofile ↗</a>
+          )}
           <button onClick={enrich} disabled={loading}
-            className="text-xs px-2 py-0.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 rounded border border-indigo-600/30 disabled:opacity-50">
-            {loading ? "..." : "Обогатить ЕГРЮЛом"}
+            className="text-xs px-2 py-0.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded border border-slate-600 disabled:opacity-50">
+            {loading ? "⟳ загрузка..." : "↻ обновить"}
           </button>
         </div>
       </div>
 
-      {data && (
-        <div className="p-4 space-y-3">
-          {name && <p className="text-sm font-semibold text-white">{name}</p>}
+      <div className="p-4 space-y-3">
+        {loading && !data && (
+          <div className="text-xs text-slate-500 animate-pulse">Ищем данные по ИНН {inn}…</div>
+        )}
+
+        {name && <p className="text-sm font-semibold text-white leading-snug">{name}</p>}
+
+        <div className="space-y-0.5">
           {ogrn && <p className="text-xs text-slate-500">ОГРН: {ogrn}</p>}
           {addr && <p className="text-xs text-slate-400">📍 {addr}</p>}
           {dir  && <p className="text-xs text-slate-400">👤 {dir}</p>}
+        </div>
 
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <div>
-              <p className="text-xs text-slate-500 mb-0.5">Телефон</p>
-              <input value={editPhone} onChange={e => setEditPhone(e.target.value)}
-                placeholder="+7 ..."
-                className="w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-0.5">Email</p>
-              <input value={editEmail} onChange={e => setEditEmail(e.target.value)}
-                placeholder="info@..."
-                className="w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-0.5">Сайт</p>
-              <input value={editSite} onChange={e => setEditSite(e.target.value)}
-                placeholder="https://..."
-                className="w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
-            </div>
+        {/* Contacts */}
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <p className="text-xs text-slate-500 mb-0.5">Телефон</p>
+            {editPhone
+              ? <a href={`tel:${editPhone}`} className="text-xs text-green-400 font-medium block truncate">{editPhone}</a>
+              : <span className="text-xs text-slate-600">не найден</span>}
+            <input value={editPhone} onChange={e => setEditPhone(e.target.value)}
+              placeholder="+7..."
+              className="mt-1 w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
           </div>
+          <div>
+            <p className="text-xs text-slate-500 mb-0.5">Email</p>
+            {editEmail
+              ? <a href={`mailto:${editEmail}`} className="text-xs text-blue-400 font-medium block truncate">{editEmail}</a>
+              : <span className="text-xs text-slate-600">не найден</span>}
+            <input value={editEmail} onChange={e => setEditEmail(e.target.value)}
+              placeholder="info@..."
+              className="mt-1 w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 mb-0.5">Сайт</p>
+            {editSite
+              ? <a href={editSite} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 font-medium block truncate">{editSite.replace(/^https?:\/\//, "")}</a>
+              : <span className="text-xs text-slate-600">не найден</span>}
+            <input value={editSite} onChange={e => setEditSite(e.target.value)}
+              placeholder="https://..."
+              className="mt-1 w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
+          </div>
+        </div>
 
+        <div className="flex items-center justify-between">
           <button onClick={save} disabled={saving}
             className="text-xs px-3 py-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-300 rounded border border-green-600/30 disabled:opacity-50">
-            {saved ? "✓ Сохранено" : saving ? "Сохраняю..." : "Сохранить контакты"}
+            {saved ? "✓ Сохранено" : saving ? "..." : "Сохранить контакты"}
           </button>
-
-          {data.db && (
-            <div className="flex gap-4 pt-1 text-xs text-slate-500">
-              <span>Побед: <span className="text-slate-300">{data.db.win_count_365d} за год</span></span>
-              <span>Сумма: <span className="text-slate-300">{rub(data.db.total_amount)} ₽</span></span>
-              {data.db.repeat_winner && <span className="text-purple-400">🔄 Повторный победитель</span>}
+          {data?.db && (
+            <div className="flex gap-3 text-xs text-slate-500">
+              <span>Побед: <span className="text-slate-300">{data.db.win_count_365d}/год</span></span>
+              <span>Итого: <span className="text-slate-300">{rub(data.db.total_amount)} ₽</span></span>
+              {data.db.repeat_winner && <span className="text-purple-400">🔄 повторный</span>}
             </div>
           )}
         </div>
-      )}
-
-      {!data && (
-        <div className="px-4 py-3 text-xs text-slate-600">
-          Нажмите «Обогатить ЕГРЮЛом» чтобы загрузить данные компании, или введите контакты вручную через rusprofile.ru
-        </div>
-      )}
+      </div>
     </div>
   );
 }
