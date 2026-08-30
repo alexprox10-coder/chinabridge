@@ -13,6 +13,7 @@ const GROUPS = [
       { href: "/admin/outreach-leads",      label: "Email Outreach", icon: "📧" },
       { href: "/admin/market-intelligence", label: "Поиск лидов",    icon: "🎯" },
       { href: "/admin/market-intelligence/vk-intent", label: "VK Intent Leads", icon: "📡" },
+      { href: "/admin/queries",             label: "Запросы",        icon: "🔍" },
       { href: "/admin/proposals",           label: "Расчёты",        icon: "📋" },
       { href: "/admin/messages",            label: "Сообщения",      icon: "💬" },
       { href: "/admin/finance",             label: "Финансы",        icon: "💰" },
