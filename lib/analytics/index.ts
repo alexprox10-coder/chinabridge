@@ -3,6 +3,28 @@ export { reachGoal, trackMetrikaPageView, METRIKA_ID } from "./metrika";
 
 import { trackGAEvent } from "./ga";
 import { reachGoal } from "./metrika";
+import { trackVkGoal } from "@/components/analytics/VkPixel";
+
+// ── Product category classifier ──────────────────────────────────────────────
+const CATEGORY_MAP: [RegExp, string][] = [
+  [/электроник|гаджет|наушник|телефон|смартфон|планшет|ноутбук|комплектующ|процессор|видеокарт|плата|контроллер|сенсор|датчик/i, "electronics"],
+  [/одежд|футболк|худи|куртк|пальто|пиджак|брюк|джинс|обувь|кроссовк|ботинк|аксессуар|сумк|рюкзак|текстиль|бельё/i, "clothing"],
+  [/автозапчаст|запчаст|шин|диск|фар|бампер|двигател|коробк|автомобил|мото/i, "auto_parts"],
+  [/мебель|диван|стол|стул|кровать|шкаф|тумб|полк|стеллаж/i, "furniture"],
+  [/светильник|led|фонарь|лампа|освещен|прожектор/i, "lighting"],
+  [/оборудован|станок|инструмент|насос|компрессор|генератор|трансформатор|кран|конвейер/i, "equipment"],
+  [/игрушк|детск|конструктор/i, "toys"],
+  [/упаковк|пакет|пэт|коробк|тара|этикетк/i, "packaging"],
+  [/косметик|парфюм|уход|крем|шампун|гель/i, "cosmetics"],
+  [/посуд|кухонн|сковород|кастрюл|тарелк|чашк/i, "home_goods"],
+];
+
+export function classifyProduct(name: string): string {
+  for (const [re, cat] of CATEGORY_MAP) {
+    if (re.test(name)) return cat;
+  }
+  return "other";
+}
 
 function fire(gaName: string, goal: string, params?: Record<string, unknown>) {
   trackGAEvent(gaName, { event_category: params?.category ?? "engagement", ...params });
@@ -18,6 +40,19 @@ export const analytics = {
   calculatorStart: () => fire("calculator_start", "calculator_start", { category: "calculator" }),
   calculatorComplete: (params?: { route?: string; cost?: number; margin?: number }) =>
     fire("calculator_complete", "calculator_complete", { category: "calculator", ...params }),
+  calculatorProductSearch: (productName: string) => {
+    const cat = classifyProduct(productName);
+    fire("calculator_product_search", `calc_search_${cat}`, { category: "calculator", product_category: cat, product_name: productName.slice(0, 80) });
+    trackVkGoal(`calc_search_${cat}`);
+    // Log anonymously to backend (fire-and-forget)
+    if (typeof fetch !== "undefined") {
+      fetch("/api/calc/log-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product_name: productName.slice(0, 200), category: cat }),
+      }).catch(() => null);
+    }
+  },
   proposalDownload: (params?: { lead_id?: string }) =>
     fire("proposal_download", "proposal_download", { category: "calculator", ...params }),
   formSubmit: (params?: { form_id?: string }) =>

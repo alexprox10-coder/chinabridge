@@ -98,6 +98,7 @@ export function CalculatorForm() {
     setLoading(true);
     setEcoError(null);
     analytics.formSubmit({ form_id: "calculator" });
+    if (formData.product_name) analytics.calculatorProductSearch(formData.product_name);
 
     const body = {
       name: formData.name || "—",
