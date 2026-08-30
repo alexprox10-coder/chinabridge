@@ -70,6 +70,132 @@ function ScoreBadge({ score }: { score: number }) {
   return <span className={`font-bold ${color}`}>{score}</span>;
 }
 
+interface CompanyInfo {
+  inn: string;
+  db: {
+    name: string; region: string | null; contact_phone: string | null;
+    contact_email: string | null; website: string | null;
+    win_count: number; win_count_365d: number; total_amount: number; repeat_winner: boolean;
+  } | null;
+  egrul: {
+    name: string | null; ogrn: string | null; address: string | null;
+    region: string | null; director: string | null; status: string | null; okved: string | null;
+  } | null;
+}
+
+function CompanyPanel({ inn }: { inn: string }) {
+  const [data, setData]     = useState<CompanyInfo | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [editPhone, setEditPhone]   = useState("");
+  const [editEmail, setEditEmail]   = useState("");
+  const [editSite, setEditSite]     = useState("");
+  const [saving, setSaving]         = useState(false);
+  const [saved, setSaved]           = useState(false);
+
+  const enrich = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/admin/company-enrich?inn=${inn}`);
+      const j = await r.json() as CompanyInfo & { ok: boolean };
+      if (j.ok) {
+        setData(j);
+        setEditPhone(j.db?.contact_phone ?? "");
+        setEditEmail(j.db?.contact_email ?? "");
+        setEditSite(j.db?.website ?? "");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/admin/company-enrich", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inn, phone: editPhone || null, email: editEmail || null, website: editSite || null }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const name = data?.egrul?.name ?? data?.db?.name ?? null;
+  const addr = data?.egrul?.address ?? null;
+  const dir  = data?.egrul?.director ?? null;
+  const ogrn = data?.egrul?.ogrn ?? null;
+
+  return (
+    <div className="border border-slate-700 rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-800/60">
+        <span className="text-xs font-semibold text-slate-300">🏢 Компания</span>
+        <div className="flex gap-2">
+          <a href={`https://www.rusprofile.ru/search?query=${inn}`} target="_blank" rel="noopener noreferrer"
+            className="text-xs text-blue-400 hover:text-blue-300 underline">rusprofile</a>
+          <a href={`https://www.spark-interfax.ru/ru/search/results?query=${inn}`} target="_blank" rel="noopener noreferrer"
+            className="text-xs text-slate-400 hover:text-slate-300 underline">spark</a>
+          <button onClick={enrich} disabled={loading}
+            className="text-xs px-2 py-0.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 rounded border border-indigo-600/30 disabled:opacity-50">
+            {loading ? "..." : "Обогатить ЕГРЮЛом"}
+          </button>
+        </div>
+      </div>
+
+      {data && (
+        <div className="p-4 space-y-3">
+          {name && <p className="text-sm font-semibold text-white">{name}</p>}
+          {ogrn && <p className="text-xs text-slate-500">ОГРН: {ogrn}</p>}
+          {addr && <p className="text-xs text-slate-400">📍 {addr}</p>}
+          {dir  && <p className="text-xs text-slate-400">👤 {dir}</p>}
+
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <div>
+              <p className="text-xs text-slate-500 mb-0.5">Телефон</p>
+              <input value={editPhone} onChange={e => setEditPhone(e.target.value)}
+                placeholder="+7 ..."
+                className="w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-0.5">Email</p>
+              <input value={editEmail} onChange={e => setEditEmail(e.target.value)}
+                placeholder="info@..."
+                className="w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-0.5">Сайт</p>
+              <input value={editSite} onChange={e => setEditSite(e.target.value)}
+                placeholder="https://..."
+                className="w-full text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
+            </div>
+          </div>
+
+          <button onClick={save} disabled={saving}
+            className="text-xs px-3 py-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-300 rounded border border-green-600/30 disabled:opacity-50">
+            {saved ? "✓ Сохранено" : saving ? "Сохраняю..." : "Сохранить контакты"}
+          </button>
+
+          {data.db && (
+            <div className="flex gap-4 pt-1 text-xs text-slate-500">
+              <span>Побед: <span className="text-slate-300">{data.db.win_count_365d} за год</span></span>
+              <span>Сумма: <span className="text-slate-300">{rub(data.db.total_amount)} ₽</span></span>
+              {data.db.repeat_winner && <span className="text-purple-400">🔄 Повторный победитель</span>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {!data && (
+        <div className="px-4 py-3 text-xs text-slate-600">
+          Нажмите «Обогатить ЕГРЮЛом» чтобы загрузить данные компании, или введите контакты вручную через rusprofile.ru
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DetailModal({ op, onClose, onFeedback }: {
   op: TenderOp;
   onClose: () => void;
@@ -122,6 +248,8 @@ function DetailModal({ op, onClose, onFeedback }: {
               </div>
             ))}
           </div>
+
+          <CompanyPanel inn={op.company_id} />
 
           {op.ai_summary && (
             <div className="bg-slate-800/50 rounded-lg p-4">
