@@ -284,7 +284,7 @@ export default function TenderDashboard() {
                   <span className="font-bold text-white">{String(val ?? 0)}</span>
                 </div>
               ))}
-              {runResult.period && (
+              {!!runResult.period && (
                 <div><span className="text-slate-500">Период: </span><span className="text-slate-300">{String(runResult.period)}</span></div>
               )}
             </div>
