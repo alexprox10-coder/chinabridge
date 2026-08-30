@@ -140,9 +140,6 @@ export async function softDeleteClient(clientId: string, currentRecord: ClientAc
     password_hash: currentRecord.password_hash ?? "",
     company:       currentRecord.company ?? "",
     phone:         currentRecord.phone ?? "",
-    telegram:      currentRecord.telegram ?? "",
-    inn:           currentRecord.inn ?? "",
-    country:       currentRecord.country ?? "",
     role:          currentRecord.role ?? "CLIENT",
     status:        "INACTIVE",
     created_at:    now,
@@ -168,7 +165,7 @@ export async function getClientById(clientId: string): Promise<ClientAccount | n
 
 export async function updateClientProfile(
   currentRecord: ClientAccount,
-  fields: Partial<Pick<ClientAccount, "name" | "company" | "phone" | "password_hash" | "telegram" | "inn" | "country">>
+  fields: Partial<Pick<ClientAccount, "name" | "company" | "phone" | "password_hash">>
 ): Promise<boolean> {
   // n8n Data Tables REST API v1 does not support row-level PATCH.
   // Use insert-newest: write a full clean record with only schema fields.
@@ -181,9 +178,6 @@ export async function updateClientProfile(
     name:          fields.name ?? currentRecord.name,
     company:       fields.company ?? currentRecord.company ?? "",
     phone:         fields.phone ?? currentRecord.phone ?? "",
-    telegram:      fields.telegram ?? currentRecord.telegram ?? "",
-    inn:           fields.inn ?? currentRecord.inn ?? "",
-    country:       fields.country ?? currentRecord.country ?? "",
     role:          currentRecord.role,
     status:        currentRecord.status,
     created_at:    currentRecord.created_at,
