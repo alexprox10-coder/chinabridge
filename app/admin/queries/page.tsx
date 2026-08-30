@@ -93,7 +93,7 @@ export default function QueriesPage() {
             <div className="text-3xl mb-2">⏳</div>
             <div className="text-slate-300 font-medium">Данные ещё накапливаются</div>
             <div className="text-slate-500 text-sm mt-1">
-              Логирование запущено сегодня. Через 1–2 недели здесь появится статистика
+              Логирование запущено <span className="text-slate-400">30 августа 2026</span>. Через 1–2 недели здесь появится статистика
               по товарам которые посетители вводят в калькулятор.
             </div>
           </div>
