@@ -277,25 +277,32 @@ export async function getOpportunities(filters: OpportunityFilters = {}): Promis
   const limit = filters.limit ?? 50;
   const offset = ((filters.page ?? 1) - 1) * limit;
 
+  const st = filters.status   ?? "";
+  const pr = filters.priority ?? "";
+  const lt = filters.law_type ?? "";
+  const sm = filters.stream   ?? "";
+  const mf = filters.min_fit   ?? 0;
+  const ms = filters.min_score ?? 0;
+
   const rows = await db`
     SELECT o.*, c.name as company_name, c.repeat_winner as c_repeat, c.win_count_365d
     FROM tender_opportunities o
     LEFT JOIN tender_companies c ON c.inn = o.company_id
     WHERE 1=1
-      ${filters.status    ? db`AND o.status = ${filters.status}`                      : db``}
-      ${filters.priority  ? db`AND o.priority = ${filters.priority}`                  : db``}
-      ${filters.law_type  ? db`AND o.law_type = ${filters.law_type}`                  : db``}
-      ${filters.stream    ? db`AND o.stream = ${filters.stream}`                      : db``}
-      ${filters.min_fit   ? db`AND o.china_import_fit >= ${filters.min_fit}`          : db``}
-      ${filters.min_score ? db`AND o.opportunity_score >= ${filters.min_score}`       : db``}
+      AND (${st}::text = '' OR o.status   = ${st}::text)
+      AND (${pr}::text = '' OR o.priority = ${pr}::text)
+      AND (${lt}::text = '' OR o.law_type = ${lt}::text)
+      AND (${sm}::text = '' OR o.stream   = ${sm}::text)
+      AND (${mf}::int  = 0  OR o.china_import_fit   >= ${mf}::int)
+      AND (${ms}::int  = 0  OR o.opportunity_score  >= ${ms}::int)
     ORDER BY o.opportunity_score DESC, o.created_at DESC
     LIMIT ${limit} OFFSET ${offset}`;
 
   const countRows = await db`
     SELECT COUNT(*) AS n FROM tender_opportunities o
     WHERE 1=1
-      ${filters.status   ? db`AND o.status = ${filters.status}`   : db``}
-      ${filters.priority ? db`AND o.priority = ${filters.priority}` : db``}`;
+      AND (${st}::text = '' OR o.status   = ${st}::text)
+      AND (${pr}::text = '' OR o.priority = ${pr}::text)`;
 
   return {
     rows: rows as unknown as TenderOpportunity[],
