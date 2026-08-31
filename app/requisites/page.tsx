@@ -168,7 +168,9 @@ export default function RequisitesPage() {
               </a>
 
               <a
-                href="mailto:info@chinabridge.pro"
+                href="https://wa.me/79145889874"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group"
               >
                 <div className="w-8 h-8 rounded-lg bg-[#00A86B]/15 flex items-center justify-center text-base">✉️</div>
