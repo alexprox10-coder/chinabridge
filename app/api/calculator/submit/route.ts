@@ -104,8 +104,8 @@ export async function POST(req: NextRequest) {
     }),
   };
 
-  // Fire Telegram notification FIRST — independent of n8n, fast
-  await notifyManagerTelegram({
+  // Fire Telegram notification — non-blocking, don't hold up user
+  notifyManagerTelegram({
     name:         body.name ?? '',
     phone:        body.phone ?? '',
     telegram:     body.telegram ?? '',
@@ -117,18 +117,17 @@ export async function POST(req: NextRequest) {
     weight_kg:    body.weight_kg ?? '',
     quantity:     String(body.quantity ?? ''),
     source:       body.source ?? '',
-  });
+  }).catch(() => null);
 
-  const n8n = await fetch(`${N8N_BASE}/webhook/chinabridge-calculator`, {
+  // Fire n8n — non-blocking (AI analysis in background, don't make user wait)
+  fetch(`${N8N_BASE}/webhook/chinabridge-calculator`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: escapeNonAscii(JSON.stringify(n8nPayload)),
-    signal: AbortSignal.timeout(28000),
-  }).then(r => r.json()).catch(() => null);
+    signal: AbortSignal.timeout(10000),
+  }).catch(() => null);
 
-  const n8nData = Array.isArray(n8n) ? n8n[0] ?? {} : (n8n ?? {});
-
-  // Save to crm_leads so the proposal API can find the lead by ID
+  // Save to CRM immediately with defaults — this is fast (local DB)
   const crmLeadId = `calc-${id}`;
   await createLead({
     lead_id:             crmLeadId,
@@ -150,10 +149,10 @@ export async function POST(req: NextRequest) {
     delivery_type:       '',
     service_type:        body.service_type ?? '',
     status:              'NEW',
-    priority:            (n8nData.priority ?? 'WARM') as 'HOT' | 'WARM' | 'COLD',
+    priority:            'WARM',
     estimated_value:     hasRate ? cost!.sale_price : 0,
     manager:             '',
-    comment:             n8nData.reason ?? '',
+    comment:             '',
     source:              'delivery_calculator',
     utm_source:          'calculator',
     utm_campaign:        '',
@@ -165,11 +164,12 @@ export async function POST(req: NextRequest) {
     pricing_rule:        hasRate ? cost!.selected_rule_name : undefined,
   }, 'tenant-chinabridge').catch((e) => console.error('[calculator] createLead failed:', e));
 
+  // Respond immediately — don't wait for Telegram or n8n
   return NextResponse.json({
     ok: true,
-    cargo_type: n8nData.cargo_type ?? 'consolidation',
-    priority: n8nData.priority ?? 'WARM',
-    reason: n8nData.reason ?? '',
+    cargo_type: 'consolidation',
+    priority: 'WARM',
+    reason: '',
     lead_id: crmLeadId,
     ...(hasRate && {
       delivery_cost: cost!.sale_price,
