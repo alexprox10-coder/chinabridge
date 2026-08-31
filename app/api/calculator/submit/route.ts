@@ -14,7 +14,7 @@ async function notifyManagerTelegram(data: {
   weight_kg?: string; quantity?: string; cost?: number; days_min?: number; days_max?: number;
   source?: string;
 }) {
-  const token = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN ?? "";
+  const token = process.env.NEW_LK_BOT_TOKEN ?? process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
   const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
   if (!token) return;
 
