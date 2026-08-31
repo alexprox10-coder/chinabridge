@@ -8,15 +8,16 @@ export const dynamic = "force-dynamic";
 const LID_BOT_TOKEN     = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
 const NEW_LK_BOT_TOKEN  = process.env.NEW_LK_BOT_TOKEN ?? LID_BOT_TOKEN;
 const MONITOR_BOT_TOKEN = process.env.MONITOR_BOT_TOKEN ?? LID_BOT_TOKEN;
-const PARSER_BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN ?? "";  // @ParserLid_n8n_bot
-const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID  ?? "8979087725";
+const PARSER_BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN ?? "";
+const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
 
 async function sendMsg(chatId: number | string, text: string, extra?: object) {
-  await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
+  const res = await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown", ...extra }),
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", ...extra }),
   });
+  return res.json().catch(() => null);
 }
 
 async function answerCallback(callbackQueryId: string, text: string) {
@@ -27,19 +28,35 @@ async function answerCallback(callbackQueryId: string, text: string) {
   });
 }
 
+async function ensureBridgeTables(sql: ReturnType<typeof neon>) {
+  await sql`
+    CREATE TABLE IF NOT EXISTS bot_greeted (
+      chat_id BIGINT PRIMARY KEY,
+      greeted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS bot_message_map (
+      manager_msg_id BIGINT PRIMARY KEY,
+      client_chat_id BIGINT NOT NULL,
+      client_name    TEXT,
+      created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+}
+
 export async function POST(req: NextRequest) {
   if (!LID_BOT_TOKEN) return NextResponse.json({ ok: true });
 
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ ok: true });
 
-  // ── Callback query (inline button press) ──────────────────────────────────
+  // ── Callback query ─────────────────────────────────────────────────────────
   if (body.callback_query) {
     const cq     = body.callback_query;
     const cqId   = cq.id as string;
     const data   = cq.data as string;
     const chatId = cq.from?.id as number;
-
     if (data === "drip_stop") {
       try {
         const sql = neon(process.env.DATABASE_URL!);
@@ -61,7 +78,7 @@ export async function POST(req: NextRequest) {
 
   if (!text) return NextResponse.json({ ok: true });
 
-  // ── Group / supergroup message monitoring ──────────────────────────────────
+  // ── Group monitoring ───────────────────────────────────────────────────────
   const chatType = message.chat?.type as string;
   if (chatType === "group" || chatType === "supergroup") {
     const HOT_KEYWORDS = [
@@ -73,17 +90,12 @@ export async function POST(req: NextRequest) {
       "cargo china", "cargo доставка", "карго служба", "логистика китай",
       "отправка из китая", "посредник китай", "выкуп на 1688", "выкуп alibaba",
     ];
-
     const lowerText = text.toLowerCase();
     const matched = HOT_KEYWORDS.find(kw => lowerText.includes(kw));
-
     if (matched && MANAGER_CHAT_ID) {
       const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       const groupName = h(message.chat?.title ?? "группа");
-      const senderLink = message.from?.username
-        ? `@${message.from.username}`
-        : `tg://user?id=${chatId}`;
-
+      const senderLink = message.from?.username ? `@${message.from.username}` : `tg://user?id=${chatId}`;
       await fetch(`https://api.telegram.org/bot${MONITOR_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,8 +106,29 @@ export async function POST(req: NextRequest) {
         }),
       });
     }
+    return NextResponse.json({ ok: true });
+  }
 
-    // Бот молчит в группе — не отвечает
+  // ── Manager reply bridge: forward reply to client ──────────────────────────
+  // When manager replies to a forwarded notification, send the reply to the client
+  if (String(chatId) === String(MANAGER_CHAT_ID) && message.reply_to_message) {
+    try {
+      const sql = neon(process.env.DATABASE_URL!);
+      await ensureBridgeTables(sql);
+      const replyToMsgId = message.reply_to_message.message_id as number;
+      const rows = await sql`SELECT client_chat_id, client_name FROM bot_message_map WHERE manager_msg_id = ${replyToMsgId}`;
+      if (rows.length > 0) {
+        const clientChatId = rows[0].client_chat_id;
+        const clientName   = rows[0].client_name ?? "клиент";
+        await sendMsg(clientChatId, `<b>Менеджер ChinaBridge:</b>\n${text}`);
+        await sendMsg(MANAGER_CHAT_ID, `✅ Ответ отправлен ${clientName}`);
+        return NextResponse.json({ ok: true });
+      }
+    } catch { /* fall through if table not ready */ }
+  }
+
+  // ── Ignore other manager messages (non-reply) ──────────────────────────────
+  if (String(chatId) === String(MANAGER_CHAT_ID)) {
     return NextResponse.json({ ok: true });
   }
 
@@ -105,7 +138,6 @@ export async function POST(req: NextRequest) {
     const isCalcFunnel = param === "calc" || param.startsWith("calc");
 
     if (isCalcFunnel) {
-      // Save to drip funnel
       try {
         await ensureFunnelTable(process.env.DATABASE_URL!);
         const sql = neon(process.env.DATABASE_URL!);
@@ -117,9 +149,8 @@ export async function POST(req: NextRequest) {
                 drip_step    = 0,
                 next_drip_at = NOW() + INTERVAL '2 days'
         `;
-      } catch { /* ignore — don't break the UX */ }
+      } catch { /* ignore */ }
 
-      // Notify manager via @ParserLid_n8n_bot
       if (PARSER_BOT_TOKEN && MANAGER_CHAT_ID) {
         const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
         fetch(`https://api.telegram.org/bot${PARSER_BOT_TOKEN}/sendMessage`, {
@@ -144,12 +175,9 @@ export async function POST(req: NextRequest) {
         }
       );
     } else {
-      // Default /start — notify manager immediately (don't wait for a message)
       if (MANAGER_CHAT_ID) {
         const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
-        const replyLink = message.from?.username
-          ? `t.me/${message.from.username}`
-          : `tg://user?id=${chatId}`;
+        const replyLink = message.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`;
         const source = param ? ` (источник: ${param})` : " (с сайта)";
         fetch(`https://api.telegram.org/bot${NEW_LK_BOT_TOKEN}/sendMessage`, {
           method: "POST",
@@ -161,23 +189,15 @@ export async function POST(req: NextRequest) {
           }),
         }).catch(() => null);
       }
-
-      // No auto-greeting to client — leads from niche pages go to @New_LK_chinabridge_bot
     }
     return NextResponse.json({ ok: true });
   }
 
-  // ── Incoming message — forward to manager ──────────────────────────────────
-  // Auto-reply only on first message (not on every subsequent message)
+  // ── Client message → auto-reply once + forward to manager ─────────────────
+  const sql = neon(process.env.DATABASE_URL!);
   let isFirstMessage = false;
   try {
-    const sql = neon(process.env.DATABASE_URL!);
-    await sql`
-      CREATE TABLE IF NOT EXISTS bot_greeted (
-        chat_id BIGINT PRIMARY KEY,
-        greeted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `;
+    await ensureBridgeTables(sql);
     const inserted = await sql`
       INSERT INTO bot_greeted (chat_id) VALUES (${chatId})
       ON CONFLICT (chat_id) DO NOTHING
@@ -190,21 +210,30 @@ export async function POST(req: NextRequest) {
     await sendMsg(chatId, "✅ Сообщение получено! Менеджер ответит вам в течение 5 минут.");
   }
 
-  if (MANAGER_CHAT_ID) {
-    const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const replyLink = message.from?.username
-      ? `t.me/${message.from.username}`
-      : `tg://user?id=${chatId}`;
-    await fetch(`https://api.telegram.org/bot${NEW_LK_BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: MANAGER_CHAT_ID,
-        text: `💬 <b>Сообщение от клиента</b>\n\n👤 ${h(firstName)} (${h(username)})\n🆔 chat_id: <code>${chatId}</code>\n\n📝 <b>Текст:</b>\n${h(text)}\n\n📲 Ответить: ${replyLink}`,
-        parse_mode: "HTML",
-      }),
-    });
-  }
+  // Forward to manager via LID_BOT_TOKEN so replies can be bridged back
+  const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const replyLink = message.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`;
+  const notifRes = await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: MANAGER_CHAT_ID,
+      text: `💬 <b>Клиент: ${h(firstName)} (${h(username)})</b>\n\n${h(text)}\n\n<i>↩️ Ответьте реплаем на это сообщение</i>`,
+      parse_mode: "HTML",
+    }),
+  });
+
+  // Save mapping: manager notification message_id → client chat_id
+  try {
+    const notifData = await notifRes.json();
+    if (notifData?.ok && notifData?.result?.message_id) {
+      await sql`
+        INSERT INTO bot_message_map (manager_msg_id, client_chat_id, client_name)
+        VALUES (${notifData.result.message_id}, ${chatId}, ${`${firstName} (${username})`})
+        ON CONFLICT (manager_msg_id) DO NOTHING
+      `;
+    }
+  } catch { /* ignore */ }
 
   return NextResponse.json({ ok: true });
 }
