@@ -144,7 +144,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                     href="whatsapp://send?phone=79145889874"
                     onClick={(e) => {
                       trackGAEvent("contact", { method: "whatsapp", source: config.source });
-                      // Try native app scheme first; fallback to web after 500ms
+                      if (typeof window !== "undefined" && (window as any).VK) (window as any).VK.Goal("lead");
                       setTimeout(() => {
                         if (document.hasFocus()) window.open("https://wa.me/79145889874", "_blank");
                       }, 500);
@@ -158,6 +158,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                     href={`tg://resolve?domain=ChinaBridgeLID_bot&start=${config.source}`}
                     onClick={(e) => {
                       trackGAEvent("contact", { method: "telegram", source: config.source });
+                      if (typeof window !== "undefined" && (window as any).VK) (window as any).VK.Goal("lead");
                       setTimeout(() => {
                         if (document.hasFocus()) window.open(`https://t.me/ChinaBridgeLID_bot?start=${config.source}`, "_blank");
                       }, 500);
