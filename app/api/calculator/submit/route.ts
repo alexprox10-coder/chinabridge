@@ -26,7 +26,7 @@ async function notifyManagerTelegram(data: {
   const emailLine = !data.telegram && !data.whatsapp && data.email ? `\n📧 Email: ${h(data.email)}` : "";
   const sourceLine = data.source ? `\n🌐 Источник: ${h(data.source)}` : "";
 
-  const text = `🔥 <b>Новая заявка!</b>${sourceLine}\n\n👤 <b>${h(data.name)}</b>\n📞 <code>${h(data.phone)}</code>${tgLine}${waLine}${emailLine}\n📦 <b>Товар:</b> ${h(data.product_name)}\n🗺 <b>Куда:</b> ${h(dest || "—")}\n📏 <b>Вес/кол-во:</b> ${h(data.weight_kg || data.quantity || "—")}${costLine}\n\n⏱ Ответьте в течение 5 минут!`;
+  const text = `🔥 <b>Новая заявка!</b>${sourceLine}\n\n👤 <b>${h(data.name || "Аноним")}</b>\n📞 <code>${h(data.phone)}</code>${tgLine}${waLine}${emailLine}\n📦 <b>Товар:</b> ${h(data.product_name || "—")}\n🗺 <b>Куда:</b> ${h(dest || "—")}\n📏 <b>Вес/кол-во:</b> ${h(data.weight_kg || data.quantity || "—")}${costLine}\n\n⏱ Ответьте в течение 5 минут!`;
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
@@ -39,7 +39,7 @@ async function notifyManagerTelegram(data: {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
 
-  if (!body.name || !body.phone || !body.product_name) {
+  if (!body.phone) {
     return NextResponse.json({ ok: false, error: 'required_fields_missing' }, { status: 400 });
   }
 
