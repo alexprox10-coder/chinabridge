@@ -24,6 +24,7 @@ export default function FloatingContact() {
   useEffect(() => { setVisible(true); }, []);
 
   if (!visible) return null;
+  if (pathname.startsWith("/client") || pathname.startsWith("/admin")) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
