@@ -109,12 +109,25 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
               <div className="text-center py-8">
                 <div className="text-5xl mb-4">✅</div>
                 <div className="text-xl font-bold mb-2">Заявка принята!</div>
-                <div className="text-slate-400 text-sm">
-                  Менеджер свяжется в течение 5 минут.
+                <div className="text-slate-400 text-sm mb-6">
+                  Напишите менеджеру в Telegram — ответим за 5 минут.
                 </div>
+                <a
+                  href={`tg://resolve?domain=New_LK_chinabridge_bot&start=${config.source}`}
+                  onClick={() => {
+                    trackGAEvent("contact", { method: "telegram_after_form", source: config.source });
+                    setTimeout(() => {
+                      if (document.hasFocus()) window.open(`https://t.me/New_LK_chinabridge_bot?start=${config.source}`, "_blank");
+                    }, 500);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 w-full bg-[#229ED9] hover:bg-[#1a8fc4] text-white font-semibold py-3.5 rounded-xl transition text-sm mb-4"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-2.03 9.57c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 14.105l-2.95-.924c-.642-.2-.654-.642.136-.953l11.527-4.448c.535-.194 1.003.13.59.468z"/></svg>
+                  Написать менеджеру в Telegram →
+                </a>
                 <Link
                   href="/"
-                  className="inline-block mt-6 text-sm text-slate-500 hover:text-white transition"
+                  className="inline-block text-sm text-slate-500 hover:text-white transition"
                 >
                   ← На главную
                 </Link>
