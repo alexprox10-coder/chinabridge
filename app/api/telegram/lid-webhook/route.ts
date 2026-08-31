@@ -168,6 +168,11 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Incoming message — forward to manager ──────────────────────────────────
+  // Skip auto-reply and forwarding if message is from the manager themselves
+  if (String(chatId) === String(MANAGER_CHAT_ID)) {
+    return NextResponse.json({ ok: true });
+  }
+
   await sendMsg(chatId, "✅ Сообщение получено! Менеджер ответит вам в течение 5 минут.");
 
   if (MANAGER_CHAT_ID) {
