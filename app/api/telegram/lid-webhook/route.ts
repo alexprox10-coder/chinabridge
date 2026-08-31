@@ -173,7 +173,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  await sendMsg(chatId, "✅ Сообщение получено! Менеджер ответит вам в течение 5 минут.");
+  // Auto-reply only on first message (not on every subsequent message)
+  let isFirstMessage = false;
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
+    await sql`
+      CREATE TABLE IF NOT EXISTS bot_greeted (
+        chat_id BIGINT PRIMARY KEY,
+        greeted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+    const inserted = await sql`
+      INSERT INTO bot_greeted (chat_id) VALUES (${chatId})
+      ON CONFLICT (chat_id) DO NOTHING
+      RETURNING chat_id
+    `;
+    isFirstMessage = inserted.length > 0;
+  } catch { isFirstMessage = true; }
+
+  if (isFirstMessage) {
+    await sendMsg(chatId, "✅ Сообщение получено! Менеджер ответит вам в течение 5 минут.");
+  }
 
   if (MANAGER_CHAT_ID) {
     const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
