@@ -169,6 +169,29 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                     className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition"
                   />
 
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-slate-800" />
+                    <span className="text-slate-500 text-xs">Как с вами удобнее связаться?</span>
+                    <div className="flex-1 h-px bg-slate-800" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Ваш Telegram @username"
+                      value={form.telegram}
+                      onChange={set("telegram")}
+                      className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Ваш WhatsApp +7..."
+                      value={form.whatsapp}
+                      onChange={set("whatsapp")}
+                      className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition"
+                    />
+                  </div>
+
                   {state === "error" && (
                     <div className="text-red-400 text-sm">
                       Ошибка отправки. Позвоните нам или попробуйте ещё раз.
@@ -183,29 +206,6 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                     {state === "loading" ? "Отправляем..." : "Получить расчёт →"}
                   </button>
                 </form>
-
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="flex-1 h-px bg-slate-800" />
-                  <span className="text-slate-500 text-xs">Как с вами удобнее связаться?</span>
-                  <div className="flex-1 h-px bg-slate-800" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <input
-                    type="text"
-                    placeholder="Ваш Telegram @username"
-                    value={form.telegram}
-                    onChange={set("telegram")}
-                    className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Ваш WhatsApp +7..."
-                    value={form.whatsapp}
-                    onChange={set("whatsapp")}
-                    className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition"
-                  />
-                </div>
 
                 <p className="text-slate-600 text-xs mt-3 text-center">
                   Нажимая кнопку, вы соглашаетесь с{" "}
