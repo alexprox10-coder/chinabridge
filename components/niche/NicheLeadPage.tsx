@@ -114,8 +114,6 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                 </div>
                 <a
                   href={`https://t.me/New_LK_chinabridge_bot?start=${config.source}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   onClick={() => {
                     trackGAEvent("contact", { method: "telegram_after_form", source: config.source });
                   }}
@@ -141,8 +139,6 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                 <div className="flex gap-3 mb-4">
                   <a
                     href="https://wa.me/79145889874"
-                    target="_blank"
-                    rel="noopener noreferrer"
                     onClick={() => {
                       trackGAEvent("contact", { method: "whatsapp", source: config.source });
                       if (typeof window !== "undefined" && (window as any).VK) (window as any).VK.Goal("lead");
@@ -154,8 +150,6 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                   </a>
                   <a
                     href={`https://t.me/ChinaBridgeLID_bot?start=${config.source}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     onClick={() => {
                       trackGAEvent("contact", { method: "telegram", source: config.source });
                       if (typeof window !== "undefined" && (window as any).VK) (window as any).VK.Goal("lead");
