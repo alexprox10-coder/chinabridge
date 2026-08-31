@@ -1,28 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
-const AIEconomicsFunnel = dynamic(
-  () => import("@/components/ai-funnel/AIEconomicsFunnel"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="min-h-[420px] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#00A86B] border-t-transparent rounded-full animate-spin" />
-          <p className="text-[#8899aa] text-sm">Загружаем калькулятор…</p>
-        </div>
-      </div>
-    ),
-  }
-);
-
-const SideBanners = dynamic(
-  () => import("@/components/calculator/SideBanners"),
-  { ssr: false }
-);
+import { DynamicFunnel, DynamicSideBanners } from "./DynamicComponents";
 
 const CANONICAL = "https://chinabridge.pro/ai-calculator";
 
@@ -142,7 +122,7 @@ export default function AICalculatorPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
-      <SideBanners />
+      <DynamicSideBanners />
       <div className="relative min-h-screen bg-[#060f1e] pt-16 sm:pt-24 pb-24 sm:pb-24">
         {/* Background glow — absolute, not fixed, to avoid CLS */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -186,7 +166,7 @@ export default function AICalculatorPage() {
 
           {/* Funnel — explicit min-h prevents CLS on hydration */}
           <div id="calculator-top" className="min-h-[420px]">
-            <AIEconomicsFunnel />
+            <DynamicFunnel />
           </div>
 
           {/* Social proof */}
