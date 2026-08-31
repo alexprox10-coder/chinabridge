@@ -26,7 +26,8 @@ async function notifyManagerTelegram(data: {
   const emailLine = !data.telegram && !data.whatsapp && data.email ? `\n📧 Email: ${h(data.email)}` : "";
   const sourceLine = data.source ? `\n🌐 Источник: ${h(data.source)}` : "";
 
-  const text = `🔥 <b>Новая заявка!</b>${sourceLine}\n\n👤 <b>${h(data.name || "Аноним")}</b>\n📞 <code>${h(data.phone)}</code>${tgLine}${waLine}${emailLine}\n📦 <b>Товар:</b> ${h(data.product_name || "—")}\n🗺 <b>Куда:</b> ${h(dest || "—")}\n📏 <b>Вес/кол-во:</b> ${h(data.weight_kg || data.quantity || "—")}${costLine}\n\n⏱ Ответьте в течение 5 минут!`;
+  const phoneLink = data.phone ? `\n\n📞 <b><a href="tel:${data.phone}">${h(data.phone)}</a></b>` : "\n\n📞 <b>телефон не указан</b>";
+  const text = `🔥 <b>Новая заявка!</b>${sourceLine}${phoneLink}${tgLine}${waLine}${emailLine}\n\n👤 ${h(data.name || "Аноним")}\n📦 <b>Товар:</b> ${h(data.product_name || "—")}\n🗺 <b>Куда:</b> ${h(dest || "—")}\n📏 <b>Вес/кол-во:</b> ${h(data.weight_kg || data.quantity || "—")}${costLine}\n\n⏱ Ответьте в течение 5 минут!`;
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",

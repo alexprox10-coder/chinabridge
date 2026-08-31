@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { trackGAEvent } from "@/lib/analytics/ga";
 
@@ -20,9 +20,12 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
     telegram: "", whatsapp: "",
   });
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const submittedRef = useRef(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (submittedRef.current) return;
+    submittedRef.current = true;
     setState("loading");
     try {
       const r = await fetch("/api/calculator/submit", {
