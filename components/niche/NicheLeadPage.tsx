@@ -37,8 +37,13 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           service_type: "sourcing_and_delivery",
         }),
       });
-      if (r.ok) setState("done");
-      else setState("error");
+      if (r.ok) {
+        setState("done");
+        // VK pixel lead event for ad conversion tracking
+        if (typeof window !== "undefined" && (window as any).VK) {
+          (window as any).VK.Goal("lead");
+        }
+      } else setState("error");
     } catch {
       setState("error");
     }

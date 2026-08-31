@@ -9,9 +9,10 @@ function escapeNonAscii(s: string): string {
 }
 
 async function notifyManagerTelegram(data: {
-  name: string; phone: string; telegram?: string; email?: string;
+  name: string; phone: string; telegram?: string; whatsapp?: string; email?: string;
   product_name: string; city_to?: string; country_to?: string;
   weight_kg?: string; quantity?: string; cost?: number; days_min?: number; days_max?: number;
+  source?: string;
 }) {
   const token = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN ?? "";
   const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
@@ -20,11 +21,12 @@ async function notifyManagerTelegram(data: {
   const h = (s: string) => (s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   const dest = [data.city_to, data.country_to].filter(Boolean).join(", ");
   const costLine = data.cost ? `\n💰 <b>Расчёт:</b> ${data.cost.toFixed(0)} ₽ (${data.days_min}-${data.days_max} дн.)` : "";
-  const contactLine = data.telegram
-    ? `\n📲 Telegram: ${h(data.telegram)}`
-    : data.email ? `\n📧 Email: ${h(data.email)}` : "";
+  const tgLine = data.telegram ? `\n📲 Telegram: ${h(data.telegram)}` : "";
+  const waLine = data.whatsapp ? `\n💬 WhatsApp: ${h(data.whatsapp)}` : "";
+  const emailLine = !data.telegram && !data.whatsapp && data.email ? `\n📧 Email: ${h(data.email)}` : "";
+  const sourceLine = data.source ? `\n🌐 Источник: ${h(data.source)}` : "";
 
-  const text = `🔥 <b>Новая заявка с калькулятора!</b>\n\n👤 <b>${h(data.name)}</b>\n📞 <code>${h(data.phone)}</code>${contactLine}\n📦 <b>Товар:</b> ${h(data.product_name)}\n🗺 <b>Куда:</b> ${h(dest || "—")}\n📏 <b>Вес/кол-во:</b> ${h(data.weight_kg || data.quantity || "—")}${costLine}\n\n⏱ Ответьте в течение 5 минут!`;
+  const text = `🔥 <b>Новая заявка!</b>${sourceLine}\n\n👤 <b>${h(data.name)}</b>\n📞 <code>${h(data.phone)}</code>${tgLine}${waLine}${emailLine}\n📦 <b>Товар:</b> ${h(data.product_name)}\n🗺 <b>Куда:</b> ${h(dest || "—")}\n📏 <b>Вес/кол-во:</b> ${h(data.weight_kg || data.quantity || "—")}${costLine}\n\n⏱ Ответьте в течение 5 минут!`;
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
@@ -101,6 +103,21 @@ export async function POST(req: NextRequest) {
     }),
   };
 
+  // Fire Telegram notification FIRST — independent of n8n, fast
+  await notifyManagerTelegram({
+    name:         body.name ?? '',
+    phone:        body.phone ?? '',
+    telegram:     body.telegram ?? '',
+    whatsapp:     body.whatsapp ?? '',
+    email:        body.email ?? '',
+    product_name: body.product_name ?? '',
+    city_to:      body.city_to ?? '',
+    country_to:   body.country_to ?? '',
+    weight_kg:    body.weight_kg ?? '',
+    quantity:     String(body.quantity ?? ''),
+    source:       body.source ?? '',
+  });
+
   const n8n = await fetch(`${N8N_BASE}/webhook/chinabridge-calculator`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -146,22 +163,6 @@ export async function POST(req: NextRequest) {
     margin_percent:      hasRate ? cost!.margin_percent : undefined,
     pricing_rule:        hasRate ? cost!.selected_rule_name : undefined,
   }, 'tenant-chinabridge').catch((e) => console.error('[calculator] createLead failed:', e));
-
-  // Direct Telegram notification — does NOT depend on n8n
-  await notifyManagerTelegram({
-    name:         body.name ?? '',
-    phone:        body.phone ?? '',
-    telegram:     body.telegram ?? '',
-    email:        body.email ?? '',
-    product_name: body.product_name ?? '',
-    city_to:      body.city_to ?? '',
-    country_to:   body.country_to ?? '',
-    weight_kg:    body.weight_kg ?? '',
-    quantity:     String(body.quantity ?? ''),
-    cost:         hasRate ? cost!.sale_price : undefined,
-    days_min:     hasRate ? cost!.delivery_days_min : undefined,
-    days_max:     hasRate ? cost!.delivery_days_max : undefined,
-  });
 
   return NextResponse.json({
     ok: true,
