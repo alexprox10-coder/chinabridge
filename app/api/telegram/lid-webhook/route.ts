@@ -161,16 +161,7 @@ export async function POST(req: NextRequest) {
         }).catch(() => null);
       }
 
-      await sendMsg(chatId,
-        `👋 Привет, ${firstName}!\n\nЭто ChinaBridge — доставка из Китая в Россию и Казахстан 🇨🇳\n\nНапишите какой товар хотите привезти — менеджер ответит в течение 5 минут с ценой и сроками 📦`,
-        {
-          reply_markup: {
-            keyboard: [[{ text: "📦 Хочу узнать стоимость доставки" }]],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
-        }
-      );
+      // No auto-greeting to client — leads from niche pages go to @New_LK_chinabridge_bot
     }
     return NextResponse.json({ ok: true });
   }

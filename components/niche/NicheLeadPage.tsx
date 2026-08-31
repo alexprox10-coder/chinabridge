@@ -142,12 +142,11 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                     WhatsApp
                   </a>
                   <a
-                    href={`tg://resolve?domain=ChinaBridgeLID_bot&start=${config.source}`}
+                    href={`tg://resolve?domain=New_LK_chinabridge_bot&start=${config.source}`}
                     onClick={(e) => {
                       trackGAEvent("contact", { method: "telegram", source: config.source });
-                      // Fallback to web version after 500ms if app didn't open
                       setTimeout(() => {
-                        if (document.hasFocus()) window.open(`https://t.me/ChinaBridgeLID_bot?start=${config.source}`, "_blank");
+                        if (document.hasFocus()) window.open(`https://t.me/New_LK_chinabridge_bot?start=${config.source}`, "_blank");
                       }, 500);
                     }}
                     className="flex-1 flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1a8fc4] text-white font-semibold py-3 rounded-xl transition text-sm"
