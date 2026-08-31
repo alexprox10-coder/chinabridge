@@ -109,29 +109,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // ── Manager reply bridge: forward reply to client ──────────────────────────
-  // When manager replies to a forwarded notification, send the reply to the client
-  if (String(chatId) === String(MANAGER_CHAT_ID) && message.reply_to_message) {
-    try {
-      const sql = neon(process.env.DATABASE_URL!);
-      await ensureBridgeTables(sql);
-      const replyToMsgId = message.reply_to_message.message_id as number;
-      const rows = await sql`SELECT client_chat_id, client_name FROM bot_message_map WHERE manager_msg_id = ${replyToMsgId}`;
-      if (rows.length > 0) {
-        const clientChatId = rows[0].client_chat_id;
-        const clientName   = rows[0].client_name ?? "клиент";
-        await sendMsg(clientChatId, `<b>Менеджер ChinaBridge:</b>\n${text}`);
-        await sendMsg(MANAGER_CHAT_ID, `✅ Ответ отправлен ${clientName}`);
-        return NextResponse.json({ ok: true });
-      }
-    } catch { /* fall through if table not ready */ }
-  }
-
-  // ── Ignore other manager messages (non-reply) ──────────────────────────────
-  if (String(chatId) === String(MANAGER_CHAT_ID)) {
-    return NextResponse.json({ ok: true });
-  }
-
   // ── /start handler ─────────────────────────────────────────────────────────
   if (text.startsWith("/start")) {
     const param = text.split(" ")[1] ?? "";
@@ -190,6 +167,28 @@ export async function POST(req: NextRequest) {
         }).catch(() => null);
       }
     }
+    return NextResponse.json({ ok: true });
+  }
+
+  // ── Manager reply bridge ──────────────────────────────────────────────────
+  // When manager replies to a forwarded notification → send reply to client
+  if (String(chatId) === String(MANAGER_CHAT_ID)) {
+    if (message.reply_to_message) {
+      try {
+        const sql = neon(process.env.DATABASE_URL!);
+        await ensureBridgeTables(sql);
+        const replyToMsgId = message.reply_to_message.message_id as number;
+        const rows = await sql`SELECT client_chat_id, client_name FROM bot_message_map WHERE manager_msg_id = ${replyToMsgId}`;
+        if (rows.length > 0) {
+          const clientChatId = rows[0].client_chat_id;
+          const clientName   = rows[0].client_name ?? "клиент";
+          await sendMsg(clientChatId, `<b>Менеджер ChinaBridge:</b>\n${text}`);
+          await sendMsg(MANAGER_CHAT_ID, `✅ Ответ отправлен → ${clientName}`);
+          return NextResponse.json({ ok: true });
+        }
+      } catch { /* ignore */ }
+    }
+    // Non-reply manager message — ignore silently
     return NextResponse.json({ ok: true });
   }
 
