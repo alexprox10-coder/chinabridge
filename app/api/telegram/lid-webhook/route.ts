@@ -168,11 +168,6 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Incoming message — forward to manager ──────────────────────────────────
-  // Skip auto-reply and forwarding if message is from the manager themselves
-  if (String(chatId) === String(MANAGER_CHAT_ID)) {
-    return NextResponse.json({ ok: true });
-  }
-
   // Auto-reply only on first message (not on every subsequent message)
   let isFirstMessage = false;
   try {
