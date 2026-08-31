@@ -113,12 +113,11 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                   Напишите менеджеру в Telegram — ответим за 5 минут.
                 </div>
                 <a
-                  href={`tg://resolve?domain=New_LK_chinabridge_bot&start=${config.source}`}
+                  href={`https://t.me/New_LK_chinabridge_bot?start=${config.source}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={() => {
                     trackGAEvent("contact", { method: "telegram_after_form", source: config.source });
-                    setTimeout(() => {
-                      if (document.hasFocus()) window.open(`https://t.me/New_LK_chinabridge_bot?start=${config.source}`, "_blank");
-                    }, 500);
                   }}
                   className="inline-flex items-center justify-center gap-2 w-full bg-[#229ED9] hover:bg-[#1a8fc4] text-white font-semibold py-3.5 rounded-xl transition text-sm mb-4"
                 >
@@ -141,13 +140,12 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
 
                 <div className="flex gap-3 mb-4">
                   <a
-                    href="whatsapp://send?phone=79145889874"
-                    onClick={(e) => {
+                    href="https://wa.me/79145889874"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
                       trackGAEvent("contact", { method: "whatsapp", source: config.source });
                       if (typeof window !== "undefined" && (window as any).VK) (window as any).VK.Goal("lead");
-                      setTimeout(() => {
-                        if (document.hasFocus()) window.open("https://wa.me/79145889874", "_blank");
-                      }, 500);
                     }}
                     className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1db954] text-white font-semibold py-3 rounded-xl transition text-sm"
                   >
@@ -155,13 +153,12 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                     WhatsApp
                   </a>
                   <a
-                    href={`tg://resolve?domain=ChinaBridgeLID_bot&start=${config.source}`}
-                    onClick={(e) => {
+                    href={`https://t.me/ChinaBridgeLID_bot?start=${config.source}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
                       trackGAEvent("contact", { method: "telegram", source: config.source });
                       if (typeof window !== "undefined" && (window as any).VK) (window as any).VK.Goal("lead");
-                      setTimeout(() => {
-                        if (document.hasFocus()) window.open(`https://t.me/ChinaBridgeLID_bot?start=${config.source}`, "_blank");
-                      }, 500);
                     }}
                     className="flex-1 flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1a8fc4] text-white font-semibold py-3 rounded-xl transition text-sm"
                   >
