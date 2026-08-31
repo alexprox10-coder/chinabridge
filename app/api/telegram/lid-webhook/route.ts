@@ -143,15 +143,31 @@ export async function POST(req: NextRequest) {
         }
       );
     } else {
-      // Default /start — лид с вопросом
+      // Default /start — notify manager immediately (don't wait for a message)
+      if (MANAGER_CHAT_ID) {
+        const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
+        const replyLink = message.from?.username
+          ? `t.me/${message.from.username}`
+          : `tg://user?id=${chatId}`;
+        const source = param ? ` (источник: ${param})` : " (с сайта)";
+        fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: MANAGER_CHAT_ID,
+            text: `👁 <b>Новый лид открыл бота</b>${source}\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>\n\n📲 Написать: ${replyLink}\n\n⚠️ Ещё не написал — напишите первым!`,
+            parse_mode: "HTML",
+          }),
+        }).catch(() => null);
+      }
+
       await sendMsg(chatId,
-        `👋 Привет, ${firstName}!\n\nЯ бот ChinaBridge 🇨🇳\n\nНапишите ваш вопрос или товар который хотите доставить из Китая — менеджер ответит в течение 5 минут.`,
+        `👋 Привет, ${firstName}!\n\nЭто ChinaBridge — доставка из Китая в Россию и Казахстан 🇨🇳\n\nНапишите какой товар хотите привезти — менеджер ответит в течение 5 минут с ценой и сроками 📦`,
         {
           reply_markup: {
-            inline_keyboard: [[
-              { text: "🌐 Сайт", url: "https://chinabridge.pro" },
-              { text: "📊 Калькулятор", url: "https://chinabridge.pro/ai-calculator" },
-            ]],
+            keyboard: [[{ text: "📦 Хочу узнать стоимость доставки" }]],
+            resize_keyboard: true,
+            one_time_keyboard: true,
           },
         }
       );

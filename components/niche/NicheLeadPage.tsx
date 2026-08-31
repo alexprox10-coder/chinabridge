@@ -195,7 +195,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
 
                 <div className="flex gap-3 mt-2">
                   <a
-                    href="https://t.me/ChinaBridgeLID_bot"
+                    href="{`https://t.me/ChinaBridgeLID_bot?start=${config.source}`}"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1a8fc4] text-white font-semibold py-2.5 rounded-xl transition text-sm"
