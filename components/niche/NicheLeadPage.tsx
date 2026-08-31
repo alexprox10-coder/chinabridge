@@ -57,8 +57,8 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           <span className="text-xl">🇨🇳</span>
           <span className="font-bold text-white">ChinaBridge</span>
         </Link>
-        <a href="tel:+78005551234" className="text-slate-400 hover:text-white text-sm transition">
-          Бесплатная консультация →
+        <a href="tel:+79145889874" className="text-slate-400 hover:text-white text-sm transition">
+          +7 914 588-98-74 →
         </a>
       </header>
 
@@ -208,7 +208,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                     Написать в Telegram
                   </a>
                   <a
-                    href="https://wa.me/79991234567"
+                    href="https://wa.me/79145889874"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1db954] text-white font-semibold py-2.5 rounded-xl transition text-sm"
