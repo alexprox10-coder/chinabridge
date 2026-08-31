@@ -6,6 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const LID_BOT_TOKEN     = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
+const NEW_LK_BOT_TOKEN  = process.env.NEW_LK_BOT_TOKEN ?? LID_BOT_TOKEN;
 const MONITOR_BOT_TOKEN = process.env.MONITOR_BOT_TOKEN ?? LID_BOT_TOKEN;
 const PARSER_BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN ?? "";  // @ParserLid_n8n_bot
 const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID  ?? "8979087725";
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
           ? `t.me/${message.from.username}`
           : `tg://user?id=${chatId}`;
         const source = param ? ` (источник: ${param})` : " (с сайта)";
-        fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
+        fetch(`https://api.telegram.org/bot${NEW_LK_BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -174,7 +175,7 @@ export async function POST(req: NextRequest) {
     const replyLink = message.from?.username
       ? `t.me/${message.from.username}`
       : `tg://user?id=${chatId}`;
-    await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot${NEW_LK_BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
