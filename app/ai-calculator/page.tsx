@@ -164,6 +164,18 @@ export default function AICalculatorPage() {
             ))}
           </div>
 
+          {/* Proof strip — пример результата перед формой */}
+          <div className="mb-4 flex items-center gap-3 bg-emerald-900/20 border border-emerald-700/30 rounded-xl px-4 py-3">
+            <span className="text-xl shrink-0">🎧</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-[#8899aa]">
+                Пример: наушники TWS (¥38) → Wildberries →{" "}
+                <span className="text-emerald-400 font-semibold">маржа 28.6%, +572 ₽/шт, ROI 107%</span>
+              </p>
+            </div>
+            <span className="text-emerald-400 text-xs font-semibold shrink-0">Пример ↓</span>
+          </div>
+
           {/* Funnel — explicit min-h prevents CLS on hydration */}
           <div id="calculator-top" className="min-h-[420px]">
             <DynamicFunnel />

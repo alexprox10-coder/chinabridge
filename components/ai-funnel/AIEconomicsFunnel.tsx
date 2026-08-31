@@ -91,10 +91,10 @@ interface FunnelState {
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Алматы", "Астана"];
 
 const QUICK_EXAMPLES = [
-  { emoji: "👟", label: "Кроссовки",    product_name: "Кроссовки",          product_name_cn: "运动鞋",   product_name_en: "sneakers",            unit_price_cny: 80,  weight_kg: 0.8,  moq: 10 },
-  { emoji: "👗", label: "Одежда",       product_name: "Одежда",              product_name_cn: "服装",     product_name_en: "clothing",            unit_price_cny: 35,  weight_kg: 0.3,  moq: 50 },
-  { emoji: "🎧", label: "Наушники TWS", product_name: "Наушники TWS",        product_name_cn: "蓝牙耳机", product_name_en: "bluetooth earphones", unit_price_cny: 45,  weight_kg: 0.15, moq: 20 },
-  { emoji: "🧸", label: "Игрушки",      product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
+  { emoji: "👟", label: "Кроссовки",    margin_hint: "~26% маржа", product_name: "Кроссовки",          product_name_cn: "运动鞋",   product_name_en: "sneakers",            unit_price_cny: 80,  weight_kg: 0.8,  moq: 10 },
+  { emoji: "👗", label: "Одежда",       margin_hint: "~31% маржа", product_name: "Одежда",              product_name_cn: "服装",     product_name_en: "clothing",            unit_price_cny: 35,  weight_kg: 0.3,  moq: 50 },
+  { emoji: "🎧", label: "Наушники TWS", margin_hint: "~28% маржа", product_name: "Наушники TWS",        product_name_cn: "蓝牙耳机", product_name_en: "bluetooth earphones", unit_price_cny: 45,  weight_kg: 0.15, moq: 20 },
+  { emoji: "🧸", label: "Игрушки",      margin_hint: "~33% маржа", product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
 ];
 
 const ANON_LIMIT = 3; // 3 free full calculations per day
@@ -555,8 +555,11 @@ function PaywallBlock({
             {usedCount} / {ANON_LIMIT} бесплатных расчётов использовано
           </p>
           <h2 className="text-lg font-bold text-white leading-tight">
-            Продолжить анализировать товары?
+            Видите потенциал? Привезём товар за вас
           </h2>
+          <p className="text-xs text-[#8899aa] mt-1 leading-relaxed">
+            Менеджер найдёт поставщика и рассчитает поставку — бесплатно, за 15 минут
+          </p>
           {ec && (
             <div className="mt-2 flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
               <span className="text-xl">{ec.verdict_emoji}</span>
@@ -1309,7 +1312,7 @@ export default function AIEconomicsFunnel() {
 
           {/* Quick examples — instant calculation without URL */}
           <div>
-            <p className="text-xs font-medium text-white mb-2">Выберите категорию — расчёт за 15 сек:</p>
+            <p className="text-xs font-medium text-white mb-2">Нажмите — покажем расчёт за 15 сек:</p>
             <div className="grid grid-cols-2 gap-2">
               {QUICK_EXAMPLES.map(ex => (
                 <button
@@ -1320,7 +1323,7 @@ export default function AIEconomicsFunnel() {
                   <span className="text-lg leading-none">{ex.emoji}</span>
                   <div>
                     <p className="text-xs font-medium text-white">{ex.label}</p>
-                    <p className="text-[10px] text-[#8899aa]">≈ ¥{ex.unit_price_cny}/шт</p>
+                    <p className="text-[10px] text-emerald-400 font-medium">{ex.margin_hint}</p>
                   </div>
                 </button>
               ))}
