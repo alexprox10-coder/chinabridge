@@ -306,28 +306,56 @@ export async function POST(req: NextRequest) {
 
   // Lead interactions — non-admin users
   if (ALLOWED.length > 0 && !ALLOWED.includes(key)) {
+    const managerId = ALLOWED[0];
     if (text.startsWith("/start")) {
+      // Notify manager immediately — lead is in the bot
+      if (managerId) {
+        const userLink = message.from?.username
+          ? `@${message.from.username}`
+          : `[${firstName}](tg://user?id=${chatId})`;
+        await tg("sendMessage", {
+          chat_id: managerId,
+          text: `🔥 *Новый лид открыл бот!*\n\n👤 ${userLink} (id: \`${chatId}\`)\n\nОн ждёт ответа — напиши ему прямо сейчас:\nhttps://t.me/${message.from?.username ?? `user?id=${chatId}`}`,
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [[
+              { text: "✉️ Написать лиду", url: message.from?.username ? `https://t.me/${message.from.username}` : `tg://user?id=${chatId}` },
+            ]],
+          },
+        });
+      }
+      // Ask lead to write their question
       await tg("sendMessage", {
         chat_id: chatId,
-        text: `👋 Привет, ${firstName}!\n\nВаш расчёт уже у менеджера — мы свяжемся с вами в ближайшее время.\n\nЕсть вопросы? Напишите прямо сюда!`,
+        text: `👋 Привет, ${firstName}!\n\nЯ помогу рассчитать доставку товаров из Китая.\n\n*Напишите, что хотите привезти* — товар, примерное количество или вес.\n\nМенеджер ответит в течение 5 минут 🚀`,
         parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: [[
-            { text: "🌐 ChinaBridge", url: "https://chinabridge.pro" },
-            { text: "🔢 Новый расчёт", url: "https://chinabridge.pro/ai-calculator" },
-          ]],
+          keyboard: [
+            [{ text: "📦 Хочу заказать товар из Китая" }],
+            [{ text: "🔢 Рассчитать стоимость доставки" }],
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true,
         },
       });
     } else {
-      const managerId = ALLOWED[0];
+      // Forward every message to manager
       if (managerId) {
+        const userLink = message.from?.username
+          ? `@${message.from.username}`
+          : `[${firstName}](tg://user?id=${chatId})`;
         await tg("sendMessage", {
           chat_id: managerId,
-          text: `💬 *Вопрос от лида*\n@${message.from?.username ?? firstName} (id: \`${chatId}\`)\n\n${text}`,
+          text: `💬 *Сообщение от лида*\n${userLink} (id: \`${chatId}\`)\n\n${text}\n\nОтветить: https://t.me/${message.from?.username ?? `user?id=${chatId}`}`,
           parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [[
+              { text: "✉️ Ответить", url: message.from?.username ? `https://t.me/${message.from.username}` : `tg://user?id=${chatId}` },
+            ]],
+          },
         });
       }
-      await send(chatId, "✅ Ваше сообщение получено! Менеджер ответит в ближайшее время.");
+      await send(chatId, "✅ Получил! Менеджер ответит в течение 5 минут.");
     }
     return NextResponse.json({ ok: true });
   }
