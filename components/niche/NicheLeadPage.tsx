@@ -107,7 +107,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
 
           {/* CTA buttons — visible immediately, before any scroll */}
           <div className="flex flex-col gap-3 mb-6">
-            <
+            <a
               href={tgHref}
               target="_blank"
               rel="noopener noreferrer"
