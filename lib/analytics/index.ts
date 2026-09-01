@@ -88,6 +88,14 @@ export const analytics = {
   aiFunnelSupplierClick: ()                               => fire("ai_funnel_supplier_click",  "ai_funnel_supplier_click", { category: "ai_funnel" }),
   aiFunnelImportClick:   ()                               => fire("ai_funnel_import_click",    "ai_funnel_import_click",   { category: "ai_funnel" }),
 
+  // ── Delivery / Import Funnel ─────────────────────────────────────────────
+  supplierExistsYes:            ()                           => fire("supplier_exists_yes",            "supplier_exists_yes",            { category: "delivery_funnel" }),
+  supplierExistsNo:             ()                           => fire("supplier_exists_no",             "supplier_exists_no",             { category: "delivery_funnel" }),
+  deliveryCalculationStarted:   ()                           => fire("delivery_calculation_started",   "delivery_calculation_started",   { category: "delivery_funnel" }),
+  deliveryCalculationCompleted: (p?: { verdict?: string })  => fire("delivery_calculation_completed", "delivery_calculation_completed", { category: "delivery_funnel", ...p }),
+  importQuoteRequested:         (p?: { source?: string })   => fire("import_quote_requested",         "import_quote_requested",         { category: "delivery_funnel", ...p }),
+  calculatorToDeliveryClick:    ()                           => fire("calculator_to_delivery_click",   "calculator_to_delivery_click",   { category: "delivery_funnel" }),
+
   // ── Monetization Funnel ───────────────────────────────────────────────────
   paywallShown:      (p?: { count?: number; verdict?: string }) => fire("paywall_shown",       "paywall_shown",       { category: "monetization", ...p }),
   paywallProClicked: ()                                          => fire("paywall_pro_clicked", "paywall_pro_clicked", { category: "monetization" }),

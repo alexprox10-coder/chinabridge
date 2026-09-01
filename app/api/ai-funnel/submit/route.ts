@@ -100,7 +100,7 @@ async function saveProductAnalysis(params: {
 async function sendTelegramAlert(p: {
   leadId: string; name: string; phone: string; telegram: string;
   product: string; marginPct: number; verdict: string; score?: number;
-  priority: string; marketplace: string; cityTo: string;
+  priority: string; marketplace: string; cityTo: string; supplierExists?: boolean | null;
 }): Promise<void> {
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
@@ -108,6 +108,7 @@ async function sendTelegramAlert(p: {
 
   const ve = p.verdict === 'go' ? '✅' : p.verdict === 'maybe' ? '⚠️' : '❌';
   const pe = p.priority === 'HIGH' ? '🔥' : p.priority === 'MEDIUM' ? '⚡' : '💤';
+  const se = p.supplierExists === true ? '🏭 Поставщик: есть (+15 скор)' : p.supplierExists === false ? '🔍 Поставщик: ищет' : '';
 
   const lines = [
     `${pe} <b>Новый лид — AI калькулятор</b>`,
@@ -120,6 +121,7 @@ async function sendTelegramAlert(p: {
     `🏪 ${p.marketplace}${p.cityTo ? ' → ' + p.cityTo : ''}`,
     `📊 Маржа: <b>${p.marginPct.toFixed(1)}%</b>`,
     `${ve} Вердикт: ${p.verdict}${p.score ? ` · Скор ${p.score}/100` : ''}`,
+    se,
     ``,
     `🆔 <code>${p.leadId}</code>`,
   ].filter(Boolean).join('\n');
@@ -260,6 +262,7 @@ export async function POST(req: NextRequest) {
         supplier_risk:            economics.supplier_risk?.level,
         tariff_date:              mp?.tariff_date,
         ai_analysis:              aiAnalysis,
+        supplier_exists:          body.supplier_exists ?? null,
         source:                   'ai_economics_funnel',
       }),
       source:              'LEAD_MAGNET_UNIT_ECONOMICS',
@@ -297,16 +300,17 @@ export async function POST(req: NextRequest) {
   // Прямое Telegram-уведомление — await чтобы не обрывалось на Vercel serverless
   await sendTelegramAlert({
     leadId,
-    name:      String(body.name ?? ''),
+    name:           String(body.name ?? ''),
     phone,
     telegram,
-    product:   String(body.product_name ?? ''),
-    marginPct: economics.margin_pct,
-    verdict:   economics.verdict,
-    score:     economics.product_score?.total,
+    product:        String(body.product_name ?? ''),
+    marginPct:      economics.margin_pct,
+    verdict:        economics.verdict,
+    score:          economics.product_score?.total,
     priority,
-    marketplace: mp?.label ?? marketplaceId,
-    cityTo:    String(body.city_to ?? ''),
+    marketplace:    mp?.label ?? marketplaceId,
+    cityTo:         String(body.city_to ?? ''),
+    supplierExists: body.supplier_exists as boolean | null | undefined,
   });
 
   const enriched = { ...economics, ai_analysis: aiAnalysis };

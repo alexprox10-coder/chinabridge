@@ -14,7 +14,7 @@ import type {
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 // "product" step — fallback only when AI extraction fails
-type Step = "input" | "analyzing" | "product" | "marketplace" | "calculating" | "preview" | "contact" | "success";
+type Step = "supplier_check" | "input" | "analyzing" | "product" | "marketplace" | "calculating" | "preview" | "contact" | "success";
 
 interface ProductData {
   product_name:   string;
@@ -754,7 +754,7 @@ export default function AIEconomicsFunnel() {
   const handleCalcRef = useRef<(() => Promise<void>) | null>(null);
 
   const [s, setS] = useState<FunnelState>({
-    step:              "input",
+    step:              "supplier_check",
     urlInput:          "",
     descInput:         "",
     product:           EMPTY_PRODUCT,
@@ -789,6 +789,7 @@ export default function AIEconomicsFunnel() {
   const [showExitIntent,  setShowExitIntent]  = useState(false);
   const [showPaywall,     setShowPaywall]     = useState(false);
   const [showProBanner,   setShowProBanner]   = useState(false);
+  const [supplierExists,  setSupplierExists]  = useState<boolean | null>(null);
   const [showHistory,     setShowHistory]     = useState(false);
   const [historyItems,    setHistoryItems]    = useState<HistoryItem[] | null>(null);
   const [historyCount,    setHistoryCount]    = useState(0);
@@ -1246,9 +1247,10 @@ export default function AIEconomicsFunnel() {
           price_currency: ed ? ed.price_currency        : s.product.price_currency,
           sale_price:     parseFloat(s.salePrice) || parseFloat(s.product.sale_price) || 0,
           quantity:       parseInt(s.product.quantity) || 1,
-          marketplace:    s.marketplace,
-          city_to:        s.city_to,
-          weight_kg:      ed ? (ed.weight_kg ?? undefined) : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
+          marketplace:     s.marketplace,
+          city_to:         s.city_to,
+          weight_kg:       ed ? (ed.weight_kg ?? undefined) : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
+          supplier_exists: supplierExists,
         }),
       });
       const data = await res.json();
@@ -1305,11 +1307,12 @@ export default function AIEconomicsFunnel() {
           price_currency: ed ? ed.price_currency        : s.product.price_currency,
           sale_price:     parseFloat(s.salePrice) || parseFloat(s.product.sale_price) || 0,
           quantity:       parseInt(s.product.quantity) || 1,
-          marketplace:    s.marketplace,
-          city_to:        s.city_to,
-          weight_kg:      ed
+          marketplace:     s.marketplace,
+          city_to:         s.city_to,
+          weight_kg:       ed
             ? (ed.weight_kg ?? undefined)
             : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
+          supplier_exists: supplierExists,
         }),
       });
       if (resp.ok) {
@@ -1451,6 +1454,65 @@ export default function AIEconomicsFunnel() {
             <div className="h-full bg-[#00A86B] rounded-full transition-all duration-700" style={{ width: `${progressPct}%` }} />
           </div>
           <span className="text-xs text-[#8899aa] whitespace-nowrap">AI Unit Economics</span>
+        </div>
+      )}
+
+      {/* ── SUPPLIER CHECK ─────────────────────────────────────────────────────── */}
+      {s.step === "supplier_check" && (
+        <div className="flex flex-col gap-6 items-center py-4">
+          <div className="text-center">
+            <div className="text-3xl mb-3">🏭</div>
+            <h2 className="text-xl font-bold text-white mb-2">У вас уже есть поставщик в Китае?</h2>
+            <p className="text-sm text-[#8899aa] max-w-xs mx-auto">
+              Это поможет нам показать нужный расчёт — юнит-экономика или стоимость доставки
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 w-full max-w-sm">
+            <button
+              onClick={() => {
+                setSupplierExists(true);
+                analytics.supplierExistsYes?.();
+                go("input");
+              }}
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-xl border border-[#243a5e] bg-[#0d1f38] hover:bg-[#162d50] hover:border-[#00A86B] transition-all text-left"
+            >
+              <span className="text-2xl">✅</span>
+              <div>
+                <div className="font-semibold text-white text-sm">Да, есть поставщик</div>
+                <div className="text-xs text-[#8899aa]">Рассчитаю доставку и юнит-экономику</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                setSupplierExists(false);
+                analytics.supplierExistsNo?.();
+                go("input");
+              }}
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-xl border border-[#243a5e] bg-[#0d1f38] hover:bg-[#162d50] hover:border-[#4a9eff] transition-all text-left"
+            >
+              <span className="text-2xl">🔍</span>
+              <div>
+                <div className="font-semibold text-white text-sm">Нет, ищу поставщика</div>
+                <div className="text-xs text-[#8899aa]">Помогу с поиском и оценкой прибыльности</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                setSupplierExists(null);
+                go("input");
+              }}
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-xl border border-[#1a2a42] bg-[#0a1628] hover:bg-[#0d1f38] transition-all text-left"
+            >
+              <span className="text-2xl">🤔</span>
+              <div>
+                <div className="font-semibold text-[#8899aa] text-sm">Пока не уверен</div>
+                <div className="text-xs text-[#556677]">Просто хочу посчитать</div>
+              </div>
+            </button>
+          </div>
         </div>
       )}
 

@@ -7,10 +7,10 @@ import Link from "next/link";
 import { trackGAEvent } from "@/lib/analytics/ga";
 
 const checks = [
-  "ГТД с номером — карточки WB и Ozon не блокируются (листинг без проблем)",
-  "Оплата поставщику в юанях — Swift не нужен, берём на себя",
-  "Один менеджер: поставщик → доставка → таможня → склад МП",
-  "Казахстан · Россия · Беларусь · Армения · Узбекистан — от 10 дней",
+  "Не нужно менять поставщика — работаем с вашей фабрикой",
+  "Сборные партии от небольших объёмов — не нужен полный контейнер",
+  "Один менеджер: забор → консолидация → перевозка → оформление → склад",
+  "Россия · Казахстан · другие страны ЕАЭС — от 10 дней",
 ];
 
 function RouteMap() {
@@ -212,16 +212,16 @@ export default function Hero() {
           <div>
             <div className="fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse"/>
-              Белый импорт · официальные документы · с 2019 года
+              Сборная поставка из Китая · ваш поставщик · с 2019 года
             </div>
 
             <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-5">
-              Импорт из Китая<br/>
-              <span className="text-gradient">под ключ — вы продаёте</span>
+              Поставщик в Китае<br/>
+              <span className="text-gradient">уже есть? Привезём.</span>
             </h1>
 
             <p className="fade-up text-lg text-[#8899aa] leading-relaxed mb-7 max-w-lg">
-              Документы, поставщик, оплата в юанях, таможня — наша работа. Вы получаете товар на складе маркетплейса с полным пакетом документов. Без пяти подрядчиков.
+              Не меняйте фабрику. Мы заберём товар у вашего поставщика, организуем консолидацию и доставку в РФ или Казахстан с необходимым оформлением.
             </p>
 
             <ul className="fade-up flex flex-col gap-2.5 mb-9">
@@ -239,7 +239,7 @@ export default function Hero() {
                 className="btn-primary"
                 onClick={() => trackGAEvent("hero_calc_click")}
               >
-                Рассчитать прибыль <ArrowRight className="w-4 h-4"/>
+                Рассчитать поставку <ArrowRight className="w-4 h-4"/>
               </Link>
               <Link
                 href="#services"
