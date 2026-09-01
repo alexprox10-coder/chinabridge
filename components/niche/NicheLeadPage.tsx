@@ -20,10 +20,16 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
     telegram: "", whatsapp: "",
   });
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [phoneError, setPhoneError] = useState(false);
   const submittedRef = useRef(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.phone.trim()) {
+      setPhoneError(true);
+      return;
+    }
+    setPhoneError(false);
     if (submittedRef.current) return;
     submittedRef.current = true;
     setState("loading");
@@ -170,14 +176,20 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                     onChange={set("product_name")}
                     className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition"
                   />
-                  <input
-                    type="tel"
-                    placeholder="+7 (999) 000-00-00"
-                    value={form.phone}
-                    onChange={set("phone")}
-                    required
-                    className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 transition"
-                  />
+                  <div>
+                    <input
+                      type="tel"
+                      placeholder="+7 (999) 000-00-00"
+                      value={form.phone}
+                      onChange={(e) => { set("phone")(e); setPhoneError(false); }}
+                      className={`w-full bg-slate-800 border text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none transition ${phoneError ? "border-red-500 ring-1 ring-red-500" : "border-slate-700 focus:border-red-500"}`}
+                    />
+                    {phoneError && (
+                      <div className="mt-1 text-red-400 text-xs font-medium pl-1">
+                        Введите номер телефона — мы перезвоним в течение 5 минут
+                      </div>
+                    )}
+                  </div>
 
                   {state === "error" && (
                     <div className="text-red-400 text-sm">
