@@ -164,8 +164,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
             ) : (
               <>
                 <div className="mb-6">
-                  <div className="text-lg font-semibold mb-1">Получить расчёт стоимости</div>
-                  <div className="text-slate-500 text-sm">Ответим за 5 минут</div>
+                  <div className="text-lg font-semibold">Получить расчёт стоимости</div>
                 </div>
 
                 <form onSubmit={submit} className="space-y-4">
