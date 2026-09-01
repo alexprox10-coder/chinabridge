@@ -70,7 +70,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
       setForm(prev => ({ ...prev, [k]: e.target.value }));
   }
 
-  const tgHref = `tg://resolve?domain=ChinaBridgeLID_bot&start=${config.source}`;
+  const tgHref = `https://t.me/ChinaBridgeLID_bot?start=${config.source}`;
   const waHref = "https://wa.me/79145889874?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%A5%D0%BE%D1%87%D1%83+%D1%83%D0%B7%D0%BD%D0%B0%D1%82%D1%8C+%D0%BE+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B5+%D0%B8%D0%B7+%D0%9A%D0%B8%D1%82%D0%B0%D1%8F";
 
   const TgIcon = () => (
@@ -109,6 +109,8 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           <div className="flex flex-col gap-3 mb-6">
             <a
               href={tgHref}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => trackContact("telegram_hero", config.source)}
               className="flex items-center justify-center gap-2.5 bg-[#229ED9] text-white font-bold py-4 rounded-2xl text-base shadow-lg shadow-[#229ED9]/20"
             >
@@ -117,6 +119,8 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
             </a>
             <a
               href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => trackContact("whatsapp_hero", config.source)}
               className="flex items-center justify-center gap-2.5 bg-[#25D366] text-white font-bold py-4 rounded-2xl text-base shadow-lg shadow-[#25D366]/20"
             >
