@@ -1522,6 +1522,28 @@ export default function AIEconomicsFunnel() {
           {/* Market news + currency rates */}
           <MarketNewsBar />
 
+          {/* Context header based on supplier answer */}
+          {supplierExists === true && (
+            <div className="flex items-start gap-3 bg-[#00A86B]/10 border border-[#00A86B]/30 rounded-xl px-4 py-3">
+              <span className="text-lg">🏭</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">Считаем юнит-экономику от вашего поставщика</p>
+                <p className="text-xs text-[#8899aa] mt-0.5">Введите ссылку на товар или закупочную цену — рассчитаем маржу и стоимость доставки</p>
+              </div>
+              <button onClick={() => { go("supplier_check"); }} className="text-[10px] text-[#5a7899] hover:text-[#8899aa] flex-shrink-0 mt-0.5">изменить</button>
+            </div>
+          )}
+          {supplierExists === false && (
+            <div className="flex items-start gap-3 bg-[#4a9eff]/10 border border-[#4a9eff]/30 rounded-xl px-4 py-3">
+              <span className="text-lg">🔍</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">Проверим прибыльность — поможем найти поставщика</p>
+                <p className="text-xs text-[#8899aa] mt-0.5">Введите товар — покажем маржу и ссылки на фабрики</p>
+              </div>
+              <button onClick={() => { go("supplier_check"); }} className="text-[10px] text-[#5a7899] hover:text-[#8899aa] flex-shrink-0 mt-0.5">изменить</button>
+            </div>
+          )}
+
           {/* Quick examples — instant calculation without URL */}
           <div>
             <p className="text-xs font-medium text-white mb-2">Нажмите — покажем расчёт за 15 сек:</p>
@@ -1580,7 +1602,11 @@ export default function AIEconomicsFunnel() {
             disabled={isPaidPro ? (!s.urlInput.trim() && !s.descInput.trim()) : false}
             className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
           >
-            {!isPaidPro && calcCount >= effectiveLimit ? "🔒 Лимит — разблокировать PRO" : "🚀 Рассчитать прибыль"}
+            {!isPaidPro && calcCount >= effectiveLimit
+              ? "🔒 Лимит — разблокировать PRO"
+              : supplierExists === true
+              ? "🚛 Рассчитать юнит-экономику"
+              : "🚀 Рассчитать прибыль"}
           </button>
 
           {isPaidPro ? (
@@ -1866,8 +1892,8 @@ export default function AIEconomicsFunnel() {
             </p>
           </div>
 
-          {/* Supplier links — shown when user typed product name (no URL) */}
-          {s.extractedData?.source_platform === "description" && s.extractedData.product_name && (() => {
+          {/* Supplier links — shown when user typed product name (no URL) AND has no supplier yet */}
+          {supplierExists !== true && s.extractedData?.source_platform === "description" && s.extractedData.product_name && (() => {
             const cn = encodeURIComponent(s.extractedData!.product_name_cn || s.extractedData!.product_name);
             const en = encodeURIComponent(s.extractedData!.product_name_en || s.extractedData!.product_name);
             return (
@@ -1972,21 +1998,30 @@ export default function AIEconomicsFunnel() {
 
             {/* Direct cargo CTA */}
             <a
-              href="https://t.me/ChinaBridgeLID_bot?start=calc"
+              href={supplierExists === true
+                ? "https://t.me/chinabridge_manager?text=Хочу+рассчитать+доставку+от+моего+поставщика"
+                : "https://t.me/ChinaBridgeLID_bot?start=calc"}
               target="_blank" rel="noopener noreferrer"
-              onClick={() => analytics.aiFunnelImportClick?.()}
+              onClick={() => {
+                analytics.aiFunnelImportClick?.();
+                if (supplierExists === true) analytics.calculatorToDeliveryClick?.();
+              }}
               className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#00A86B]/20 to-[#00A86B]/5 border border-[#00A86B]/40 rounded-xl px-4 py-4 hover:from-[#00A86B]/30 hover:border-[#00A86B]/60 transition-all group"
             >
               <div>
                 <p className="text-sm font-bold text-white">
-                  {s.economics?.verdict === "green"
+                  {supplierExists === true
+                    ? "🚛 Рассчитать стоимость доставки от вашего поставщика"
+                    : s.economics?.verdict === "green"
                     ? "🚀 Товар выглядит прибыльным — привезём за вас!"
                     : s.economics?.verdict === "red"
                     ? "🔍 Найдём более выгодного поставщика"
                     : "🚢 Хотите привезти этот товар?"}
                 </p>
                 <p className="text-xs text-[#8899aa] mt-0.5">
-                  {s.economics?.verdict === "green"
+                  {supplierExists === true
+                    ? "Менеджер уточнит маршрут и выставит счёт с полной стоимостью →"
+                    : s.economics?.verdict === "green"
                     ? "Менеджер рассчитает поставку и организует доставку под ключ →"
                     : s.economics?.verdict === "red"
                     ? "Поможем снизить закупочную цену — расчёт за 15 минут →"
