@@ -107,8 +107,8 @@ export async function POST(req: NextRequest) {
     }),
   };
 
-  // Fire Telegram notification — non-blocking, don't hold up user
-  notifyManagerTelegram({
+  // Notify manager — must be awaited in Vercel serverless or it never fires
+  await notifyManagerTelegram({
     name:         body.name ?? '',
     phone:        body.phone ?? '',
     telegram:     body.telegram ?? '',
