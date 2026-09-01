@@ -75,16 +75,19 @@ export async function POST(req: NextRequest) {
   };
 
   // Cost Engine: select pricing rule → compute sale price, profit, margin
-  const cost = await calculateCostBreakdown({
-    country_from: body.country_from ?? 'China',
-    city_from: body.city_from ?? '',
-    country_to: body.country_to ?? 'Russia',
-    city_to: body.city_to ?? '',
-    weight: body.weight_kg ? parseFloat(body.weight_kg) : undefined,
-    volume: body.volume_m3 ? parseFloat(body.volume_m3) : undefined,
-    packages: body.packages_count ? parseInt(body.packages_count) : undefined,
-    customer_type: body.customer_type ?? undefined,
-  }).catch(() => null);
+  const cost = await Promise.race([
+    calculateCostBreakdown({
+      country_from: body.country_from ?? 'China',
+      city_from: body.city_from ?? '',
+      country_to: body.country_to ?? 'Russia',
+      city_to: body.city_to ?? '',
+      weight: body.weight_kg ? parseFloat(body.weight_kg) : undefined,
+      volume: body.volume_m3 ? parseFloat(body.volume_m3) : undefined,
+      packages: body.packages_count ? parseInt(body.packages_count) : undefined,
+      customer_type: body.customer_type ?? undefined,
+    }),
+    new Promise<null>(r => setTimeout(() => r(null), 8000)),
+  ]).catch(() => null);
 
   const hasRate = cost && cost.sale_price > 0;
 
