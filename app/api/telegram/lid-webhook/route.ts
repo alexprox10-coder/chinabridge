@@ -168,7 +168,10 @@ export async function POST(req: NextRequest) {
         const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
         const replyLink = message.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`;
         const source = param ? ` (источник: ${param})` : " (с сайта)";
-        await fetch(`https://api.telegram.org/bot${NEW_LK_BOT_TOKEN}/sendMessage`, {
+        // Use personal bot (PARSER_BOT_TOKEN) as primary — manager has definitely started it.
+        // Fall back to NEW_LK_BOT_TOKEN → LID_BOT_TOKEN if personal bot is not configured.
+        const notifyToken = PARSER_BOT_TOKEN || NEW_LK_BOT_TOKEN;
+        const notifyRes = await fetch(`https://api.telegram.org/bot${notifyToken}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -176,7 +179,11 @@ export async function POST(req: NextRequest) {
             text: `👁 <b>Новый лид открыл бота</b>${source}\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>\n\n📲 Написать: ${replyLink}\n\n⚠️ Приветствие отправлено — ждите сообщения!`,
             parse_mode: "HTML",
           }),
-        }).catch(() => null);
+        }).catch((e) => { console.error("[lid-webhook] notify fetch error:", e); return null; });
+        if (notifyRes) {
+          const notifyData = await notifyRes.json().catch(() => null);
+          if (!notifyData?.ok) console.error("[lid-webhook] notify TG error:", JSON.stringify(notifyData));
+        }
       }
     }
     return NextResponse.json({ ok: true });
@@ -224,6 +231,7 @@ export async function POST(req: NextRequest) {
   // Forward to manager via LID_BOT_TOKEN so replies can be bridged back
   const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const replyLink = message.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`;
+  console.log(`[lid-webhook] forwarding msg from ${chatId} to manager ${MANAGER_CHAT_ID}`);
   const notifRes = await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -237,6 +245,7 @@ export async function POST(req: NextRequest) {
   // Save mapping: manager notification message_id → client chat_id
   try {
     const notifData = await notifRes.json();
+    if (!notifData?.ok) console.error("[lid-webhook] forward TG error:", JSON.stringify(notifData));
     if (notifData?.ok && notifData?.result?.message_id) {
       await sql`
         INSERT INTO bot_message_map (manager_msg_id, client_chat_id, client_name)
