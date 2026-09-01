@@ -525,10 +525,23 @@ function PaywallBlock({
 }) {
   const isGreen = ec?.verdict === "green";
 
-  function handleProPayment(e: React.MouseEvent) {
+  const [payLoading, setPayLoading] = useState(false);
+  async function handleProPayment(e: React.MouseEvent) {
     e.preventDefault();
-    // Middleware redirects unauthenticated users to /client/login?from=/client/plans
-    window.location.href = "/client/plans";
+    setPayLoading(true);
+    try {
+      const res  = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
+      const data = await res.json();
+      if (data.ok && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        alert("Ошибка: " + (data.error ?? "попробуйте ещё раз"));
+        setPayLoading(false);
+      }
+    } catch {
+      alert("Ошибка сети — попробуйте ещё раз");
+      setPayLoading(false);
+    }
   }
 
   return (
@@ -643,9 +656,10 @@ function PaywallBlock({
             </div>
             <button
               onClick={handleProPayment}
-              className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
+              disabled={payLoading}
+              className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
             >
-              Переходим к оплате...
+              {payLoading ? "Создаём платёж..." : "Подключить PRO — 1 990 ₽/мес"}
             </button>
           </div>
 
@@ -711,6 +725,7 @@ export default function AIEconomicsFunnel() {
   const [isRegistered,    setIsRegistered]    = useState(false);
   const [showExitIntent,  setShowExitIntent]  = useState(false);
   const [showPaywall,     setShowPaywall]     = useState(false);
+  const [showProBanner,   setShowProBanner]   = useState(false);
   const exitShownRef = useRef(false);
 
   const resetPaywall = () => { go("input", { error: null, scrapeError: null }); };
@@ -754,8 +769,14 @@ export default function AIEconomicsFunnel() {
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('pay') === 'ok') {
-        // Payment succeeded — user already has cb_paid_until in cookie set by server
+        // Payment succeeded — show banner, mark as registered
+        setIsRegistered(true);
+        setShowProBanner(true);
+        // Clear calc counter so paywall doesn't fire
+        localStorage.removeItem('cb_calc_uses');
         window.history.replaceState({}, '', window.location.pathname);
+        // Hide banner after 10s
+        setTimeout(() => setShowProBanner(false), 10000);
       } else if (params.get('pay') === 'fail' || params.get('pay') === 'cancel') {
         window.history.replaceState({}, '', window.location.pathname);
       }
@@ -1292,6 +1313,16 @@ export default function AIEconomicsFunnel() {
         usedCount={calcCount}
         onClose={() => setShowPaywall(false)}
       />
+    )}
+    {showProBanner && (
+      <div className="mb-4 rounded-xl bg-[#00A86B]/15 border border-[#00A86B]/40 px-4 py-3 flex items-center gap-3">
+        <span className="text-2xl shrink-0">🎉</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-[#00A86B]">PRO-подписка активна!</p>
+          <p className="text-xs text-[#8899aa]">Безлимитные расчёты включены на 30 дней. Считайте сколько угодно.</p>
+        </div>
+        <button onClick={() => setShowProBanner(false)} className="text-[#5a7899] hover:text-white text-lg leading-none shrink-0">×</button>
+      </div>
     )}
     <div className="card-glass rounded-2xl p-6 md:p-8">
       {/* Progress */}
