@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
 
       if (PARSER_BOT_TOKEN && MANAGER_CHAT_ID) {
         const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
-        fetch(`https://api.telegram.org/bot${PARSER_BOT_TOKEN}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${PARSER_BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
         const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
         const replyLink = message.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`;
         const source = param ? ` (источник: ${param})` : " (с сайта)";
-        fetch(`https://api.telegram.org/bot${NEW_LK_BOT_TOKEN}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${NEW_LK_BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
