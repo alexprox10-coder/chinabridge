@@ -6,7 +6,8 @@ import { neon }                   from '@neondatabase/serverless';
 export const runtime     = 'nodejs';
 export const maxDuration = 20;
 
-const DAILY_LIMIT = 3; // 3 free calculations, then paywall
+const ANON_LIMIT  = 5;  // anonymous free calculations
+const REG_LIMIT   = 10; // registered (gave TG) free calculations
 const CLIENT_COOKIE = 'cb_client';
 
 function getIp(req: NextRequest) {
@@ -38,8 +39,9 @@ async function hasActiveSubscription(clientId: string): Promise<boolean> {
   } catch { return false; }
 }
 
-async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
-  if (ip === 'unknown') return { allowed: true, remaining: DAILY_LIMIT };
+async function checkRateLimit(ip: string, isReg: boolean): Promise<{ allowed: boolean; remaining: number }> {
+  const limit = isReg ? REG_LIMIT : ANON_LIMIT;
+  if (ip === 'unknown') return { allowed: true, remaining: limit };
   try {
     const sql  = neon(process.env.DATABASE_URL!);
     const date = new Date().toISOString().slice(0, 10);
@@ -51,12 +53,12 @@ async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining
       )`;
     const rows = await sql`SELECT count FROM calc_anon_requests WHERE ip=${key} AND date=${date}`;
     const cur  = Number(rows[0]?.count ?? 0);
-    if (cur >= DAILY_LIMIT) return { allowed: false, remaining: 0 };
+    if (cur >= limit) return { allowed: false, remaining: 0 };
     await sql`
       INSERT INTO calc_anon_requests (ip, date, count) VALUES (${key}, ${date}, 1)
       ON CONFLICT (ip, date) DO UPDATE SET count = calc_anon_requests.count + 1`;
-    return { allowed: true, remaining: DAILY_LIMIT - cur - 1 };
-  } catch { return { allowed: true, remaining: DAILY_LIMIT }; }
+    return { allowed: true, remaining: limit - cur - 1 };
+  } catch { return { allowed: true, remaining: limit }; }
 }
 
 async function runCalc(body: Record<string, unknown>) {
@@ -113,12 +115,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, preview: true, subscribed: true, rate_limit_remaining: 999, ...calc });
   }
 
-  // Anonymous / unsubscribed — IP rate limit
-  const ip = getIp(req);
-  const { allowed, remaining } = await checkRateLimit(ip);
+  // Anonymous / registered (gave TG) — IP rate limit with tier
+  const ip       = getIp(req);
+  const isReg    = req.cookies.get('cb_registered')?.value === '1';
+  const { allowed, remaining } = await checkRateLimit(ip, isReg);
   if (!allowed) {
+    const limit = isReg ? REG_LIMIT : ANON_LIMIT;
     return NextResponse.json(
-      { ok: false, error: 'rate_limit', message: `Лимит ${DAILY_LIMIT} предварительных расчётов в день` },
+      { ok: false, error: 'rate_limit', message: `Лимит ${limit} предварительных расчётов использован` },
       { status: 429 },
     );
   }

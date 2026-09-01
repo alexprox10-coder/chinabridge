@@ -88,6 +88,12 @@ export const analytics = {
   aiFunnelSupplierClick: ()                               => fire("ai_funnel_supplier_click",  "ai_funnel_supplier_click", { category: "ai_funnel" }),
   aiFunnelImportClick:   ()                               => fire("ai_funnel_import_click",    "ai_funnel_import_click",   { category: "ai_funnel" }),
 
+  // ── Monetization Funnel ───────────────────────────────────────────────────
+  paywallShown:      (p?: { count?: number; verdict?: string }) => fire("paywall_shown",       "paywall_shown",       { category: "monetization", ...p }),
+  paywallProClicked: ()                                          => fire("paywall_pro_clicked", "paywall_pro_clicked", { category: "monetization" }),
+  paywallTgClicked:  ()                                          => fire("paywall_tg_clicked",  "paywall_tg_clicked",  { category: "monetization" }),
+  calcRegistered:    (p?: { source?: string })                   => fire("calc_registered",     "calc_registered",     { category: "monetization", ...p }),
+
   // ── Unit Economics Engine — полная воронка (ТЗ §30) ───────────────────────
   unitEconomicsOpen:        ()                                          => fire("unit_economics_open",        "unit_economics_open",        { category: "unit_economics" }),
   productUrlEntered:        ()                                          => fire("product_url_entered",        "product_url_entered",        { category: "unit_economics" }),

@@ -97,7 +97,8 @@ const QUICK_EXAMPLES = [
   { emoji: "🧸", label: "Игрушки",      margin_hint: "~33% маржа", product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
 ];
 
-const ANON_LIMIT = 3; // 3 free full calculations per day
+const ANON_LIMIT = 5;  // free calculations for anonymous users
+const REG_LIMIT  = 10; // free calculations for registered users (gave TG)
 
 // Analyzing stages — real stages that match backend process
 const ANALYZE_STAGES = [
@@ -517,10 +518,12 @@ function CorrectionAccordion({
 function PaywallBlock({
   ec,
   usedCount,
+  totalLimit,
   onClose,
 }: {
   ec: EconomicsResult | null;
   usedCount: number;
+  totalLimit: number;
   onClose: () => void;
 }) {
   const isGreen = ec?.verdict === "green";
@@ -528,6 +531,7 @@ function PaywallBlock({
   const [payLoading, setPayLoading] = useState(false);
   async function handleProPayment(e: React.MouseEvent) {
     e.preventDefault();
+    analytics.paywallProClicked?.();
     setPayLoading(true);
     try {
       const res  = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
@@ -560,12 +564,12 @@ function PaywallBlock({
             className="absolute top-4 right-4 text-[#5a7899] hover:text-white text-xl leading-none"
           >×</button>
           <div className="flex items-center gap-3 mb-2">
-            {[0,1,2].map(i => (
+            {[0,1,2,3,4].map(i => (
               <div key={i} className="w-2 h-2 rounded-full bg-[#00A86B]" />
             ))}
           </div>
           <p className="text-xs text-[#8899aa] mb-0.5">
-            {usedCount} / {ANON_LIMIT} бесплатных расчётов использовано
+            {usedCount} / {totalLimit} бесплатных расчётов использовано
           </p>
           <h2 className="text-lg font-bold text-white leading-tight">
             Видите потенциал? Привезём товар за вас
@@ -592,6 +596,7 @@ function PaywallBlock({
           <a
             href="https://t.me/ChinaBridgeLID_bot?start=calc"
             target="_blank"
+            onClick={() => analytics.paywallTgClicked?.()}
             rel="noopener noreferrer"
             className={`block rounded-xl border p-4 transition-all hover:scale-[1.02] ${
               isGreen
@@ -643,7 +648,7 @@ function PaywallBlock({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#8899aa] mt-0.5">Для принятия решений, не только оценки</p>
+                <p className="text-xs text-[#8899aa] mt-0.5">Сохраните расчёты и анализируйте до 100 товаров в месяц</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-[#8899aa] mb-3">
@@ -723,6 +728,7 @@ export default function AIEconomicsFunnel() {
   const [autoCountdown,  setAutoCountdown]  = useState<number | null>(null);
   const [calcCount,       setCalcCount]       = useState(0);
   const [isRegistered,    setIsRegistered]    = useState(false);
+  const [isPaidPro,       setIsPaidPro]       = useState(false);
   const [showExitIntent,  setShowExitIntent]  = useState(false);
   const [showPaywall,     setShowPaywall]     = useState(false);
   const [showProBanner,   setShowProBanner]   = useState(false);
@@ -759,7 +765,8 @@ export default function AIEconomicsFunnel() {
     try {
       const paidUntil = localStorage.getItem('cb_paid_until');
       if (paidUntil && new Date(paidUntil) > new Date()) {
-        setIsRegistered(true); // paid users get unlimited
+        setIsPaidPro(true); // paid users get unlimited
+        setIsRegistered(true);
       } else if (paidUntil) {
         localStorage.removeItem('cb_paid_until'); // expired
       }
@@ -769,7 +776,8 @@ export default function AIEconomicsFunnel() {
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('pay') === 'ok') {
-        // Payment succeeded — show banner, mark as registered
+        // Payment succeeded — show banner, mark as PRO
+        setIsPaidPro(true);
         setIsRegistered(true);
         setShowProBanner(true);
         // Clear calc counter so paywall doesn't fire
@@ -925,8 +933,10 @@ export default function AIEconomicsFunnel() {
 
   // ── URL / Description submit ────────────────────────────────────────────────
 
+  const effectiveLimit = isPaidPro ? 9999 : isRegistered ? REG_LIMIT : ANON_LIMIT;
+
   async function handleUrlSubmit() {
-    if (!isRegistered && calcCount >= ANON_LIMIT) { setShowPaywall(true); return; }
+    if (!isPaidPro && calcCount >= effectiveLimit) { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount, verdict: s.economics?.verdict ?? undefined }); return; }
 
     if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
     const url = s.urlInput.trim();
@@ -1152,7 +1162,9 @@ export default function AIEconomicsFunnel() {
       // Mark as registered when they complete the contact form
       if (!isRegistered) {
         localStorage.setItem('cb_registered', 'true');
+        document.cookie = "cb_registered=1; max-age=31536000; path=/; samesite=lax";
         setIsRegistered(true);
+        analytics.calcRegistered?.({ source: "contact_form" });
       }
       go("success", { leadId: data.lead_id, economics: data.economics, priority: data.priority, marketplace_config: data.marketplace_config });
     } catch {
@@ -1171,8 +1183,12 @@ export default function AIEconomicsFunnel() {
   async function handleInlineCapture() {
     if (!inlineTg.trim()) return;
     setInlineSubmitting(true);
-    localStorage.setItem('cb_registered', 'true');
-    setIsRegistered(true);
+    if (!isRegistered) {
+      localStorage.setItem('cb_registered', 'true');
+      document.cookie = "cb_registered=1; max-age=31536000; path=/; samesite=lax";
+      setIsRegistered(true);
+      analytics.calcRegistered?.({ source: "inline_tg" });
+    }
     try {
       const ed        = s.extractedData;
       const unitPrice = ed
@@ -1303,7 +1319,9 @@ export default function AIEconomicsFunnel() {
         onClose={() => setShowExitIntent(false)}
         onCapture={() => {
           localStorage.setItem("cb_registered", "true");
+          document.cookie = "cb_registered=1; max-age=31536000; path=/; samesite=lax";
           setIsRegistered(true);
+          analytics.calcRegistered?.({ source: "exit_intent" });
         }}
       />
     )}
@@ -1311,6 +1329,7 @@ export default function AIEconomicsFunnel() {
       <PaywallBlock
         ec={ec}
         usedCount={calcCount}
+        totalLimit={effectiveLimit}
         onClose={() => setShowPaywall(false)}
       />
     )}
@@ -1395,25 +1414,34 @@ export default function AIEconomicsFunnel() {
           </div>
 
           <button
-            onClick={!isRegistered && calcCount >= ANON_LIMIT ? () => setShowPaywall(true) : handleUrlSubmit}
-            disabled={isRegistered ? (!s.urlInput.trim() && !s.descInput.trim()) : false}
+            onClick={!isPaidPro && calcCount >= effectiveLimit ? () => { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount }); } : handleUrlSubmit}
+            disabled={isPaidPro ? (!s.urlInput.trim() && !s.descInput.trim()) : false}
             className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
           >
-            {!isRegistered && calcCount >= ANON_LIMIT ? "🔒 Лимит — разблокировать PRO" : "🚀 Рассчитать прибыль"}
+            {!isPaidPro && calcCount >= effectiveLimit ? "🔒 Лимит — разблокировать PRO" : "🚀 Рассчитать прибыль"}
           </button>
 
-          {isRegistered ? (
+          {isPaidPro ? (
             <p className="text-center text-xs text-[#00A86B]">✓ PRO активен · безлимитные расчёты</p>
-          ) : calcCount >= ANON_LIMIT ? (
+          ) : isRegistered && calcCount < REG_LIMIT ? (
+            <div className="flex items-center justify-center gap-2">
+              {[0,1,2,3,4,5,6,7,8,9].map(i => (
+                <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i < calcCount ? 'bg-[#00A86B]' : 'bg-white/15'}`} />
+              ))}
+              <p className="text-xs text-[#8899aa]">
+                {`Расчёт ${calcCount + 1} из ${REG_LIMIT} · GPT-4o`}
+              </p>
+            </div>
+          ) : calcCount >= effectiveLimit ? (
             <button
-              onClick={() => setShowPaywall(true)}
+              onClick={() => { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount }); }}
               className="w-full py-2 bg-[#229ED9]/10 border border-[#229ED9]/30 hover:border-[#229ED9]/60 rounded-xl text-xs text-[#229ED9] font-semibold transition-colors"
             >
-              🔒 3/3 бесплатных использованы — разблокировать PRO
+              🔒 {calcCount}/{effectiveLimit} бесплатных использованы — разблокировать PRO
             </button>
           ) : (
             <div className="flex items-center justify-center gap-2">
-              {[0, 1, 2].map(i => (
+              {[0,1,2,3,4].map(i => (
                 <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i < calcCount ? 'bg-[#00A86B]' : 'bg-white/15'}`} />
               ))}
               <p className="text-xs text-[#8899aa]">
@@ -1772,8 +1800,20 @@ export default function AIEconomicsFunnel() {
               className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#00A86B]/20 to-[#00A86B]/5 border border-[#00A86B]/40 rounded-xl px-4 py-4 hover:from-[#00A86B]/30 hover:border-[#00A86B]/60 transition-all group"
             >
               <div>
-                <p className="text-sm font-bold text-white">🚢 Хотите привезти этот товар?</p>
-                <p className="text-xs text-[#8899aa] mt-0.5">Запросить точные ставки доставки из Китая →</p>
+                <p className="text-sm font-bold text-white">
+                  {s.economics?.verdict === "green"
+                    ? "🚀 Товар выглядит прибыльным — привезём за вас!"
+                    : s.economics?.verdict === "red"
+                    ? "🔍 Найдём более выгодного поставщика"
+                    : "🚢 Хотите привезти этот товар?"}
+                </p>
+                <p className="text-xs text-[#8899aa] mt-0.5">
+                  {s.economics?.verdict === "green"
+                    ? "Менеджер рассчитает поставку и организует доставку под ключ →"
+                    : s.economics?.verdict === "red"
+                    ? "Поможем снизить закупочную цену — расчёт за 15 минут →"
+                    : "Запросить точные ставки доставки из Китая →"}
+                </p>
               </div>
               <svg className="w-5 h-5 text-[#00A86B] flex-shrink-0 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
