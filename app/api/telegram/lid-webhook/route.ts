@@ -152,6 +152,18 @@ export async function POST(req: NextRequest) {
         }
       );
     } else {
+      // Greeting to client — they opened bot from niche page
+      await sendMsg(chatId,
+        `👋 ${firstName}, привет!\n\nЭто ChinaBridge — доставка из Китая в Россию и Казахстан.\n\n📦 Напишите:\n— Какой товар хотите привезти?\n— Откуда (город в Китае или 1688/Alibaba ссылка)?\n— Куда доставка?\n\nМенеджер ответит в течение 5 минут с расчётом стоимости 🚀`,
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: "💰 Рассчитать стоимость", url: "https://chinabridge.pro/ai-calculator" },
+            ]],
+          },
+        }
+      );
+
       if (MANAGER_CHAT_ID) {
         const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
         const replyLink = message.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`;
@@ -161,7 +173,7 @@ export async function POST(req: NextRequest) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: MANAGER_CHAT_ID,
-            text: `👁 <b>Новый лид открыл бота</b>${source}\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>\n\n📲 Написать: ${replyLink}\n\n⚠️ Ещё не написал — напишите первым!`,
+            text: `👁 <b>Новый лид открыл бота</b>${source}\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>\n\n📲 Написать: ${replyLink}\n\n⚠️ Приветствие отправлено — ждите сообщения!`,
             parse_mode: "HTML",
           }),
         }).catch(() => null);

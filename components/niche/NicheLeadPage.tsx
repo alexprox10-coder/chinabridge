@@ -63,7 +63,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
       {/* Sticky CTA bar — mobile only, always visible */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-slate-900/95 backdrop-blur border-t border-slate-700 px-4 py-3 flex gap-3">
         <a
-          href="https://wa.me/79145889874"
+          href="https://wa.me/79145889874?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%A5%D0%BE%D1%87%D1%83+%D1%83%D0%B7%D0%BD%D0%B0%D1%82%D1%8C+%D0%BE+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B5+%D0%B8%D0%B7+%D0%9A%D0%B8%D1%82%D0%B0%D1%8F"
           onClick={() => {
             trackGAEvent("contact", { method: "whatsapp_sticky", source: config.source });
             if (typeof window !== "undefined" && (window as any).VK) (window as any).VK.Goal("lead");
@@ -164,7 +164,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
 
                 <div className="flex gap-3 mb-4">
                   <a
-                    href="https://wa.me/79145889874"
+                    href="https://wa.me/79145889874?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%A5%D0%BE%D1%87%D1%83+%D1%83%D0%B7%D0%BD%D0%B0%D1%82%D1%8C+%D0%BE+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B5+%D0%B8%D0%B7+%D0%9A%D0%B8%D1%82%D0%B0%D1%8F"
                     onClick={() => {
                       trackGAEvent("contact", { method: "whatsapp", source: config.source });
                       if (typeof window !== "undefined" && (window as any).VK) (window as any).VK.Goal("lead");
