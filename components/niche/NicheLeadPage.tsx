@@ -145,7 +145,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
                   Напишите менеджеру в Telegram — ответим за 5 минут.
                 </div>
                 <a
-                  href={`https://t.me/China_manager02_bot?start=${config.source}`}
+                  href={`https://t.me/ChinaBridgeLID_bot?start=${config.source}`}
                   onClick={() => {
                     trackGAEvent("contact", { method: "telegram_after_form", source: config.source });
                   }}
