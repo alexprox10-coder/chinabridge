@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { neon } from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { ensureFunnelTable } from "@/lib/telegram/funnel";
 
 export const runtime = "nodejs";
@@ -28,7 +28,7 @@ async function answerCallback(callbackQueryId: string, text: string) {
   });
 }
 
-async function ensureBridgeTables(sql: ReturnType<typeof neon>) {
+async function ensureBridgeTables(sql: NeonQueryFunction<false, false>) {
   await sql`
     CREATE TABLE IF NOT EXISTS bot_greeted (
       chat_id BIGINT PRIMARY KEY,
