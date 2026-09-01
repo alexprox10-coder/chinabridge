@@ -513,6 +513,63 @@ function CorrectionAccordion({
   );
 }
 
+// ── History Panel ─────────────────────────────────────────────────────────────
+
+interface HistoryItem {
+  id: string;
+  product_name: string | null;
+  verdict: string | null;
+  verdict_emoji: string | null;
+  verdict_label: string | null;
+  margin_pct: number | null;
+  roi_pct: number | null;
+  net_profit_rub: number | null;
+  marketplace: string | null;
+  created_at: string;
+}
+
+function fmtHistoryDate(iso: string): string {
+  const d = new Date(iso);
+  const h = (Date.now() - d.getTime()) / 3600000;
+  if (h < 1)  return 'только что';
+  if (h < 24) return `${Math.floor(h)} ч назад`;
+  if (h < 48) return 'вчера';
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+}
+
+function HistoryPanel({ items, onClose }: { items: HistoryItem[]; onClose: () => void }) {
+  return (
+    <div className="border-t border-[#1e3a5f] pt-4 mt-3">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-bold text-white">📋 Мои расчёты {items.length > 0 && `(${items.length})`}</p>
+        <button onClick={onClose} className="text-[#5a7899] hover:text-white text-xl leading-none">×</button>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-xs text-[#5a7899] text-center py-6">
+          Расчёты появятся здесь после первого запроса
+        </p>
+      ) : (
+        <div className="space-y-2 max-h-60 overflow-y-auto pr-0.5">
+          {items.map(item => (
+            <div key={item.id} className="bg-white/5 hover:bg-white/8 rounded-xl px-3 py-2.5 flex items-center gap-3 transition-colors">
+              <span className="text-lg shrink-0">{item.verdict_emoji ?? '📦'}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-white truncate">
+                  {item.product_name ?? 'Товар без названия'}
+                </p>
+                <p className="text-[10px] text-[#8899aa] mt-0.5">
+                  {item.marketplace?.toUpperCase()} · Маржа {item.margin_pct?.toFixed(1)}% · ROI {item.roi_pct?.toFixed(0)}%
+                </p>
+              </div>
+              <p className="text-[10px] text-[#5a7899] shrink-0">{fmtHistoryDate(item.created_at)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Paywall Modal ─────────────────────────────────────────────────────────────
 
 function PaywallBlock({
@@ -732,6 +789,9 @@ export default function AIEconomicsFunnel() {
   const [showExitIntent,  setShowExitIntent]  = useState(false);
   const [showPaywall,     setShowPaywall]     = useState(false);
   const [showProBanner,   setShowProBanner]   = useState(false);
+  const [showHistory,     setShowHistory]     = useState(false);
+  const [historyItems,    setHistoryItems]    = useState<HistoryItem[] | null>(null);
+  const [historyCount,    setHistoryCount]    = useState(0);
   const exitShownRef = useRef(false);
 
   const resetPaywall = () => { go("input", { error: null, scrapeError: null }); };
@@ -771,6 +831,15 @@ export default function AIEconomicsFunnel() {
         localStorage.removeItem('cb_paid_until'); // expired
       }
     } catch { /* ignore */ }
+
+    // Pre-load history if returning user (session cookie present)
+    if (document.cookie.includes('cb_session_id=')) {
+      fetch('/api/calc/history').then(r => r.json()).then((d: { items?: HistoryItem[] }) => {
+        const items = d.items ?? [];
+        setHistoryItems(items);
+        setHistoryCount(items.length);
+      }).catch(() => {});
+    }
 
     // Handle Tochka payment redirect
     try {
@@ -825,6 +894,35 @@ export default function AIEconomicsFunnel() {
   const setCorrection = (k: keyof CorrectionData, v: string) => setS(p => ({ ...p, correction: { ...p.correction, [k]: v } }));
 
   // ── Calculation helper (shared by auto and manual) ─────────────────────────
+
+  async function loadHistory() {
+    try {
+      const res  = await fetch('/api/calc/history');
+      const data = await res.json();
+      const items: HistoryItem[] = data.items ?? [];
+      setHistoryItems(items);
+      setHistoryCount(items.length);
+    } catch { setHistoryItems([]); }
+  }
+
+  async function toggleHistory() {
+    if (!showHistory && historyItems === null) await loadHistory();
+    setShowHistory(prev => !prev);
+  }
+
+  function saveToHistory(economics: EconomicsResult, marketplace: string, unitPriceCny: number, salePriceRub: number, qty: number, productName: string) {
+    fetch('/api/calc/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ product_name: productName, marketplace, unit_price_cny: unitPriceCny, sale_price_rub: salePriceRub, quantity: qty, economics }),
+    }).then(() => {
+      setHistoryCount(prev => prev + 1);
+      if (historyItems !== null) {
+        // Refresh list if already loaded
+        loadHistory();
+      }
+    }).catch(() => {});
+  }
 
   async function handleCalculate() {
 
@@ -907,6 +1005,7 @@ export default function AIEconomicsFunnel() {
         showCorrection:     false,
         correction:         corr,
       });
+      if (data.economics) saveToHistory(data.economics, s.marketplace, unitPrice, salePriceN, qty, pName);
     } catch {
       go("preview", { error: "Ошибка сети. Попробуйте ещё раз." });
     }
@@ -1115,6 +1214,7 @@ export default function AIEconomicsFunnel() {
         marketplace_config: data.marketplace_config,
         showCorrection:     false,
       });
+      if (data.economics) saveToHistory(data.economics, s.marketplace, unitPrice, salePriceN, parseInt(s.product.quantity) || 1, s.correction.product_name || s.product.product_name);
     } catch {
       go("preview", { error: "Ошибка сети. Попробуйте ещё раз." });
     }
@@ -1449,6 +1549,22 @@ export default function AIEconomicsFunnel() {
               </p>
             </div>
           )}
+
+          {/* История расчётов */}
+          {historyCount > 0 || historyItems !== null ? (
+            <div>
+              <button
+                onClick={toggleHistory}
+                className="w-full text-xs text-[#5a7899] hover:text-[#8899aa] flex items-center justify-center gap-1.5 py-1 transition-colors"
+              >
+                <span>📋</span>
+                <span>{showHistory ? 'Скрыть историю' : `Мои расчёты${historyCount > 0 ? ` (${historyCount})` : ''}`}</span>
+              </button>
+              {showHistory && historyItems !== null && (
+                <HistoryPanel items={historyItems} onClose={() => setShowHistory(false)} />
+              )}
+            </div>
+          ) : null}
         </div>
       )}
 
