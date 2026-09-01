@@ -29,6 +29,27 @@ export async function POST(_req: NextRequest) {
       VALUES (${session.clientId}, ${session.email ?? ''}, ${until.toISOString()})
       ON CONFLICT (client_id)
       DO UPDATE SET subscribed_until = EXCLUDED.subscribed_until, created_at = NOW()`;
+
+    // Telegram notification to manager
+    const tgToken  = process.env.TELEGRAM_PAY_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN;
+    const tgChatId = process.env.TELEGRAM_PAY_CHAT_ID ?? process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
+    if (tgToken && tgChatId) {
+      const text = [
+        `💳 <b>Оплата PRO-калькулятора</b>`,
+        ``,
+        `👤 Клиент: <code>${session.clientId}</code>`,
+        session.email ? `📧 Email: ${session.email}` : '',
+        `📅 Доступ до: <b>${until.toLocaleDateString('ru-RU')}</b>`,
+        ``,
+        `✅ Подписка активирована`,
+      ].filter(Boolean).join('\n');
+      fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ chat_id: tgChatId, text, parse_mode: 'HTML' }),
+        signal:  AbortSignal.timeout(5000),
+      }).catch(() => null);
+    }
   }
 
   return NextResponse.json({ ok: true, subscribed_until: until.toISOString(), clientId: session?.clientId ?? null });

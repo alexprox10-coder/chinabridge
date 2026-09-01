@@ -8,7 +8,8 @@ export const dynamic     = 'force-dynamic';
 const SESSION_COOKIE = 'cb_session_id';
 const MAX_HISTORY    = 30;
 
-async function ensureTable(sql: ReturnType<typeof neon>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureTable(sql: any) {
   await sql`
     CREATE TABLE IF NOT EXISTS calc_history (
       id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -90,6 +90,29 @@ export async function POST(req: NextRequest) {
           mrr:    Number(payment.amount) || 0,
         });
       }
+
+      // Telegram notification to manager via pay bot
+      const tgToken  = process.env.TELEGRAM_PAY_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN;
+      const tgChatId = process.env.TELEGRAM_PAY_CHAT_ID ?? process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
+      if (tgToken && tgChatId) {
+        const amountRub = payment?.amount ? `${Number(payment.amount).toLocaleString('ru-RU')} ₽` : '—';
+        const plan      = payment?.plan ? String(payment.plan) : 'calculator';
+        const text = [
+          `💳 <b>Новая оплата!</b>`,
+          ``,
+          `📦 Тариф: <b>${plan}</b>`,
+          `💰 Сумма: <b>${amountRub}</b>`,
+          `🆔 operation_id: <code>${operationId}</code>`,
+          ``,
+          `✅ Подписка активирована автоматически`,
+        ].join('\n');
+        await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ chat_id: tgChatId, text, parse_mode: 'HTML' }),
+          signal:  AbortSignal.timeout(5000),
+        }).catch(() => null);
+      }
     }
 
     return NextResponse.json({ ok: true, operationId, status });
