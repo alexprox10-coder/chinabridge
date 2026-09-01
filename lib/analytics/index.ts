@@ -97,7 +97,7 @@ export const analytics = {
   calculatorToDeliveryClick:    ()                           => fire("calculator_to_delivery_click",   "calculator_to_delivery_click",   { category: "delivery_funnel" }),
 
   // ── Monetization Funnel ───────────────────────────────────────────────────
-  paywallShown:      (p?: { count?: number; verdict?: string }) => fire("paywall_shown",       "paywall_shown",       { category: "monetization", ...p }),
+  paywallShown:      (p?: { count?: number; verdict?: string }) => { fire("paywall_shown", "paywall_shown", { category: "monetization", ...p }); trackVkGoal("paywall_shown"); },
   paywallProClicked: ()                                          => fire("paywall_pro_clicked", "paywall_pro_clicked", { category: "monetization" }),
   paywallTgClicked:  ()                                          => fire("paywall_tg_clicked",  "paywall_tg_clicked",  { category: "monetization" }),
   calcRegistered:    (p?: { source?: string })                   => fire("calc_registered",     "calc_registered",     { category: "monetization", ...p }),
