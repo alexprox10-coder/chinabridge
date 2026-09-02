@@ -29,6 +29,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
   });
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [phoneError, setPhoneError] = useState(false);
+  const [tgCopied, setTgCopied] = useState(false);
   const submittedRef = useRef(false);
 
   async function submit(e: React.FormEvent) {
@@ -108,7 +109,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           </p>
 
           {/* CTA buttons — absolute top, full-width, unmissable */}
-          <div className="flex flex-col gap-3 mb-3">
+          <div className="flex flex-col gap-3 mb-1">
             <a
               href={tgHref}
               target="_blank"
@@ -119,6 +120,30 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
               <TgIcon />
               Написать в Telegram
             </a>
+
+            {/* VK WebView fallback — копировать юзернейм если TG не открылся */}
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-slate-500 text-xs">Не открылся Telegram?</span>
+              <button
+                onClick={() => {
+                  const text = "@ChinaBridgeLID_bot";
+                  if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).catch(() => null);
+                  } else {
+                    const el = document.createElement("textarea");
+                    el.value = text; document.body.appendChild(el);
+                    el.select(); document.execCommand("copy");
+                    document.body.removeChild(el);
+                  }
+                  setTgCopied(true);
+                  setTimeout(() => setTgCopied(false), 2500);
+                }}
+                className="text-xs text-[#229ED9] font-semibold active:opacity-70 transition-opacity"
+              >
+                {tgCopied ? "✓ Скопировано!" : "Скопировать юзернейм"}
+              </button>
+            </div>
+
             <a
               href={waHref}
               target="_blank"
@@ -131,7 +156,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
             </a>
           </div>
 
-          <p className="text-slate-500 text-xs text-center mb-6">
+          <p className="text-slate-500 text-xs text-center mb-6 mt-3">
             Бесплатно · Ответим за 5 минут
           </p>
 
