@@ -36,6 +36,7 @@ export async function POST(req: Request) {
           purpose: "Аудит партии из Китая — ChinaBridge",
           paymentMode: ["sbp", "card", "tinkoff"],
           redirectUrl: "https://chinabridge.pro/audit-success",
+          callbackUrl: "https://chinabridge.pro/api/payments/tochka-webhook",
         },
       }),
     });

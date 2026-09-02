@@ -96,6 +96,7 @@ export async function createTochkaPayment(params: {
       paymentMode:     ["sbp", "tinkoff", "card"],
       redirectUrl:     params.redirectUrl,
       failRedirectUrl: params.failUrl,
+      callbackUrl:     "https://chinabridge.pro/api/payments/tochka-webhook",
       paymentLinkId:   `cb-${params.plan.slice(0, 3)}-${Date.now().toString(36)}`,
       ttl:             10080,
     },
