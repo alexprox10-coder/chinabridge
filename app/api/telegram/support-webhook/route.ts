@@ -5,11 +5,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SUPPORT_BOT_TOKEN = process.env.CHINABRIDGE_SUPPORT_BOT_TOKEN ?? "";
+const NEW_LK_BOT_TOKEN  = process.env.NEW_LK_BOT_TOKEN ?? "";
 const LID_BOT_TOKEN     = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
 const PARSER_BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN ?? "";
 const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
-// Use same notify chain as lid-webhook so manager definitely receives the message
-const notifyToken = PARSER_BOT_TOKEN || LID_BOT_TOKEN || SUPPORT_BOT_TOKEN;
+// NEW_LK_BOT_TOKEN delivers to the manager's New_LK chat where they see all alerts
+const notifyToken = NEW_LK_BOT_TOKEN || PARSER_BOT_TOKEN || LID_BOT_TOKEN || SUPPORT_BOT_TOKEN;
 
 async function sendViaSupport(chatId: number | string, text: string) {
   if (!SUPPORT_BOT_TOKEN) return;
