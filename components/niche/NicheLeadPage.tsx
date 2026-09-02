@@ -93,9 +93,12 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           <span className="text-lg">🇨🇳</span>
           <span className="font-bold text-white text-sm">ChinaBridge</span>
         </Link>
-        <a href="tel:+79145889874" className="text-slate-400 hover:text-white text-xs transition">
-          +7 914 588-98-74
-        </a>
+        <div className="text-right">
+          <a href="tel:+79145889874" className="text-slate-300 hover:text-white text-xs font-medium transition block">
+            +7 914 588-98-74
+          </a>
+          <span className="text-slate-500 text-[10px]">WhatsApp · Telegram</span>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4">
