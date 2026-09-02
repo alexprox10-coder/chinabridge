@@ -97,7 +97,7 @@ const QUICK_EXAMPLES = [
   { emoji: "🧸", label: "Игрушки",      margin_hint: "~33% маржа", product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
 ];
 
-const ANON_LIMIT = 5;  // free calculations for anonymous users
+const ANON_LIMIT = 3;  // free calculations for anonymous users
 const REG_LIMIT  = 10; // free calculations for registered users (gave TG)
 
 // Analyzing stages — real stages that match backend process
@@ -965,7 +965,14 @@ export default function AIEconomicsFunnel() {
     }).catch(() => {});
   }
 
+  const effectiveLimit = isPaidPro ? 9999 : isRegistered ? REG_LIMIT : ANON_LIMIT;
+
   async function handleCalculate() {
+    if (!isPaidPro && calcCount >= effectiveLimit) {
+      setShowPaywall(true);
+      analytics.paywallShown?.({ count: calcCount, verdict: s.economics?.verdict ?? undefined });
+      return;
+    }
 
     const ed = s.extractedData;
     const unitPrice  = ed ? ((ed.unit_price_cny  ?? parseFloat(s.product.unit_price_cny)) || 0)
@@ -1072,8 +1079,6 @@ export default function AIEconomicsFunnel() {
   }, [s.step, s.marketplace, s.city_to, s.salePrice, s.product.sale_price, calcCount, isRegistered]);
 
   // ── URL / Description submit ────────────────────────────────────────────────
-
-  const effectiveLimit = isPaidPro ? 9999 : isRegistered ? REG_LIMIT : ANON_LIMIT;
 
   async function handleUrlSubmit() {
     if (!isPaidPro && calcCount >= effectiveLimit) { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount, verdict: s.economics?.verdict ?? undefined }); return; }
