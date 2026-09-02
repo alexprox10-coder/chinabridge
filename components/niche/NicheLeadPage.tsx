@@ -72,7 +72,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
   }
 
   const tgHref = `https://t.me/ChinaBridgeLID_bot?start=${config.source}`;
-  const waHref = "https://wa.me/79145889874?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%A5%D0%BE%D1%87%D1%83+%D1%83%D0%B7%D0%BD%D0%B0%D1%82%D1%8C+%D0%BE+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B5+%D0%B8%D0%B7+%D0%9A%D0%B8%D1%82%D0%B0%D1%8F";
+  const waHref = `https://wa.me/79145889874?text=${encodeURIComponent("Привет, хочу узнать стоимость доставки из Китая")}`;
 
   const TgIcon = () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
@@ -123,6 +123,9 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
               <TgIcon />
               Написать в Telegram
             </a>
+            <p className="text-center text-slate-400 text-xs -mt-1">
+              В Telegram нажмите кнопку <span className="text-white font-semibold">«Запустить»</span>
+            </p>
 
             {/* VK WebView fallback — копировать юзернейм если TG не открылся */}
             <div className="flex items-center justify-center gap-2">
