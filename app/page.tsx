@@ -59,7 +59,6 @@ const schemaOrg = {
       "@id": "https://chinabridge.pro/#organization",
       name: "ChinaBridge",
       url: "https://chinabridge.pro",
-      logo: "https://chinabridge.pro/images/logo.png",
       description: "Белый импорт из Китая в Россию и Казахстан на AI-платформе",
       foundingDate: "2019",
       contactPoint: {

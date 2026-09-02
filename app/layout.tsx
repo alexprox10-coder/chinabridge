@@ -49,7 +49,6 @@ const orgSchema = {
       "@id": "https://chinabridge.pro/#organization",
       "name": "ChinaBridge",
       "url": "https://chinabridge.pro",
-      "logo": { "@type": "ImageObject", "url": "https://chinabridge.pro/logo.png" },
       "description": "Импорт товаров из Китая под ключ в Россию и Казахстан. Доставка, таможня, поиск поставщиков для Wildberries и Ozon.",
       "foundingDate": "2019",
       "contactPoint": {

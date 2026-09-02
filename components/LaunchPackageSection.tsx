@@ -149,8 +149,10 @@ export default function LaunchPackageSection() {
                 ))}
               </ul>
 
-              <Link
+              <a
                 href={pkg.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => trackGAEvent("package_cta_click", { package: pkg.name })}
                 className={`w-full py-3 rounded-xl font-semibold text-sm text-center transition-all ${
                   pkg.highlight
@@ -159,7 +161,7 @@ export default function LaunchPackageSection() {
                 }`}
               >
                 {pkg.cta} →
-              </Link>
+              </a>
             </div>
           ))}
         </div>
