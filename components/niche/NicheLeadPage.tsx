@@ -99,20 +99,22 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
 
       <main className="max-w-5xl mx-auto px-4">
 
-        {/* ── MOBILE HERO: CTA first ── */}
-        <div className="md:hidden pt-6 pb-8">
-          <div className="text-3xl mb-3">{config.emoji}</div>
-          <h1 className="text-2xl font-bold leading-tight mb-2">{config.title}</h1>
-          <p className="text-slate-400 text-sm mb-5 leading-relaxed">{config.subtitle}</p>
+        {/* ── MOBILE HERO: buttons FIRST, content below ── */}
+        <div className="md:hidden pt-4 pb-8">
 
-          {/* CTA buttons — visible immediately, before any scroll */}
-          <div className="flex flex-col gap-3 mb-6">
+          {/* Hook line — one sentence, instant clarity */}
+          <p className="text-center text-slate-300 text-sm font-medium mb-4 leading-snug">
+            {config.emoji} {config.title}
+          </p>
+
+          {/* CTA buttons — absolute top, full-width, unmissable */}
+          <div className="flex flex-col gap-3 mb-3">
             <a
               href={tgHref}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackContact("telegram_hero", config.source)}
-              className="flex items-center justify-center gap-2.5 bg-[#229ED9] text-white font-bold py-4 rounded-2xl text-base shadow-lg shadow-[#229ED9]/20"
+              className="flex items-center justify-center gap-2.5 bg-[#229ED9] text-white font-bold py-4 rounded-2xl text-lg shadow-xl shadow-[#229ED9]/30 active:scale-95 transition-transform"
             >
               <TgIcon />
               Написать в Telegram
@@ -122,7 +124,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackContact("whatsapp_hero", config.source)}
-              className="flex items-center justify-center gap-2.5 bg-[#25D366] text-white font-bold py-4 rounded-2xl text-base shadow-lg shadow-[#25D366]/20"
+              className="flex items-center justify-center gap-2.5 bg-[#25D366] text-white font-bold py-4 rounded-2xl text-lg shadow-xl shadow-[#25D366]/30 active:scale-95 transition-transform"
             >
               <WaIcon />
               Написать в WhatsApp
@@ -130,11 +132,17 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           </div>
 
           <p className="text-slate-500 text-xs text-center mb-6">
-            Бесплатный расчёт · Ответим за 5 минут
+            Бесплатно · Ответим за 5 минут
           </p>
 
+          {/* Divider */}
+          <div className="border-t border-slate-800 mb-5" />
+
+          {/* Context below the fold */}
+          <p className="text-slate-400 text-sm mb-4 leading-relaxed">{config.subtitle}</p>
+
           {/* Benefits compact */}
-          <ul className="space-y-2 mb-4">
+          <ul className="space-y-2 mb-5">
             {config.benefits.map((b, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
                 <span className="text-red-500 mt-0.5 shrink-0 text-xs">✓</span>
@@ -144,7 +152,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           </ul>
 
           {/* Trust pills */}
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2">
             {["📦 Склад в Гуанчжоу", "🚢 Море · Авиа · Ж/Д", "🇰🇿 Казахстан и РФ", "⏱ От 7 дней"].map(t => (
               <span key={t} className="text-xs text-slate-400 bg-slate-800 rounded-full px-3 py-1">{t}</span>
             ))}
