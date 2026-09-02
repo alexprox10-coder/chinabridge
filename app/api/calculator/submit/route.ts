@@ -40,7 +40,7 @@ async function notifyManagerTelegram(data: {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
 
-  if (!body.phone) {
+  if (!body.phone && !body.telegram && !body.email) {
     return NextResponse.json({ ok: false, error: 'required_fields_missing' }, { status: 400 });
   }
 

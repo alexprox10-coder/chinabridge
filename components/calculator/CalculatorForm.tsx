@@ -11,6 +11,7 @@ import {
 } from "@/lib/calculator/types";
 import { CheckCircle2, ChevronRight, ChevronLeft, Download, Send } from "lucide-react";
 import { analytics } from "@/lib/analytics";
+import { trackVkGoal } from "@/components/analytics/VkPixel";
 
 const AI_STEPS = [
   "AI анализирует параметры груза...",
@@ -128,6 +129,7 @@ export function CalculatorForm() {
           cost: data.delivery_cost,
           margin: data.margin_percent,
         });
+        trackVkGoal("lead");
       }
     } catch {
       setResult({

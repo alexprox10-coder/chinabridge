@@ -653,7 +653,7 @@ function PaywallBlock({
           <a
             href="https://t.me/ChinaBridgeLID_bot?start=calc"
             target="_blank"
-            onClick={() => analytics.paywallTgClicked?.()}
+            onClick={() => { analytics.paywallTgClicked?.(); analytics.telegramClick(); }}
             rel="noopener noreferrer"
             className={`block rounded-xl border p-4 transition-all hover:scale-[1.02] ${
               isGreen
@@ -2034,6 +2034,7 @@ export default function AIEconomicsFunnel() {
                   <a
                     href={`https://t.me/ChinaBridgeLID_bot?start=pdf_${reportCode.replace(/-/g, "_")}`}
                     target="_blank" rel="noopener noreferrer"
+                    onClick={() => analytics.telegramClick()}
                     className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#229ED9] hover:bg-[#1a8bbf] text-white font-bold rounded-xl transition-all text-sm"
                   >
                     📨 Открыть бот и получить отчёт

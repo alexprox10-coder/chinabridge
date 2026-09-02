@@ -34,7 +34,7 @@ function fire(gaName: string, goal: string, params?: Record<string, unknown>) {
 export const analytics = {
   // ── Форма заявки ──────────────────────────────────────────────────────────
   leadFormStart:  () => fire("lead_form_start",  "lead_form_start",  { category: "lead" }),
-  leadFormSubmit: () => fire("lead_form_submit",  "lead_form_submit", { category: "lead" }),
+  leadFormSubmit: () => { fire("lead_form_submit",  "lead_form_submit", { category: "lead" }); trackVkGoal("lead"); },
 
   // ── Калькулятор ───────────────────────────────────────────────────────────
   calculatorStart: () => fire("calculator_start", "calculator_start", { category: "calculator" }),
@@ -55,15 +55,17 @@ export const analytics = {
   },
   proposalDownload: (params?: { lead_id?: string }) =>
     fire("proposal_download", "proposal_download", { category: "calculator", ...params }),
-  formSubmit: (params?: { form_id?: string }) =>
-    fire("form_submit", "form_submit", { category: "lead", ...params }),
+  formSubmit: (params?: { form_id?: string }) => {
+    fire("form_submit", "form_submit", { category: "lead", ...params });
+    trackVkGoal("lead");
+  },
 
   // ── CTA-кнопки ────────────────────────────────────────────────────────────
   clickQuote:     () => fire("click_quote",       "click_quote",      { category: "engagement" }),
 
   // ── Контакты ──────────────────────────────────────────────────────────────
-  telegramClick:  () => fire("telegram_click",    "telegram_click",   { category: "contact" }),
-  whatsappClick:  () => fire("whatsapp_click",    "whatsapp_click",   { category: "contact" }),
+  telegramClick:  () => { fire("telegram_click",    "telegram_click",   { category: "contact" }); trackVkGoal("contact"); },
+  whatsappClick:  () => { fire("whatsapp_click",    "whatsapp_click",   { category: "contact" }); trackVkGoal("contact"); },
   phoneClick:     () => fire("phone_click",       "phone_click",      { category: "contact" }),
 
   // ── Услуги (просмотр конкретных карточек) ─────────────────────────────────
@@ -84,7 +86,7 @@ export const analytics = {
   aiFunnelMpSelected:    (p?: { marketplace?: string })  => fire("ai_funnel_mp_selected",     "ai_funnel_mp_selected",    { category: "ai_funnel", ...p }),
   aiFunnelFullCalc:      (p?: { verdict?: string })      => fire("ai_funnel_full_calc",       "ai_funnel_full_calc",      { category: "ai_funnel", ...p }),
   aiFunnelContactOpen:   ()                               => fire("ai_funnel_contact_open",    "ai_funnel_contact_open",   { category: "ai_funnel" }),
-  aiFunnelLeadCreated:   (p?: { priority?: string })     => fire("ai_funnel_lead_created",    "ai_funnel_lead_created",   { category: "ai_funnel", ...p }),
+  aiFunnelLeadCreated:   (p?: { priority?: string })     => { fire("ai_funnel_lead_created",    "ai_funnel_lead_created",   { category: "ai_funnel", ...p }); trackVkGoal("lead"); },
   aiFunnelSupplierClick: ()                               => fire("ai_funnel_supplier_click",  "ai_funnel_supplier_click", { category: "ai_funnel" }),
   aiFunnelImportClick:   ()                               => fire("ai_funnel_import_click",    "ai_funnel_import_click",   { category: "ai_funnel" }),
 
