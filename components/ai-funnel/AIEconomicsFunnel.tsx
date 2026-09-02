@@ -795,7 +795,47 @@ export default function AIEconomicsFunnel() {
   const [historyCount,    setHistoryCount]    = useState(0);
   const exitShownRef = useRef(false);
 
+  // PDF lead capture state
+  const [showPdfInput,  setShowPdfInput]  = useState(false);
+  const [pdfTelegram,   setPdfTelegram]   = useState("");
+  const [pdfSent,       setPdfSent]       = useState(false);
+  const [pdfLoading,    setPdfLoading]    = useState(false);
+  const [reportCode,    setReportCode]    = useState<string | null>(null);
+
   const resetPaywall = () => { go("input", { error: null, scrapeError: null }); };
+
+  const handleGetPdf = async () => {
+    if (!pdfTelegram.trim()) return;
+    setPdfLoading(true);
+    const ec = s.economics;
+    try {
+      const res = await fetch("/api/calculator-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          telegram:       pdfTelegram.trim(),
+          product_url:    s.extractedData?.product_link || s.product.product_link || null,
+          product_name:   s.extractedData?.product_name || s.product.product_name || null,
+          margin:         ec?.margin_pct,
+          profit:         ec ? ec.net_profit_rub / ec.quantity : null,
+          purchase_price: ec?.unit_cost_rub,
+          marketplace:    s.marketplace,
+          verdict:        ec?.verdict,
+          source:         "calculator_pdf",
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setReportCode(json.report_code as string);
+        setPdfSent(true);
+        analytics.aiFunnelImportClick?.();
+      }
+    } catch (e) {
+      console.error("[pdf-lead]", e);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   // Load usage counters from localStorage on mount (reset=1 clears state)
   useEffect(() => {
@@ -1952,30 +1992,108 @@ export default function AIEconomicsFunnel() {
             ))}
           </div>
 
-          {/* ── PRIMARY CTA — visible immediately after verdict ─────────── */}
-          <div className="flex flex-col gap-2">
-            <a
-              href={supplierExists === true
-                ? "https://t.me/chinabridge_manager?text=%D0%A5%D0%BE%D1%87%D1%83+%D1%80%D0%B0%D1%81%D1%81%D1%87%D0%B8%D1%82%D0%B0%D1%82%D1%8C+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D1%83+%D0%BE%D1%82+%D0%BC%D0%BE%D0%B5%D0%B3%D0%BE+%D0%BF%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B0"
-                : "https://t.me/ChinaBridgeLID_bot?start=calc"}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => { analytics.aiFunnelImportClick?.(); if (supplierExists === true) analytics.calculatorToDeliveryClick?.(); }}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
-            >
-              🚀{" "}
-              {supplierExists === true
-                ? "Рассчитать доставку от моего поставщика"
-                : ec.verdict === "green"
-                ? "Привезти этот товар из Китая"
-                : ec.verdict === "red"
-                ? "Найти поставщика с ценой ниже"
-                : "Хочу привезти этот товар"}
-            </a>
-            <p className="text-center text-xs text-[#5a7899]">
-              Откроется Telegram — нажмите <b className="text-[#8899aa]">Запустить</b> · ответим в течение 5 минут
-            </p>
-          </div>
+          {/* ── RISK BLOCK + PDF CTA ─────────────────────────────────── */}
+          {supplierExists !== true ? (
+            <div className="rounded-2xl border border-amber-700/30 bg-gradient-to-br from-[#1a1800] to-[#0f1000] p-5 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⚠️</span>
+                <div>
+                  <p className="text-amber-400 font-bold text-sm">Риск-факторы до закупки</p>
+                  <p className="text-[#8899aa] text-xs mt-0.5">
+                    Ошибка на 1688 стоит <span className="text-white font-semibold">150 000 ₽</span> на первой партии
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {[
+                  { risk: "Таможенные пошлины",       status: "не учтено",         color: "text-red-400"    },
+                  { risk: "НДС при ввозе (20%)",       status: "не учтено",         color: "text-red-400"    },
+                  { risk: "Реальный объёмный вес",     status: "не проверено",      color: "text-amber-400"  },
+                  { risk: "Риск брака партии",         status: "не оценено",        color: "text-amber-400"  },
+                  { risk: "Маркировка под WB/Ozon",    status: "требует проверки",  color: "text-amber-400"  },
+                ].map(item => (
+                  <div key={item.risk} className="flex items-center justify-between gap-2">
+                    <span className="text-[#aab4c4] text-xs">• {item.risk}</span>
+                    <span className={`${item.color} text-[11px] font-semibold shrink-0`}>{item.status}</span>
+                  </div>
+                ))}
+              </div>
+
+              {pdfSent && reportCode ? (
+                <div className="flex flex-col gap-2">
+                  <div className="bg-[#00A86B]/10 border border-[#00A86B]/30 rounded-xl px-4 py-3 text-center">
+                    <p className="text-[#00A86B] font-semibold text-sm">✅ Запрос принят!</p>
+                    <p className="text-[#8899aa] text-xs mt-1">Нажмите кнопку — бот пришлёт полный отчёт</p>
+                  </div>
+                  <a
+                    href={`https://t.me/ChinaBridgeLID_bot?start=pdf_${reportCode.replace(/-/g, "_")}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#229ED9] hover:bg-[#1a8bbf] text-white font-bold rounded-xl transition-all text-sm"
+                  >
+                    📨 Открыть бот и получить отчёт
+                  </a>
+                  <p className="text-center text-[11px] text-[#5a7899]">Нажмите «Запустить» — отчёт придёт через 5 секунд</p>
+                </div>
+              ) : showPdfInput ? (
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={pdfTelegram}
+                    onChange={e => setPdfTelegram(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && pdfTelegram.trim() && handleGetPdf()}
+                    placeholder="@username в Telegram"
+                    autoFocus
+                    className="w-full px-4 py-3 bg-[#0B1F3A] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl text-sm placeholder:text-[#8899aa] outline-none transition-colors text-white"
+                  />
+                  <button
+                    onClick={handleGetPdf}
+                    disabled={!pdfTelegram.trim() || pdfLoading}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 text-white font-bold rounded-xl transition-all text-sm"
+                  >
+                    {pdfLoading ? "Сохраняем..." : "📊 Получить PDF-отчёт →"}
+                  </button>
+                  <p className="text-center text-[11px] text-[#5a7899]">Бесплатно · бот пришлёт за 30 сек</p>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowPdfInput(true)}
+                  className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
+                >
+                  📊 Получить полный PDF-отчёт в Telegram
+                </button>
+              )}
+
+              {!pdfSent && (
+                <a
+                  href={ec.verdict === "green"
+                    ? "https://t.me/ChinaBridgeLID_bot?start=calc"
+                    : ec.verdict === "red"
+                    ? "https://t.me/ChinaBridgeLID_bot?start=calc"
+                    : "https://t.me/ChinaBridgeLID_bot?start=calc"}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={() => analytics.aiFunnelImportClick?.()}
+                  className="text-center text-xs text-[#5a7899] hover:text-[#8899aa] transition-colors"
+                >
+                  Или сразу: {ec.verdict === "green" ? "привезти этот товар →" : ec.verdict === "red" ? "найти поставщика дешевле →" : "обсудить поставку →"}
+                </a>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <a
+                href="https://t.me/chinabridge_manager?text=%D0%A5%D0%BE%D1%87%D1%83+%D1%80%D0%B0%D1%81%D1%81%D1%87%D0%B8%D1%82%D0%B0%D1%82%D1%8C+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D1%83+%D0%BE%D1%82+%D0%BC%D0%BE%D0%B5%D0%B3%D0%BE+%D0%BF%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B0"
+                target="_blank" rel="noopener noreferrer"
+                onClick={() => { analytics.aiFunnelImportClick?.(); analytics.calculatorToDeliveryClick?.(); }}
+                className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
+              >
+                🚀 Рассчитать доставку от моего поставщика
+              </a>
+              <p className="text-center text-xs text-[#5a7899]">
+                Откроется Telegram — нажмите <b className="text-[#8899aa]">Запустить</b> · ответим в течение 5 минут
+              </p>
+            </div>
+          )}
 
           {/* Divider before analytics */}
           <div className="flex items-center gap-3">

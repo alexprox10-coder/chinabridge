@@ -113,6 +113,91 @@ export async function POST(req: NextRequest) {
   if (text.startsWith("/start")) {
     const param = text.split(" ")[1] ?? "";
     const isCalcFunnel = param === "calc" || param.startsWith("calc");
+    const isPdfReport  = param.startsWith("pdf_");
+
+    // ── PDF report delivery ─────────────────────────────────────────────────
+    if (isPdfReport) {
+      const reportCode = param.replace(/^pdf_/, "").replace(/_/g, "-");
+      try {
+        const sql = neon(process.env.DATABASE_URL!);
+        const rows = await sql`
+          SELECT * FROM calculator_leads WHERE report_code = ${reportCode}::uuid LIMIT 1
+        `;
+        const lead = rows[0] as Record<string, unknown> | undefined;
+
+        if (lead) {
+          await sql`
+            UPDATE calculator_leads
+            SET pdf_sent_at = NOW(), status = 'pdf_sent'
+            WHERE report_code = ${reportCode}::uuid
+          `;
+
+          const fmtN = (n: unknown) => n ? Math.round(Number(n)).toLocaleString("ru-RU") : "—";
+          const verdictEmoji = lead.verdict === "green" ? "🟢" : lead.verdict === "red" ? "🔴" : "🟡";
+          const verdictLabel = lead.verdict === "green" ? "Выгодный товар" : lead.verdict === "red" ? "Требует оптимизации" : "Осторожный потенциал";
+
+          const reportText = [
+            `📊 <b>АУДИТ ПАРТИИ — ChinaBridge</b>`,
+            `━━━━━━━━━━━━━━━━━━`,
+            lead.product_name ? `📦 Товар: ${lead.product_name}` : "",
+            lead.product_url ? `🔗 ${lead.product_url}` : "",
+            `━━━━━━━━━━━━━━━━━━`,
+            ``,
+            `${verdictEmoji} <b>${verdictLabel}</b>`,
+            `📈 Маржа: <b>${lead.margin ? Number(lead.margin).toFixed(1) : "—"}%</b>`,
+            `💰 Прибыль/шт: <b>${fmtN(lead.profit)} ₽</b>`,
+            `🛍 Маркетплейс: ${lead.marketplace ?? "—"}`,
+            ``,
+            `━━━━━━━━━━━━━━━━━━`,
+            `⚠️ <b>НЕ УЧТЕНО в предварительном расчёте:</b>`,
+            `• Таможенные пошлины — зависят от ТН ВЭД кода`,
+            `• НДС при ввозе — 20% для большинства товаров`,
+            `• Реальный объёмный вес — нужен точный замер`,
+            `• Риск брака партии — без инспекции фабрики`,
+            `• Маркировка под WB/Ozon — требует проверки`,
+            `━━━━━━━━━━━━━━━━━━`,
+            ``,
+            `✅ <b>Следующие шаги:</b>`,
+            `1. Уточните ставки доставки у менеджера`,
+            `2. Закажите проверку поставщика в Китае`,
+            `3. Рассчитайте точные таможенные платежи`,
+            ``,
+            `<i>ChinaBridge — доставка из Китая под ключ</i>`,
+            `<i>chinabridge.pro · Гуанчжоу · Суньфэньхэ</i>`,
+          ].filter(s => s !== undefined).join("\n");
+
+          await sendMsg(chatId, reportText, {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "🚀 Привезти этот товар из Китая", url: "https://t.me/chinabridge_manager" }],
+                [{ text: "📊 Рассчитать другой товар", url: "https://chinabridge.pro/ai-calculator" }],
+              ],
+            },
+          });
+
+          // Notify manager
+          const notifyToken = PARSER_BOT_TOKEN || LID_BOT_TOKEN;
+          if (notifyToken && MANAGER_CHAT_ID) {
+            const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
+            await fetch(`https://api.telegram.org/bot${notifyToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: MANAGER_CHAT_ID,
+                text: `📨 <b>Лид получил PDF-отчёт</b>\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>\n📊 Маржа: ${lead.margin ? Number(lead.margin).toFixed(1) : "—"}%\n\n📲 Написать: ${message?.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`}`,
+                parse_mode: "HTML",
+              }),
+            }).catch(() => null);
+          }
+        } else {
+          await sendMsg(chatId, `👋 ${firstName}, привет!\n\nЭто ChinaBridge — доставка из Китая.\n\nНапишите какой товар хотите привезти — менеджер ответит в течение 5 минут 📦`);
+        }
+      } catch (e) {
+        console.error("[lid-webhook] pdf handler error:", e);
+        await sendMsg(chatId, `👋 ${firstName}, привет!\n\nЭто ChinaBridge — доставка из Китая.\n\nНапишите какой товар хотите привезти — менеджер ответит в течение 5 минут 📦`);
+      }
+      return NextResponse.json({ ok: true });
+    }
 
     if (isCalcFunnel) {
       try {
