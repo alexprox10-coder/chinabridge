@@ -9,8 +9,13 @@ const NEW_LK_BOT_TOKEN  = process.env.NEW_LK_BOT_TOKEN ?? "";
 const LID_BOT_TOKEN     = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
 const PARSER_BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN ?? "";
 const MANAGER_CHAT_ID   = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
-// NEW_LK_BOT_TOKEN delivers to the manager's New_LK chat where they see all alerts
 const notifyToken = NEW_LK_BOT_TOKEN || PARSER_BOT_TOKEN || LID_BOT_TOKEN || SUPPORT_BOT_TOKEN;
+
+const GREETING = `👋 Добро пожаловать в ChinaBridge!
+
+Мы занимаемся доставкой товаров из Китая в Россию и Казахстан — WB, Ozon, Kaspi и опт.
+
+Напишите, что хотите привезти — менеджер ответит в течение 5 минут.`;
 
 async function sendViaSupport(chatId: number | string, text: string) {
   if (!SUPPORT_BOT_TOKEN) return;
@@ -39,7 +44,13 @@ export async function POST(req: NextRequest) {
 
   const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  // Track first message for auto-reply
+  // /start — always send greeting, don't forward to manager
+  if (text.startsWith("/start")) {
+    await sendViaSupport(chatId, GREETING);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Track first real message for auto-reply
   let isFirstMessage = false;
   try {
     const sql = neon(process.env.DATABASE_URL!);
@@ -58,7 +69,7 @@ export async function POST(req: NextRequest) {
   } catch { isFirstMessage = true; }
 
   if (isFirstMessage) {
-    await sendViaSupport(chatId, "✅ Сообщение получено! Менеджер ChinaBridge ответит в течение 5 минут.");
+    await sendViaSupport(chatId, "✅ Сообщение получено! Менеджер ответит в течение 5 минут.");
   }
 
   // Forward to manager
