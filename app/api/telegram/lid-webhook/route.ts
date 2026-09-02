@@ -63,7 +63,66 @@ export async function POST(req: NextRequest) {
         await sql`UPDATE funnel_subscribers SET opted_out = TRUE WHERE chat_id = ${chatId}`;
       } catch { /* ignore */ }
       await answerCallback(cqId, "Вы отписались от рассылки.");
+      return NextResponse.json({ ok: true });
     }
+
+    // ── Tripwire 2 000 ₽ ────────────────────────────────────────────────────
+    if (data.startsWith("tripwire_")) {
+      const leadId = data.replace("tripwire_", "");
+      await answerCallback(cqId, "Генерируем ссылку оплаты...");
+      try {
+        const payResp = await fetch(
+          "https://chinabridge.pro/api/payments/create-tripwire",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lead_id: leadId, chat_id: String(chatId) }),
+          }
+        );
+        const payData = await payResp.json() as { paymentLink?: string };
+
+        if (payData.paymentLink) {
+          await sendMsg(chatId,
+            [
+              `💳 <b>Аудит партии — 2 000 ₽</b>`,
+              ``,
+              `✅ Точный расчёт таможни и пошлин по ТН ВЭД`,
+              `✅ НДС при ввозе + акцизы`,
+              `✅ Проверка поставщика по 5 критериям`,
+              `✅ Сравнение 3 маршрутов доставки`,
+              `✅ Оценка рисков партии (брак, задержки)`,
+              ``,
+              `⏱ Готово в течение 24 часов`,
+              `💡 При первой поставке через ChinaBridge — стоимость аудита вычитается`,
+            ].join("\n"),
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: "💳 Оплатить 2 000 ₽", url: payData.paymentLink }],
+                  [{ text: "📲 Написать менеджеру", url: "https://t.me/chinabridge_manager" }],
+                ],
+              },
+            }
+          );
+        } else {
+          await sendMsg(chatId,
+            `📋 <b>Аудит партии — 2 000 ₽</b>\n\nСвяжитесь с менеджером для оплаты и запуска аудита:`,
+            {
+              reply_markup: {
+                inline_keyboard: [[
+                  { text: "📲 Написать менеджеру", url: "https://t.me/chinabridge_manager" },
+                ]],
+              },
+            }
+          );
+        }
+      } catch (e) {
+        console.error("[lid-webhook] tripwire error:", e);
+        await sendMsg(chatId, `Напишите менеджеру для оплаты аудита: @chinabridge_manager`);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     return NextResponse.json({ ok: true });
   }
 
@@ -126,9 +185,10 @@ export async function POST(req: NextRequest) {
         const lead = rows[0] as Record<string, unknown> | undefined;
 
         if (lead) {
+          await sql`ALTER TABLE calculator_leads ADD COLUMN IF NOT EXISTS chat_id TEXT`.catch(() => null);
           await sql`
             UPDATE calculator_leads
-            SET pdf_sent_at = NOW(), status = 'pdf_sent'
+            SET pdf_sent_at = NOW(), status = 'pdf_sent', chat_id = ${String(chatId)}
             WHERE report_code = ${reportCode}::uuid
           `;
 
@@ -170,6 +230,7 @@ export async function POST(req: NextRequest) {
             reply_markup: {
               inline_keyboard: [
                 [{ text: "🚀 Привезти этот товар из Китая", url: "https://t.me/chinabridge_manager" }],
+                [{ text: "📋 Заказать аудит за 2 000 ₽", callback_data: `tripwire_${String(lead.id)}` }],
                 [{ text: "📊 Рассчитать другой товар", url: "https://chinabridge.pro/ai-calculator" }],
               ],
             },

@@ -134,12 +134,12 @@ export default function AICalculatorPage() {
           {/* Page header — compact on mobile */}
           <div className="text-center mb-4 sm:mb-10">
             <p className="hidden sm:block text-[#00A86B] text-xs font-semibold uppercase tracking-widest mb-3">
-              AI Unit Economics
+              AI Калькулятор импорта
             </p>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 sm:mb-4 leading-tight">
-              Проверьте товар
+              Аудит партии из Китая
               <span className="bg-gradient-to-r from-[#00A86B] to-[#00d48a] bg-clip-text text-transparent">
-                {" "}перед закупкой
+                {" "}— юнит-экономика за 15 сек
               </span>
             </h1>
             <p className="hidden sm:block text-[#8899aa] text-sm leading-relaxed max-w-lg mx-auto">
