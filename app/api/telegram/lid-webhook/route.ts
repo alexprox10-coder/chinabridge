@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
               reply_markup: {
                 inline_keyboard: [
                   [{ text: "💳 Оплатить 2 000 ₽", url: payData.paymentLink }],
-                  [{ text: "📲 Написать менеджеру", url: "https://t.me/chinabridge_manager" }],
+                  [{ text: "📲 Написать менеджеру", url: "https://t.me/chinabridge_support24_bot" }],
                 ],
               },
             }
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
             {
               reply_markup: {
                 inline_keyboard: [[
-                  { text: "📲 Написать менеджеру", url: "https://t.me/chinabridge_manager" },
+                  { text: "📲 Написать менеджеру", url: "https://t.me/chinabridge_support24_bot" },
                 ]],
               },
             }
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
         }
       } catch (e) {
         console.error("[lid-webhook] tripwire error:", e);
-        await sendMsg(chatId, `Напишите менеджеру для оплаты аудита: @chinabridge_manager`);
+        await sendMsg(chatId, `Напишите менеджеру для оплаты аудита: @chinabridge_support24_bot`);
       }
       return NextResponse.json({ ok: true });
     }
@@ -229,7 +229,7 @@ export async function POST(req: NextRequest) {
           await sendMsg(chatId, reportText, {
             reply_markup: {
               inline_keyboard: [
-                [{ text: "🚀 Привезти этот товар из Китая", url: "https://t.me/chinabridge_manager" }],
+                [{ text: "🚀 Привезти этот товар из Китая", url: "https://t.me/chinabridge_support24_bot" }],
                 [{ text: "📋 Заказать аудит за 2 000 ₽", callback_data: `tripwire_${String(lead.id)}` }],
                 [{ text: "📊 Рассчитать другой товар", url: "https://chinabridge.pro/ai-calculator" }],
               ],

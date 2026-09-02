@@ -48,7 +48,7 @@ export async function POST(req: Request) {
             `⏱ Рассчитываем таможню, поставщиков и маршруты доставки.`,
             `Готово в течение 24 часов.`,
             ``,
-            `📲 Менеджер свяжется: @chinabridge_manager`,
+            `📲 Менеджер свяжется: @chinabridge_support24_bot`,
           ].filter(Boolean).join("\n"),
           parse_mode: "HTML",
         }),

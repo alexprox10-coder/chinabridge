@@ -2087,7 +2087,7 @@ export default function AIEconomicsFunnel() {
           ) : (
             <div className="flex flex-col gap-2">
               <a
-                href="https://t.me/chinabridge_manager?text=%D0%A5%D0%BE%D1%87%D1%83+%D1%80%D0%B0%D1%81%D1%81%D1%87%D0%B8%D1%82%D0%B0%D1%82%D1%8C+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D1%83+%D0%BE%D1%82+%D0%BC%D0%BE%D0%B5%D0%B3%D0%BE+%D0%BF%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B0"
+                href="https://t.me/chinabridge_support24_bot?text=%D0%A5%D0%BE%D1%87%D1%83+%D1%80%D0%B0%D1%81%D1%81%D1%87%D0%B8%D1%82%D0%B0%D1%82%D1%8C+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D1%83+%D0%BE%D1%82+%D0%BC%D0%BE%D0%B5%D0%B3%D0%BE+%D0%BF%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B0"
                 target="_blank" rel="noopener noreferrer"
                 onClick={() => { analytics.aiFunnelImportClick?.(); analytics.calculatorToDeliveryClick?.(); }}
                 className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
@@ -2154,7 +2154,7 @@ export default function AIEconomicsFunnel() {
             {/* Direct cargo CTA */}
             <a
               href={supplierExists === true
-                ? "https://t.me/chinabridge_manager?text=Хочу+рассчитать+доставку+от+моего+поставщика"
+                ? "https://t.me/ChinaBridgeLID_bot?text=Хочу+рассчитать+доставку+от+моего+поставщика"
                 : "https://t.me/ChinaBridgeLID_bot?start=calc"}
               target="_blank" rel="noopener noreferrer"
               onClick={() => {
