@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SupplierFinderUI } from "@/components/supplier-finder/SupplierFinderUI";
@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "AI Поиск поставщиков из Китая — ChinaBridge",
   description:
     "AI анализирует рынок поставщиков в Китае: типы, регионы, цены, MOQ и Supplier Score для вашего товара.",
+
+  alternates: { canonical: "https://chinabridge.pro/supplier-finder" },
 };
 
 export default function SupplierFinderPage() {

@@ -122,8 +122,8 @@ export async function POST(req: NextRequest) {
     source:       body.source ?? '',
   }).catch(() => null);
 
-  // Fire n8n — non-blocking (AI analysis in background, don't make user wait)
-  fetch(`${N8N_BASE}/webhook/chinabridge-calculator`, {
+  // Notify n8n — awaited so Vercel doesn't kill the request before fetch completes
+  await fetch(`${N8N_BASE}/webhook/chinabridge-calculator`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: escapeNonAscii(JSON.stringify(n8nPayload)),

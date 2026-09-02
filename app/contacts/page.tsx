@@ -1,4 +1,4 @@
-import Header from "@/components/Header";
+﻿import Header from "@/components/Header";
 import Calculator from "@/components/Calculator";
 import Footer from "@/components/Footer";
 import type { Metadata } from "next";
@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Контакты — ChinaBridge | Напишите нам",
   description: "Свяжитесь с ChinaBridge — ответим в течение 15 минут. Telegram, WhatsApp, Email.",
+
+  alternates: { canonical: "https://chinabridge.pro/contacts" },
 };
 
 export default function ContactsPage() {

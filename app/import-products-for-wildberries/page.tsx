@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { CategoryPage } from "@/components/seo/CategoryPage";
 
 export const metadata: Metadata = {
   title: "Импорт товаров для Wildberries из Китая | ChinaBridge",
   description:
     "Доставляем товары из Китая для продажи на Wildberries. Упаковка и маркировка по требованиям WB, AI юнит-экономика, таможня и доставка под ключ.",
+
+  alternates: { canonical: "https://chinabridge.pro/import-products-for-wildberries" },
 };
 
 export default function Page() {

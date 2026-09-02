@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { KnowledgeUI } from "@/components/knowledge/KnowledgeUI";
@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "База знаний по импорту из Китая — ChinaBridge",
   description:
     "Ответы на частые вопросы об импорте из Китая, доставке, таможне и работе с поставщиками. AI-консультант онлайн.",
+
+  alternates: { canonical: "https://chinabridge.pro/knowledge" },
 };
 
 export default function KnowledgePage() {

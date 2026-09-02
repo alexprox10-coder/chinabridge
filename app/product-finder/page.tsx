@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ProductFinderUI } from "@/components/product-finder/ProductFinderUI";
@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "AI Поиск товаров из Китая — ChinaBridge",
   description:
     "Опишите товар на русском — AI найдёт варианты с ценами, MOQ и прямыми ссылками на 1688 и Alibaba.",
+
+  alternates: { canonical: "https://chinabridge.pro/product-finder" },
 };
 
 export default function ProductFinderPage() {

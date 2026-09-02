@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { NicheLeadPage } from "@/components/niche/NicheLeadPage";
 
 export const metadata: Metadata = {
   title: "Любой товар из Китая оптом | ChinaBridge",
   description: "Есть офис в Гуанчжоу и склад — везём всё. Найдём поставщика, проверим, привезём.",
+
+  alternates: { canonical: "https://chinabridge.pro/optom" },
 };
 
 export default function Page() {

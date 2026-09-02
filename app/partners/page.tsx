@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Партнёрская программа ChinaBridge — зарабатывайте на рекомендациях",
   description:
     "Рекомендуйте ChinaBridge — получайте 20% с первого платежа и 10% с повторных. Выплаты ежемесячно. Присоединяйтесь бесплатно.",
+  alternates: { canonical: "https://chinabridge.pro/partners" },
 };
 
 const STEPS = [

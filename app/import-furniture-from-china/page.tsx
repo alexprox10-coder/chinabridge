@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { CategoryPage } from "@/components/seo/CategoryPage";
 
 export const metadata: Metadata = {
   title: "Импорт мебели из Китая — доставка и растаможка | ChinaBridge",
   description:
     "Доставляем мебель из Китая в Россию и Казахстан. Сборный груз и контейнер, инспекция, таможенное оформление. Мягкая, корпусная, офисная мебель.",
+
+  alternates: { canonical: "https://chinabridge.pro/import-furniture-from-china" },
 };
 
 export default function Page() {

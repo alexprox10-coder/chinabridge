@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { NicheLeadPage } from "@/components/niche/NicheLeadPage";
 
 export const metadata: Metadata = {
   title: "Стройматериалы из Китая оптом | ChinaBridge",
   description: "Плитка, арматура, сантехника, опалубка — сборным грузом от 50 кг или полным контейнером.",
+
+  alternates: { canonical: "https://chinabridge.pro/stroy" },
 };
 
 export default function Page() {

@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { NicheLeadPage } from "@/components/niche/NicheLeadPage";
 
 export const metadata: Metadata = {
   title: "Автозапчасти из Китая под заказ | ChinaBridge",
   description: "Оригинал и аналоги напрямую с завода. Белый ввоз, полные документы, доставка в РФ и Казахстан.",
+
+  alternates: { canonical: "https://chinabridge.pro/avtozapchasti" },
 };
 
 export default function Page() {

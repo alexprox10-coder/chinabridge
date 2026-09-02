@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { CategoryPage } from "@/components/seo/CategoryPage";
 
 export const metadata: Metadata = {
   title: "Импорт товаров для Ozon из Китая | ChinaBridge",
   description:
     "Доставляем товары из Китая для продажи на Ozon. Упаковка по требованиям Ozon, AI расчёт маржи, таможня и доставка под ключ для селлеров.",
+
+  alternates: { canonical: "https://chinabridge.pro/import-products-for-ozon" },
 };
 
 export default function Page() {

@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { CategoryPage } from "@/components/seo/CategoryPage";
 
 export const metadata: Metadata = {
   title: "Импорт автозапчастей из Китая — доставка и таможня | ChinaBridge",
   description:
     "Доставляем автозапчасти из Китая в Россию и Казахстан. Быстрая доставка, контроль качества, таможенное оформление. Запчасти для любых марок авто.",
+
+  alternates: { canonical: "https://chinabridge.pro/import-auto-parts-from-china" },
 };
 
 export default function Page() {

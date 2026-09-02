@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { CategoryPage } from "@/components/seo/CategoryPage";
 
 export const metadata: Metadata = {
   title: "Импорт оборудования из Китая — доставка и таможня | ChinaBridge",
   description:
     "Ввозим производственное, торговое и промышленное оборудование из Китая. Таможенное оформление, инспекция, льготные пошлины. Контейнеры и сборный груз.",
+
+  alternates: { canonical: "https://chinabridge.pro/import-equipment-from-china" },
 };
 
 export default function Page() {

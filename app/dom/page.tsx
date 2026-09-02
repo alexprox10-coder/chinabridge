@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { NicheLeadPage } from "@/components/niche/NicheLeadPage";
 
 export const metadata: Metadata = {
   title: "Товары для дома из Китая для маркетплейсов | ChinaBridge",
   description: "Поставки напрямую с производства. Маркировка и документы под WB и Ozon включены в стоимость.",
+
+  alternates: { canonical: "https://chinabridge.pro/dom" },
 };
 
 export default function Page() {

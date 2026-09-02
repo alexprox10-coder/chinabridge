@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CalculatorForm } from "@/components/calculator/CalculatorForm";
@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: "Калькулятор доставки из Китая — ChinaBridge",
   description:
     "Рассчитайте предварительную стоимость и способ доставки товаров из Китая в Россию и Казахстан.",
+
+  alternates: { canonical: "https://chinabridge.pro/delivery-calculator" },
 };
 
 export default function DeliveryCalculatorPage() {

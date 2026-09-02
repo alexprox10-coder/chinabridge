@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { CategoryPage } from "@/components/seo/CategoryPage";
 
 export const metadata: Metadata = {
   title: "Импорт одежды из Китая — доставка и таможня | ChinaBridge",
   description:
     "Импортируйте одежду из Китая с гарантией качества. Доставка в Россию и Казахстан, таможенное оформление, поиск поставщиков. От 50 кг.",
+
+  alternates: { canonical: "https://chinabridge.pro/import-clothing-from-china" },
 };
 
 export default function Page() {
