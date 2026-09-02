@@ -13,9 +13,9 @@ function escapeNonAscii(json: string): string {
 }
 
 interface FreeLeadInput {
-  name: string;
+  name?: string;
   telegram: string;
-  product: string;
+  product?: string;
   country?: string;
   volume?: string;
 }
@@ -26,23 +26,17 @@ function validate(body: unknown): { input: FreeLeadInput; errors: Record<string,
   const b = body as Record<string, unknown>;
   const errors: Record<string, string> = {};
 
-  if (!b.name || typeof b.name !== "string" || !b.name.trim()) {
-    errors.name = "name is required";
-  }
   if (!b.telegram || typeof b.telegram !== "string" || !b.telegram.trim()) {
     errors.telegram = "telegram is required";
-  }
-  if (!b.product || typeof b.product !== "string" || !b.product.trim()) {
-    errors.product = "product is required";
   }
 
   if (Object.keys(errors).length > 0) return { input: {} as FreeLeadInput, errors };
 
   return {
     input: {
-      name:     (b.name     as string).trim(),
+      name:     typeof b.name    === "string" ? b.name.trim()    || undefined : undefined,
       telegram: (b.telegram as string).trim(),
-      product:  (b.product  as string).trim(),
+      product:  typeof b.product === "string" ? b.product.trim() || undefined : undefined,
       country:  typeof b.country === "string" ? b.country.trim() || undefined : undefined,
       volume:   typeof b.volume  === "string" ? b.volume.trim()  || undefined : undefined,
     },

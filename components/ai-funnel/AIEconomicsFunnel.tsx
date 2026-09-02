@@ -1956,7 +1956,7 @@ export default function AIEconomicsFunnel() {
           <>
             {inlineLeadId && (
               <a
-                href={`https://t.me/ChinaBridgeLID_bot?start=calc?start=${inlineLeadId.replace(/-/g, '_')}`}
+                href={`https://t.me/ChinaBridgeLID_bot?start=calc_${inlineLeadId.replace(/-/g, '_')}`}
                 target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-between gap-3 bg-[#229ED9]/10 border border-[#229ED9]/30 rounded-xl px-4 py-3 mb-1 hover:bg-[#229ED9]/20 transition-colors"
               >
