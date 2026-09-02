@@ -1952,6 +1952,38 @@ export default function AIEconomicsFunnel() {
             ))}
           </div>
 
+          {/* ── PRIMARY CTA — visible immediately after verdict ─────────── */}
+          <div className="flex flex-col gap-2">
+            <a
+              href={supplierExists === true
+                ? "https://t.me/chinabridge_manager?text=%D0%A5%D0%BE%D1%87%D1%83+%D1%80%D0%B0%D1%81%D1%81%D1%87%D0%B8%D1%82%D0%B0%D1%82%D1%8C+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D1%83+%D0%BE%D1%82+%D0%BC%D0%BE%D0%B5%D0%B3%D0%BE+%D0%BF%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B0"
+                : "https://t.me/ChinaBridgeLID_bot?start=calc"}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => { analytics.aiFunnelImportClick?.(); if (supplierExists === true) analytics.calculatorToDeliveryClick?.(); }}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
+            >
+              🚀{" "}
+              {supplierExists === true
+                ? "Рассчитать доставку от моего поставщика"
+                : ec.verdict === "green"
+                ? "Привезти этот товар из Китая"
+                : ec.verdict === "red"
+                ? "Найти поставщика с ценой ниже"
+                : "Хочу привезти этот товар"}
+            </a>
+            <p className="text-center text-xs text-[#5a7899]">
+              Откроется Telegram — нажмите <b className="text-[#8899aa]">Запустить</b> · ответим в течение 5 минут
+            </p>
+          </div>
+
+          {/* Divider before analytics */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-[#243a5e]" />
+            <span className="text-[10px] text-[#5a7899] uppercase tracking-wide">Детали расчёта</span>
+            <div className="flex-1 h-px bg-[#243a5e]" />
+          </div>
+
           {/* Full analytics: always free, no gate */}
           <>
             {inlineLeadId && (

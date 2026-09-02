@@ -54,14 +54,14 @@ export default function GtdCompareBlock() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="fade-up text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-4 uppercase tracking-widest">
-              Уникальное преимущество
+              Официальное оформление
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               ГТД при каждой&nbsp;
               <span className="text-gradient">официальной поставке</span>
             </h2>
             <p className="text-[#8899aa] max-w-2xl mx-auto text-base leading-relaxed">
-              Грузовая таможенная декларация с номером — важный документ для листинга товара на Wildberries и Ozon.
+              Грузовая таможенная декларация с номером — документ, подтверждающий законность ввоза товара.
               Мы работаем только через официальные таможенные пункты и выдаём ГТД при каждой белой поставке.
             </p>
           </div>
@@ -70,8 +70,8 @@ export default function GtdCompareBlock() {
             {[
               {
                 icon: "🔒",
-                title: "Карточки не блокируют",
-                desc: "WB и Ozon проверяют наличие ГТД при листинге. Без него — отказ в размещении или блокировка карточки.",
+                title: "Подтверждение законности ввоза",
+                desc: "ГТД подтверждает официальный ввоз товара через таможню и используется при листинге на WB и Ozon для подтверждения происхождения.",
               },
               {
                 icon: "📋",
