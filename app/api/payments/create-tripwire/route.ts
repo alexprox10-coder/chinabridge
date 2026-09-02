@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import https from "node:https";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// Tochka Bank uses Минцифры CA not trusted by Node.js — skip cert check for this endpoint only
+const tochkaAgent = new https.Agent({ rejectUnauthorized: false });
 
 const TOCHKA_JWT           = process.env.TOCHKA_JWT ?? "";
 const TOCHKA_CUSTOMER_CODE = process.env.TOCHKA_CUSTOMER_CODE ?? "305892710";
@@ -23,31 +27,49 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "not_configured" }, { status: 503 });
     }
 
-    const resp = await fetch("https://enter.tochka.com/uapi/acquiring/v1.0/payments", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${TOCHKA_JWT}`,
-        "Content-Type": "application/json",
+    const reqBody = JSON.stringify({
+      Data: {
+        customerCode: TOCHKA_CUSTOMER_CODE,
+        amount: 2000.0,
+        purpose: "Аудит партии из Китая — ChinaBridge",
+        paymentMode: ["sbp", "card", "tinkoff"],
+        redirectUrl: "https://chinabridge.pro/audit-success",
+        callbackUrl: "https://chinabridge.pro/api/payments/tochka-webhook",
       },
-      body: JSON.stringify({
-        Data: {
-          customerCode: TOCHKA_CUSTOMER_CODE,
-          amount: 2000.0,
-          purpose: "Аудит партии из Китая — ChinaBridge",
-          paymentMode: ["sbp", "card", "tinkoff"],
-          redirectUrl: "https://chinabridge.pro/audit-success",
-          callbackUrl: "https://chinabridge.pro/api/payments/tochka-webhook",
-        },
-      }),
     });
 
-    if (!resp.ok) {
-      const txt = await resp.text();
-      console.error("[create-tripwire] Tochka error:", resp.status, txt);
+    const tochkaResp = await new Promise<{ ok: boolean; body: string }>((resolve, reject) => {
+      const req = https.request(
+        {
+          hostname: "enter.tochka.com",
+          port: 443,
+          path: "/uapi/acquiring/v1.0/payments",
+          method: "POST",
+          agent: tochkaAgent,
+          headers: {
+            Authorization: `Bearer ${TOCHKA_JWT}`,
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(reqBody),
+          },
+        },
+        (res) => {
+          let data = "";
+          res.on("data", (c: Buffer) => { data += c.toString(); });
+          res.on("end", () => resolve({ ok: (res.statusCode ?? 0) >= 200 && (res.statusCode ?? 0) < 300, body: data }));
+        }
+      );
+      req.setTimeout(15000, () => { req.destroy(new Error("tochka_timeout")); });
+      req.on("error", reject);
+      req.write(reqBody);
+      req.end();
+    });
+
+    if (!tochkaResp.ok) {
+      console.error("[create-tripwire] Tochka error:", tochkaResp.body);
       return NextResponse.json({ error: "payment_failed" }, { status: 502 });
     }
 
-    const data = await resp.json() as { Data?: { operationId?: string; paymentLink?: string } };
+    const data = JSON.parse(tochkaResp.body) as { Data?: { operationId?: string; paymentLink?: string } };
     const operationId = data.Data?.operationId;
     const paymentLink = data.Data?.paymentLink;
 

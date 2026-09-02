@@ -18,7 +18,8 @@ function loadCa(): Buffer | undefined {
 }
 
 const CA_CERT  = loadCa();
-const tochkaAgent = new https.Agent({ ca: CA_CERT });
+// rejectUnauthorized: false — Tochka uses Минцифры CA not in Node.js default trust store
+const tochkaAgent = new https.Agent({ ca: CA_CERT, rejectUnauthorized: false });
 
 function authHeader() {
   return `Bearer ${process.env.TOCHKA_JWT ?? ""}`;
