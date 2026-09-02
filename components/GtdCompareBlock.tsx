@@ -57,12 +57,12 @@ export default function GtdCompareBlock() {
               Уникальное преимущество
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Только ChinaBridge&nbsp;
-              <span className="text-gradient">выдаёт ГТД</span>
+              ГТД при каждой&nbsp;
+              <span className="text-gradient">официальной поставке</span>
             </h2>
             <p className="text-[#8899aa] max-w-2xl mx-auto text-base leading-relaxed">
-              Грузовая таможенная декларация с номером — обязательный документ для листинга товара на Wildberries и Ozon.
-              Большинство карго-компаний работают по серой схеме и выдать ГТД не могут.
+              Грузовая таможенная декларация с номером — важный документ для листинга товара на Wildberries и Ozon.
+              Мы работаем только через официальные таможенные пункты и выдаём ГТД при каждой белой поставке.
             </p>
           </div>
 

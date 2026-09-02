@@ -9,7 +9,7 @@ import {
   CARGO_TYPE_LABELS,
   CARGO_TYPE_ICONS,
 } from "@/lib/calculator/types";
-import { CheckCircle2, ChevronRight, ChevronLeft, Download } from "lucide-react";
+import { CheckCircle2, ChevronRight, ChevronLeft, Download, Send } from "lucide-react";
 import { analytics } from "@/lib/analytics";
 
 const AI_STEPS = [
@@ -292,30 +292,31 @@ export function CalculatorForm() {
           </div>
         )}
 
+        <div className="bg-[#229ED9]/10 border border-[#229ED9]/25 rounded-xl px-4 py-3 mb-3 text-center">
+          <p className="text-sm font-semibold text-white">Хотите привезти этот товар?</p>
+          <p className="text-xs text-[#8899aa] mt-0.5">Напишите менеджеру — ответим за 5 минут</p>
+        </div>
         <div className="flex flex-col gap-2.5">
+          <a
+            href="https://t.me/ChinaBridgeLID_bot?start=calc"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => analytics.telegramClick()}
+            className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-[#229ED9] hover:bg-[#1a8fc4] text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-[#229ED9]/20"
+          >
+            <Send className="w-4 h-4" />
+            Написать в Telegram →
+          </a>
           {result.lead_id && (
             <button
               onClick={() => handleDownloadProposal(result.lead_id!)}
               disabled={proposalLoading}
-              className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-all"
+              className="flex items-center justify-center gap-2 w-full px-5 py-3 border border-[#243a5e] hover:border-[#00A86B]/50 text-white hover:bg-white/5 text-sm font-semibold rounded-xl transition-all"
             >
               <Download className="w-4 h-4" />
               {proposalLoading ? "Создаём КП…" : "Получить коммерческое предложение"}
             </button>
           )}
-          <a
-            href="https://t.me/ChinaBridgeLID_bot"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => analytics.telegramClick()}
-            className={`flex items-center justify-center gap-2 w-full px-5 py-3 font-semibold text-sm rounded-xl transition-all ${
-              result.lead_id
-                ? "border border-[#243a5e] hover:border-[#00A86B]/50 text-white hover:bg-white/5"
-                : "bg-[#00A86B] hover:bg-[#008f59] text-white"
-            }`}
-          >
-            Написать менеджеру в Telegram
-          </a>
         </div>
 
         <button
