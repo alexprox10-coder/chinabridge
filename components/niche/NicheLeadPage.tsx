@@ -17,8 +17,8 @@ export interface NicheConfig {
 function trackContact(method: string, source: string) {
   trackGAEvent("contact", { method, source });
   if (typeof window !== "undefined") {
-    const w = window as unknown as { VK?: { Goal: (g: string) => void } };
-    if (w.VK) w.VK.Goal("lead");
+    const w = window as unknown as { VK?: { Retargeting?: { Goal: (g: string) => void } } };
+    w.VK?.Retargeting?.Goal("lead");
   }
 }
 
@@ -57,8 +57,8 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
         setState("done");
         trackGAEvent("generate_lead", { source: config.source, method: "form" });
         if (typeof window !== "undefined") {
-          const w = window as unknown as { VK?: { Goal: (g: string) => void } };
-          if (w.VK) w.VK.Goal("lead");
+          const w = window as unknown as { VK?: { Retargeting?: { Goal: (g: string) => void } } };
+          w.VK?.Retargeting?.Goal("lead");
         }
       } else setState("error");
     } catch {
@@ -71,7 +71,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
       setForm(prev => ({ ...prev, [k]: e.target.value }));
   }
 
-  const tgHref = `https://t.me/ChinaBridgeLID_bot?start=${config.source}`;
+  const tgHref = `https://t.me/chinabridge_support24_bot?start=${config.source}`;
   const waHref = `https://wa.me/79145889874?text=${encodeURIComponent("Привет, хочу узнать стоимость доставки из Китая")}`;
 
   const TgIcon = () => (
@@ -132,7 +132,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
               <span className="text-slate-500 text-xs">Не открылся Telegram?</span>
               <button
                 onClick={() => {
-                  const text = "@ChinaBridgeLID_bot";
+                  const text = "@chinabridge_support24_bot";
                   if (navigator.clipboard) {
                     navigator.clipboard.writeText(text).catch(() => null);
                   } else {
