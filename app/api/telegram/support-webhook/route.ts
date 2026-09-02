@@ -17,12 +17,28 @@ const GREETING = `👋 Добро пожаловать в ChinaBridge!
 
 Напишите, что хотите привезти — менеджер ответит в течение 5 минут.`;
 
-async function sendViaSupport(chatId: number | string, text: string) {
+const GREETING_BUTTONS = {
+  inline_keyboard: [
+    [
+      { text: "📢 Подписаться на канал", url: "https://t.me/chinabridgeline" },
+    ],
+    [
+      { text: "🧮 Рассчитать стоимость", url: "https://chinabridge.pro/ai-calculator" },
+    ],
+  ],
+};
+
+async function sendViaSupport(chatId: number | string, text: string, replyMarkup?: object) {
   if (!SUPPORT_BOT_TOKEN) return;
   await fetch(`https://api.telegram.org/bot${SUPPORT_BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: "HTML",
+      ...(replyMarkup && { reply_markup: replyMarkup }),
+    }),
   }).catch(() => null);
 }
 
@@ -44,9 +60,9 @@ export async function POST(req: NextRequest) {
 
   const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  // /start — always send greeting, don't forward to manager
+  // /start — always send greeting with buttons, don't forward to manager
   if (text.startsWith("/start")) {
-    await sendViaSupport(chatId, GREETING);
+    await sendViaSupport(chatId, GREETING, GREETING_BUTTONS);
     return NextResponse.json({ ok: true });
   }
 

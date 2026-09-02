@@ -60,8 +60,12 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           const w = window as unknown as { VK?: { Retargeting?: { Goal: (g: string) => void } } };
           w.VK?.Retargeting?.Goal("lead");
         }
-      } else setState("error");
+      } else {
+        submittedRef.current = false;
+        setState("error");
+      }
     } catch {
+      submittedRef.current = false;
       setState("error");
     }
   }
