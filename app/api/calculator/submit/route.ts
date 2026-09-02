@@ -75,19 +75,35 @@ export async function POST(req: NextRequest) {
   };
 
   // Cost Engine: select pricing rule → compute sale price, profit, margin
-  const cost = await Promise.race([
-    calculateCostBreakdown({
-      country_from: body.country_from ?? 'China',
-      city_from: body.city_from ?? '',
-      country_to: body.country_to ?? 'Russia',
-      city_to: body.city_to ?? '',
-      weight: body.weight_kg ? parseFloat(body.weight_kg) : undefined,
-      volume: body.volume_m3 ? parseFloat(body.volume_m3) : undefined,
-      packages: body.packages_count ? parseInt(body.packages_count) : undefined,
-      customer_type: body.customer_type ?? undefined,
-    }),
-    new Promise<null>(r => setTimeout(() => r(null), 8000)),
-  ]).catch(() => null);
+  // Run cost calculation and manager notification in parallel to fit within Vercel 10s timeout
+  const [cost] = await Promise.all([
+    Promise.race([
+      calculateCostBreakdown({
+        country_from: body.country_from ?? 'China',
+        city_from: body.city_from ?? '',
+        country_to: body.country_to ?? 'Russia',
+        city_to: body.city_to ?? '',
+        weight: body.weight_kg ? parseFloat(body.weight_kg) : undefined,
+        volume: body.volume_m3 ? parseFloat(body.volume_m3) : undefined,
+        packages: body.packages_count ? parseInt(body.packages_count) : undefined,
+        customer_type: body.customer_type ?? undefined,
+      }),
+      new Promise<null>(r => setTimeout(() => r(null), 4000)),
+    ]).catch(() => null),
+    notifyManagerTelegram({
+      name:         body.name ?? '',
+      phone:        body.phone ?? '',
+      telegram:     body.telegram ?? '',
+      whatsapp:     body.whatsapp ?? '',
+      email:        body.email ?? '',
+      product_name: body.product_name ?? '',
+      city_to:      body.city_to ?? '',
+      country_to:   body.country_to ?? '',
+      weight_kg:    body.weight_kg ?? '',
+      quantity:     String(body.quantity ?? ''),
+      source:       body.source ?? '',
+    }).catch(() => null),
+  ]);
 
   const hasRate = cost && cost.sale_price > 0;
 
@@ -107,33 +123,18 @@ export async function POST(req: NextRequest) {
     }),
   };
 
-  // Notify manager — must be awaited in Vercel serverless or it never fires
-  await notifyManagerTelegram({
-    name:         body.name ?? '',
-    phone:        body.phone ?? '',
-    telegram:     body.telegram ?? '',
-    whatsapp:     body.whatsapp ?? '',
-    email:        body.email ?? '',
-    product_name: body.product_name ?? '',
-    city_to:      body.city_to ?? '',
-    country_to:   body.country_to ?? '',
-    weight_kg:    body.weight_kg ?? '',
-    quantity:     String(body.quantity ?? ''),
-    source:       body.source ?? '',
-  }).catch(() => null);
-
-  // Notify n8n — awaited so Vercel doesn't kill the request before fetch completes
-  await fetch(`${N8N_BASE}/webhook/chinabridge-calculator`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: escapeNonAscii(JSON.stringify(n8nPayload)),
-    signal: AbortSignal.timeout(10000),
-  }).catch(() => null);
-
-  // Save to CRM immediately with defaults — this is fast (local DB)
   const crmLeadId = `calc-${id}`;
-  await createLead({
-    lead_id:             crmLeadId,
+
+  // n8n + createLead in parallel — 3s timeout for n8n to stay within Vercel 10s limit
+  await Promise.all([
+    fetch(`${N8N_BASE}/webhook/chinabridge-calculator`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: escapeNonAscii(JSON.stringify(n8nPayload)),
+      signal: AbortSignal.timeout(3000),
+    }).catch(() => null),
+    createLead({
+      lead_id:             crmLeadId,
     created_at:          new Date().toISOString(),
     updated_at:          new Date().toISOString(),
     name:                body.name ?? '',
@@ -165,7 +166,8 @@ export async function POST(req: NextRequest) {
     profit:              hasRate ? cost!.profit : undefined,
     margin_percent:      hasRate ? cost!.margin_percent : undefined,
     pricing_rule:        hasRate ? cost!.selected_rule_name : undefined,
-  }, 'tenant-chinabridge').catch((e) => console.error('[calculator] createLead failed:', e));
+    }, 'tenant-chinabridge').catch((e) => console.error('[calculator] createLead failed:', e)),
+  ]);
 
   // Respond immediately — don't wait for Telegram or n8n
   return NextResponse.json({
