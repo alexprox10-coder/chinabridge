@@ -80,7 +80,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
   }
 
   const tgHref = `https://t.me/chinabridge_support24_bot?start=${config.source}`;
-  const waHref = `https://api.whatsapp.com/send?phone=79145889874&text=${encodeURIComponent("Привет, хочу узнать стоимость доставки из Китая")}`;
+  const waHref = `https://api.whatsapp.com/send?phone=79145889874&text=${encodeURIComponent(`Здравствуйте! Интересует доставка из Китая. [${config.source}]`)}`;
 
   const TgIcon = () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
