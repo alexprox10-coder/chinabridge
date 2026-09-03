@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { analytics } from "@/lib/analytics";
 
 const SUBSCRIPTION_DAYS = 30;
 
@@ -29,7 +30,11 @@ export default function CalculatorSuccessPage() {
           localStorage.setItem("cb_paid_until", until.toISOString());
           localStorage.removeItem("cb_paywall_active");
           localStorage.removeItem("cb_calc_uses");
+          localStorage.removeItem("cb_pending_op_id");
         } catch { /* ignore */ }
+
+        // Track Pro activation
+        analytics.proActivated?.({ source: "calculator_payment" });
 
         // Notify manager in Telegram
         try {

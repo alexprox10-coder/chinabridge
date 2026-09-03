@@ -144,7 +144,7 @@ export default function AICalculatorPage() {
             </h1>
             <p className="hidden sm:block text-[#8899aa] text-sm leading-relaxed max-w-lg mx-auto">
               Не покупайте вслепую — вставьте ссылку с 1688 или Alibaba и получите
-              реальную маржу с учётом таможни, доставки и комиссии маркетплейса. 3 расчёта бесплатно.
+              реальную маржу с учётом таможни, доставки и комиссии маркетплейса. 5 расчётов бесплатно.
             </p>
           </div>
 
@@ -152,7 +152,7 @@ export default function AICalculatorPage() {
           {/* Trust badges — hidden on mobile to keep form above fold */}
           <div className="hidden sm:flex flex-wrap justify-center gap-4 mb-8 text-xs text-[#8899aa]">
             {[
-              { icon: "🎁", text: "3 расчёта бесплатно" },
+              { icon: "🎁", text: "5 расчётов бесплатно" },
               { icon: "⚡", text: "Результат за 15 сек" },
               { icon: "🤖", text: "AI-анализ GPT-4o" },
               { icon: "🚀", text: "Реальные данные" },

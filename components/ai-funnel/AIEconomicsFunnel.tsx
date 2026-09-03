@@ -97,7 +97,8 @@ const QUICK_EXAMPLES = [
   { emoji: "🧸", label: "Игрушки",      margin_hint: "~33% маржа", product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
 ];
 
-const ANON_LIMIT = 3;  // free calculations for anonymous users
+// Free limit — raise via NEXT_PUBLIC_FREE_CALC_LIMIT env var if needed
+const ANON_LIMIT = Number(process.env.NEXT_PUBLIC_FREE_CALC_LIMIT ?? "5");
 const REG_LIMIT  = 10; // free calculations for registered users (gave TG)
 
 // Analyzing stages — real stages that match backend process
@@ -585,23 +586,36 @@ function PaywallBlock({
 }) {
   const isGreen = ec?.verdict === "green";
 
-  const [payLoading, setPayLoading] = useState(false);
-  async function handleProPayment(e: React.MouseEvent) {
+  const [payLoading,    setPayLoading]    = useState(false);
+  const [showTrustStep, setShowTrustStep] = useState(false);
+
+  function handleProCtaClick(e: React.MouseEvent) {
     e.preventDefault();
     analytics.paywallProClicked?.();
+    // Show trust confirmation step before redirect
+    setShowTrustStep(true);
+  }
+
+  async function handleProPayment(e: React.MouseEvent) {
+    e.preventDefault();
+    analytics.checkoutStarted?.({ amount: 1990 });
     setPayLoading(true);
     try {
       const res  = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
       const data = await res.json();
       if (data.ok && data.paymentLink) {
+        // Save operationId so success page can clean up localStorage
+        try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
         window.location.href = data.paymentLink;
       } else {
         alert("Ошибка: " + (data.error ?? "попробуйте ещё раз"));
         setPayLoading(false);
+        setShowTrustStep(false);
       }
     } catch {
       alert("Ошибка сети — попробуйте ещё раз");
       setPayLoading(false);
+      setShowTrustStep(false);
     }
   }
 
@@ -620,19 +634,16 @@ function PaywallBlock({
             onClick={onClose}
             className="absolute top-4 right-4 text-[#5a7899] hover:text-white text-xl leading-none"
           >×</button>
-          <div className="flex items-center gap-3 mb-2">
-            {[0,1,2,3,4].map(i => (
-              <div key={i} className="w-2 h-2 rounded-full bg-[#00A86B]" />
+          <div className="flex items-center gap-2 mb-3">
+            {Array.from({ length: totalLimit }).map((_, i) => (
+              <div key={i} className={`w-2 h-2 rounded-full ${i < usedCount ? "bg-[#00A86B]" : "bg-[#243a5e]"}`} />
             ))}
           </div>
-          <p className="text-xs text-[#8899aa] mb-0.5">
-            {usedCount} / {totalLimit} бесплатных расчётов использовано
-          </p>
           <h2 className="text-lg font-bold text-white leading-tight">
-            Видите потенциал? Привезём товар за вас
+            Вы проверили {usedCount} {usedCount === 1 ? "товар" : usedCount < 5 ? "товара" : "товаров"} бесплатно
           </h2>
           <p className="text-xs text-[#8899aa] mt-1 leading-relaxed">
-            Менеджер найдёт поставщика и рассчитает поставку — бесплатно, за 15 минут
+            Продолжайте анализировать товары и сохраняйте расчёты в личном кабинете
           </p>
           {ec && (
             <div className="mt-2 flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
@@ -705,7 +716,7 @@ function PaywallBlock({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#8899aa] mt-0.5">Сохраните расчёты и анализируйте до 100 товаров в месяц</p>
+                <p className="text-xs text-[#8899aa] mt-0.5">Безлимитные расчёты и история товаров</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-[#8899aa] mb-3">
@@ -716,13 +727,39 @@ function PaywallBlock({
               <span>✓ Все маркетплейсы</span>
               <span>✓ AI-сценарии</span>
             </div>
-            <button
-              onClick={handleProPayment}
-              disabled={payLoading}
-              className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
-            >
-              {payLoading ? "Создаём платёж..." : "Подключить PRO — 1 990 ₽/мес"}
-            </button>
+
+            {/* Trust step — shown after first click, before redirect */}
+            {showTrustStep ? (
+              <div className="flex flex-col gap-2">
+                <div className="rounded-xl bg-[#0b1a2e] border border-[#243a5e] px-3 py-2.5 text-xs text-[#8899aa] leading-relaxed">
+                  Вы перейдёте на страницу оплаты нашего партнёра.{" "}
+                  <span className="text-white">После успешной оплаты вы вернётесь автоматически</span>{" "}
+                  и Pro активируется сразу.
+                </div>
+                <button
+                  onClick={handleProPayment}
+                  disabled={payLoading}
+                  className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
+                >
+                  {payLoading ? "Переходим к оплате..." : "Перейти к оплате →"}
+                </button>
+                <button onClick={() => setShowTrustStep(false)} className="text-xs text-[#5a7899] hover:text-white text-center">
+                  Отмена
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={handleProCtaClick}
+                  className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
+                >
+                  Подключить Pro — 1 990 ₽/мес
+                </button>
+                <p className="mt-2 text-[10px] text-[#5a7899] text-center leading-relaxed">
+                  Безопасная оплата через платёжный сервис партнёра. После оплаты Pro активируется автоматически.
+                </p>
+              </>
+            )}
           </div>
 
           <button
@@ -897,6 +934,8 @@ export default function AIEconomicsFunnel() {
         setTimeout(() => setShowProBanner(false), 10000);
       } else if (params.get('pay') === 'fail' || params.get('pay') === 'cancel') {
         window.history.replaceState({}, '', window.location.pathname);
+        setShowPayCancel(true);
+        analytics.paymentFailed?.({ reason: params.get('pay') ?? 'cancel' });
       }
     } catch { /* ignore */ }
   }, []);
@@ -1321,6 +1360,7 @@ export default function AIEconomicsFunnel() {
 
   // ── Share ───────────────────────────────────────────────────────────────────
 
+  const [showPayCancel,    setShowPayCancel]    = useState(false);
   const [copied,           setCopied]           = useState(false);
   const [inlineTg,         setInlineTg]         = useState("");
   const [inlineName,       setInlineName]       = useState("");
@@ -1489,6 +1529,32 @@ export default function AIEconomicsFunnel() {
           <p className="text-xs text-[#8899aa]">Безлимитные расчёты включены на 30 дней. Считайте сколько угодно.</p>
         </div>
         <button onClick={() => setShowProBanner(false)} className="text-[#5a7899] hover:text-white text-lg leading-none shrink-0">×</button>
+      </div>
+    )}
+    {showPayCancel && (
+      <div className="mb-4 rounded-xl bg-amber-900/20 border border-amber-700/40 px-4 py-3 flex flex-col gap-3">
+        <div className="flex items-start gap-3">
+          <span className="text-xl shrink-0 mt-0.5">⚠️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-amber-400">Оплата не завершена</p>
+            <p className="text-xs text-[#8899aa] mt-0.5">Вы можете повторить оплату или продолжить бесплатные расчёты.</p>
+          </div>
+          <button onClick={() => setShowPayCancel(false)} className="text-[#5a7899] hover:text-white text-lg leading-none shrink-0">×</button>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setShowPayCancel(false); setShowPaywall(true); analytics.paywallShown?.({ count: calcCount }); }}
+            className="flex-1 py-2 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-xs font-semibold rounded-xl transition-colors"
+          >
+            Повторить оплату
+          </button>
+          <button
+            onClick={() => setShowPayCancel(false)}
+            className="flex-1 py-2 border border-[#243a5e] hover:border-[#8899aa]/50 text-[#8899aa] text-xs rounded-xl transition-colors"
+          >
+            Вернуться к расчётам
+          </button>
+        </div>
       </div>
     )}
     <div className="card-glass rounded-2xl p-6 md:p-8">
@@ -2160,6 +2226,7 @@ export default function AIEconomicsFunnel() {
               target="_blank" rel="noopener noreferrer"
               onClick={() => {
                 analytics.aiFunnelImportClick?.();
+                analytics.importCtaClick?.({ verdict: ec?.verdict ?? undefined });
                 if (supplierExists === true) analytics.calculatorToDeliveryClick?.();
               }}
               className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#00A86B]/20 to-[#00A86B]/5 border border-[#00A86B]/40 rounded-xl px-4 py-4 hover:from-[#00A86B]/30 hover:border-[#00A86B]/60 transition-all group"

@@ -103,6 +103,10 @@ export const analytics = {
   paywallProClicked: ()                                          => fire("paywall_pro_clicked", "paywall_pro_clicked", { category: "monetization" }),
   paywallTgClicked:  ()                                          => fire("paywall_tg_clicked",  "paywall_tg_clicked",  { category: "monetization" }),
   calcRegistered:    (p?: { source?: string })                   => fire("calc_registered",     "calc_registered",     { category: "monetization", ...p }),
+  checkoutStarted:   (p?: { amount?: number })                   => { fire("checkout_started",   "checkout_started",   { category: "monetization", ...p }); trackVkGoal("checkout_started"); },
+  paymentFailed:     (p?: { reason?: string })                   => fire("payment_failed",       "payment_failed",     { category: "monetization", ...p }),
+  proActivated:      (p?: { source?: string })                   => { fire("pro_activated",      "pro_activated",      { category: "monetization", ...p }); trackVkGoal("pro_activated"); },
+  importCtaClick:    (p?: { verdict?: string })                  => fire("import_cta_click",     "import_cta_click",   { category: "monetization", ...p }),
 
   // ── Unit Economics Engine — полная воронка (ТЗ §30) ───────────────────────
   unitEconomicsOpen:        ()                                          => fire("unit_economics_open",        "unit_economics_open",        { category: "unit_economics" }),

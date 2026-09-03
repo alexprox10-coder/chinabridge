@@ -15,7 +15,8 @@ export async function POST(req: Request) {
     const operationId = (data.operationId ?? data.OperationId) as string | undefined;
     const status      = (data.status ?? data.Status) as string | undefined;
 
-    if (!operationId || status !== "PAID") {
+    // Tochka sends "APPROVED" on success; older integrations may send "PAID"
+    if (!operationId || (status !== "PAID" && status !== "APPROVED")) {
       return NextResponse.json({ ok: true });
     }
 
