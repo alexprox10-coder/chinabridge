@@ -267,36 +267,56 @@ export function CalculatorForm() {
         </div>
 
         {hasCost ? (
-          <div className="bg-[#00A86B]/10 border border-[#00A86B]/30 rounded-xl p-5 mb-4 text-center">
-            <p className="text-xs text-[#8899aa] mb-1 uppercase tracking-widest">Предварительная стоимость</p>
-            <p className="text-4xl font-bold text-white mb-1">
-              {sym}{result.delivery_cost!.toLocaleString("ru-RU")}
-            </p>
-            <p className="text-sm text-[#8899aa]">
-              {currency}
-              {result.delivery_days_min && result.delivery_days_max
-                ? ` · ${result.delivery_days_min}–${result.delivery_days_max} дней`
-                : ""}
-            </p>
-            {result.pricing_rule && (
-              <span className="inline-block mt-2 px-2.5 py-0.5 bg-[#00A86B]/20 text-[#00A86B] text-xs rounded-full font-medium">
-                {result.pricing_rule}
-              </span>
-            )}
-            <p className="text-[10px] text-[#8899aa] mt-2 italic">
-              * Окончательная стоимость уточняется менеджером
+          <div className="bg-[#00A86B]/10 border border-[#00A86B]/30 rounded-xl p-4 mb-3">
+            <p className="text-[10px] text-[#8899aa] uppercase tracking-widest mb-2 text-center">Ориентир стоимости перевозки</p>
+            <div className="text-center mb-3">
+              <p className="text-3xl font-bold text-white">
+                {sym}{result.delivery_cost!.toLocaleString("ru-RU")}
+              </p>
+              <p className="text-sm text-[#8899aa]">
+                {currency}
+                {result.delivery_days_min && result.delivery_days_max
+                  ? ` · ${result.delivery_days_min}–${result.delivery_days_max} дней`
+                  : ""}
+              </p>
+            </div>
+            {/* Landed cost breakdown */}
+            <div className="border-t border-white/10 pt-3 flex flex-col gap-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="text-[#8899aa]">Перевозка (ориентир)</span>
+                <span className="text-white font-medium">{sym}{result.delivery_cost!.toLocaleString("ru-RU")}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-[#8899aa]">Таможня + НДС</span>
+                <span className="text-yellow-400/80">не учтено ⚠️</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-[#8899aa]">Брокер</span>
+                <span className="text-yellow-400/80">не учтено ⚠️</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-[#8899aa]">Доставка по РФ/КЗ</span>
+                <span className="text-yellow-400/80">не учтено ⚠️</span>
+              </div>
+              <div className="flex justify-between text-xs border-t border-white/10 pt-1.5 mt-0.5">
+                <span className="text-white font-semibold">Полная себестоимость</span>
+                <span className="text-[#00A86B] font-semibold">рассчитает менеджер →</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-[#8899aa] mt-2 text-center italic">
+              * Ориентир — точная ставка зависит от маршрута и плотности груза
             </p>
           </div>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4 text-center">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-3 text-center">
             <p className="text-2xl mb-1">📋</p>
             <p className="text-sm text-[#8899aa]">Точную стоимость рассчитает менеджер индивидуально</p>
           </div>
         )}
 
         <div className="bg-[#229ED9]/10 border border-[#229ED9]/25 rounded-xl px-4 py-3 mb-3 text-center">
-          <p className="text-sm font-semibold text-white">Хотите привезти этот товар?</p>
-          <p className="text-xs text-[#8899aa] mt-0.5">Напишите менеджеру — ответим за 5 минут</p>
+          <p className="text-sm font-semibold text-white">Рассчитаем полную себестоимость</p>
+          <p className="text-xs text-[#8899aa] mt-0.5">Менеджер пришлёт КП с таможней и доставкой за 15 минут</p>
         </div>
         <div className="flex flex-col gap-2.5">
           <a
