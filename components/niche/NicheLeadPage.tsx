@@ -12,6 +12,8 @@ export interface NicheConfig {
   benefits: string[];
   source: string;
   default_product?: string;
+  price_anchor?: string;
+  social_proof?: string;
 }
 
 function trackContact(method: string, source: string) {
@@ -78,7 +80,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
   }
 
   const tgHref = `https://t.me/chinabridge_support24_bot?start=${config.source}`;
-  const waHref = `https://wa.me/79145889874?text=${encodeURIComponent("Привет, хочу узнать стоимость доставки из Китая")}`;
+  const waHref = `https://api.whatsapp.com/send?phone=79145889874&text=${encodeURIComponent("Привет, хочу узнать стоимость доставки из Китая")}`;
 
   const TgIcon = () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
@@ -115,23 +117,26 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
         {/* ── MOBILE HERO: buttons FIRST, content below ── */}
         <div className="md:hidden pt-3 pb-8">
 
-          {/* Title — минимально, не задерживаем */}
-          <p className="text-center text-white text-base font-bold mb-3 leading-snug">
+          {/* Title */}
+          <p className="text-center text-white text-base font-bold mb-1 leading-snug">
             {config.emoji} {config.title}
           </p>
 
-          {/* CTA buttons — full-width, unmissable */}
+          {/* Price anchor */}
+          {config.price_anchor && (
+            <p className="text-center text-slate-400 text-xs mb-3">{config.price_anchor}</p>
+          )}
+
+          {/* Social proof */}
+          {config.social_proof && (
+            <div className="flex items-center justify-center gap-1.5 mb-3">
+              <span className="text-yellow-400 text-xs">★★★★★</span>
+              <span className="text-slate-400 text-xs">{config.social_proof}</span>
+            </div>
+          )}
+
+          {/* CTA buttons — WA первой (лучше конвертит в VK WebView), TG второй */}
           <div className="flex flex-col gap-2 mb-2">
-            <a
-              href={tgHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackContact("telegram_hero", config.source)}
-              className="flex items-center justify-center gap-2.5 bg-[#229ED9] text-white font-bold py-4 rounded-2xl text-lg shadow-xl shadow-[#229ED9]/30 active:scale-95 transition-transform"
-            >
-              <TgIcon />
-              Написать в Telegram
-            </a>
             <a
               href={waHref}
               target="_blank"
@@ -140,7 +145,17 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
               className="flex items-center justify-center gap-2.5 bg-[#25D366] text-white font-bold py-4 rounded-2xl text-lg shadow-xl shadow-[#25D366]/30 active:scale-95 transition-transform"
             >
               <WaIcon />
-              Написать в WhatsApp
+              Получить расчёт в WhatsApp
+            </a>
+            <a
+              href={tgHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackContact("telegram_hero", config.source)}
+              className="flex items-center justify-center gap-2.5 bg-[#229ED9] text-white font-bold py-4 rounded-2xl text-lg shadow-xl shadow-[#229ED9]/30 active:scale-95 transition-transform"
+            >
+              <TgIcon />
+              Получить расчёт в Telegram
             </a>
           </div>
 
