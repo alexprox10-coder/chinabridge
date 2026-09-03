@@ -588,35 +588,37 @@ function PaywallBlock({
 
   const [payLoading,    setPayLoading]    = useState(false);
   const [showTrustStep, setShowTrustStep] = useState(false);
+  const [paymentLink,   setPaymentLink]   = useState<string | null>(null);
+  const [linkError,     setLinkError]     = useState(false);
+
+  // Pre-fetch payment link on mount so final tap is a direct <a href> gesture (VK WebView compat)
+  useEffect(() => {
+    let cancelled = false;
+    setPayLoading(true);
+    fetch("/api/payments/calculator-subscribe", { method: "POST" })
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        if (data.ok && data.paymentLink) {
+          try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
+          setPaymentLink(data.paymentLink);
+        } else {
+          setLinkError(true);
+        }
+      })
+      .catch(() => { if (!cancelled) setLinkError(true); })
+      .finally(() => { if (!cancelled) setPayLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   function handleProCtaClick(e: React.MouseEvent) {
     e.preventDefault();
     analytics.paywallProClicked?.();
-    // Show trust confirmation step before redirect
     setShowTrustStep(true);
   }
 
-  async function handleProPayment(e: React.MouseEvent) {
-    e.preventDefault();
+  function handlePaymentClick() {
     analytics.checkoutStarted?.({ amount: 1990 });
-    setPayLoading(true);
-    try {
-      const res  = await fetch("/api/payments/calculator-subscribe", { method: "POST" });
-      const data = await res.json();
-      if (data.ok && data.paymentLink) {
-        // Save operationId so success page can clean up localStorage
-        try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
-        window.location.href = data.paymentLink;
-      } else {
-        alert("Ошибка: " + (data.error ?? "попробуйте ещё раз"));
-        setPayLoading(false);
-        setShowTrustStep(false);
-      }
-    } catch {
-      alert("Ошибка сети — попробуйте ещё раз");
-      setPayLoading(false);
-      setShowTrustStep(false);
-    }
   }
 
   return (
@@ -736,13 +738,21 @@ function PaywallBlock({
                   <span className="text-white">После успешной оплаты вы вернётесь автоматически</span>{" "}
                   и Pro активируется сразу.
                 </div>
-                <button
-                  onClick={handleProPayment}
-                  disabled={payLoading}
-                  className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
-                >
-                  {payLoading ? "Переходим к оплате..." : "Перейти к оплате →"}
-                </button>
+                {linkError ? (
+                  <p className="text-xs text-red-400 text-center">Ошибка загрузки. Обновите страницу и попробуйте снова.</p>
+                ) : payLoading || !paymentLink ? (
+                  <div className="py-2.5 bg-[#229ED9]/50 rounded-xl text-white text-sm font-semibold text-center">
+                    Загружаем ссылку...
+                  </div>
+                ) : (
+                  <a
+                    href={paymentLink}
+                    onClick={handlePaymentClick}
+                    className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
+                  >
+                    Перейти к оплате →
+                  </a>
+                )}
                 <button onClick={() => setShowTrustStep(false)} className="text-xs text-[#5a7899] hover:text-white text-center">
                   Отмена
                 </button>
@@ -751,9 +761,10 @@ function PaywallBlock({
               <>
                 <button
                   onClick={handleProCtaClick}
-                  className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
+                  disabled={payLoading || !!linkError}
+                  className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
                 >
-                  Подключить Pro — 1 990 ₽/мес
+                  {payLoading ? "Подготавливаем оплату..." : linkError ? "Ошибка — обновите страницу" : "Подключить Pro — 1 990 ₽/мес"}
                 </button>
                 <p className="mt-2 text-[10px] text-[#5a7899] text-center leading-relaxed">
                   Безопасная оплата через платёжный сервис партнёра. После оплаты Pro активируется автоматически.
