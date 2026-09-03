@@ -113,15 +113,15 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
       <main className="max-w-5xl mx-auto px-4">
 
         {/* ── MOBILE HERO: buttons FIRST, content below ── */}
-        <div className="md:hidden pt-4 pb-8">
+        <div className="md:hidden pt-3 pb-8">
 
-          {/* Hook line — one sentence, instant clarity */}
-          <p className="text-center text-slate-300 text-sm font-medium mb-4 leading-snug">
+          {/* Title — минимально, не задерживаем */}
+          <p className="text-center text-white text-base font-bold mb-3 leading-snug">
             {config.emoji} {config.title}
           </p>
 
-          {/* CTA buttons — absolute top, full-width, unmissable */}
-          <div className="flex flex-col gap-3 mb-1">
+          {/* CTA buttons — full-width, unmissable */}
+          <div className="flex flex-col gap-2 mb-2">
             <a
               href={tgHref}
               target="_blank"
@@ -132,33 +132,6 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
               <TgIcon />
               Написать в Telegram
             </a>
-            <p className="text-center text-slate-400 text-xs -mt-1">
-              В Telegram нажмите кнопку <span className="text-white font-semibold">«Запустить»</span>
-            </p>
-
-            {/* VK WebView fallback — копировать юзернейм если TG не открылся */}
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-slate-500 text-xs">Не открылся Telegram?</span>
-              <button
-                onClick={() => {
-                  const text = "@chinabridge_support24_bot";
-                  if (navigator.clipboard) {
-                    navigator.clipboard.writeText(text).catch(() => null);
-                  } else {
-                    const el = document.createElement("textarea");
-                    el.value = text; document.body.appendChild(el);
-                    el.select(); document.execCommand("copy");
-                    document.body.removeChild(el);
-                  }
-                  setTgCopied(true);
-                  setTimeout(() => setTgCopied(false), 2500);
-                }}
-                className="text-xs text-[#229ED9] font-semibold active:opacity-70 transition-opacity"
-              >
-                {tgCopied ? "✓ Скопировано!" : "Скопировать юзернейм"}
-              </button>
-            </div>
-
             <a
               href={waHref}
               target="_blank"
@@ -171,9 +144,64 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
             </a>
           </div>
 
-          <p className="text-slate-500 text-xs text-center mb-6 mt-3">
+          <p className="text-slate-500 text-xs text-center mb-4">
             Бесплатно · Ответим за 5 минут
           </p>
+
+          {/* VK WebView fallback */}
+          <div className="flex items-center justify-center gap-2 mb-5">
+            <span className="text-slate-600 text-xs">Не открылся Telegram?</span>
+            <button
+              onClick={() => {
+                const text = "@chinabridge_support24_bot";
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(text).catch(() => null);
+                } else {
+                  const el = document.createElement("textarea");
+                  el.value = text; document.body.appendChild(el);
+                  el.select(); document.execCommand("copy");
+                  document.body.removeChild(el);
+                }
+                setTgCopied(true);
+                setTimeout(() => setTgCopied(false), 2500);
+              }}
+              className="text-xs text-[#229ED9] font-semibold active:opacity-70 transition-opacity"
+            >
+              {tgCopied ? "✓ Скопировано!" : "Скопировать юзернейм"}
+            </button>
+          </div>
+
+          {/* Quick phone form */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-5">
+            <p className="text-sm font-semibold text-white mb-3">Или оставьте номер — перезвоним</p>
+            {state === "done" ? (
+              <p className="text-emerald-400 text-sm text-center py-1">✅ Перезвоним в течение 5 минут</p>
+            ) : (
+              <form onSubmit={submit} className="flex gap-2">
+                <input
+                  type="tel"
+                  placeholder="+7 (999) 000-00-00"
+                  value={form.phone}
+                  onChange={(e) => { set("phone")(e); setPhoneError(false); }}
+                  className={`flex-1 min-w-0 bg-slate-800 border text-white placeholder-slate-500 rounded-xl px-3 py-3 text-sm focus:outline-none transition ${phoneError ? "border-red-500" : "border-slate-700 focus:border-red-500"}`}
+                />
+                <button
+                  type="submit"
+                  disabled={state === "loading"}
+                  className="bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-bold px-4 rounded-xl text-sm shrink-0 active:scale-95 transition-transform"
+                >
+                  {state === "loading" ? "..." : "→"}
+                </button>
+              </form>
+            )}
+          </div>
+
+          {/* Trust pills — выше fold */}
+          <div className="flex flex-wrap gap-2 mb-5">
+            {["📦 Склад в Гуанчжоу", "🚢 Море · Авиа · Ж/Д", "🇰🇿 Казахстан и РФ", "⏱ От 7 дней"].map(t => (
+              <span key={t} className="text-xs text-slate-400 bg-slate-800 rounded-full px-3 py-1">{t}</span>
+            ))}
+          </div>
 
           {/* Divider */}
           <div className="border-t border-slate-800 mb-5" />
@@ -182,7 +210,7 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
           <p className="text-slate-400 text-sm mb-4 leading-relaxed">{config.subtitle}</p>
 
           {/* Benefits compact */}
-          <ul className="space-y-2 mb-5">
+          <ul className="space-y-2">
             {config.benefits.map((b, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
                 <span className="text-red-500 mt-0.5 shrink-0 text-xs">✓</span>
@@ -190,13 +218,6 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
               </li>
             ))}
           </ul>
-
-          {/* Trust pills */}
-          <div className="flex flex-wrap gap-2">
-            {["📦 Склад в Гуанчжоу", "🚢 Море · Авиа · Ж/Д", "🇰🇿 Казахстан и РФ", "⏱ От 7 дней"].map(t => (
-              <span key={t} className="text-xs text-slate-400 bg-slate-800 rounded-full px-3 py-1">{t}</span>
-            ))}
-          </div>
         </div>
 
         {/* ── DESKTOP: 2-column layout ── */}
