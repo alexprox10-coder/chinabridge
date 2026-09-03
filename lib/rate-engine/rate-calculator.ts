@@ -5,11 +5,21 @@ import type {
 import { listRows, createRow, TABLE_IDS } from './db';
 import { matchRoute, matchRate, getDefaultTransportType } from './route-matcher';
 
-function calcBaseCost(rate: ShippingRate, input: CalculationInput): number {
+// Air/express: 1 m³ = 200 kg (L×W×H / 5000 cm³ rule)
+// Road/rail/sea: 1 m³ = 167 kg (L×W×H / 6000 cm³ rule)
+function computeChargeableWeight(actualKg: number, volumeM3: number, transport_type?: string): number {
+  if (!volumeM3 || volumeM3 <= 0) return actualKg;
+  const kgPerM3 = (transport_type === 'air' || transport_type === 'express') ? 200 : 167;
+  return Math.max(actualKg, volumeM3 * kgPerM3);
+}
+
+function calcBaseCost(rate: ShippingRate, input: CalculationInput, transport_type?: string): number {
   const { rate_type, price_value } = rate;
   switch (rate_type) {
-    case 'KG':
-      return (input.weight ?? 0) * price_value;
+    case 'KG': {
+      const chargeable = computeChargeableWeight(input.weight ?? 0, input.volume ?? 0, transport_type);
+      return chargeable * price_value;
+    }
     case 'CBM':
       return (input.volume ?? 0) * price_value;
     case 'BOX':
@@ -76,15 +86,15 @@ export async function calculateDeliveryCost(input: CalculationInput): Promise<Ca
     // FCL rates ($4250/$6500) apply only to full containers (≥5 CBM or ≥2000 kg).
     // For smaller cargo, estimate LCL (сборный): max($2.5/kg, $150/CBM), min $200.
     const vol = input.volume ?? 0;
-    const wt = input.weight ?? 0;
+    const wt = computeChargeableWeight(input.weight ?? 0, vol, transport_type);
     const isFCL = vol >= 5 || wt >= 2000;
     if (isFCL) {
-      baseCost = calcBaseCost(matchedRate, input);
+      baseCost = calcBaseCost(matchedRate, input, transport_type);
     } else {
       baseCost = Math.max(200, Math.max(wt * 2.5, vol * 150));
     }
   } else if (matchedRate) {
-    baseCost = calcBaseCost(matchedRate, input);
+    baseCost = calcBaseCost(matchedRate, input, transport_type);
   }
 
   // Additional services
