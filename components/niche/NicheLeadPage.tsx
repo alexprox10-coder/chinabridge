@@ -17,6 +17,7 @@ export interface NicheConfig {
 function trackContact(method: string, source: string) {
   trackGAEvent("contact", { method, source });
   if (typeof window !== "undefined") {
+    (window as unknown as { ym?: (id: number, action: string, goal: string) => void }).ym?.(111162572, "reachGoal", "messenger_click");
     const w = window as unknown as { VK?: { Retargeting?: { Goal: (g: string) => void } } };
     w.VK?.Retargeting?.Goal("lead");
   }
@@ -57,8 +58,9 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
         setState("done");
         trackGAEvent("generate_lead", { source: config.source, method: "form" });
         if (typeof window !== "undefined") {
-          const w = window as unknown as { VK?: { Retargeting?: { Goal: (g: string) => void } } };
+          const w = window as unknown as { VK?: { Retargeting?: { Goal: (g: string) => void } }; ym?: (id: number, action: string, goal: string) => void };
           w.VK?.Retargeting?.Goal("lead");
+          w.ym?.(111162572, "reachGoal", "form_submit");
         }
       } else {
         submittedRef.current = false;
@@ -93,15 +95,18 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
       <header className="border-b border-slate-800 px-4 py-3 flex items-center justify-between max-w-5xl mx-auto">
-        <Link href="/" className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <span className="text-lg">🇨🇳</span>
           <span className="font-bold text-white text-sm">ChinaBridge</span>
-        </Link>
+        </div>
         <div className="text-right">
           <a href="tel:+79145889874" className="text-slate-300 hover:text-white text-xs font-medium transition block">
             +7 914 588-98-74
           </a>
-          <span className="text-slate-500 text-[10px]">WhatsApp · Telegram</span>
+          <div className="flex gap-2 justify-end mt-0.5">
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 text-[10px] transition">WhatsApp</a>
+            <a href={tgHref} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 text-[10px] transition">Telegram</a>
+          </div>
         </div>
       </header>
 
