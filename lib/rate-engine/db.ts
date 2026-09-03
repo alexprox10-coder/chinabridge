@@ -7,6 +7,7 @@ export const TABLE_IDS = {
   additional_services: 'xpmKXW51U37OJ8lb',
   pricing_rules: '8TMB7H9pwS55ccfu',
   rate_calculations: 'DZAaoggjCa8sRhGP',
+  rate_benchmarks: 'TL16JNMLmZPVLPkI',
 } as const;
 
 async function n8nFetch(path: string, init?: RequestInit) {
