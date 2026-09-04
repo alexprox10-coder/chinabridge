@@ -1378,6 +1378,10 @@ export default function AIEconomicsFunnel() {
   const [inlineSubmitting, setInlineSubmitting] = useState(false);
   const [inlineLeadId,     setInlineLeadId]     = useState("");
 
+  const [previewPhone,           setPreviewPhone]           = useState("");
+  const [previewPhoneSubmitting, setPreviewPhoneSubmitting] = useState(false);
+  const [previewPhoneDone,       setPreviewPhoneDone]       = useState(false);
+
   async function handleInlineCapture() {
     if (!inlineTg.trim()) return;
     setInlineSubmitting(true);
@@ -1417,6 +1421,35 @@ export default function AIEconomicsFunnel() {
       }
     } catch { /* ignore */ }
     setInlineSubmitting(false);
+  }
+
+  async function handlePreviewPhone() {
+    const digits = previewPhone.replace(/\D/g, '');
+    if (digits.length < 10) return;
+    setPreviewPhoneSubmitting(true);
+    try {
+      const ed = s.extractedData;
+      await fetch("/api/calculator/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone:        previewPhone,
+          product_name: ed?.product_name ?? s.product.product_name ?? "",
+          city_to:      s.city_to,
+          country_to:   "Russia",
+          source:       "ai_funnel_preview_phone",
+          weight_kg:    ed?.weight_kg?.toString() ?? s.product.weight_kg ?? "",
+          quantity:     String(parseInt(s.product.quantity) || 1),
+        }),
+      });
+      setPreviewPhoneDone(true);
+      if (typeof window !== 'undefined') {
+        const w = window as unknown as { VK?: { Retargeting?: { Goal: (g: string) => void } }; ym?: (id: number, a: string, g: string) => void };
+        w.VK?.Retargeting?.Goal('lead');
+        w.ym?.(111162572, 'reachGoal', 'form_submit');
+      }
+    } catch { /* ignore */ }
+    setPreviewPhoneSubmitting(false);
   }
 
   async function handleShare(ec: EconomicsResult) {
@@ -2073,6 +2106,36 @@ export default function AIEconomicsFunnel() {
               </div>
             ))}
           </div>
+
+          {/* ── QUICK PHONE CAPTURE ──────────────────────────────────── */}
+          {previewPhoneDone ? (
+            <div className="rounded-xl border border-[#00A86B]/30 bg-[#00A86B]/10 p-4 text-center">
+              <p className="text-[#00A86B] font-semibold text-sm">✅ Номер принят! Менеджер перезвонит в течение 5 минут</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-[#1a3a5e] bg-[#071525] p-4">
+              <p className="text-sm font-semibold text-white mb-0.5">📞 Хотите привезти этот товар?</p>
+              <p className="text-xs text-[#8899aa] mb-3">Оставьте номер — менеджер перезвонит и рассчитает поставку под ключ</p>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  value={previewPhone}
+                  onChange={e => setPreviewPhone(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") handlePreviewPhone(); }}
+                  placeholder="+7 (999) 000-00-00"
+                  className="flex-1 min-w-0 bg-[#0B1F3A] border border-[#243a5e] focus:border-[#4a8fff] rounded-xl px-3 py-3 text-sm placeholder:text-[#556677] outline-none transition-colors text-white"
+                />
+                <button
+                  onClick={handlePreviewPhone}
+                  disabled={previewPhone.replace(/\D/g, '').length < 10 || previewPhoneSubmitting}
+                  className="bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white font-bold px-5 rounded-xl text-sm shrink-0 transition active:scale-95"
+                >
+                  {previewPhoneSubmitting ? "..." : "Позвоните мне"}
+                </button>
+              </div>
+              <p className="text-[10px] text-[#445566] mt-2">Бесплатно · ответим за 5 минут</p>
+            </div>
+          )}
 
           {/* ── RISK BLOCK + PDF CTA ─────────────────────────────────── */}
           {supplierExists !== true ? (
