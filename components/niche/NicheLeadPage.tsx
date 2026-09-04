@@ -106,8 +106,8 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
             +7 914 588-98-74
           </a>
           <div className="flex gap-2 justify-end mt-0.5">
-            <a href={waHref} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 text-[10px] transition">WhatsApp</a>
-            <a href={tgHref} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 text-[10px] transition">Telegram</a>
+            <a href={waHref} target="_blank" rel="noopener noreferrer" onClick={() => trackContact("whatsapp_header", config.source)} className="text-green-400 hover:text-green-300 text-[10px] transition">WhatsApp</a>
+            <a href={tgHref} target="_blank" rel="noopener noreferrer" onClick={() => trackContact("telegram_header", config.source)} className="text-sky-400 hover:text-sky-300 text-[10px] transition">Telegram</a>
           </div>
         </div>
       </header>
