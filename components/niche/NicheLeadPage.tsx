@@ -351,6 +351,22 @@ export function NicheLeadPage({ config }: { config: NicheConfig }) {
             )}
           </div>
         </div>
+        {/* Calculator CTA */}
+        <div className="py-5 border-t border-slate-800">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4">
+            <div>
+              <p className="text-white font-semibold text-sm">Хотите рассчитать стоимость самостоятельно?</p>
+              <p className="text-slate-400 text-xs mt-0.5">AI-калькулятор покажет точную цену доставки за 2 минуты</p>
+            </div>
+            <Link
+              href="/ai-calculator"
+              onClick={() => trackGAEvent("calculator_cta_click", { source: config.source })}
+              className="shrink-0 bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition active:scale-95"
+            >
+              Открыть калькулятор →
+            </Link>
+          </div>
+        </div>
       </main>
 
       {/* Trust bar — desktop only (mobile has pills above) */}

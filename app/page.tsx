@@ -102,6 +102,7 @@ export default function Home() {
         <Header />
         <Hero />
         <KzRatesBanner />
+        <Calculator />
         <DirectionsSplit />
         <HowItWorks />
         <WarehouseGallery />
@@ -113,7 +114,6 @@ export default function Home() {
         <Directions />
         <Cases />
         <TrustBlock />
-        <Calculator />
         <LeadMagnetSection />
         <FAQ />
         <KnowledgePromoBlock />

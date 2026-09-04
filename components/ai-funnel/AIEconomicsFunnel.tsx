@@ -802,7 +802,7 @@ export default function AIEconomicsFunnel() {
   const handleCalcRef = useRef<(() => Promise<void>) | null>(null);
 
   const [s, setS] = useState<FunnelState>({
-    step:              "supplier_check",
+    step:              "input",
     urlInput:          "",
     descInput:         "",
     product:           EMPTY_PRODUCT,
