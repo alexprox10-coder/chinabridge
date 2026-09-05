@@ -298,7 +298,36 @@ export async function POST(req: NextRequest) {
         }
       );
     }
-    // bare /start or unrecognized param — payment bot, silent ignore
+    // bare /start or landing param (e.g. /start electronics, /start наушники)
+    {
+      const isLandingParam = param && !param.startsWith("pdf_") && param !== "calc";
+      const greeting = isLandingParam
+        ? `👋 ${firstName}, привет!\n\nМы получили вашу заявку на <b>${param}</b>.\n\nМенеджер ответит вам в течение 5 минут с реальной ценой доставки 📦`
+        : `👋 ${firstName}, привет!\n\nЭто ChinaBridge — доставка из Китая в Россию и Казахстан.\n\nНапишите какой товар хотите привезти — менеджер ответит в течение 5 минут 📦`;
+
+      await sendMsg(chatId, greeting, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "📊 Рассчитать маржу", url: "https://chinabridge.pro/ai-calculator" },
+          ]],
+        },
+      });
+
+      // Notify manager about new landing lead
+      const notifyToken = PARSER_BOT_TOKEN || LID_BOT_TOKEN;
+      if (notifyToken && MANAGER_CHAT_ID) {
+        const uname = message?.from?.username ? `@${message.from.username}` : `id: ${chatId}`;
+        await fetch(`https://api.telegram.org/bot${notifyToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: MANAGER_CHAT_ID,
+            text: `🔔 <b>Лид открыл бот с лендинга</b>\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>${param ? `\n📦 Товар/категория: ${param}` : ""}\n\n📲 Написать: ${message?.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`}`,
+            parse_mode: "HTML",
+          }),
+        }).catch(() => null);
+      }
+    }
     return NextResponse.json({ ok: true });
   }
 
