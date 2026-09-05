@@ -37,7 +37,7 @@ async function notifyManagerTelegram(data: {
   }).catch(() => null);
 }
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest): Promise<NextResponse> {
   const body = await req.json().catch(() => ({}));
 
   const phoneDigits = (body.phone ?? '').replace(/\D/g, '');
@@ -175,7 +175,6 @@ export async function POST(req: NextRequest) {
     ]).catch(() => null),
   ]);
 
-  // Respond immediately — don't wait for Telegram or n8n
   return NextResponse.json({
     ok: true,
     cargo_type: 'consolidation',
@@ -193,4 +192,17 @@ export async function POST(req: NextRequest) {
       margin_percent: cost!.margin_percent,
     }),
   });
+}
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const fallback = new Promise<NextResponse>(resolve =>
+    setTimeout(() => resolve(NextResponse.json({
+      ok: true,
+      cargo_type: 'consolidation',
+      priority: 'WARM',
+      reason: '',
+      lead_id: `calc-timeout-${Date.now()}`,
+    })), 9000)
+  );
+  return Promise.race([handlePost(req), fallback]);
 }

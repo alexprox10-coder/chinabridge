@@ -53,8 +53,8 @@ function buildReason(rule: PricingRule, input: PricingSelectorInput): string {
   return parts.length > 0 ? parts.join(', ') : `Применено правило: ${rule.name}`;
 }
 
-export async function selectPricingRule(input: PricingSelectorInput): Promise<PricingSelection> {
-  const allRules = await listRows<PricingRule>(TABLE_IDS.pricing_rules);
+export async function selectPricingRule(input: PricingSelectorInput, preloadedRules?: PricingRule[]): Promise<PricingSelection> {
+  const allRules = preloadedRules ?? await listRows<PricingRule>(TABLE_IDS.pricing_rules);
 
   // Only active rules participate in selection
   const active = allRules.filter(r => r.status === 'active');
