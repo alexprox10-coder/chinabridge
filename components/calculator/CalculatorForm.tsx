@@ -151,6 +151,7 @@ export function CalculatorForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ leadId }),
+        signal: AbortSignal.timeout(20000),
       });
       const data = await res.json();
       if (!res.ok) {

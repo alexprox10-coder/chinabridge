@@ -34,7 +34,13 @@ export async function POST(req: NextRequest) {
   const intelSnapshot = await getFactsSnapshot(SNAPSHOT_KEYS).catch(() => ({}));
 
   try {
-    const { ctx, buffer } = await generateProposal(lead, mode);
+    const result = await Promise.race([
+      generateProposal(lead, mode),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('proposal_timeout')), 18000)
+      ),
+    ]);
+    const { ctx, buffer } = result;
 
     const record: ProposalRecord = {
       proposal_id:     ctx.id,
