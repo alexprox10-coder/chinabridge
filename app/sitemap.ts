@@ -59,6 +59,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: "https://chinabridge.pro/import-china-kazakhstan", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
     { url: "https://chinabridge.pro/white-import", lastModified: new Date(), changeFrequency: "monthly", priority: 0.75 },
     { url: "https://chinabridge.pro/wildberries-margin-calculator", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+    { url: "https://chinabridge.pro/import/electronics", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
+    { url: "https://chinabridge.pro/import/auto-parts", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
+    { url: "https://chinabridge.pro/import/clothing", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
+    { url: "https://chinabridge.pro/import/furniture", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
+    { url: "https://chinabridge.pro/import/equipment", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
+    { url: "https://chinabridge.pro/import/lighting", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
+    { url: "https://chinabridge.pro/import/components", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
     ...articleUrls,
   ];
 }

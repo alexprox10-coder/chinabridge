@@ -314,20 +314,30 @@ export function CalculatorForm() {
           </div>
         )}
 
-        <div className="bg-[#229ED9]/10 border border-[#229ED9]/25 rounded-xl px-4 py-3 mb-3 text-center">
-          <p className="text-sm font-semibold text-white">Рассчитаем полную себестоимость</p>
-          <p className="text-xs text-[#8899aa] mt-0.5">Менеджер пришлёт КП с таможней и доставкой за 15 минут</p>
+        {/* Commercial bridge */}
+        <div className="bg-[#0B1F3A] border border-[#00A86B]/30 rounded-xl p-4 mb-3">
+          <p className="text-sm font-bold text-white mb-1">Хотите привезти эту партию?</p>
+          <p className="text-xs text-[#8899aa] mb-3">
+            {formData.product_name
+              ? `${formData.product_name} — передайте нам детали, рассчитаем полную стоимость поставки с таможней.`
+              : "Передайте нам детали — рассчитаем полную себестоимость поставки включая таможню и доставку."}
+          </p>
+          <div className="flex flex-col gap-1.5 text-xs text-[#8899aa]">
+            <div className="flex items-center gap-2"><span className="text-[#00A86B]">✓</span> Поставщик уже есть — менять не нужно</div>
+            <div className="flex items-center gap-2"><span className="text-[#00A86B]">✓</span> Полная себестоимость с таможней и НДС</div>
+            <div className="flex items-center gap-2"><span className="text-[#00A86B]">✓</span> КП за 15 минут, без обязательств</div>
+          </div>
         </div>
         <div className="flex flex-col gap-2.5">
           <a
-            href="https://t.me/ChinaBridgeLID_bot?start=calc"
+            href={`https://t.me/ChinaBridgeLID_bot?start=${encodeURIComponent(formData.product_name ? `calc_${formData.product_name}` : "calc")}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => analytics.telegramClick()}
-            className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-[#229ED9] hover:bg-[#1a8fc4] text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-[#229ED9]/20"
+            className="flex items-center justify-center gap-2 w-full px-5 py-3 bg-[#00A86B] hover:bg-[#009060] text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-[#00A86B]/20"
           >
             <Send className="w-4 h-4" />
-            Написать в Telegram →
+            Получить точный расчёт →
           </a>
           {result.lead_id && (
             <button

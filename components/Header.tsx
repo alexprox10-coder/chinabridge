@@ -15,19 +15,18 @@ const navLinks = [
 ];
 
 const pageLinks = [
-  { label: "🇰🇿 Kaspi.kz", href: "/kaspi-china" },
+  { label: "🇰🇿 Kaspi", href: "/kaspi-china" },
   { label: "Блог", href: "/blog" },
-  { label: "Доставка", href: "/delivery" },
-  { label: "📦 Фулфилмент", href: "/fulfilment" },
+  { label: "Партнёрам", href: "/partners" },
 ];
 
 const toolLinks = [
   { icon: "🧮", label: "Калькулятор доставки", href: "/delivery-calculator" },
-  { icon: "🔍", label: "AI Поиск товаров",     href: "/product-finder" },
-  { icon: "🏭", label: "AI Поиск поставщиков", href: "/supplier-finder" },
-  { icon: "📊", label: "Аудит импорта",         href: "/import-audit" },
-  { icon: "📚", label: "База знаний",           href: "/knowledge" },
-  { icon: "🤝", label: "Партнёрам",             href: "/partners" },
+  { icon: "🤖", label: "AI-калькулятор маржи", href: "/ai-calculator" },
+  { icon: "🔍", label: "Поиск товаров",        href: "/product-finder" },
+  { icon: "🏭", label: "Поиск поставщиков",    href: "/supplier-finder" },
+  { icon: "📊", label: "Аудит импорта",        href: "/import-audit" },
+  { icon: "📚", label: "База знаний",          href: "/knowledge" },
 ];
 
 export default function Header() {
@@ -99,8 +98,7 @@ export default function Header() {
                 onClick={() => setToolsOpen(v => !v)}
                 className="flex items-center gap-1 px-4 py-2 text-sm text-[#8899aa] hover:text-white transition-colors rounded-lg hover:bg-white/5"
               >
-                🤖 AI Инструменты
-                <span className="ml-1 text-[10px] bg-[#00A86B]/20 text-[#00A86B] font-semibold px-1.5 py-0.5 rounded-full">6</span>
+                Инструменты
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`} />
               </button>
               {toolsOpen && (
