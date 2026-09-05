@@ -33,7 +33,7 @@ async function notifyManagerTelegram(data: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(3000),
   }).catch(() => null);
 }
 
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: escapeNonAscii(JSON.stringify(n8nPayload)),
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(2000),
     }).catch(() => null),
     createLead({
       lead_id:             crmLeadId,
