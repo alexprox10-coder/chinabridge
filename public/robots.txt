@@ -1,8 +1,11 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
-Disallow: /client/
 Disallow: /api/
+Disallow: /client/
+Disallow: /settings/
+Disallow: /demo/
 Disallow: /_next/
 
+Host: https://chinabridge.pro
 Sitemap: https://chinabridge.pro/sitemap.xml
