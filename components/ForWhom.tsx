@@ -32,20 +32,6 @@ const CARDS = [
     href: "/free",
     accent: false,
   },
-  {
-    emoji: "🚚",
-    title: "Карго-компании",
-    subtitle: "Оказываете услуги логистики",
-    points: [
-      "SaaS-платформа под ключ",
-      "AI-директора для каждого отдела",
-      "CRM + воронка + аналитика",
-      "Белый лейбл под ваш бренд",
-    ],
-    cta: "Посмотреть платформу",
-    href: "/platform",
-    accent: false,
-  },
 ];
 
 export default function ForWhom() {

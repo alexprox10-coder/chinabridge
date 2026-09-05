@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -97,6 +97,7 @@ export default function Hero() {
     });
   }, []);
 
+  const [product, setProduct] = useState("");
   const scrollTo = (href: string) => document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
 
   return (
@@ -206,59 +207,77 @@ export default function Hero() {
           <div>
             <div className="fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse"/>
-              Импорт из Китая · Россия и Казахстан · с 2019 года
+              🇨🇳 Офис в Гуанчжоу · Работаем с 2019 года · 500+ партий
             </div>
 
-            <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-3">
-              С чего начать<br/>
-              <span className="text-gradient">импорт из Китая?</span>
+            <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-4">
+              Есть товар в Китае?<br/>
+              <span className="text-gradient">Мы привезём его<br className="sm:hidden"/> в Россию или Казахстан.</span>
             </h1>
 
-            <p className="fade-up text-base text-[#8899aa] leading-relaxed mb-7 max-w-lg">
-              Выберите свою ситуацию — покажем следующий шаг
+            <p className="fade-up text-base text-[#8899aa] leading-relaxed mb-6 max-w-lg">
+              Поставщик уже есть — менять его не нужно. Рассчитаем поставку, организуем забор, консолидацию и доставку с необходимыми документами.
             </p>
 
-            {/* 3 сценария */}
-            <div className="fade-up flex flex-col gap-3 mb-8">
+            {/* Главная форма */}
+            <div className="fade-up mb-6">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={product}
+                  onChange={e => setProduct(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") {
+                      trackGAEvent("hero_cta_click", { product });
+                      window.open(`https://t.me/ChinaBridgeLID_bot?start=${encodeURIComponent(product || "start")}`, "_blank");
+                    }
+                  }}
+                  placeholder="Что хотите привезти из Китая?"
+                  className="flex-1 bg-[#0B1F3A] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-[#556677] outline-none transition-colors"
+                />
+                <a
+                  href={`https://t.me/ChinaBridgeLID_bot?start=${encodeURIComponent(product || "start")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackGAEvent("hero_cta_click", { product })}
+                  className="shrink-0 bg-[#00A86B] hover:bg-[#009060] text-white font-semibold px-6 py-3.5 rounded-xl text-sm transition active:scale-95 text-center whitespace-nowrap"
+                >
+                  Рассчитать поставку →
+                </a>
+              </div>
+              <p className="text-[#445566] text-xs mt-2">Ответим за 15&nbsp;минут · Без обязательств · Первый расчёт бесплатно</p>
+            </div>
+
+            {/* 3 сценария — мелко */}
+            <div className="fade-up flex flex-col gap-2 mb-8">
               <Link
                 href="/ai-calculator"
                 onClick={() => trackGAEvent("hero_scenario_product")}
-                className="group flex items-center gap-4 bg-[#0B1F3A] hover:bg-[#0d2444] border border-[#243a5e] hover:border-[#00A86B]/50 rounded-2xl px-5 py-4 transition-all"
+                className="group flex items-center gap-2.5 text-sm text-[#8899aa] hover:text-white transition-colors py-1"
               >
-                <div className="w-11 h-11 rounded-xl bg-[#00A86B]/15 border border-[#00A86B]/30 flex items-center justify-center text-xl flex-shrink-0">📦</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-sm">У меня есть товар</p>
-                  <p className="text-[#8899aa] text-xs mt-0.5">Проверить себестоимость поставки</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#8899aa] group-hover:text-[#00A86B] transition-colors flex-shrink-0"/>
+                <span>📦</span>
+                <span>Есть товар → проверить себестоимость поставки</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-auto opacity-0 group-hover:opacity-60 transition-opacity"/>
               </Link>
-
               <Link
-                href="/ai-calculator"
+                href="/delivery-calculator"
                 onClick={() => trackGAEvent("hero_scenario_supplier")}
-                className="group flex items-center gap-4 bg-[#0B1F3A] hover:bg-[#0d2444] border border-[#243a5e] hover:border-[#00A86B]/50 rounded-2xl px-5 py-4 transition-all"
+                className="group flex items-center gap-2.5 text-sm text-[#8899aa] hover:text-white transition-colors py-1"
               >
-                <div className="w-11 h-11 rounded-xl bg-[#229ED9]/15 border border-[#229ED9]/30 flex items-center justify-center text-xl flex-shrink-0">🏭</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-sm">У меня есть поставщик</p>
-                  <p className="text-[#8899aa] text-xs mt-0.5">Рассчитать стоимость доставки</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#8899aa] group-hover:text-[#00A86B] transition-colors flex-shrink-0"/>
+                <span>🏭</span>
+                <span>Есть поставщик → рассчитать стоимость доставки</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-auto opacity-0 group-hover:opacity-60 transition-opacity"/>
               </Link>
-
               <a
                 href="https://t.me/ChinaBridgeLID_bot?start=find_supplier"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackGAEvent("hero_scenario_no_supplier")}
-                className="group flex items-center gap-4 bg-[#0B1F3A] hover:bg-[#0d2444] border border-[#243a5e] hover:border-[#229ED9]/50 rounded-2xl px-5 py-4 transition-all"
+                className="group flex items-center gap-2.5 text-sm text-[#8899aa] hover:text-white transition-colors py-1"
               >
-                <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xl flex-shrink-0">🔍</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-sm">Поставщика нет</p>
-                  <p className="text-[#8899aa] text-xs mt-0.5">Найти надёжного поставщика в Китае</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#8899aa] group-hover:text-[#229ED9] transition-colors flex-shrink-0"/>
+                <span>🔍</span>
+                <span>Нет поставщика → найти надёжную фабрику в Китае</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-auto opacity-0 group-hover:opacity-60 transition-opacity"/>
               </a>
             </div>
 
