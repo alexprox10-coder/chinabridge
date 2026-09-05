@@ -19,6 +19,7 @@ async function n8nFetch(path: string, init?: RequestInit) {
       ...init?.headers,
     },
     cache: 'no-store',
+    signal: AbortSignal.timeout(3000),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');

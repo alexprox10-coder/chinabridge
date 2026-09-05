@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
       body: escapeNonAscii(JSON.stringify(n8nPayload)),
       signal: AbortSignal.timeout(2000),
     }).catch(() => null),
-    createLead({
+    Promise.race([createLead({
       lead_id:             crmLeadId,
     created_at:          new Date().toISOString(),
     updated_at:          new Date().toISOString(),
@@ -171,6 +171,8 @@ export async function POST(req: NextRequest) {
     margin_percent:      hasRate ? cost!.margin_percent : undefined,
     pricing_rule:        hasRate ? cost!.selected_rule_name : undefined,
     }, 'tenant-chinabridge').catch((e) => console.error('[calculator] createLead failed:', e)),
+      new Promise<null>(r => setTimeout(() => r(null), 4000)),
+    ]).catch(() => null),
   ]);
 
   // Respond immediately — don't wait for Telegram or n8n
