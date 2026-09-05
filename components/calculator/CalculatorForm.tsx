@@ -114,14 +114,28 @@ export function CalculatorForm() {
       service_type: "delivery_only",
     };
 
+    const FALLBACK: CalculatorResult = {
+      ok: true,
+      cargo_type: "consolidation",
+      priority: "WARM",
+      reason: "Заявка принята. Менеджер свяжется с вами для точного расчёта.",
+    };
+
+    // Promise.race — 100% reliable cross-browser timeout, no AbortSignal dependency
+    const fetchData = fetch("/api/calculator/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+      .then(r => r.json() as Promise<CalculatorResult>)
+      .catch(() => FALLBACK);
+
+    const timeout = new Promise<CalculatorResult>(resolve =>
+      setTimeout(() => resolve(FALLBACK), 10000)
+    );
+
     try {
-      const res = await fetch("/api/calculator/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(15000),
-      });
-      const data: CalculatorResult = await res.json();
+      const data = await Promise.race([fetchData, timeout]);
       setResult(data);
       if (data.ok) {
         analytics.calculatorComplete({
@@ -132,12 +146,7 @@ export function CalculatorForm() {
         trackVkGoal("lead");
       }
     } catch {
-      setResult({
-        ok: true,
-        cargo_type: "consolidation",
-        priority: "WARM",
-        reason: "Заявка принята. Менеджер свяжется с вами для точного расчёта.",
-      });
+      setResult(FALLBACK);
     } finally {
       setLoading(false);
     }
