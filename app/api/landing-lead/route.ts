@@ -43,14 +43,32 @@ export async function POST(req: NextRequest) {
 
   try {
     await createLead({
+      lead_id: `landing-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       name: telegram,
       phone: "",
       telegram,
       email: "",
-      product_name: product,
-      city_to: city,
+      company: "",
+      product,
+      product_link: "",
+      category: "",
+      quantity: "",
+      weight: "",
+      volume: "",
+      country_destination: "",
+      city_destination: city,
+      delivery_type: "",
+      service_type: "",
+      status: "NEW",
+      priority: "WARM",
+      estimated_value: 0,
+      manager: "",
+      comment: `has_supplier: ${has_supplier}`,
       source,
-      status: "new",
+      utm_source: "vk_ads",
+      utm_campaign: "",
     });
   } catch {
     // не блокируем — уведомление важнее
