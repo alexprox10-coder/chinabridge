@@ -20,6 +20,13 @@ const AI_STEPS = [
   "Готовит предложение...",
 ];
 
+const SUBMIT_FALLBACK: CalculatorResult = {
+  ok: true,
+  cargo_type: "consolidation",
+  priority: "WARM",
+  reason: "Заявка принята. Менеджер свяжется с вами для точного расчёта.",
+};
+
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Алматы", "Астана"];
 
 const initialFormData: CalculatorFormData = {
@@ -63,6 +70,16 @@ export function CalculatorForm() {
     if (!loading) { setAiStep(0); return; }
     const id = setInterval(() => setAiStep(p => (p + 1) % AI_STEPS.length), 950);
     return () => clearInterval(id);
+  }, [loading]);
+
+  // Component-level safety net: if loading stays true >12s, force-clear it
+  useEffect(() => {
+    if (!loading) return;
+    const id = setTimeout(() => {
+      setResult(SUBMIT_FALLBACK);
+      setLoading(false);
+    }, 12000);
+    return () => clearTimeout(id);
   }, [loading]);
 
   const set = (field: keyof CalculatorFormData, value: string) => {
@@ -114,13 +131,6 @@ export function CalculatorForm() {
       service_type: "delivery_only",
     };
 
-    const FALLBACK: CalculatorResult = {
-      ok: true,
-      cargo_type: "consolidation",
-      priority: "WARM",
-      reason: "Заявка принята. Менеджер свяжется с вами для точного расчёта.",
-    };
-
     // Promise.race — 100% reliable cross-browser timeout, no AbortSignal dependency
     const fetchData = fetch("/api/calculator/submit", {
       method: "POST",
@@ -128,10 +138,10 @@ export function CalculatorForm() {
       body: JSON.stringify(body),
     })
       .then(r => r.json() as Promise<CalculatorResult>)
-      .catch(() => FALLBACK);
+      .catch(() => SUBMIT_FALLBACK);
 
     const timeout = new Promise<CalculatorResult>(resolve =>
-      setTimeout(() => resolve(FALLBACK), 10000)
+      setTimeout(() => resolve(SUBMIT_FALLBACK), 8000)
     );
 
     try {
@@ -146,7 +156,7 @@ export function CalculatorForm() {
         trackVkGoal("lead");
       }
     } catch {
-      setResult(FALLBACK);
+      setResult(SUBMIT_FALLBACK);
     } finally {
       setLoading(false);
     }
