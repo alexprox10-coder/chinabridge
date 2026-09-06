@@ -68,6 +68,8 @@ export function matchRate(rates: ShippingRate[], opts: MatchOptions & { route?: 
       if (opts.cargo_type && r.cargo_type === opts.cargo_type) score += 5;
       // Transport type match bonus
       if (opts.transport_type && r.transport_type === opts.transport_type) score += 5;
+      // Prefer rates from verified partner source over legacy estimates
+      if (r.rate_source === 'partner_2026_09_06') score += 10;
       return { rate: r, score };
     })
     .sort((a, b) => b.score - a.score);
