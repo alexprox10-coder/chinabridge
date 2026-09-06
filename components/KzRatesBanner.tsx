@@ -6,9 +6,9 @@ export default function KzRatesBanner() {
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <span className="text-xs text-[#8899aa] font-medium uppercase tracking-wide">Доставка в Казахстан:</span>
           {[
-            { icon: "🚗", mode: "Авто",  price: "от $3/кг", days: "12–18 дн" },
+            { icon: "🚗", mode: "Авто",  price: "от $2/кг", days: "12–18 дн" },
             { icon: "🚂", mode: "Ж/Д",   price: "от $4/кг", days: "12–15 дн" },
-            { icon: "✈️", mode: "Авиа",  price: "от $15/кг", days: "5–7 дн"  },
+            { icon: "✈️", mode: "Авиа",  price: "от $23/кг", days: "5–7 дн"  },
           ].map(r => (
             <div key={r.mode} className="flex items-center gap-1.5">
               <span className="text-sm">{r.icon}</span>
