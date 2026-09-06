@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition, startTransition } from "react";
 import type {
   CalculatorFormData,
   CalculatorResult,
@@ -65,6 +65,7 @@ export function CalculatorForm() {
   const [proposalLoading, setProposalLoading] = useState(false);
   const [ecoError, setEcoError] = useState<string | null>(null);
   const startedRef = useRef(false);
+  const [, startStepTransition] = useTransition();
 
   useEffect(() => {
     if (!loading) { setAiStep(0); return; }
@@ -84,7 +85,7 @@ export function CalculatorForm() {
 
   const set = (field: keyof CalculatorFormData, value: string) => {
     setFormData(p => ({ ...p, [field]: value }));
-    if (errors[field]) setErrors(e => ({ ...e, [field]: undefined }));
+    if (errors[field]) startTransition(() => setErrors(e => ({ ...e, [field]: undefined })));
   };
 
   const validateStep = (s: number): boolean => {
@@ -101,22 +102,26 @@ export function CalculatorForm() {
 
   const handleNext = () => {
     if (validateStep(step)) {
-      if (!startedRef.current) {
-        analytics.calculatorStart();
-        startedRef.current = true;
-      }
-      setStep(2);
+      startStepTransition(() => {
+        if (!startedRef.current) {
+          setTimeout(() => { analytics.calculatorStart(); }, 0);
+          startedRef.current = true;
+        }
+        setStep(2);
+      });
     }
   };
 
-  const handleBack = () => setStep(1);
+  const handleBack = () => startStepTransition(() => setStep(1));
 
   const handleSubmit = async () => {
     if (!validateStep(2)) return;
     setLoading(true);
     setEcoError(null);
-    analytics.formSubmit({ form_id: "calculator" });
-    if (formData.product_name) analytics.calculatorProductSearch(formData.product_name);
+    setTimeout(() => {
+      analytics.formSubmit({ form_id: "calculator" });
+      if (formData.product_name) analytics.calculatorProductSearch(formData.product_name);
+    }, 0);
 
     const body = {
       name: formData.name || "—",

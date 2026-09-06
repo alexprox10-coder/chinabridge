@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useTransition } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { trackGAEvent } from "@/lib/analytics/ga";
@@ -116,19 +116,20 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
   const [city, setCity] = useState("");
   const [telegram, setTelegram] = useState("");
   const [loading, setLoading] = useState(false);
+  const [, startStepTransition] = useTransition();
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!product.trim()) return;
-    trackGAEvent("import_form_step1", { category, product, has_supplier: hasSupplier, city });
-    setStep("contact");
+    setTimeout(() => trackGAEvent("import_form_step1", { category, product, has_supplier: hasSupplier, city }), 0);
+    startStepTransition(() => setStep("contact"));
   };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!telegram.trim()) return;
     setLoading(true);
-    trackGAEvent("import_lead_submit", { category, telegram });
+    setTimeout(() => trackGAEvent("import_lead_submit", { category, telegram }), 0);
     try {
       await fetch("/api/landing-lead", {
         method: "POST",
@@ -136,8 +137,7 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
         body: JSON.stringify({ telegram, product, has_supplier: hasSupplier, city, source: cfg.source }),
       });
     } catch { /* silent */ }
-    setStep("done");
-    setLoading(false);
+    startStepTransition(() => { setStep("done"); setLoading(false); });
   };
 
   return (
