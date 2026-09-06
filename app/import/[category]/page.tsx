@@ -149,13 +149,29 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
             China<span className="text-[#00A86B]">Bridge</span>
           </Link>
           <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
-            className="text-sm text-[#00A86B] hover:text-white transition-colors">
-            Telegram
+            onClick={() => trackGAEvent("import_header_tg_click", { category })}
+            className="flex items-center gap-1.5 text-sm bg-[#00A86B]/15 hover:bg-[#00A86B]/30 text-[#00A86B] px-3 py-1.5 rounded-lg transition-colors font-medium">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.652-.64.135-.954l11.57-4.461c.537-.194 1.006.131.969.06z"/></svg>
+            Написать
           </a>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-12 sm:py-20">
+      {/* Sticky mobile bottom CTA — visible only when form is active */}
+      {step === "form" && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-[#060F1E]/95 backdrop-blur border-t border-[#1a2d47] px-4 py-3">
+          <div className="flex gap-3 max-w-2xl mx-auto">
+            <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+              onClick={() => trackGAEvent("import_sticky_tg_click", { category })}
+              className="flex-1 flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1a8dbf] text-white font-semibold py-3 rounded-xl text-sm transition">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.652-.64.135-.954l11.57-4.461c.537-.194 1.006.131.969.06z"/></svg>
+              Написать в Telegram
+            </a>
+          </div>
+        </div>
+      )}
+
+      <main className="max-w-2xl mx-auto px-4 py-12 sm:py-20 pb-24 sm:pb-20">
 
         {/* Hero */}
         <div className="text-center mb-10">
@@ -236,6 +252,17 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
                 Получить расчёт →
               </button>
               <p className="text-center text-[#445566] text-xs">Без обязательств · Ответим за 15 минут</p>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-[#1a2d47]"/>
+                <span className="text-[#445566] text-xs">или</span>
+                <div className="flex-1 h-px bg-[#1a2d47]"/>
+              </div>
+              <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+                onClick={() => trackGAEvent("import_form_tg_alt_click", { category })}
+                className="w-full flex items-center justify-center gap-2 border border-[#229ED9]/50 hover:border-[#229ED9] text-[#229ED9] hover:bg-[#229ED9]/10 font-medium py-3 rounded-xl transition text-sm">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.652-.64.135-.954l11.57-4.461c.537-.194 1.006.131.969.06z"/></svg>
+                Написать в Telegram напрямую
+              </a>
             </div>
           </form>
         )}
