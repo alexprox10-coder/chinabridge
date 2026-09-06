@@ -23,6 +23,14 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy",      value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      // HTML pages must not be cached so browsers always fetch the latest
+      // chunk references after a new deployment — prevents ChunkLoadError
+      {
+        source: "/((?!_next/static|_next/image|favicon\\.ico).*)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
     ];
   },
 };

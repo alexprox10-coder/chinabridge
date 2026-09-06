@@ -88,6 +88,17 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
         />
+        {/* Reload once on ChunkLoadError — clears stale JS bundle references */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.addEventListener('error', function(e) {
+            if (e && e.message && (e.message.indexOf('Loading chunk') !== -1 || e.message.indexOf('ChunkLoadError') !== -1)) {
+              if (!sessionStorage.getItem('_chunk_reload')) {
+                sessionStorage.setItem('_chunk_reload', '1');
+                window.location.reload();
+              }
+            }
+          }, true);
+        `}} />
       </head>
       <body className="bg-background text-foreground antialiased font-sans">
         <AnalyticsProvider />

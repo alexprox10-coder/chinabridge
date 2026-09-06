@@ -7,7 +7,9 @@ const VK_PIXEL_ID = process.env.NEXT_PUBLIC_VK_PIXEL_ID;
 export function trackVkGoal(goal: string) {
   if (typeof window === "undefined") return;
   const w = window as any;
-  w.VK?.Retargeting?.Goal(goal);
+  if (typeof w.VK?.Retargeting?.Goal === "function") {
+    w.VK.Retargeting.Goal(goal);
+  }
 }
 
 export default function VkPixel() {
