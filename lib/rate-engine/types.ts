@@ -5,7 +5,7 @@ export type Currency = 'USD' | 'CNY' | 'RUB' | 'KZT';
 export type PriceType = 'FIXED' | 'PERCENT';
 export type RuleType = 'margin' | 'discount' | 'markup';
 export type ItemStatus = 'active' | 'inactive';
-export type RateSource = 'MARKET' | 'PARTNER' | 'MANUAL';
+export type RateSource = 'MARKET' | 'PARTNER' | 'MANUAL' | 'partner_2026_09_06' | 'estimate';
 export type CustomerType = 'B2C' | 'SMALL_BUSINESS' | 'BUSINESS' | 'VIP';
 
 export interface ShippingRate {

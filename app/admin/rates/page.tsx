@@ -8,6 +8,8 @@ const SOURCE_BADGE: Record<RateSource, { label: string; cls: string }> = {
   MARKET: { label: "MARKET", cls: "bg-slate-700 text-slate-300" },
   PARTNER: { label: "PARTNER", cls: "bg-blue-900/50 text-blue-400" },
   MANUAL: { label: "MANUAL", cls: "bg-yellow-900/50 text-yellow-400" },
+  partner_2026_09_06: { label: "PARTNER 09/06", cls: "bg-green-900/50 text-green-400" },
+  estimate: { label: "ESTIMATE", cls: "bg-slate-700 text-slate-400" },
 };
 
 const BLANK: Partial<ShippingRate> = {
