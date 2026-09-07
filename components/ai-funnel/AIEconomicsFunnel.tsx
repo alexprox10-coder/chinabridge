@@ -701,6 +701,39 @@ function PaywallBlock({
             </div>
           </a>
 
+          {/* Tripwire 490₽ */}
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/8 p-4 transition-all hover:border-amber-500/70">
+            <div className="flex items-start gap-3 mb-2">
+              <span className="text-2xl leading-none mt-0.5">🏭</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-bold text-white">3 фабрики за 490 ₽</p>
+                  <span className="text-[10px] bg-amber-500 text-black rounded-full px-2 py-0.5 font-bold">Быстрый старт</span>
+                </div>
+                <p className="text-xs text-[#8899aa] mt-0.5 leading-relaxed">Проверенные поставщики именно вашего товара с ценами и контактами</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px] text-[#8899aa] mb-3">
+              <span>✓ 3 фабрики под ваш товар</span>
+              <span>✓ Цены в юанях</span>
+              <span>✓ Точная стоимость доставки</span>
+              <span>✓ Таможенные пошлины</span>
+              <span>✓ Итоговая маржа</span>
+              <span>✓ Готово за 24 часа</span>
+            </div>
+            <button
+              onClick={() => {
+                const ec2 = s.economics ?? s.extractedData;
+                handleTripwirePayment();
+              }}
+              disabled={tripwireLoading}
+              className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:opacity-90 disabled:opacity-50 text-black font-black rounded-xl text-sm transition-all"
+            >
+              {tripwireLoading ? "Создаём платёж..." : "Получить отчёт за 490 ₽ →"}
+            </button>
+            <p className="mt-1.5 text-[10px] text-[#5a7899] text-center">Оплата СБП или картой · Гарантия возврата</p>
+          </div>
+
           {/* PRO path */}
           <div className={`rounded-xl border p-4 ${
             !isGreen
