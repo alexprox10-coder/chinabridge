@@ -2112,66 +2112,9 @@ export default function AIEconomicsFunnel() {
             ))}
           </div>
 
-          {/* ── CAPTURE GATE OR FULL CONTENT ──────────────────────────── */}
+          {/* ── FULL CONTENT (always visible) ──────────────────────────── */}
           {(() => {
-            const detailsUnlocked = isRegistered || isPaidPro;
-            if (!detailsUnlocked) return (
-              <>
-                {/* TG Capture Gate */}
-                <div className="rounded-xl border border-[#00A86B]/40 bg-[#071525] p-5">
-                  <p className="text-base font-bold text-white mb-1">📊 Получите детальный расчёт</p>
-                  <p className="text-xs text-[#8899aa] mb-4">Оставьте Telegram — пришлём полный P&L с учётом всех расходов</p>
-                  <div className="flex flex-col gap-2 mb-4 p-3 bg-white/3 rounded-xl">
-                    {[
-                      "Таможенные пошлины по коду ТН ВЭД",
-                      "НДС при ввозе (20%)",
-                      "Точная стоимость доставки под ваш объём",
-                      "3 проверенных поставщика этого товара",
-                      "Реальная итоговая маржа с учётом всего",
-                    ].map(item => (
-                      <div key={item} className="flex items-center gap-2 text-sm text-[#cdd5e0]">
-                        <span className="text-[#00A86B] font-bold shrink-0">✓</span>
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {inlineLeadId ? (
-                    <a href={`https://t.me/ChinaBridgeLID_bot?start=calc_${inlineLeadId.replace(/-/g,'_')}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#229ED9] hover:bg-[#1a8bbf] text-white font-bold rounded-xl text-sm">
-                      📨 Открыть бот и получить расчёт
-                    </a>
-                  ) : (
-                    <>
-                      <div className="flex flex-col gap-2">
-                        <input type="text" value={inlineTg} onChange={e => setInlineTg(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
-                          placeholder="@username в Telegram" className={inp()} />
-                        <button onClick={handleInlineCapture}
-                          disabled={!inlineTg.trim() || inlineSubmitting}
-                          className="w-full py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 text-white font-bold rounded-xl text-sm transition-all active:scale-[0.98]">
-                          {inlineSubmitting ? "Отправляем..." : "📩 Получить детальный расчёт →"}
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-[#5a7899] text-center mt-2">Бесплатно · Ответ за 15 минут · Без обязательств</p>
-                    </>
-                  )}
-                </div>
-
-                {/* PRO upgrade button — shown when rate limit hit */}
-                {!isPaidPro && calcCount >= effectiveLimit && (
-                  <button
-                    onClick={() => setShowPaywall(true)}
-                    className="w-full py-3 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-bold rounded-xl transition-colors"
-                  >
-                    📊 Продолжить расчёты — PRO 490 ₽/мес
-                  </button>
-                )}
-
-              </>
-            );
-
-            // detailsUnlocked = true → show full content
+            // Full economics shown to everyone — TG capture is a soft CTA below
             return (
               <>
                 {/* Quick phone capture */}
