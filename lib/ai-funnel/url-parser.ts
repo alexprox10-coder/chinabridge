@@ -83,8 +83,7 @@ async function scrape(url: string): Promise<string | null> {
     };
     if (is1688) {
       body.mobile  = true;
-      body.waitFor = 5000;
-      body.proxy   = 'stealth';
+      body.waitFor = 3000;
       body.headers = {
         'User-Agent':      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
         'Accept-Language': 'zh-CN,zh;q=0.9',
