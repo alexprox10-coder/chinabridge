@@ -196,6 +196,9 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
             </div>
           ))}
         </div>
+        {cfg.priceHint && (
+          <p className="text-center text-[#445566] text-xs mb-5">{cfg.priceHint}</p>
+        )}
 
         {!done ? (
           <>
