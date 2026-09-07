@@ -100,7 +100,7 @@ const QUICK_EXAMPLES = [
 ];
 
 // Free limit — raise via NEXT_PUBLIC_FREE_CALC_LIMIT env var if needed
-const ANON_LIMIT = Number(process.env.NEXT_PUBLIC_FREE_CALC_LIMIT ?? "50");
+const ANON_LIMIT = 50;
 const REG_LIMIT  = 50;
 
 // Analyzing stages — real stages that match backend process
@@ -1796,7 +1796,7 @@ export default function AIEconomicsFunnel() {
                 <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i < calcCount ? 'bg-[#00A86B]' : 'bg-white/15'}`} />
               ))}
               <p className="text-xs text-[#8899aa]">
-                {`Расчёт ${calcCount + 1} из ${REG_LIMIT} · GPT-4o`}
+                {`Расчёт ${calcCount + 1} из ${REG_LIMIT} · AI`}
               </p>
             </div>
           ) : calcCount >= effectiveLimit ? (
@@ -1812,7 +1812,7 @@ export default function AIEconomicsFunnel() {
                 <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i < calcCount ? 'bg-[#00A86B]' : 'bg-white/15'}`} />
               ))}
               <p className="text-xs text-[#8899aa]">
-                {`Расчёт ${calcCount + 1} из ${ANON_LIMIT} бесплатных · GPT-4o`}
+                {`Расчёт ${calcCount + 1} из ${ANON_LIMIT} бесплатных · AI`}
               </p>
             </div>
           )}
