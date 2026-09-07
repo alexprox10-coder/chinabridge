@@ -100,8 +100,8 @@ const QUICK_EXAMPLES = [
 ];
 
 // Free limit — raise via NEXT_PUBLIC_FREE_CALC_LIMIT env var if needed
-const ANON_LIMIT = Number(process.env.NEXT_PUBLIC_FREE_CALC_LIMIT ?? "5");
-const REG_LIMIT  = 10; // free calculations for registered users (gave TG)
+const ANON_LIMIT = Number(process.env.NEXT_PUBLIC_FREE_CALC_LIMIT ?? "50");
+const REG_LIMIT  = 50;
 
 // Analyzing stages — real stages that match backend process
 const ANALYZE_STAGES = [
