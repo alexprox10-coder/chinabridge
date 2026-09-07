@@ -61,7 +61,7 @@ function DeliveryBanner({ visible }: { visible: boolean }) {
         <p className="text-white font-bold text-sm leading-tight">Доставка из Китая</p>
         <p className="text-[#8899aa] text-[11px] mt-0.5 leading-tight">Карго · авиа · море · ж/д</p>
         <div className="mt-2 flex items-center justify-between">
-          <p className="text-[#00A86B] text-[11px] font-semibold">от 3 USD/кг</p>
+          <p className="text-[#00A86B] text-[11px] font-semibold">от 2 USD/кг</p>
           <span className="text-[10px] text-[#00A86B] group-hover:translate-x-1 transition-transform inline-block">→</span>
         </div>
       </div>
