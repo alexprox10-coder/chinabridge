@@ -578,15 +578,11 @@ function PaywallBlock({
   usedCount,
   totalLimit,
   onClose,
-  onTripwire,
-  tripwireLoading,
 }: {
   ec: EconomicsResult | null;
   usedCount: number;
   totalLimit: number;
   onClose: () => void;
-  onTripwire: () => void;
-  tripwireLoading: boolean;
 }) {
   const isGreen = ec?.verdict === "green";
 
@@ -704,42 +700,6 @@ function PaywallBlock({
               <p className="text-[10px] text-[#5a7899]">нажмите Start в боте</p>
             </div>
           </a>
-
-          {/* Tripwire 490₽ */}
-          <div className="rounded-xl border border-amber-500/40 bg-amber-500/8 p-4 transition-all hover:border-amber-500/70">
-            <div className="flex items-start gap-3 mb-2">
-              <span className="text-2xl leading-none mt-0.5">🏭</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-bold text-white">3 фабрики под ваш товар</p>
-                  <span className="text-[10px] bg-amber-500 text-black rounded-full px-2 py-0.5 font-bold">Акция</span>
-                </div>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-lg font-black text-amber-400">490 ₽</span>
-                  <span className="text-xs text-[#5a7899] line-through">2 000 ₽</span>
-                  <span className="text-[10px] text-[#8899aa]">· только сейчас</span>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px] text-[#8899aa] mb-3">
-              <span>✓ 3 фабрики под ваш товар</span>
-              <span>✓ Цены в юанях</span>
-              <span>✓ Точная стоимость доставки</span>
-              <span>✓ Таможенные пошлины</span>
-              <span>✓ Итоговая маржа</span>
-              <span>✓ Готово за 24 часа</span>
-            </div>
-            <button
-              onClick={onTripwire}
-              disabled={tripwireLoading}
-              className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:opacity-90 disabled:opacity-50 text-black font-black rounded-xl text-sm transition-all"
-            >
-              {tripwireLoading ? "Создаём платёж..." : "Получить за 490 ₽ →"}
-            </button>
-            <p className="mt-1.5 text-[10px] text-[#5a7899] text-center leading-relaxed">
-              🔒 Не понравится — вернём деньги. Без вопросов.
-            </p>
-          </div>
 
           {/* PRO path */}
           <div className={`rounded-xl border p-4 ${
@@ -1426,7 +1386,6 @@ export default function AIEconomicsFunnel() {
   const [previewPhone,           setPreviewPhone]           = useState("");
   const [previewPhoneSubmitting, setPreviewPhoneSubmitting] = useState(false);
   const [previewPhoneDone,       setPreviewPhoneDone]       = useState(false);
-  const [tripwireLoading,        setTripwireLoading]        = useState(false);
 
   async function handleInlineCapture() {
     if (!inlineTg.trim()) return;
@@ -1496,27 +1455,6 @@ export default function AIEconomicsFunnel() {
       }
     } catch { /* ignore */ }
     setPreviewPhoneSubmitting(false);
-  }
-
-  async function handleTripwirePayment() {
-    setTripwireLoading(true);
-    try {
-      const ed = s.extractedData;
-      const resp = await fetch("/api/payments/tripwire", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          product_url:  ed?.product_link ?? s.product.product_link ?? "",
-          product_name: ed?.product_name ?? s.product.product_name ?? "",
-          margin:       s.economics?.margin_pct ?? 0,
-        }),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        if (data.payment_url) window.location.href = data.payment_url;
-      }
-    } catch { /* ignore */ }
-    setTripwireLoading(false);
   }
 
   async function handleShare(ec: EconomicsResult) {
@@ -1630,8 +1568,6 @@ export default function AIEconomicsFunnel() {
         usedCount={calcCount}
         totalLimit={effectiveLimit}
         onClose={() => setShowPaywall(false)}
-        onTripwire={handleTripwirePayment}
-        tripwireLoading={tripwireLoading}
       />
     )}
     {showProBanner && (
@@ -2229,45 +2165,6 @@ export default function AIEconomicsFunnel() {
                   <div className="flex-1 h-px bg-[#243a5e]" />
                 </div>
 
-                {/* 490₽ Tripwire */}
-                <div className="rounded-xl border border-amber-600/30 bg-gradient-to-br from-[#1a1400] to-[#0f0d00] p-5">
-                  <div className="inline-block bg-amber-500/15 border border-amber-500/30 rounded-full px-3 py-1 text-[11px] font-bold text-amber-400 uppercase tracking-wide mb-3">
-                    ⚡ Быстрый старт
-                  </div>
-                  <h3 className="text-white font-bold text-base mb-2">3 проверенных фабрики для вашего товара</h3>
-                  <p className="text-xs text-[#8899aa] mb-4 leading-relaxed">
-                    Аналитик ChinaBridge в Китае найдёт 3 завода, проверит рейтинг и отзывы, рассчитает точную стоимость доставки до вашего склада за 24 часа.
-                  </p>
-                  <div className="flex flex-col gap-2 mb-4">
-                    {([
-                      ["🏭", "3 проверенных производителя на 1688"],
-                      ["📊", "Цены в юанях + расчёт в рублях/тенге"],
-                      ["🚚", "Точная стоимость доставки до вашего города"],
-                      ["📋", "Таможенные пошлины по вашему товару"],
-                      ["✅", "Итоговая маржа с учётом всех расходов"],
-                      ["⏱", "Готово за 24 часа в Telegram"],
-                    ] as [string, string][]).map(([icon, text]) => (
-                      <div key={text} className="flex items-center gap-2 text-xs text-[#cdd5e0]">
-                        <span>{icon}</span><span>{text}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-[#00A86B]/8 border border-[#00A86B]/20 rounded-lg px-3 py-2 text-xs text-[#00A86B] text-center mb-4">
-                    🛡 Если не устроит — вернём деньги без вопросов
-                  </div>
-                  <div className="flex items-center gap-3 mb-3 flex-wrap">
-                    <span className="text-[#5a7899] line-through text-sm">2 000 ₽</span>
-                    <span className="text-amber-400 text-3xl font-black">490 ₽</span>
-                    <span className="text-[#5a7899] text-[11px]">При заказе поставки — вычитается из стоимости</span>
-                  </div>
-                  <button
-                    onClick={handleTripwirePayment}
-                    disabled={tripwireLoading}
-                    className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-400 hover:opacity-90 disabled:opacity-50 text-[#0a0f1a] font-black rounded-xl text-base transition-all active:scale-[0.98]"
-                  >
-                    {tripwireLoading ? "Создаём платёж..." : "Получить аудит за 490 ₽ →"}
-                  </button>
-                </div>
               </>
             );
 
