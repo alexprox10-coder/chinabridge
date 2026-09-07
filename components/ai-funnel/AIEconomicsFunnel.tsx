@@ -578,11 +578,15 @@ function PaywallBlock({
   usedCount,
   totalLimit,
   onClose,
+  onTripwire,
+  tripwireLoading,
 }: {
   ec: EconomicsResult | null;
   usedCount: number;
   totalLimit: number;
   onClose: () => void;
+  onTripwire: () => void;
+  tripwireLoading: boolean;
 }) {
   const isGreen = ec?.verdict === "green";
 
@@ -726,7 +730,7 @@ function PaywallBlock({
               <span>✓ Готово за 24 часа</span>
             </div>
             <button
-              onClick={handleTripwirePayment}
+              onClick={onTripwire}
               disabled={tripwireLoading}
               className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:opacity-90 disabled:opacity-50 text-black font-black rounded-xl text-sm transition-all"
             >
@@ -1626,6 +1630,8 @@ export default function AIEconomicsFunnel() {
         usedCount={calcCount}
         totalLimit={effectiveLimit}
         onClose={() => setShowPaywall(false)}
+        onTripwire={handleTripwirePayment}
+        tripwireLoading={tripwireLoading}
       />
     )}
     {showProBanner && (
