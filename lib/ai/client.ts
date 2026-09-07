@@ -7,7 +7,7 @@ export function getLLMConfig() {
   return {
     baseURL: process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1",
     apiKey:  process.env.OPENROUTER_API_KEY ?? "",
-    model:   process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini",
+    model:   process.env.OPENROUTER_MODEL ?? "anthropic/claude-haiku-4-5-20251001",
   };
 }
 
