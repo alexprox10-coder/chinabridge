@@ -732,7 +732,9 @@ function PaywallBlock({
             >
               {tripwireLoading ? "Создаём платёж..." : "Получить за 490 ₽ →"}
             </button>
-            <p className="mt-1.5 text-[10px] text-[#5a7899] text-center">СБП / карта · Гарантия возврата · Цена вырастет</p>
+            <p className="mt-1.5 text-[10px] text-[#5a7899] text-center leading-relaxed">
+              🔒 Если не пришлём отчёт в течение 24 ч — вернём деньги полностью, без вопросов
+            </p>
           </div>
 
           {/* PRO path */}
