@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   const timeoutPromise = new Promise<{ ok: false; reason: string }>((resolve) =>
-    setTimeout(() => resolve({ ok: false, reason: 'scrape_failed' }), 15_000)
+    setTimeout(() => resolve({ ok: false, reason: 'scrape_failed' }), 28_000)
   );
   const result = await Promise.race([parseProductUrl(url), timeoutPromise]);
 
