@@ -25,10 +25,13 @@ export interface MarketplaceConfig {
 }
 
 // ─── Реальные тарифы 2026 ────────────────────────────────────────────────────
-// WB: комиссии с 07.07.2026, логистика FBW с 15.09.2025
-// Ozon: комиссии с 01.07.2026, логистика FBO актуальная
-// Kaspi: 10,9% + НДС 16% КЗ = 12,6%. Доставка покупателю — Kaspi платит из своей комиссии
-// Яндекс Маркет: с 01.02.2026 (FBY)
+// WB: с 15.05.2026 логистика объёмная (литры, не кг). Комиссии актуальны на 07.07.2026.
+//   Шкала FBW: ≤0.2л=23₽, 0.4л=26₽, 0.6л=29₽, 0.8л=30₽, 1л=32₽, >1л: 46₽+14₽/доп.л
+//   Аппроксимация через вес: 1кг ≈ 2л → порог 0.5кг=1л=32₽, дополнительно 28₽/кг
+// Ozon: с 28.08.2026 повышение комиссий и логистики. С 01.09.2026 last-mile 1.1₽/л.
+//   Совокупная нагрузка (комиссия+логистика): дом/одежда ~52%, электроника ~47%
+// Kaspi: 10,9% + НДС 16% КЗ = 12,6%. Доставка — Kaspi платит из своей комиссии.
+// Яндекс Маркет: с 01.09.2026 FBY и FBS выравнены.
 // Карго из Китая: авто $2/кг (ChinaBridge, 18-22 дня), авиа ~$23/кг
 
 export const MARKETPLACES: MarketplaceConfig[] = [
@@ -36,41 +39,38 @@ export const MARKETPLACES: MarketplaceConfig[] = [
     id:    'wb',
     label: 'Wildberries',
     icon:  '🫐',
-    // Для общих товаров (игрушки, дом, товары для спорта): 23%
-    // Одежда/обувь: 43,5% | Ноутбуки: 23,5% | Электроника: 23-28%
-    // + эквайринг 1,5% (РФ) — включён в 23%
+    // Общие товары: 19-23% | Одежда/обувь: 25-35% (КВВ доходит до 43%) | Электроника: 10-15%
     commission_pct: 23,
-    // FBW логистика (расчёт по объёму, но аппроксимируем весом 1кг≈2л)
-    // До 0,5кг (~1л): ~75₽ (32₽ × кэф.склада 1.5-2.0, среднее)
-    // За каждый кг выше 0,5кг: +35₽
-    logistics_base_rub:            75,
-    logistics_per_kg_rub:          35,
+    // FBW логистика объёмная с 15.05.2026 (1кг≈2л):
+    // ≤0.5кг (~1л) = 32₽; сверх 0.5кг = +28₽/кг (14₽/л × 2)
+    logistics_base_rub:            32,
+    logistics_per_kg_rub:          28,
     logistics_weight_threshold_kg: 0.5,
     last_mile_pct:     0,
     last_mile_max_rub: 0,
-    storage_per_unit_month_rub: 12,
+    storage_per_unit_month_rub: 6,   // ~0.08₽/л/день × 2л × 30 дней
     returns_pct:       8,
-    commission_note:   'Одежда/обувь: 43,5% | Электроника: 23–28% | Ноутбуки: 23,5%',
-    tariff_date:       '2026-07-07',
+    commission_note:   'Одежда/обувь: 25–43% | Электроника: 10–15% | Логистика объёмная с мая 2026',
+    tariff_date:       '2026-08-15',
   },
   {
     id:    'ozon',
     label: 'Ozon',
     icon:  '🟠',
-    // Дом/Игрушки: 18% | Одежда: 22% | Смартфоны: 5% | Обувь: 50%
-    // Last mile включён в комиссию; эквайринг в комиссии
-    commission_pct: 18,
-    // FBO логистика: до 1л = 43₽, каждый доп. литр +10₽
-    // 1кг≈2л → 0,5кг=1л=43₽; 1кг=2л=53₽; 2кг=4л=73₽
-    logistics_base_rub:            43,
-    logistics_per_kg_rub:          20,
+    // С 28.08.2026: совокупная нагрузка ~52% (дом/одежда), ~47% (электроника).
+    // Базовая комиссия ~20-26% + логистика. Смартфоны: ~5-8%.
+    commission_pct: 20,
+    // FBO логистика с 01.09.2026: last-mile 1.1₽/л. Приёмка + обработка: ~55₽/ед
+    // 1кг≈2л → base 55₽; +25₽/кг сверх 0.5кг
+    logistics_base_rub:            55,
+    logistics_per_kg_rub:          25,
     logistics_weight_threshold_kg: 0.5,
     last_mile_pct:     0,
     last_mile_max_rub: 0,
-    storage_per_unit_month_rub: 8,
+    storage_per_unit_month_rub: 10,
     returns_pct:       5,
-    commission_note:   'Одежда: 22% | Смартфоны: 5% | Обувь: 50% | Электроника: 15%',
-    tariff_date:       '2026-07-01',
+    commission_note:   'С 28.08.2026: нагрузка дом/одежда ~52%, электроника ~47%. Смартфоны: ~5%',
+    tariff_date:       '2026-09-01',
   },
   {
     id:    'kaspi',
@@ -104,8 +104,8 @@ export const MARKETPLACES: MarketplaceConfig[] = [
     last_mile_max_rub: 1000,
     storage_per_unit_month_rub: 0,
     returns_pct:       3,
-    commission_note:   'FBY пакет до конца 2026. Last mile: 4,5% (макс. 1000₽)',
-    tariff_date:       '2026-02-01',
+    commission_note:   'FBY=FBS с 01.09.2026. Last mile: 4,5% (макс. 1000₽)',
+    tariff_date:       '2026-09-01',
   },
   {
     id:    'shop',
@@ -170,16 +170,16 @@ export function detectCommissionPct(
   const text = [productName, productNameEn, productNameCn].filter(Boolean).join(' ');
 
   if (marketplaceId === 'wb') {
-    if (FOOTWEAR_KW.test(text) || CLOTHING_KW.test(text)) return 43.5;
+    if (FOOTWEAR_KW.test(text) || CLOTHING_KW.test(text)) return 35; // с 2026: 25-43% в зависимости от КВВ
     if (LAPTOP_KW.test(text)) return 23.5;
     return mp.commission_pct; // 23%
   }
 
   if (marketplaceId === 'ozon') {
-    if (FOOTWEAR_KW.test(text)) return 50;
-    if (CLOTHING_KW.test(text)) return 22;
+    if (FOOTWEAR_KW.test(text)) return 52; // с 28.08.2026: совокупная нагрузка ~52%
+    if (CLOTHING_KW.test(text)) return 26; // комиссия выросла с 22% до 26%
     if (PHONE_KW.test(text))    return 5;
-    return mp.commission_pct; // 18%
+    return mp.commission_pct; // 20%
   }
 
   return mp.commission_pct;
