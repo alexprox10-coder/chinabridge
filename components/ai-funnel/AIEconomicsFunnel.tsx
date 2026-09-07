@@ -745,7 +745,12 @@ function PaywallBlock({
               <span className="text-2xl leading-none mt-0.5">📊</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-bold text-white">PRO — 1 990 ₽/мес</p>
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <p className="text-sm font-bold text-white">PRO</p>
+                    <span className="text-base font-black text-[#229ED9]">490 ₽</span>
+                    <span className="text-xs text-[#5a7899] line-through">1 990 ₽</span>
+                    <span className="text-[10px] text-[#8899aa]">/мес первый месяц</span>
+                  </div>
                   {!isGreen && (
                     <span className="text-[10px] bg-[#229ED9] text-white rounded-full px-2 py-0.5 font-semibold">
                       Рекомендуем
@@ -798,7 +803,7 @@ function PaywallBlock({
                   disabled={payLoading || !!linkError}
                   className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
                 >
-                  {payLoading ? "Подготавливаем оплату..." : linkError ? "Ошибка — обновите страницу" : "Подключить Pro — 1 990 ₽/мес"}
+                  {payLoading ? "Подготавливаем оплату..." : linkError ? "Ошибка — обновите страницу" : "Подключить Pro — 490 ₽/мес"}
                 </button>
                 <p className="mt-2 text-[10px] text-[#5a7899] text-center leading-relaxed">
                   Безопасная оплата через платёжный сервис партнёра. После оплаты Pro активируется автоматически.
