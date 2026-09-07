@@ -151,7 +151,7 @@ ${markdown}
         'HTTP-Referer': 'https://chinabridge.pro',
       },
       body: JSON.stringify({
-        model:       'anthropic/claude-haiku-4-5-20251001',
+        model:       'openai/gpt-4o-mini',
         max_tokens:  512,
         temperature: 0.1,
         messages:    [{ role: 'user', content: prompt }],
