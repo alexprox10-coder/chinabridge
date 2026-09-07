@@ -2158,12 +2158,15 @@ export default function AIEconomicsFunnel() {
                   )}
                 </div>
 
-                {/* Divider "или" */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-[#243a5e]" />
-                  <span className="text-[10px] text-[#5a7899] uppercase tracking-wide">или сразу</span>
-                  <div className="flex-1 h-px bg-[#243a5e]" />
-                </div>
+                {/* PRO upgrade button — shown when rate limit hit */}
+                {!isPaidPro && calcCount >= effectiveLimit && (
+                  <button
+                    onClick={() => setShowPaywall(true)}
+                    className="w-full py-3 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-bold rounded-xl transition-colors"
+                  >
+                    📊 Продолжить расчёты — PRO 490 ₽/мес
+                  </button>
+                )}
 
               </>
             );
