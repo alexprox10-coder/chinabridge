@@ -110,13 +110,11 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
   const cfg = CATEGORIES[category];
   if (!cfg) notFound();
 
-  const [step, setStep] = useState<"form" | "contact" | "done">("form");
-  const [product, setProduct] = useState("");
-  const [hasSupplier, setHasSupplier] = useState<"yes" | "no" | "">("");
-  const [city, setCity] = useState("");
+  const [done, setDone] = useState(false);
   const [telegram, setTelegram] = useState("");
+  const [product, setProduct] = useState("");
   const [loading, setLoading] = useState(false);
-  const [, startStepTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const notifyTgClick = (button: string) => {
     fetch("/api/tg-click", {
@@ -126,14 +124,7 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
     }).catch(() => null);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!product.trim()) return;
-    setTimeout(() => trackGAEvent("import_form_step1", { category, product, has_supplier: hasSupplier, city }), 0);
-    startStepTransition(() => setStep("contact"));
-  };
-
-  const handleContactSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!telegram.trim()) return;
     setLoading(true);
@@ -142,15 +133,21 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
       await fetch("/api/landing-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telegram, product, has_supplier: hasSupplier, city, source: cfg.source }),
+        body: JSON.stringify({ telegram, product, has_supplier: "no", city: "", source: cfg.source }),
       });
     } catch { /* silent */ }
-    startStepTransition(() => { setStep("done"); setLoading(false); });
+    startTransition(() => { setDone(true); setLoading(false); });
   };
+
+  const TgIcon = () => (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current flex-shrink-0">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.652-.64.135-.954l11.57-4.461c.537-.194 1.006.131.969.06z"/>
+    </svg>
+  );
 
   return (
     <div className="min-h-screen bg-[#060F1E] text-white">
-      {/* Minimal header */}
+      {/* Header */}
       <header className="sticky top-0 z-50 bg-[#060F1E]/95 backdrop-blur border-b border-[#1a2d47]">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="text-white font-bold text-lg tracking-tight">
@@ -158,226 +155,148 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
           </Link>
           <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
             onClick={() => { trackGAEvent("import_header_tg_click", { category }); notifyTgClick("header"); }}
-            className="flex items-center gap-1.5 text-sm bg-[#00A86B]/15 hover:bg-[#00A86B]/30 text-[#00A86B] px-3 py-1.5 rounded-lg transition-colors font-medium">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.652-.64.135-.954l11.57-4.461c.537-.194 1.006.131.969.06z"/></svg>
+            className="flex items-center gap-1.5 text-sm bg-[#229ED9]/15 hover:bg-[#229ED9]/30 text-[#229ED9] px-3 py-1.5 rounded-lg transition-colors font-medium">
+            <TgIcon />
             Написать
           </a>
         </div>
       </header>
 
-      {/* Sticky mobile bottom CTA — visible only when form is active */}
-      {step === "form" && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-[#060F1E]/95 backdrop-blur border-t border-[#1a2d47] px-4 py-3">
-          <div className="flex gap-3 max-w-2xl mx-auto">
-            <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
-              onClick={() => { trackGAEvent("import_sticky_tg_click", { category }); notifyTgClick("sticky_bottom"); }}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1a8dbf] text-white font-semibold py-3 rounded-xl text-sm transition">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.652-.64.135-.954l11.57-4.461c.537-.194 1.006.131.969.06z"/></svg>
-              Написать в Telegram
-            </a>
-          </div>
+      {/* Sticky bottom CTA mobile */}
+      {!done && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-[#060F1E]/97 backdrop-blur border-t border-[#1a2d47] px-4 py-3">
+          <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+            onClick={() => { trackGAEvent("import_sticky_tg_click", { category }); notifyTgClick("sticky_bottom"); }}
+            className="flex items-center justify-center gap-2 w-full bg-[#229ED9] hover:bg-[#1a8dbf] text-white font-bold py-3.5 rounded-xl text-sm transition active:scale-95">
+            <TgIcon />
+            Бесплатная консультация в Telegram
+          </a>
         </div>
       )}
 
-      <main className="max-w-2xl mx-auto px-4 py-12 sm:py-20 pb-24 sm:pb-20">
+      <main className="max-w-lg mx-auto px-4 py-8 sm:py-14 pb-28 sm:pb-14">
 
         {/* Hero */}
-        <div className="text-center mb-10">
-          <div className="text-5xl mb-4">{cfg.emoji}</div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-5">
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-3">{cfg.emoji}</div>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse"/>
-            🇨🇳 Прямые поставки · Офис в Гуанчжоу · с 2019 года
+            Офис в Гуанчжоу · с 2019 года · 500+ клиентов
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-4">{cfg.title}</h1>
-          <p className="text-[#8899aa] text-base leading-relaxed">{cfg.subtitle}</p>
-          <p className="text-[#445566] text-xs mt-3">{cfg.priceHint}</p>
+          <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-3">{cfg.title}</h1>
+          <p className="text-[#8899aa] text-sm leading-relaxed">{cfg.subtitle}</p>
         </div>
 
-        {/* Qualifier form */}
-        {step === "form" && (
-          <form onSubmit={handleFormSubmit} className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-6 sm:p-8 mb-10">
-            <h2 className="font-semibold text-lg mb-6">Расскажите о вашем товаре</h2>
-            <div className="flex flex-col gap-5">
-              <div>
-                <label className="text-xs text-[#8899aa] mb-2 block font-medium uppercase tracking-wide">Что хотите привезти?</label>
-                <input
-                  type="text"
-                  value={product}
-                  onChange={e => setProduct(e.target.value)}
-                  placeholder={cfg.placeholder}
-                  required
-                  className="w-full bg-[#060F1E] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#445566] outline-none transition-colors"
-                />
-                {/* Category chips */}
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {cfg.items.slice(0, 4).map(item => (
-                    <button key={item} type="button"
-                      onClick={() => setProduct(item)}
-                      className="text-xs px-2.5 py-1 rounded-lg bg-[#243a5e]/60 text-[#8899aa] hover:text-white hover:bg-[#243a5e] transition-colors">
-                      {item}
-                    </button>
-                  ))}
+        {/* Stats bar */}
+        <div className="grid grid-cols-3 gap-3 mb-7">
+          {cfg.caseStats.map(s => (
+            <div key={s.l} className="bg-[#0B1F3A] border border-[#1a2d47] rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-[#00A86B]">{s.v}</div>
+              <div className="text-xs text-[#8899aa]">{s.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {!done ? (
+          <>
+            {/* Primary CTA — Telegram */}
+            <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+              onClick={() => { trackGAEvent("import_hero_tg_click", { category }); notifyTgClick("hero_primary"); }}
+              className="flex items-center justify-center gap-3 w-full bg-[#229ED9] hover:bg-[#1a8dbf] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-4 shadow-lg shadow-[#229ED9]/20">
+              <TgIcon />
+              Получить расчёт в Telegram — бесплатно
+            </a>
+            <p className="text-center text-[#445566] text-xs mb-6">Ответим за 15 минут · Без обязательств</p>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px bg-[#1a2d47]"/>
+              <span className="text-[#445566] text-xs font-medium">или оставьте заявку</span>
+              <div className="flex-1 h-px bg-[#1a2d47]"/>
+            </div>
+
+            {/* Secondary — 1-step form */}
+            <form onSubmit={handleSubmit} className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-5 sm:p-6 mb-8">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="text-xs text-[#8899aa] mb-2 block font-medium uppercase tracking-wide">Ваш Telegram или телефон</label>
+                  <input type="text" value={telegram} onChange={e => setTelegram(e.target.value)}
+                    placeholder="@username или +7 999 000 00 00" required
+                    className="w-full bg-[#060F1E] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#445566] outline-none transition-colors"/>
                 </div>
-              </div>
-
-              <div>
-                <label className="text-xs text-[#8899aa] mb-2 block font-medium uppercase tracking-wide">Поставщик в Китае уже есть?</label>
-                <div className="flex gap-3">
-                  {(["yes", "no"] as const).map(v => (
-                    <button key={v} type="button" onClick={() => setHasSupplier(v)}
-                      className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all border ${
-                        hasSupplier === v
-                          ? "bg-[#00A86B]/20 border-[#00A86B] text-[#00A86B]"
-                          : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/40 hover:text-white"
-                      }`}>
-                      {v === "yes" ? "Да, есть" : "Нет, нужен"}
-                    </button>
-                  ))}
+                <div>
+                  <label className="text-xs text-[#8899aa] mb-2 block font-medium uppercase tracking-wide">Что хотите привезти? <span className="text-[#334466]">(необязательно)</span></label>
+                  <input type="text" value={product} onChange={e => setProduct(e.target.value)}
+                    placeholder={cfg.placeholder}
+                    className="w-full bg-[#060F1E] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#445566] outline-none transition-colors"/>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {cfg.items.slice(0, 3).map(item => (
+                      <button key={item} type="button" onClick={() => setProduct(item)}
+                        className="text-xs px-2.5 py-1 rounded-lg bg-[#243a5e]/60 text-[#8899aa] hover:text-white hover:bg-[#243a5e] transition-colors">
+                        {item}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                <button type="submit" disabled={loading}
+                  className="w-full bg-[#00A86B] hover:bg-[#009060] disabled:opacity-60 text-white font-semibold py-3.5 rounded-xl transition active:scale-95">
+                  {loading ? "Отправляем..." : "Отправить заявку →"}
+                </button>
               </div>
-
-              <div>
-                <label className="text-xs text-[#8899aa] mb-2 block font-medium uppercase tracking-wide">Куда доставить?</label>
-                <select
-                  value={city}
-                  onChange={e => setCity(e.target.value)}
-                  className="w-full bg-[#060F1E] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3 text-sm text-white outline-none transition-colors appearance-none">
-                  <option value="">Выберите город</option>
-                  <optgroup label="Россия">
-                    {CITIES.slice(0, 5).map(c => <option key={c} value={c}>{c}</option>)}
-                    <option value="Другой город РФ">Другой город РФ</option>
-                  </optgroup>
-                  <optgroup label="Казахстан">
-                    <option value="Алматы">Алматы</option>
-                    <option value="Астана">Астана</option>
-                    <option value="Другой город КЗ">Другой город КЗ</option>
-                  </optgroup>
-                </select>
-              </div>
-
-              <button type="submit"
-                className="w-full bg-[#00A86B] hover:bg-[#009060] text-white font-semibold py-3.5 rounded-xl transition active:scale-95">
-                Получить расчёт →
-              </button>
-              <p className="text-center text-[#445566] text-xs">Без обязательств · Ответим за 15 минут</p>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-[#1a2d47]"/>
-                <span className="text-[#445566] text-xs">или</span>
-                <div className="flex-1 h-px bg-[#1a2d47]"/>
-              </div>
-              <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
-                onClick={() => { trackGAEvent("import_form_tg_alt_click", { category }); notifyTgClick("form_alt"); }}
-                className="w-full flex items-center justify-center gap-2 border border-[#229ED9]/50 hover:border-[#229ED9] text-[#229ED9] hover:bg-[#229ED9]/10 font-medium py-3 rounded-xl transition text-sm">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.652-.64.135-.954l11.57-4.461c.537-.194 1.006.131.969.06z"/></svg>
-                Написать в Telegram напрямую
-              </a>
-            </div>
-          </form>
-        )}
-
-        {/* Contact step */}
-        {step === "contact" && (
-          <form onSubmit={handleContactSubmit} className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-6 sm:p-8 mb-10">
-            <div className="mb-6">
-              <div className="text-xs text-[#00A86B] font-medium mb-1">Почти готово!</div>
-              <h2 className="font-semibold text-lg">Куда отправить расчёт?</h2>
-              <p className="text-[#8899aa] text-sm mt-1">Менеджер напишет напрямую с ценой и сроками</p>
-            </div>
-            <div className="flex flex-col gap-5">
-              <div>
-                <label className="text-xs text-[#8899aa] mb-2 block font-medium uppercase tracking-wide">Ваш Telegram</label>
-                <input type="text" value={telegram} onChange={e => setTelegram(e.target.value)}
-                  placeholder="@username или номер телефона" required
-                  className="w-full bg-[#060F1E] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#445566] outline-none transition-colors"/>
-              </div>
-              <div className="bg-[#060F1E] rounded-xl p-4 text-sm text-[#8899aa] space-y-1">
-                <div><span className="text-white font-medium">Товар:</span> {product}</div>
-                {hasSupplier && <div><span className="text-white font-medium">Поставщик:</span> {hasSupplier === "yes" ? "Есть" : "Нужен"}</div>}
-                {city && <div><span className="text-white font-medium">Город:</span> {city}</div>}
-              </div>
-              <button type="submit" disabled={loading}
-                className="w-full bg-[#00A86B] hover:bg-[#009060] disabled:opacity-60 text-white font-semibold py-3.5 rounded-xl transition active:scale-95">
-                {loading ? "Отправляем..." : "Получить расчёт бесплатно →"}
-              </button>
-              <button type="button" onClick={() => setStep("form")}
-                className="text-center text-[#445566] text-xs hover:text-white transition-colors">
-                ← Изменить данные
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Done */}
-        {step === "done" && (
-          <div className="bg-[#0B1F3A] border border-[#00A86B]/40 rounded-2xl p-8 mb-10 text-center">
+            </form>
+          </>
+        ) : (
+          /* Done */
+          <div className="bg-[#0B1F3A] border border-[#00A86B]/40 rounded-2xl p-8 mb-8 text-center">
             <div className="text-4xl mb-4">✅</div>
             <h2 className="font-bold text-xl mb-2">Заявка принята!</h2>
-            <p className="text-[#8899aa] mb-6">Менеджер напишет в Telegram в течение 15 минут с ценой и сроками.</p>
+            <p className="text-[#8899aa] mb-6">Менеджер напишет в течение 15 минут с ценой и сроками.</p>
             <a href={`https://t.me/ChinaBridgeLID_bot?start=${encodeURIComponent(product || category)}`}
               target="_blank" rel="noopener noreferrer"
-              className="inline-block bg-[#00A86B] hover:bg-[#009060] text-white font-semibold px-6 py-3 rounded-xl transition">
+              onClick={() => notifyTgClick("done_cta")}
+              className="inline-flex items-center gap-2 bg-[#229ED9] hover:bg-[#1a8dbf] text-white font-semibold px-6 py-3 rounded-xl transition">
+              <TgIcon />
               Написать в Telegram сейчас
             </a>
           </div>
         )}
 
-        {/* Also try calculator */}
-        <div className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-5 mb-8 flex items-start gap-4">
-          <div className="text-2xl">🤖</div>
-          <div className="flex-1">
-            <p className="font-semibold text-sm mb-1">Хотите сначала проверить юнит-экономику?</p>
-            <p className="text-[#8899aa] text-xs mb-3">AI-калькулятор за 15 сек рассчитает маржу на WB, Ozon и Kaspi</p>
-            <Link href="/ai-calculator"
-              onClick={() => trackGAEvent("import_to_calculator_click", { category })}
-              className="inline-block text-xs text-[#00A86B] hover:text-white transition-colors font-medium">
-              Открыть AI-калькулятор →
-            </Link>
-          </div>
-        </div>
-
         {/* Case */}
-        <div className="bg-gradient-to-br from-[#00A86B]/10 to-[#00A86B]/5 border border-[#00A86B]/30 rounded-2xl p-6 mb-8">
-          <div className="text-xs text-[#00A86B] font-medium uppercase tracking-wide mb-3">Кейс</div>
-          <h3 className="font-bold text-lg mb-3">{cfg.caseTitle}</h3>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {cfg.caseStats.map(s => (
-              <div key={s.l} className="text-center">
-                <div className="text-xl font-bold text-[#00A86B]">{s.v}</div>
-                <div className="text-xs text-[#8899aa]">{s.l}</div>
-              </div>
-            ))}
-          </div>
+        <div className="bg-gradient-to-br from-[#00A86B]/10 to-[#00A86B]/5 border border-[#00A86B]/30 rounded-2xl p-5 mb-6">
+          <div className="text-xs text-[#00A86B] font-medium uppercase tracking-wide mb-2">Кейс</div>
+          <h3 className="font-bold text-base mb-3">{cfg.caseTitle}</h3>
           <p className="text-[#8899aa] text-sm leading-relaxed">{cfg.caseText}</p>
         </div>
 
-        {/* Why us */}
-        <div className="mb-8">
-          <h2 className="font-bold text-lg mb-4">Почему нам</h2>
-          <div className="flex flex-col gap-3">
-            {[
-              { icon: "🏭", title: "Поставщик уже есть?", desc: "Не нужно его менять. Возьмём в работу и организуем забор с его склада." },
-              { icon: "📦", title: "Небольшая партия?", desc: "Рассмотрим консолидацию, если подходит по условиям. От 50 кг." },
-              { icon: "📋", title: "Не хотите заниматься ВЭД?", desc: "ChinaBridge координирует поставку и необходимых участников процесса." },
-            ].map(t => (
-              <div key={t.title} className="bg-[#0B1F3A] border border-[#1a2d47] rounded-xl p-4 flex gap-4">
-                <div className="text-2xl flex-shrink-0">{t.icon}</div>
-                <div>
-                  <p className="font-semibold text-sm mb-0.5">{t.title}</p>
-                  <p className="text-[#8899aa] text-xs leading-relaxed">{t.desc}</p>
-                </div>
+        {/* Trust points */}
+        <div className="flex flex-col gap-3 mb-8">
+          {[
+            { icon: "🏭", title: "Поставщик уже есть?", desc: "Возьмём в работу — не нужно его менять." },
+            { icon: "📦", title: "Небольшая партия?", desc: "Консолидация от 50 кг, сборные рейсы." },
+            { icon: "📋", title: "Не хотите заниматься ВЭД?", desc: "ChinaBridge координирует всё под ключ." },
+          ].map(t => (
+            <div key={t.title} className="bg-[#0B1F3A] border border-[#1a2d47] rounded-xl p-4 flex gap-3 items-start">
+              <div className="text-xl flex-shrink-0">{t.icon}</div>
+              <div>
+                <p className="font-semibold text-sm mb-0.5">{t.title}</p>
+                <p className="text-[#8899aa] text-xs">{t.desc}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
-        {/* Final CTA */}
-        <div className="text-center">
-          <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
-            onClick={() => { trackGAEvent("import_final_cta", { category }); notifyTgClick("final_cta"); }}
-            className="inline-flex items-center gap-2 bg-[#229ED9] hover:bg-[#1a8dbf] text-white font-semibold px-6 py-3 rounded-xl transition">
-            Написать в Telegram
-          </a>
-          <p className="text-[#445566] text-xs mt-3">или <Link href="/" className="hover:text-white underline">вернуться на главную</Link></p>
+        {/* AI calc cross-sell */}
+        <div className="border border-[#1a2d47] rounded-xl p-4 flex items-center gap-3 mb-6">
+          <div className="text-2xl">🤖</div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm mb-0.5">Проверьте юнит-экономику</p>
+            <p className="text-[#8899aa] text-xs">AI-калькулятор рассчитает маржу на WB, Ozon и Kaspi</p>
+          </div>
+          <Link href="/ai-calculator"
+            onClick={() => trackGAEvent("import_to_calculator_click", { category })}
+            className="text-xs text-[#00A86B] font-semibold whitespace-nowrap hover:text-white transition">
+            Открыть →
+          </Link>
         </div>
       </main>
     </div>
