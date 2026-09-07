@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     }
 
     // Если есть n8n вебхук — запускаем напоминание через 23ч
-    const n8nWebhook = process.env.N8N_WEBHOOK_URL;
+    const n8nWebhook = process.env.N8N_WEBHOOK_TRIPWIRE_PAID ?? process.env.N8N_WEBHOOK_URL;
     if (n8nWebhook) {
       await fetch(n8nWebhook, {
         method: "POST",
