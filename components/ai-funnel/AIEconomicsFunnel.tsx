@@ -1807,11 +1807,13 @@ export default function AIEconomicsFunnel() {
             </button>
           ) : (
             <div className="flex items-center justify-center gap-2">
-              {[0,1,2,3,4].map(i => (
+              {Array.from({length: ANON_LIMIT}).map((_, i) => (
                 <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i < calcCount ? 'bg-[#00A86B]' : 'bg-white/15'}`} />
               ))}
-              <p className="text-xs text-[#8899aa]">
-                {`Расчёт ${calcCount + 1} из ${ANON_LIMIT} бесплатных · AI`}
+              <p className={`text-xs font-medium ${ANON_LIMIT - calcCount === 1 ? 'text-amber-400' : 'text-[#8899aa]'}`}>
+                {ANON_LIMIT - calcCount === 1
+                  ? '⚡ Последний бесплатный расчёт'
+                  : `Осталось ${ANON_LIMIT - calcCount} бесплатных · AI`}
               </p>
             </div>
           )}
