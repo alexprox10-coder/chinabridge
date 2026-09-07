@@ -64,6 +64,8 @@ interface FunnelState {
   extractedData:     ExtractedProduct | null;
   // Sale price shown in marketplace step
   salePrice:         string;
+  // KZT price from Kaspi (used to auto-convert to RUB)
+  kaspiPriceKzt:     string;
   marketplace:       string;
   city_to:           string;
   // Contact
@@ -112,6 +114,8 @@ const ANALYZE_STAGES = [
 // Approximate CNY→RUB for sale price estimation (real rate comes from API)
 const EST_CNY_RATE    = 12.5;
 const MARKUP_MULTIPLE = 2.5;
+// KZT→RUB: 1₸ ≈ 0.17₽ (1₽ ≈ 5.9₸), актуально сентябрь 2026
+const KZT_TO_RUB      = 0.17;
 
 function estimateSalePrice(cny: number | null): string {
   if (!cny) return "";
@@ -815,6 +819,7 @@ export default function AIEconomicsFunnel() {
     product:           EMPTY_PRODUCT,
     extractedData:     null,
     salePrice:         "",
+    kaspiPriceKzt:     "",
     marketplace:       "wb",
     city_to:           "Москва",
     name:              "",
@@ -2004,12 +2009,41 @@ export default function AIEconomicsFunnel() {
             </div>
           </div>
 
+          {/* KZT price field — Kaspi only */}
+          {s.marketplace === 'kaspi' && (
+            <div>
+              <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
+                Цена на Kaspi.kz, ₸
+                <span className="ml-2 text-[#00A86B]/80 font-normal">→ автоматически в ₽</span>
+              </label>
+              <input
+                type="number"
+                value={s.kaspiPriceKzt}
+                onChange={e => {
+                  const kzt = parseFloat(e.target.value) || 0;
+                  setS(p => ({
+                    ...p,
+                    kaspiPriceKzt: e.target.value,
+                    salePrice: kzt > 0 ? String(Math.round(kzt * KZT_TO_RUB)) : p.salePrice,
+                  }));
+                }}
+                placeholder="3448"
+                className={inp(!s.kaspiPriceKzt)}
+              />
+              <p className="text-[11px] text-[#8899aa] mt-1">Укажите цену с Kaspi — конвертируется по курсу 1₸ = 0,17₽</p>
+            </div>
+          )}
+
           {/* Sale price field (AI path: always shown; manual path: pre-filled) */}
           <div>
             <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
               Планируемая цена продажи, ₽
               {s.extractedData && s.salePrice && (
-                <span className="ml-2 text-amber-400/80 font-normal">расчётная — можно изменить</span>
+                <span className="ml-2 text-amber-400/80 font-normal">
+                  {s.marketplace === 'kaspi' && s.kaspiPriceKzt
+                    ? `≈ ${parseInt(s.kaspiPriceKzt).toLocaleString('ru-RU')}₸ по курсу`
+                    : 'расчётная — можно изменить'}
+                </span>
               )}
             </label>
             <input
