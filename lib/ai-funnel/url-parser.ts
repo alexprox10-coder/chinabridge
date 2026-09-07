@@ -68,39 +68,6 @@ async function scrapeKaspi(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
-async function scrape1688Direct(offerId: string): Promise<string | null> {
-  const urls = [
-    `https://m.1688.com/offer/${offerId}.html`,
-    `https://detail.1688.com/offer/${offerId}.html`,
-  ];
-  for (const u of urls) {
-    try {
-      const res = await fetch(u, {
-        headers: {
-          'User-Agent':      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-          'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'zh-CN,zh;q=0.9',
-          'Referer':         'https://m.1688.com/',
-        },
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!res.ok) continue;
-      const html = await res.text();
-      // Extract useful parts
-      const titleM  = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-      const descM   = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i);
-      const ldJson  = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
-      const priceM  = html.match(/["']price["']\s*:\s*["']?([\d.]+)/i);
-      const parts: string[] = [];
-      if (titleM?.[1])  parts.push(`Title: ${titleM[1].trim()}`);
-      if (descM?.[1])   parts.push(`Description: ${descM[1].trim()}`);
-      if (ldJson?.[1])  parts.push(`Structured data: ${ldJson[1].slice(0, 1000)}`);
-      if (priceM?.[1])  parts.push(`Price found: ${priceM[1]}`);
-      if (parts.length > 0) return parts.join('\n');
-    } catch { continue; }
-  }
-  return null;
-}
 
 async function scrape(url: string): Promise<string | null> {
   if (!FIRECRAWL_KEY) return null;
@@ -116,7 +83,8 @@ async function scrape(url: string): Promise<string | null> {
     };
     if (is1688) {
       body.mobile  = true;
-      body.waitFor = 3000;
+      body.waitFor = 5000;
+      body.proxy   = 'stealth';
       body.headers = {
         'User-Agent':      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
         'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -232,20 +200,6 @@ export async function parseProductUrl(url: string): Promise<ParseResult> {
   }
 
   const platform = detectPlatform(url);
-
-  // 1688: try direct fetch first (no Firecrawl needed), fall back to Firecrawl
-  if (url.includes('1688.com')) {
-    const offerIdM = url.match(/\/offer\/(\d+)/);
-    if (offerIdM) {
-      const directMd = await scrape1688Direct(offerIdM[1]);
-      if (directMd) {
-        const parsed = await parseWithAI('1688', directMd);
-        if (parsed?.product_name) {
-          return { ok: true, data: { ...parsed, source_platform: '1688', product_name: parsed.product_name } };
-        }
-      }
-    }
-  }
 
   if (!FIRECRAWL_KEY) return { ok: false, reason: 'no_key', code: 'FIRECRAWL_NOT_CONFIGURED' };
 
