@@ -387,7 +387,7 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
   isKZ?: boolean;
 }) {
   const deliveryLabel = delivery?.pricingRule === 'estimate_4usd_kg'
-    ? `${fmt(ec.delivery_total_rub)} ₽ (~4$/кг)`
+    ? `${fmt(ec.delivery_total_rub)} ₽ (~$2/кг авто)`
     : `${fmt(ec.delivery_total_rub)} ₽`;
   const rows: Array<[string, string, boolean?]> = [
     ["🛍️ Закупочная цена (всего)",     `${fmt(ec.purchase_total_rub)} ₽`],
@@ -395,7 +395,9 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
     ...(isKZ
       ? [] as Array<[string, string, boolean?]>
       : [["🏛️ Таможня (~20% от закупки)", `${fmt(ec.customs_rub)} ₽`] as [string, string]]),
-    ["🏪 Логистика МП (FBW/FBO)",        `${fmt(ec.marketplace_logistics_rub)} ₽`],
+    ...(ec.marketplace_logistics_rub > 0
+      ? [["🏪 Логистика МП (FBW/FBO)", `${fmt(ec.marketplace_logistics_rub)} ₽`] as [string, string]]
+      : []),
     [`💳 Комиссия ${mpLabel ?? "МП"}`,   `${fmt(ec.marketplace_fee_rub)} ₽`],
     ["📣 Реклама",                        ec.ad_cost_rub > 0 ? `${fmt(ec.ad_cost_rub)} ₽` : "не задана"],
     ["🧾 Прочие расходы",                 ec.other_costs_rub > 0 ? `${fmt(ec.other_costs_rub)} ₽` : "—"],
@@ -1190,20 +1192,22 @@ export default function AIEconomicsFunnel() {
           }, 400);
 
         } else {
-          // Firecrawl failed → manual fallback
+          // Firecrawl failed → redirect to text description input (not manual numeric form)
           analytics.productScrapeFailed({ reason: data.reason ?? "unknown" });
-          go("product", {
-            product:     { ...EMPTY_PRODUCT, product_link: url },
+          go("input", {
+            urlInput:    "",
+            descInput:   "",
             scrapeError: data.code ?? data.reason ?? null,
-            error:       null,
+            error:       "1688 заблокировал автоматический анализ. Напишите название товара текстом — AI оценит за 5 секунд.",
           });
         }
       } catch {
         analytics.productScrapeFailed({ reason: "network_error" });
-        go("product", {
-          product:     { ...EMPTY_PRODUCT, product_link: url },
+        go("input", {
+          urlInput:    "",
+          descInput:   "",
           scrapeError: "NETWORK_ERROR",
-          error:       null,
+          error:       "Ошибка сети. Попробуйте ещё раз или опишите товар текстом.",
         });
       }
     } else if (s.descInput.trim()) {

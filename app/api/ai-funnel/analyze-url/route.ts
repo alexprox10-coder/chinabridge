@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   if (!validateUrl(url)) {
     return NextResponse.json(
-      { ok: false, error: 'unsupported_domain', message: 'Поддерживаются только 1688.com, alibaba.com и taobao.com' },
+      { ok: false, error: 'unsupported_domain', message: 'Поддерживаются 1688.com, alibaba.com, taobao.com и kaspi.kz' },
       { status: 422 },
     );
   }

@@ -27,8 +27,9 @@ export interface MarketplaceConfig {
 // ─── Реальные тарифы 2026 ────────────────────────────────────────────────────
 // WB: комиссии с 07.07.2026, логистика FBW с 15.09.2025
 // Ozon: комиссии с 01.07.2026, логистика FBO актуальная
-// Kaspi: с 01.01.2026 (10,9% + 16% НДС = 12,6%)
+// Kaspi: 10,9% + НДС 16% КЗ = 12,6%. Доставка покупателю — Kaspi платит из своей комиссии
 // Яндекс Маркет: с 01.02.2026 (FBY)
+// Карго из Китая: авто $2/кг (ChinaBridge, 18-22 дня), авиа ~$23/кг
 
 export const MARKETPLACES: MarketplaceConfig[] = [
   {
@@ -75,18 +76,18 @@ export const MARKETPLACES: MarketplaceConfig[] = [
     id:    'kaspi',
     label: 'Kaspi',
     icon:  '🇰🇿',
-    // 10,9% + 16% НДС Казахстана = ~12,6%
+    // 10,9% комиссия + НДС 16% КЗ = 12,6%. Доставка покупателю — Kaspi платит сам.
     commission_pct: 12.6,
-    // Доставка покупателю по Казахстану (~1000-2000₸ ≈ 200-400₽)
-    logistics_base_rub:            300,
-    logistics_per_kg_rub:          50,
+    // Доставка внутри КЗ оплачивается Kaspi из их комиссии — у продавца 0
+    logistics_base_rub:            0,
+    logistics_per_kg_rub:          0,
     logistics_weight_threshold_kg: 1,
     last_mile_pct:     0,
     last_mile_max_rub: 0,
     storage_per_unit_month_rub: 0,
     returns_pct:       2,
-    commission_note:   'Включает НДС 16%. Рассрочка Fusion: +0,75–5%',
-    tariff_date:       '2026-01-01',
+    commission_note:   'Включает НДС 16%. Доставка Kaspi включена в комиссию. Рассрочка Fusion: +0,75–5%',
+    tariff_date:       '2026-09-07',
   },
   {
     id:    'yandex',

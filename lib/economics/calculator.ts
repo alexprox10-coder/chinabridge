@@ -250,8 +250,8 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
     : cost!.sale_price * usdRate
     : 0;
 
-  // Если нет точной ставки — оцениваем 4 USD/кг (среднее карго Китай→РФ/KZ)
-  const DEFAULT_CARGO_USD_PER_KG = 4;
+  // ChinaBridge авто-ставка клиенту: $2/кг (18-22 дня, мин 30кг)
+  const DEFAULT_CARGO_USD_PER_KG = 2;
   const estimatedDeliveryRub = (weightKg ?? 0.5) * DEFAULT_CARGO_USD_PER_KG * usdRate * qty;
   const deliveryRub = hasRate ? rateDeliveryRub : estimatedDeliveryRub;
 

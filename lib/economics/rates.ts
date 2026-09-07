@@ -1,8 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 
-const FALLBACK_CNY     = 12.48;
-const FALLBACK_USD     = 84.54;
-const FALLBACK_CUSTOMS = 0.20; // 20%
+const FALLBACK_CNY     = 12.5;
+const FALLBACK_USD     = 87.0;
+const FALLBACK_CUSTOMS = 0.20; // 20% НДС при ввозе в РФ
 
 // fact_key → mp_commissions key mapping
 // Keys must match the canonical fact_key names in lib/intelligence/seed.ts

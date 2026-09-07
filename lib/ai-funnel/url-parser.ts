@@ -25,13 +25,47 @@ export type ParseResult =
   | { ok: true;  data: ParsedProduct }
   | { ok: false; reason: 'unsupported_domain' | 'scrape_failed' | 'parse_failed' | 'no_key'; code?: string };
 
-const ALLOWED = ['1688.com', 'alibaba.com', 'taobao.com', 'detail.tmall.com'];
+const ALLOWED = ['1688.com', 'alibaba.com', 'taobao.com', 'detail.tmall.com', 'kaspi.kz'];
 
 function detectPlatform(url: string): ParsedProduct['source_platform'] {
   if (url.includes('1688.com'))    return '1688';
   if (url.includes('alibaba.com')) return 'alibaba';
   if (url.includes('taobao.com') || url.includes('tmall.com')) return 'taobao';
+  if (url.includes('kaspi.kz'))    return 'unknown'; // treated as sale-side
   return 'unknown';
+}
+
+async function scrapeKaspi(url: string): Promise<string | null> {
+  try {
+    // Extract product slug from kaspi URL: /shop/p/SLUG-ID/
+    const match = url.match(/\/shop\/p\/([^/?#]+)/);
+    if (!match) return null;
+    const slug = match[1];
+    // Extract numeric ID from the end of slug
+    const idMatch = slug.match(/(\d{6,})$/);
+    if (!idMatch) return null;
+    const productId = idMatch[1];
+    const q = slug.replace(/-\d+$/, '').replace(/-/g, ' ');
+
+    const apiUrl = `https://kaspi.kz/yml/product-view/pl/filters?q=${encodeURIComponent(q)}&sort=1&cityId=750000000&lang=ru&currency=KZT&ui=d&limit=5`;
+    const res = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://kaspi.kz/',
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const items: Array<{ id?: string; title?: string; unitPrice?: number; masterCategoryTitle?: string }> =
+      data?.data?.cards ?? data?.data?.items ?? [];
+    // Find matching product by ID
+    const product = items.find((p) => String(p.id) === productId) ?? items[0];
+    if (!product) return null;
+    const priceKzt = product.unitPrice ?? 0;
+    return `Kaspi product: ${product.title ?? q}\nPrice KZT: ${priceKzt}\nCategory: ${product.masterCategoryTitle ?? ''}\nID: ${product.id}`;
+  } catch { return null; }
 }
 
 async function scrape(url: string): Promise<string | null> {
@@ -151,7 +185,19 @@ export function validateUrl(url: string): boolean {
 
 export async function parseProductUrl(url: string): Promise<ParseResult> {
   if (!validateUrl(url)) return { ok: false, reason: 'unsupported_domain' };
-  if (!FIRECRAWL_KEY)    return { ok: false, reason: 'no_key', code: 'FIRECRAWL_NOT_CONFIGURED' };
+
+  const isKaspi = url.includes('kaspi.kz');
+
+  // Kaspi: use native API, no Firecrawl needed
+  if (isKaspi) {
+    const markdown = await scrapeKaspi(url);
+    if (!markdown) return { ok: false, reason: 'scrape_failed' };
+    const parsed = await parseWithAI('kaspi', markdown);
+    if (!parsed || !parsed.product_name) return { ok: false, reason: 'parse_failed' };
+    return { ok: true, data: { ...parsed, source_platform: 'unknown', product_name: parsed.product_name ?? '' } };
+  }
+
+  if (!FIRECRAWL_KEY) return { ok: false, reason: 'no_key', code: 'FIRECRAWL_NOT_CONFIGURED' };
 
   const markdown = await scrape(url);
   if (!markdown) return { ok: false, reason: 'scrape_failed' };
