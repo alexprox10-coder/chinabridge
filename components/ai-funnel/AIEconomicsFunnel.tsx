@@ -116,6 +116,7 @@ const EST_CNY_RATE    = 12.5;
 const MARKUP_MULTIPLE = 2.5;
 // KZT→RUB: 1₸ ≈ 0.17₽ (1₽ ≈ 5.9₸), актуально сентябрь 2026
 const KZT_TO_RUB      = 0.17;
+const RUB_TO_KZT      = 5.88; // обратный курс для отображения ₸
 
 function estimateSalePrice(cny: number | null): string {
   if (!cny) return "";
@@ -124,7 +125,8 @@ function estimateSalePrice(cny: number | null): string {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
+const fmt    = (n: number) => Math.round(n).toLocaleString("ru-RU");
+const fmtKzt = (rub: number) => Math.round(rub * RUB_TO_KZT).toLocaleString("ru-RU");
 const inp = (err?: boolean) =>
   `w-full px-4 py-3 bg-[#0B1F3A] border rounded-xl text-sm placeholder:text-[#8899aa] outline-none transition-colors text-white ${
     err ? "border-red-500/60" : "border-[#243a5e] focus:border-[#00A86B]/60"
@@ -332,12 +334,15 @@ function TargetPriceCard({ tp, currency }: { tp: TargetPrice; currency: "CNY" | 
 }
 
 function ScenariosBlock({
-  scenarios, active, onSwitch,
+  scenarios, active, onSwitch, isKZ,
 }: {
   scenarios: EconomicsScenario[];
   active: "conservative" | "base" | "optimistic";
   onSwitch: (s: "conservative" | "base" | "optimistic") => void;
+  isKZ?: boolean;
 }) {
+  const sym  = isKZ ? '₸' : '₽';
+  const fmtC = (n: number) => isKZ ? fmtKzt(n) : fmt(n);
   const cur  = scenarios.find(s => s.name === active) ?? scenarios[1];
   const tabs: Array<{ key: EconomicsScenario["name"]; label: string }> = [
     { key: "conservative", label: "Осторожный"    },
@@ -369,13 +374,13 @@ function ScenariosBlock({
           <div className="text-center">
             <p className="text-[10px] text-[#8899aa] uppercase">Прибыль</p>
             <p className={`font-bold text-base ${cur.net_profit_rub >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-              {cur.net_profit_rub >= 0 ? "+" : ""}{fmt(cur.net_profit_rub)} ₽
+              {cur.net_profit_rub >= 0 ? "+" : ""}{fmtC(cur.net_profit_rub)} {sym}
             </p>
           </div>
         </div>
         <div className="flex justify-between text-xs text-[#8899aa]">
-          <span>Цена продажи: {fmt(cur.sale_price_rub)} ₽</span>
-          <span>Себест.: {fmt(cur.unit_cost_rub)} ₽/ед</span>
+          <span>Цена продажи: {fmtC(cur.sale_price_rub)} {sym}</span>
+          <span>Себест.: {fmtC(cur.unit_cost_rub)} {sym}/ед</span>
         </div>
       </div>
     </div>
@@ -390,23 +395,25 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
   commissionNote?: string;
   isKZ?: boolean;
 }) {
+  const sym  = isKZ ? '₸' : '₽';
+  const fmtC = (n: number) => isKZ ? fmtKzt(n) : fmt(n);
   const deliveryLabel = delivery?.pricingRule === 'estimate_4usd_kg'
-    ? `${fmt(ec.delivery_total_rub)} ₽ (~$2/кг авто)`
-    : `${fmt(ec.delivery_total_rub)} ₽`;
+    ? `${fmtC(ec.delivery_total_rub)} ${sym} (~$2/кг авто)`
+    : `${fmtC(ec.delivery_total_rub)} ${sym}`;
   const rows: Array<[string, string, boolean?]> = [
-    ["🛍️ Закупочная цена (всего)",     `${fmt(ec.purchase_total_rub)} ₽`],
+    ["🛍️ Закупочная цена (всего)",     `${fmtC(ec.purchase_total_rub)} ${sym}`],
     ["🚢 Международная доставка",        deliveryLabel],
     ...(isKZ
       ? [] as Array<[string, string, boolean?]>
-      : [["🏛️ Таможня (~20% от закупки)", `${fmt(ec.customs_rub)} ₽`] as [string, string]]),
+      : [["🏛️ Таможня (~20% от закупки)", `${fmtC(ec.customs_rub)} ${sym}`] as [string, string]]),
     ...(ec.marketplace_logistics_rub > 0
-      ? [["🏪 Логистика МП (FBW/FBO)", `${fmt(ec.marketplace_logistics_rub)} ₽`] as [string, string]]
+      ? [["🏪 Логистика МП (FBW/FBO)", `${fmtC(ec.marketplace_logistics_rub)} ${sym}`] as [string, string]]
       : []),
-    [`💳 Комиссия ${mpLabel ?? "МП"}`,   `${fmt(ec.marketplace_fee_rub)} ₽`],
-    ["📣 Реклама",                        ec.ad_cost_rub > 0 ? `${fmt(ec.ad_cost_rub)} ₽` : "не задана"],
-    ["🧾 Прочие расходы",                 ec.other_costs_rub > 0 ? `${fmt(ec.other_costs_rub)} ₽` : "—"],
-    ["📦 Итого себестоимость",            `${fmt(ec.total_cost_rub)} ₽`, true],
-    [`💵 Выручка (${ec.quantity} шт)`,   `${fmt(ec.gross_revenue_rub)} ₽`],
+    [`💳 Комиссия ${mpLabel ?? "МП"}`,   `${fmtC(ec.marketplace_fee_rub)} ${sym}`],
+    ["📣 Реклама",                        ec.ad_cost_rub > 0 ? `${fmtC(ec.ad_cost_rub)} ${sym}` : "не задана"],
+    ["🧾 Прочие расходы",                 ec.other_costs_rub > 0 ? `${fmtC(ec.other_costs_rub)} ${sym}` : "—"],
+    ["📦 Итого себестоимость",            `${fmtC(ec.total_cost_rub)} ${sym}`, true],
+    [`💵 Выручка (${ec.quantity} шт)`,   `${fmtC(ec.gross_revenue_rub)} ${sym}`],
   ];
   return (
     <div className="rounded-xl border border-[#243a5e] overflow-hidden text-sm">
@@ -430,7 +437,7 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
         ec.net_profit_rub >= 0 ? "bg-emerald-900/20 text-emerald-400" : "bg-red-900/20 text-red-400"
       }`}>
         <span>🎯 Чистая прибыль</span>
-        <span>{ec.net_profit_rub >= 0 ? "+" : ""}{fmt(ec.net_profit_rub)} ₽ · {ec.margin_pct.toFixed(1)}%</span>
+        <span>{ec.net_profit_rub >= 0 ? "+" : ""}{fmtC(ec.net_profit_rub)} {sym} · {ec.margin_pct.toFixed(1)}%</span>
       </div>
       {commissionNote && (
         <p className="px-4 py-2 text-[10px] text-[#8899aa] border-t border-[#243a5e]/40">ℹ️ {commissionNote}</p>
@@ -1963,7 +1970,12 @@ export default function AIEconomicsFunnel() {
             <div className="grid grid-cols-3 gap-2">
               {MARKETPLACES.map(mp => (
                 <button key={mp.id}
-                  onClick={() => setS(p => ({ ...p, marketplace: mp.id }))}
+                  onClick={() => setS(p => ({
+                    ...p,
+                    marketplace: mp.id,
+                    // При переключении на Kaspi сбрасываем ₽-цену от CNY-расчёта
+                    ...(mp.id === 'kaspi' ? { salePrice: '', kaspiPriceKzt: '' } : {}),
+                  }))}
                   className={`flex flex-col items-center gap-1 px-3 py-3 rounded-xl border text-xs font-medium transition-all ${
                     s.marketplace === mp.id
                       ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
@@ -2141,7 +2153,9 @@ export default function AIEconomicsFunnel() {
             {[
               { label: "Маржа",       value: `${ec.margin_pct.toFixed(1)}%`,              hi: ec.verdict === "green" },
               { label: "ROI",         value: `${ec.roi_pct.toFixed(0)}%`,                 hi: false },
-              { label: "Прибыль/шт", value: `${fmt(ec.net_profit_rub / ec.quantity)} ₽`, hi: false },
+              { label: "Прибыль/шт", value: s.marketplace === 'kaspi'
+                ? `${fmtKzt(ec.net_profit_rub / ec.quantity)} ₸`
+                : `${fmt(ec.net_profit_rub / ec.quantity)} ₽`, hi: false },
             ].map(m => (
               <div key={m.label} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-[#8899aa] mb-1 uppercase tracking-wide">{m.label}</p>
@@ -2313,6 +2327,7 @@ export default function AIEconomicsFunnel() {
                 scenarios={ec.scenarios}
                 active={s.activeScenario}
                 onSwitch={sc => setS(p => ({ ...p, activeScenario: sc }))}
+                isKZ={s.marketplace === 'kaspi'}
               />
             )}
             <PnlTable ec={ec} delivery={s.delivery}
