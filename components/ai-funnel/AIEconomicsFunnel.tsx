@@ -99,7 +99,7 @@ const QUICK_EXAMPLES = [
   { emoji: "🧸", label: "Игрушки",      margin_hint: "~33% маржа", product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
 ];
 
-const ANON_LIMIT = 3;
+const ANON_LIMIT = 5;
 const REG_LIMIT  = 10;
 
 // Analyzing stages — real stages that match backend process

@@ -6,7 +6,7 @@ import { neon }                   from '@neondatabase/serverless';
 export const runtime     = 'nodejs';
 export const maxDuration = 20;
 
-const ANON_LIMIT  = 3;
+const ANON_LIMIT  = 5;
 const REG_LIMIT   = 10;
 const CLIENT_COOKIE = 'cb_client';
 
