@@ -1204,20 +1204,16 @@ export default function AIEconomicsFunnel() {
           }, 400);
 
         } else {
-          // Firecrawl failed → redirect to text description input (not manual numeric form)
+          // Firecrawl failed → stay on input step with error visible, keep URL
           analytics.productScrapeFailed({ reason: data.reason ?? "unknown" });
           go("input", {
-            urlInput:    "",
-            descInput:   "",
             scrapeError: data.code ?? data.reason ?? null,
-            error:       "1688 заблокировал автоматический анализ. Напишите название товара текстом — AI оценит за 5 секунд.",
+            error:       "1688 заблокировал автоматический анализ. Опишите товар текстом ниже — AI оценит за 5 секунд.",
           });
         }
       } catch {
         analytics.productScrapeFailed({ reason: "network_error" });
         go("input", {
-          urlInput:    "",
-          descInput:   "",
           scrapeError: "NETWORK_ERROR",
           error:       "Ошибка сети. Попробуйте ещё раз или опишите товар текстом.",
         });
@@ -1772,6 +1768,13 @@ export default function AIEconomicsFunnel() {
               placeholder='Например: «Наушники TWS» или «Детская одежда 500 шт»' className={inp()}
             />
           </div>
+
+          {s.error && (
+            <div className="flex items-start gap-2 bg-amber-900/20 border border-amber-500/30 rounded-xl px-4 py-3">
+              <span className="text-base leading-none mt-0.5">⚠️</span>
+              <p className="text-xs text-amber-300">{s.error}</p>
+            </div>
+          )}
 
           <button
             onClick={!isPaidPro && calcCount >= effectiveLimit ? () => { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount }); } : handleUrlSubmit}
