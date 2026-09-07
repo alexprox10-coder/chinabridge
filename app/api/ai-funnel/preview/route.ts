@@ -6,8 +6,8 @@ import { neon }                   from '@neondatabase/serverless';
 export const runtime     = 'nodejs';
 export const maxDuration = 20;
 
-const ANON_LIMIT  = 5;  // anonymous free calculations
-const REG_LIMIT   = 10; // registered (gave TG) free calculations
+const ANON_LIMIT  = 50;  // temporary raised for testing
+const REG_LIMIT   = 50; // temporary raised for testing
 const CLIENT_COOKIE = 'cb_client';
 
 function getIp(req: NextRequest) {
