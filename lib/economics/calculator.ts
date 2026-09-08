@@ -259,8 +259,12 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
   const unitPriceRub     = unitPrice * rate;
   const purchaseTotalRub = unitPriceRub * qty;
 
-  // Kaspi (KZ серая схема) — таможня не применяется
-  const isKZ      = marketplaceId === 'kaspi' || countryTo === 'Kazakhstan';
+  // Kaspi (KZ серая схема) — таможня не применяется.
+  // Для opt/shop в KZ — тоже нет (серый ввоз). Для RU маркетплейсов — всегда.
+  const RU_MARKETPLACES = new Set(['wb', 'ozon', 'yandex']);
+  const isKZ = RU_MARKETPLACES.has(marketplaceId ?? '')
+    ? false  // WB/Ozon/Yandex — российская таможня всегда
+    : (marketplaceId === 'kaspi' || countryTo === 'Kazakhstan');
   const customsRub = isKZ ? 0 : purchaseTotalRub * customs_rate;
   const totalCostRub     = purchaseTotalRub + deliveryRub + customsRub + mpLogTotal + otherCosts;
   const unitCostRub      = totalCostRub / qty;
