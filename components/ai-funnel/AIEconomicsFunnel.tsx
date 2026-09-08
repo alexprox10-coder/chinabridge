@@ -68,6 +68,7 @@ interface FunnelState {
   kaspiPriceKzt:     string;
   marketplace:       string;
   city_to:           string;
+  country_to:        string;
   // Contact
   name:              string;
   phone:             string;
@@ -91,6 +92,13 @@ interface FunnelState {
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Алматы", "Астана"];
+const KZ_CITIES = new Set(["Алматы", "Астана", "Шымкент", "Актобе", "Нур-Султан", "Almaty", "Astana", "Kazakhstan"]);
+function detectCountry(city: string): string {
+  const c = city.trim();
+  if (KZ_CITIES.has(c)) return "Kazakhstan";
+  if (c.toLowerCase().includes("казахстан") || c.toLowerCase().includes("алмат") || c.toLowerCase().includes("астан")) return "Kazakhstan";
+  return "Russia";
+}
 
 const QUICK_EXAMPLES = [
   { emoji: "👟", label: "Кроссовки",    margin_hint: "~26% маржа", product_name: "Кроссовки",          product_name_cn: "运动鞋",   product_name_en: "sneakers",            unit_price_cny: 80,  weight_kg: 0.8,  moq: 10 },
@@ -828,6 +836,7 @@ export default function AIEconomicsFunnel() {
     kaspiPriceKzt:     "",
     marketplace:       "wb",
     city_to:           "Москва",
+    country_to:        "Russia",
     name:              "",
     phone:             "",
     telegram:          "",
@@ -1091,6 +1100,7 @@ export default function AIEconomicsFunnel() {
           quantity:       qty,
           marketplace:    s.marketplace,
           city_to:        s.city_to,
+          country_to:     s.country_to,
           weight_kg:      weightKg,
           product_name:   pName,
           commission_pct: commissionPct,
@@ -1314,6 +1324,7 @@ export default function AIEconomicsFunnel() {
           quantity:       parseInt(s.correction.quantity) || 1,
           marketplace:    s.marketplace,
           city_to:        s.city_to,
+          country_to:     s.country_to,
           weight_kg:      s.correction.weight_kg ? parseFloat(s.correction.weight_kg) : undefined,
           product_name:   s.correction.product_name,
           commission_pct: recalcCommission,
@@ -1374,6 +1385,7 @@ export default function AIEconomicsFunnel() {
           quantity:       parseInt(s.product.quantity) || 1,
           marketplace:     s.marketplace,
           city_to:         s.city_to,
+          country_to:      s.country_to,
           weight_kg:       ed ? (ed.weight_kg ?? undefined) : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
           supplier_exists: supplierExists,
         }),
@@ -1439,6 +1451,7 @@ export default function AIEconomicsFunnel() {
           quantity:       parseInt(s.product.quantity) || 1,
           marketplace:     s.marketplace,
           city_to:         s.city_to,
+          country_to:      s.country_to,
           weight_kg:       ed
             ? (ed.weight_kg ?? undefined)
             : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
@@ -1466,7 +1479,7 @@ export default function AIEconomicsFunnel() {
           phone:        previewPhone,
           product_name: ed?.product_name ?? s.product.product_name ?? "",
           city_to:      s.city_to,
-          country_to:   "Russia",
+          country_to:   s.country_to,
           source:       "ai_funnel_preview_phone",
           weight_kg:    ed?.weight_kg?.toString() ?? s.product.weight_kg ?? "",
           quantity:     String(parseInt(s.product.quantity) || 1),
@@ -2023,10 +2036,10 @@ export default function AIEconomicsFunnel() {
           {/* City */}
           <div>
             <label className="text-xs font-medium text-[#8899aa] block mb-2">Куда доставлять?</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-2">
               {CITY_CHIPS.map(city => (
                 <button key={city}
-                  onClick={() => setS(p => ({ ...p, city_to: city }))}
+                  onClick={() => setS(p => ({ ...p, city_to: city, country_to: detectCountry(city) }))}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     s.city_to === city
                       ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
@@ -2037,6 +2050,13 @@ export default function AIEconomicsFunnel() {
                 </button>
               ))}
             </div>
+            <input
+              type="text"
+              value={s.city_to}
+              onChange={e => setS(p => ({ ...p, city_to: e.target.value, country_to: detectCountry(e.target.value) }))}
+              placeholder="Или введите свой город..."
+              className="w-full bg-[#0d1f38] border border-[#243a5e] rounded-xl px-3 py-2 text-sm text-white placeholder-[#8899aa] focus:outline-none focus:border-[#00A86B]/60"
+            />
           </div>
 
           {/* KZT price field — Kaspi only */}
