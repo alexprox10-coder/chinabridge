@@ -939,6 +939,20 @@ export default function AIEconomicsFunnel() {
       }
     } catch { /* ignore */ }
 
+    // Server-side paid check — works on any device, even if localStorage is empty
+    fetch('/api/calc/check-paid')
+      .then(r => r.json())
+      .then((d: { isPaid?: boolean; paidUntil?: string }) => {
+        if (d.isPaid) {
+          setIsPaidPro(true);
+          setIsRegistered(true);
+          if (d.paidUntil) {
+            try { localStorage.setItem('cb_paid_until', d.paidUntil); } catch { /* ignore */ }
+          }
+        }
+      })
+      .catch(() => { /* network error — rely on localStorage */ });
+
     // Pre-load history if returning user (session cookie present)
     if (document.cookie.includes('cb_session_id=')) {
       fetch('/api/calc/history').then(r => r.json()).then((d: { items?: HistoryItem[] }) => {
