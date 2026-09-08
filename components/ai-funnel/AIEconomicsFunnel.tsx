@@ -2063,8 +2063,10 @@ export default function AIEconomicsFunnel() {
           {s.marketplace === 'kaspi' && (
             <div>
               <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
-                Цена на Kaspi.kz, ₸
-                <span className="ml-2 text-[#00A86B]/80 font-normal">→ автоматически в ₽</span>
+                Цена продажи на Kaspi, ₸
+                {s.extractedData && s.kaspiPriceKzt && (
+                  <span className="ml-2 text-amber-400/80 font-normal">расчётная — можно изменить</span>
+                )}
               </label>
               <input
                 type="number"
@@ -2080,31 +2082,29 @@ export default function AIEconomicsFunnel() {
                 placeholder="3448"
                 className={inp(!s.kaspiPriceKzt)}
               />
-              <p className="text-[11px] text-[#8899aa] mt-1">Укажите цену с Kaspi — конвертируется по курсу 1₸ = 0,17₽</p>
+              <p className="text-[11px] text-[#8899aa] mt-1">Цена в тенге — расчёт ведётся в ₸</p>
             </div>
           )}
 
-          {/* Sale price field (AI path: always shown; manual path: pre-filled) */}
-          <div>
-            <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
-              Планируемая цена продажи, ₽
-              {s.extractedData && s.salePrice && (
-                <span className="ml-2 text-amber-400/80 font-normal">
-                  {s.marketplace === 'kaspi' && s.kaspiPriceKzt
-                    ? `≈ ${parseInt(s.kaspiPriceKzt).toLocaleString('ru-RU')}₸ по курсу`
-                    : 'расчётная — можно изменить'}
-                </span>
-              )}
-            </label>
-            <input
-              type="number"
-              value={s.salePrice}
-              onChange={e => setS(p => ({ ...p, salePrice: e.target.value }))}
-              placeholder="1990"
-              className={inp(!s.salePrice && !s.product.sale_price)}
-            />
-            <p className="text-[11px] text-[#8899aa] mt-1">Сколько планируете брать с покупателей на маркетплейсе</p>
-          </div>
+          {/* Sale price field — non-Kaspi marketplaces only */}
+          {s.marketplace !== 'kaspi' && (
+            <div>
+              <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
+                Планируемая цена продажи, ₽
+                {s.extractedData && s.salePrice && (
+                  <span className="ml-2 text-amber-400/80 font-normal">расчётная — можно изменить</span>
+                )}
+              </label>
+              <input
+                type="number"
+                value={s.salePrice}
+                onChange={e => setS(p => ({ ...p, salePrice: e.target.value }))}
+                placeholder="1990"
+                className={inp(!s.salePrice && !s.product.sale_price)}
+              />
+              <p className="text-[11px] text-[#8899aa] mt-1">Сколько планируете брать с покупателей на маркетплейсе</p>
+            </div>
+          )}
 
           {/* Calculate button with auto-countdown */}
           <button
@@ -2116,7 +2116,11 @@ export default function AIEconomicsFunnel() {
               : "🤖 Рассчитать Unit Economics"}
           </button>
           {!(parseFloat(s.salePrice) > 0) && !(parseFloat(s.product.sale_price) > 0) && (
-            <p className="text-amber-400 text-xs text-center -mt-2">Укажите планируемую цену продажи для расчёта</p>
+            <p className="text-amber-400 text-xs text-center -mt-2">
+              {s.marketplace === 'kaspi'
+                ? 'Укажите цену продажи на Kaspi в ₸ для расчёта'
+                : 'Укажите планируемую цену продажи для расчёта'}
+            </p>
           )}
         </div>
       )}
