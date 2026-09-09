@@ -1841,7 +1841,7 @@ export default function AIEconomicsFunnel() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#8899aa]">🚗 Авто</span>
-                <span className="text-[#00A86B] font-bold">$3.00/кг · 18–25 дн</span>
+                <span className="text-[#00A86B] font-bold">$3.00/кг · 18–22 дн</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#8899aa]">✈️ Авиа</span>
