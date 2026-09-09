@@ -592,7 +592,7 @@ function HistoryPanel({ items, onClose }: { items: HistoryItem[]; onClose: () =>
                   {item.product_name ?? 'Товар без названия'}
                 </p>
                 <p className="text-[10px] text-[#8899aa] mt-0.5">
-                  {item.marketplace?.toUpperCase()} · Маржа {item.margin_pct?.toFixed(1)}% · ROI {item.roi_pct?.toFixed(0)}%
+                  {item.marketplace?.toUpperCase()} · Маржа {item.margin_pct != null ? Number(item.margin_pct).toFixed(1) : '—'}% · ROI {item.roi_pct != null ? Number(item.roi_pct).toFixed(0) : '—'}%
                 </p>
               </div>
               <p className="text-[10px] text-[#5a7899] shrink-0">{fmtHistoryDate(item.created_at)}</p>
