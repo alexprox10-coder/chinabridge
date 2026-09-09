@@ -11,11 +11,18 @@ export function trackGAEvent(name: string, params?: Record<string, unknown>) {
   if (!GA_ID || typeof window === "undefined") return;
   if (window.gtag) {
     window.gtag("event", name, params);
-  } else {
-    // gtag not yet loaded (fires before afterInteractive scripts) — retry after load
-    const fire = () => { if (window.gtag) window.gtag("event", name, params); };
-    window.addEventListener("load", fire, { once: true });
+    return;
   }
+  // gtag not yet loaded — poll until ready (max 5s)
+  let attempts = 0;
+  const iv = setInterval(() => {
+    if (window.gtag) {
+      window.gtag("event", name, params);
+      clearInterval(iv);
+    } else if (++attempts >= 50) {
+      clearInterval(iv);
+    }
+  }, 100);
 }
 
 export function trackGAPageView(url: string) {
