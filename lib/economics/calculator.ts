@@ -100,15 +100,15 @@ function buildScenario(
   commissionPct: number,
   adSpend:       number,
   qty:           number,
-  mpLogisticsPerUnit: number,
+  _mpLogisticsPerUnit: number,
 ): EconomicsScenario {
   const salePrice   = Math.round(baseSaleRub * saleMul);
   const unitCost    = Math.round(baseUnitCost * costMul);
   const grossRev    = salePrice * qty;
   const totalCost   = unitCost  * qty;
   const mpFee       = grossRev * (commissionPct / 100);
-  const mpLog       = mpLogisticsPerUnit * qty;
-  const netProfit   = grossRev - totalCost - mpFee - mpLog - adSpend;
+  // mpLog excluded: already baked into unitCostRub (which includes marketplace logistics)
+  const netProfit   = grossRev - totalCost - mpFee - adSpend;
   const marginPct   = grossRev > 0 ? (netProfit / grossRev) * 100 : 0;
   const roiPct      = totalCost > 0 ? (netProfit / totalCost) * 100 : 0;
 
