@@ -407,20 +407,30 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
   const deliveryLabel = delivery?.pricingRule === '97kapro_estimate'
     ? `${fmtC(ec.delivery_total_rub)} ${sym} (${isKZ ? '~$2.50/кг, 5-8 дн' : '~$3/кг авто'})`
     : `${fmtC(ec.delivery_total_rub)} ${sym}`;
-  const rows: Array<[string, string, boolean?]> = [
-    ["🛍️ Закупочная цена (всего)",     `${fmtC(ec.purchase_total_rub)} ${sym}`],
-    ["🚢 Международная доставка",        deliveryLabel],
+  const commPct = ec.gross_revenue_rub > 0
+    ? Math.round((ec.marketplace_fee_rub / ec.gross_revenue_rub) * 100) : 0;
+  const rows: Array<[string, string, boolean?, string?]> = [
+    ["🛍️ Закупочная цена (всего)", `${fmtC(ec.purchase_total_rub)} ${sym}`,
+      false, `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${ec.cny_rate.toFixed(1)} ₽/¥`],
+    ["🚢 Международная доставка", deliveryLabel,
+      false, isKZ ? "карго из Китая до Казахстана (тариф ChinaBridge $2.50/кг)" : "карго из Китая до склада МП (тариф ChinaBridge $3/кг авто)"],
     ...(isKZ
-      ? [] as Array<[string, string, boolean?]>
-      : [["🏛️ Таможня (~20% от закупки)", `${fmtC(ec.customs_rub)} ${sym}`] as [string, string]]),
+      ? [] as Array<[string, string, boolean?, string?]>
+      : [["🏛️ Таможня (~20% от закупки)", `${fmtC(ec.customs_rub)} ${sym}`,
+          false, `20% от закупочной цены — таможенные пошлины и НДС при ввозе в РФ`] as [string, string, boolean, string]]),
     ...(ec.marketplace_logistics_rub > 0
-      ? [["🏪 Логистика МП (FBW/FBO)", `${fmtC(ec.marketplace_logistics_rub)} ${sym}`] as [string, string]]
+      ? [["🏪 Логистика МП (FBW/FBO)", `${fmtC(ec.marketplace_logistics_rub)} ${sym}`,
+          false, "приёмка, хранение и доставка покупателю со склада маркетплейса"] as [string, string, boolean, string]]
       : []),
-    [`💳 Комиссия ${mpLabel ?? "МП"}`,   `${fmtC(ec.marketplace_fee_rub)} ${sym}`],
-    ["📣 Реклама",                        ec.ad_cost_rub > 0 ? `${fmtC(ec.ad_cost_rub)} ${sym}` : "не задана"],
-    ["🧾 Прочие расходы",                 ec.other_costs_rub > 0 ? `${fmtC(ec.other_costs_rub)} ${sym}` : "—"],
-    ["📦 Итого себестоимость",            `${fmtC(ec.total_cost_rub)} ${sym}`, true],
-    [`💵 Выручка (${ec.quantity} шт)`,   `${fmtC(ec.gross_revenue_rub)} ${sym}`],
+    [`💳 Комиссия ${mpLabel ?? "МП"}`, `${fmtC(ec.marketplace_fee_rub)} ${sym}`,
+      false, `${commPct}% от цены продажи — вознаграждение маркетплейса за каждую продажу`],
+    ["📣 Реклама", ec.ad_cost_rub > 0 ? `${fmtC(ec.ad_cost_rub)} ${sym}` : "не задана",
+      false, ec.ad_cost_rub > 0 ? "бюджет на продвижение внутри маркетплейса" : "можно добавить в корректировке ниже"],
+    ["🧾 Прочие расходы", ec.other_costs_rub > 0 ? `${fmtC(ec.other_costs_rub)} ${sym}` : "—"],
+    ["📦 Итого себестоимость", `${fmtC(ec.total_cost_rub)} ${sym}`,
+      true, "закупка + доставка + таможня + логистика МП"],
+    [`💵 Выручка (${ec.quantity} шт)`, `${fmtC(ec.gross_revenue_rub)} ${sym}`,
+      false, `цена продажи ${fmtC(ec.sale_price_rub)} ${sym} × ${ec.quantity} шт`],
   ];
   return (
     <div className="rounded-xl border border-[#243a5e] overflow-hidden text-sm">
@@ -434,10 +444,13 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
           </span>
         )}
       </div>
-      {rows.map(([l, v, bold]) => (
-        <div key={l as string} className={`flex justify-between px-4 py-2 border-b border-[#243a5e]/40 last:border-0 ${bold ? "bg-[#0B1F3A]" : ""}`}>
-          <span className={bold ? "font-semibold text-white" : "text-[#8899aa]"}>{l}</span>
-          <span className={bold ? "font-bold text-white" : "text-white font-medium"}>{v}</span>
+      {rows.map(([l, v, bold, hint]) => (
+        <div key={l as string} className={`flex justify-between px-4 py-2 border-b border-[#243a5e]/40 last:border-0 gap-3 ${bold ? "bg-[#0B1F3A]" : ""}`}>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className={bold ? "font-semibold text-white" : "text-[#8899aa]"}>{l}</span>
+            {hint && <span className="text-[10px] text-[#556677] leading-tight">{hint}</span>}
+          </div>
+          <span className={`shrink-0 ${bold ? "font-bold text-white" : "text-white font-medium"}`}>{v}</span>
         </div>
       ))}
       <div className={`flex justify-between px-4 py-3 font-bold text-sm ${
