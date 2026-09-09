@@ -15,7 +15,7 @@ async function ensureTable(sql: any) {
     CREATE TABLE IF NOT EXISTS tripwire_orders (
       id             UUID DEFAULT gen_random_uuid() PRIMARY KEY,
       created_at     TIMESTAMPTZ DEFAULT NOW(),
-      amount         INTEGER DEFAULT 100,
+      amount         INTEGER DEFAULT 490,
       product_url    TEXT,
       product_name   TEXT,
       margin         DECIMAL,
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     // Создаём запись в БД
     const rows = await sql`
       INSERT INTO tripwire_orders (amount, product_url, product_name, margin)
-      VALUES (100, ${data.product_url ?? null}, ${data.product_name ?? null}, ${data.margin ?? null})
+      VALUES (490, ${data.product_url ?? null}, ${data.product_name ?? null}, ${data.margin ?? null})
       RETURNING id
     `;
     const orderId     = (rows[0] as { id: string }).id;
@@ -54,8 +54,8 @@ export async function POST(req: Request) {
     const reqBody = JSON.stringify({
       Data: {
         customerCode: TOCHKA_CUSTOMER_CODE,
-        amount:       100.0,
-        purpose:      `3 фабрики за 100₽ — ${productName}`,
+        amount:       490.0,
+        purpose:      `3 фабрики за 490₽ — ${productName}`,
         paymentMode:  ["sbp", "card", "tinkoff"],
         redirectUrl:  `${process.env.NEXT_PUBLIC_URL ?? "https://chinabridge.pro"}/thank-you?order=${orderId}`,
         failRedirectUrl: `${process.env.NEXT_PUBLIC_URL ?? "https://chinabridge.pro"}/ai-calculator`,
