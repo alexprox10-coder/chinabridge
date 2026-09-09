@@ -1875,23 +1875,31 @@ export default function AIEconomicsFunnel() {
                 ))}
               </div>
             </div>
-            {s.marketplace !== 'kaspi' && (
-              <div>
-                <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Куда доставлять?</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {CITY_CHIPS.filter(c => !['Алматы','Астана'].includes(c)).map(city => (
-                    <button key={city}
-                      onClick={() => setS(p => ({ ...p, city_to: city, country_to: detectCountry(city) }))}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                        s.city_to === city
-                          ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
-                          : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/40"
-                      }`}
-                    >{city}</button>
-                  ))}
-                </div>
+            <div>
+              <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Куда доставлять?</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {(s.marketplace === 'kaspi'
+                  ? ['Алматы', 'Астана', 'Шымкент', 'Актобе']
+                  : CITY_CHIPS.filter(c => !['Алматы','Астана'].includes(c))
+                ).map(city => (
+                  <button key={city}
+                    onClick={() => setS(p => ({ ...p, city_to: city, country_to: detectCountry(city) }))}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      s.city_to === city
+                        ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
+                        : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/40 hover:text-white"
+                    }`}
+                  >{city}</button>
+                ))}
               </div>
-            )}
+              <input
+                type="text"
+                value={s.city_to}
+                onChange={e => setS(p => ({ ...p, city_to: e.target.value, country_to: detectCountry(e.target.value) }))}
+                placeholder="Или введите свой город..."
+                className="w-full bg-[#0d1f38] border border-[#243a5e] rounded-xl px-3 py-2 text-sm text-white placeholder-[#8899aa] focus:outline-none focus:border-[#00A86B]/60"
+              />
+            </div>
             {s.marketplace === 'kaspi' && (
               <div>
                 <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Цена продажи на Kaspi, ₸</label>
