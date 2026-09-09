@@ -917,7 +917,9 @@ export default function AIEconomicsFunnel() {
     if (new URLSearchParams(window.location.search).get('reset') === '1') {
       localStorage.removeItem('cb_calc_uses');
       localStorage.removeItem('cb_registered');
-      // Also reset server-side IP rate limit
+      localStorage.removeItem('cb_paid_until');
+      // Also reset server-side cookie + IP rate limit
+      fetch('/api/calc/clear-pro', { method: 'POST' }).catch(() => {});
       fetch('/api/calc/reset', { method: 'POST' }).catch(() => {});
       window.history.replaceState({}, '', window.location.pathname);
     }
