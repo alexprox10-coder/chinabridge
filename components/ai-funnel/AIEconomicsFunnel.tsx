@@ -921,17 +921,12 @@ export default function AIEconomicsFunnel() {
       fetch('/api/calc/reset', { method: 'POST' }).catch(() => {});
       window.history.replaceState({}, '', window.location.pathname);
     }
-    // Daily reset: stored as JSON {count, date}
-    const today = new Date().toISOString().slice(0, 10);
+    // Permanent counter — no daily reset
     try {
       const raw = localStorage.getItem('cb_calc_uses');
       if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.date === today && typeof parsed?.count === 'number') {
-          if (parsed.count > 0) setCalcCount(parsed.count);
-        } else {
-          localStorage.removeItem('cb_calc_uses'); // stale day → reset
-        }
+        const n = parseInt(raw, 10);
+        if (!isNaN(n) && n > 0) setCalcCount(n);
       }
     } catch {
       localStorage.removeItem('cb_calc_uses');
@@ -1133,8 +1128,7 @@ export default function AIEconomicsFunnel() {
 
       const newCount = calcCount + 1;
       setCalcCount(newCount);
-      const today = new Date().toISOString().slice(0, 10);
-      localStorage.setItem('cb_calc_uses', JSON.stringify({ count: newCount, date: today }));
+      localStorage.setItem('cb_calc_uses', String(newCount));
 
       go("preview", {
         economics:          data.economics,
