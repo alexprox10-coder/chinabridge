@@ -5,7 +5,8 @@ export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('x-admin-secret');
-  if (secret !== process.env.CRON_SECRET) {
+  const valid = [process.env.CRON_SECRET, process.env.ADMIN_SECRET].filter(Boolean);
+  if (!secret || !valid.includes(secret)) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
