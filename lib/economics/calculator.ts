@@ -250,11 +250,6 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
     : cost!.sale_price * usdRate
     : 0;
 
-  // ChinaBridge ставка клиенту: KZ $2.50/кг 5-8 дн (97Kapro), RU $3.00/кг 18-25 дн
-  const DEFAULT_CARGO_USD_PER_KG = isKZ ? 2.5 : 3.0;
-  const estimatedDeliveryRub = (weightKg ?? 0.5) * DEFAULT_CARGO_USD_PER_KG * usdRate * qty;
-  const deliveryRub = hasRate ? rateDeliveryRub : estimatedDeliveryRub;
-
   // P&L
   const unitPriceRub     = unitPrice * rate;
   const purchaseTotalRub = unitPriceRub * qty;
@@ -265,6 +260,12 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
   const isKZ = RU_MARKETPLACES.has(marketplaceId ?? '')
     ? false  // WB/Ozon/Yandex — российская таможня всегда
     : (marketplaceId === 'kaspi' || countryTo === 'Kazakhstan');
+
+  // ChinaBridge ставка клиенту: KZ $2.50/кг 5-8 дн (97Kapro), RU $3.00/кг 18-25 дн
+  const DEFAULT_CARGO_USD_PER_KG = isKZ ? 2.5 : 3.0;
+  const estimatedDeliveryRub = (weightKg ?? 0.5) * DEFAULT_CARGO_USD_PER_KG * usdRate * qty;
+  const deliveryRub = hasRate ? rateDeliveryRub : estimatedDeliveryRub;
+
   const customsRub = isKZ ? 0 : purchaseTotalRub * customs_rate;
   const totalCostRub     = purchaseTotalRub + deliveryRub + customsRub + mpLogTotal + otherCosts;
   const unitCostRub      = totalCostRub / qty;
