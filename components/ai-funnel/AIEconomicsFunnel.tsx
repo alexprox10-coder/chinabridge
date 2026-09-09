@@ -828,7 +828,7 @@ const EMPTY_CORRECTION: CorrectionData = {
 
 export default function AIEconomicsFunnel() {
   const startedRef    = useRef(false);
-  const handleCalcRef = useRef<(() => Promise<void>) | null>(null);
+  const handleCalcRef = useRef<((overrides?: { extractedData?: ExtractedProduct | null; marketplace?: string; city_to?: string; country_to?: string; salePrice?: string; }) => Promise<void>) | null>(null);
 
   const [s, setS] = useState<FunnelState>({
     step:              "input",
@@ -1072,34 +1072,44 @@ export default function AIEconomicsFunnel() {
 
   const effectiveLimit = isPaidPro ? 9999 : isRegistered ? REG_LIMIT : ANON_LIMIT;
 
-  async function handleCalculate() {
+  async function handleCalculate(overrides?: {
+    extractedData?: ExtractedProduct | null;
+    marketplace?:   string;
+    city_to?:       string;
+    country_to?:    string;
+    salePrice?:     string;
+  }) {
     if (!isPaidPro && calcCount >= effectiveLimit) {
       setShowPaywall(true);
       analytics.paywallShown?.({ count: calcCount, verdict: s.economics?.verdict ?? undefined });
       return;
     }
 
-    const capturedMarketplace = s.marketplace;
-    const ed = s.extractedData;
+    const capturedMarketplace = overrides?.marketplace ?? s.marketplace;
+    const capturedCity        = overrides?.city_to     ?? s.city_to;
+    const capturedCountry     = overrides?.country_to  ?? s.country_to;
+    const ed = overrides?.extractedData !== undefined ? overrides.extractedData : s.extractedData;
     const unitPrice  = ed ? ((ed.unit_price_cny  ?? parseFloat(s.product.unit_price_cny)) || 0)
                            : parseFloat(s.product.unit_price_cny) || 0;
-    const salePriceN = parseFloat(s.salePrice) || parseFloat(s.product.sale_price) || 0;
-    const currency   = ed ? ed.price_currency         : s.product.price_currency;
-    const pName      = ed ? ed.product_name           : s.product.product_name;
+    const salePriceN = overrides?.salePrice !== undefined
+      ? (parseFloat(overrides.salePrice) || 0)
+      : (parseFloat(s.salePrice) || parseFloat(s.product.sale_price) || 0);
+    const currency   = ed ? ed.price_currency           : s.product.price_currency;
+    const pName      = ed ? ed.product_name             : s.product.product_name;
     const weightKg   = ed ? (ed.weight_kg ?? undefined) : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined);
-    const moq        = ed ? (ed.moq ?? undefined)     : undefined;
+    const moq        = ed ? (ed.moq ?? undefined)       : undefined;
     const qty        = parseInt(s.product.quantity) || 1;
 
     analytics.unitEconomicsAutoStarted();
-    analytics.aiFunnelMpSelected({ marketplace: s.marketplace });
-    analytics.marketplaceSelected({ marketplace: s.marketplace });
-    if (s.city_to) analytics.destinationSelected({ city: s.city_to });
+    analytics.aiFunnelMpSelected({ marketplace: capturedMarketplace });
+    analytics.marketplaceSelected({ marketplace: capturedMarketplace });
+    if (capturedCity) analytics.destinationSelected({ city: capturedCity });
     analytics.fullCalculationStarted();
 
     go("calculating");
 
     const commissionPct = detectCommissionPct(
-      s.marketplace,
+      capturedMarketplace,
       pName,
       ed?.product_name_en ?? undefined,
       ed?.product_name_cn ?? undefined,
@@ -1113,9 +1123,9 @@ export default function AIEconomicsFunnel() {
           price_currency: currency,
           sale_price:     salePriceN,
           quantity:       qty,
-          marketplace:    s.marketplace,
-          city_to:        s.city_to,
-          country_to:     s.country_to,
+          marketplace:    capturedMarketplace,
+          city_to:        capturedCity,
+          country_to:     capturedCountry,
           weight_kg:      weightKg,
           product_name:   pName,
           commission_pct: commissionPct,
@@ -1233,18 +1243,29 @@ export default function AIEconomicsFunnel() {
             analytics.productExtractionSuccess({ confidence: overall });
           }
 
-          const estimated = estimateSalePrice(parsed.unit_price_cny);
+          const estimated  = estimateSalePrice(parsed.unit_price_cny);
           const isKaspiSrc = url.includes('kaspi.kz');
 
-          // ✅ Skip "product" step — go directly to marketplace
           setAllStagesDone(true);
           setTimeout(() => {
             setAllStagesDone(false);
-            go("marketplace", {
-              extractedData: parsed,
-              salePrice: isKaspiSrc ? '' : estimated,
-              ...(isKaspiSrc ? { marketplace: 'kaspi', city_to: 'Алматы', country_to: 'Kazakhstan' } : {}),
-            });
+            if (isKaspiSrc) {
+              // Use KZT price from input step OR from API response (unit_price_cny may be KZT)
+              const apiKzt = (data.data.unit_price_cny && data.data.unit_price_cny > 500)
+                ? String(Math.round(data.data.unit_price_cny)) : '';
+              const kztStr = s.kaspiPriceKzt.trim() || apiKzt;
+              if (kztStr) {
+                const salePriceRub = String(Math.round(parseFloat(kztStr) * KZT_TO_RUB));
+                setS(p => ({ ...p, extractedData: parsed, kaspiPriceKzt: kztStr, salePrice: salePriceRub, marketplace: 'kaspi', city_to: 'Алматы', country_to: 'Kazakhstan' }));
+                handleCalculate({ extractedData: parsed, marketplace: 'kaspi', city_to: 'Алматы', country_to: 'Kazakhstan', salePrice: salePriceRub });
+              } else {
+                // No KZT price — show marketplace step for manual entry
+                go("marketplace", { extractedData: parsed, salePrice: '', marketplace: 'kaspi', city_to: 'Алматы', country_to: 'Kazakhstan' });
+              }
+            } else {
+              // Non-Kaspi: skip marketplace step, calculate immediately with current MP+city
+              handleCalculate({ extractedData: parsed, marketplace: s.marketplace, city_to: s.city_to, country_to: s.country_to, salePrice: estimated });
+            }
           }, 400);
 
         } else {
@@ -1290,7 +1311,7 @@ export default function AIEconomicsFunnel() {
           setAllStagesDone(true);
           setTimeout(() => {
             setAllStagesDone(false);
-            go("marketplace", { extractedData: parsed, salePrice: estimated });
+            handleCalculate({ extractedData: parsed, marketplace: s.marketplace, city_to: s.city_to, country_to: s.country_to, salePrice: estimated });
           }, 400);
         } else {
           // AI failed → manual fallback with name pre-filled
@@ -1316,7 +1337,8 @@ export default function AIEconomicsFunnel() {
       source_platform: "description",
       confidence:      { overall: "medium" },
     };
-    go("marketplace", { extractedData: parsed, salePrice: estimateSalePrice(ex.unit_price_cny) });
+    const estimated = estimateSalePrice(ex.unit_price_cny);
+    handleCalculate({ extractedData: parsed, marketplace: s.marketplace, city_to: s.city_to, country_to: s.country_to, salePrice: estimated });
   }
 
   // ── Recalculate (correction accordion) ─────────────────────────────────────
@@ -1824,6 +1846,69 @@ export default function AIEconomicsFunnel() {
               <p className="text-xs text-amber-300">{s.error}</p>
             </div>
           )}
+
+          {/* Marketplace + City selection — upfront on input step */}
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="text-xs font-medium text-[#8899aa] block mb-2">Где планируете продавать?</label>
+              <div className="grid grid-cols-3 gap-2">
+                {MARKETPLACES.map(mp => (
+                  <button key={mp.id}
+                    onClick={() => setS(p => ({
+                      ...p,
+                      marketplace: mp.id,
+                      ...(mp.id === 'kaspi' ? { salePrice: '', kaspiPriceKzt: '', city_to: 'Алматы', country_to: 'Kazakhstan' } : {}),
+                      ...(mp.id !== 'kaspi' && p.country_to === 'Kazakhstan' ? { city_to: 'Москва', country_to: 'Russia' } : {}),
+                    }))}
+                    className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border text-xs font-medium transition-all ${
+                      s.marketplace === mp.id
+                        ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
+                        : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/40 hover:text-white"
+                    }`}
+                  >
+                    <span className="text-base">{mp.icon}</span>
+                    <span className="text-[11px]">{mp.label}</span>
+                    {mp.commission_pct > 0 && (
+                      <span className="text-[9px] opacity-70">{detectCommissionPct(mp.id, s.extractedData?.product_name ?? s.product.product_name, s.extractedData?.product_name_en ?? undefined, s.extractedData?.product_name_cn ?? undefined)}%</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {s.marketplace !== 'kaspi' && (
+              <div>
+                <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Куда доставлять?</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {CITY_CHIPS.filter(c => !['Алматы','Астана'].includes(c)).map(city => (
+                    <button key={city}
+                      onClick={() => setS(p => ({ ...p, city_to: city, country_to: detectCountry(city) }))}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                        s.city_to === city
+                          ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
+                          : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/40"
+                      }`}
+                    >{city}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {s.marketplace === 'kaspi' && (
+              <div>
+                <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Цена продажи на Kaspi, ₸</label>
+                <input
+                  type="number"
+                  value={s.kaspiPriceKzt}
+                  onChange={e => {
+                    const kzt = parseFloat(e.target.value) || 0;
+                    setS(p => ({ ...p, kaspiPriceKzt: e.target.value, salePrice: kzt > 0 ? String(Math.round(kzt * KZT_TO_RUB)) : p.salePrice }));
+                  }}
+                  placeholder="13 990"
+                  className={inp(!s.kaspiPriceKzt)}
+                />
+                <p className="text-[11px] text-[#8899aa] mt-1">Найдите товар на Kaspi — укажите его цену в ₸</p>
+              </div>
+            )}
+          </div>
 
           {/* Rates info banner */}
           <div className="rounded-xl border border-[#243a5e] bg-[#0a1a30]/60 px-4 py-3 text-xs">
