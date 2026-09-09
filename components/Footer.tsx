@@ -246,9 +246,6 @@ export default function Footer() {
             © {new Date().getFullYear()} ChinaBridge. Все права защищены. ИНН 280114439648
           </p>
           <div className="flex items-center gap-4">
-            <Link href="/client/login" className="text-xs text-[#8899aa] hover:text-white transition-colors">
-              Личный кабинет
-            </Link>
             <Link href="/partners" className="text-xs text-[#8899aa] hover:text-white transition-colors">
               Партнёрам
             </Link>
