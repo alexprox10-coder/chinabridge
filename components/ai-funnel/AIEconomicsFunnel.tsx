@@ -1796,6 +1796,35 @@ export default function AIEconomicsFunnel() {
             </div>
           )}
 
+          {/* Rates info banner */}
+          <div className="rounded-xl border border-[#243a5e] bg-[#0a1a30]/60 px-4 py-3 text-xs">
+            <p className="text-[#8899aa] font-semibold mb-2 uppercase tracking-wide text-[10px]">Тарифы доставки из Китая</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+              <div>
+                <span className="text-white font-semibold">🇰🇿 Казахстан</span>
+              </div>
+              <div>
+                <span className="text-white font-semibold">🇷🇺 Россия</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#8899aa]">🚗 Авто</span>
+                <span className="text-[#00A86B] font-bold">$2.50/кг · 5–8 дн</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#8899aa]">🚗 Авто</span>
+                <span className="text-[#00A86B] font-bold">$3.00/кг · 18–25 дн</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#8899aa]">✈️ Авиа</span>
+                <span className="text-[#00A86B] font-bold">$23/кг · 3–5 дн</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#8899aa]">✈️ Авиа</span>
+                <span className="text-[#00A86B] font-bold">$23/кг · 5–8 дн</span>
+              </div>
+            </div>
+          </div>
+
           <button
             onClick={!isPaidPro && calcCount >= effectiveLimit ? () => { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount }); } : handleUrlSubmit}
             disabled={isPaidPro ? (!s.urlInput.trim() && !s.descInput.trim()) : false}

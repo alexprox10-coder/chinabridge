@@ -4,6 +4,7 @@ import Hero from "@/components/Hero";
 import DirectionsSplit from "@/components/DirectionsSplit";
 import HowItWorks from "@/components/HowItWorks";
 import KzRatesBanner from "@/components/KzRatesBanner";
+import RatesSection from "@/components/RatesSection";
 import WarehouseGallery from "@/components/WarehouseGallery";
 import ForWhom from "@/components/ForWhom";
 import Advantages from "@/components/Advantages";
@@ -100,6 +101,7 @@ export default function Home() {
       <main>
         <Header />
         <Hero />
+        <RatesSection />
         <KzRatesBanner />
         <Calculator />
         <DirectionsSplit />
