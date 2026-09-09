@@ -157,7 +157,7 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
             onClick={() => { trackGAEvent("import_header_tg_click", { category }); notifyTgClick("header"); }}
             className="flex items-center gap-1.5 text-sm bg-[#229ED9]/15 hover:bg-[#229ED9]/30 text-[#229ED9] px-3 py-1.5 rounded-lg transition-colors font-medium">
             <TgIcon />
-            Написать
+            Написать менеджеру
           </a>
         </div>
       </header>
@@ -165,12 +165,11 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
       {/* Sticky bottom CTA mobile */}
       {!done && (
         <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-[#060F1E]/97 backdrop-blur border-t border-[#1a2d47] px-4 py-3">
-          <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
-            onClick={() => { trackGAEvent("import_sticky_tg_click", { category }); notifyTgClick("sticky_bottom"); }}
-            className="flex items-center justify-center gap-2 w-full bg-[#229ED9] hover:bg-[#1a8dbf] text-white font-bold py-3.5 rounded-xl text-sm transition active:scale-95">
-            <TgIcon />
-            Бесплатная консультация в Telegram
-          </a>
+          <Link href="/ai-calculator"
+            onClick={() => trackGAEvent("import_sticky_calc_click", { category })}
+            className="flex items-center justify-center gap-2 w-full bg-[#00A86B] hover:bg-[#009060] text-white font-bold py-3.5 rounded-xl text-sm transition active:scale-95">
+            🤖 Получить расчёт бесплатно
+          </Link>
         </div>
       )}
 
@@ -202,19 +201,18 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
 
         {!done ? (
           <>
-            {/* Primary CTA — Telegram */}
-            <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
-              onClick={() => { trackGAEvent("import_hero_tg_click", { category }); notifyTgClick("hero_primary"); }}
-              className="flex items-center justify-center gap-3 w-full bg-[#229ED9] hover:bg-[#1a8dbf] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-4 shadow-lg shadow-[#229ED9]/20">
-              <TgIcon />
-              Получить расчёт в Telegram — бесплатно
-            </a>
-            <p className="text-center text-[#445566] text-xs mb-6">Ответим за 15 минут · Без обязательств</p>
+            {/* Primary CTA — Calculator */}
+            <Link href="/ai-calculator"
+              onClick={() => trackGAEvent("import_hero_calc_click", { category })}
+              className="flex items-center justify-center gap-3 w-full bg-[#00A86B] hover:bg-[#009060] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-3 shadow-lg shadow-[#00A86B]/20">
+              🤖 Получить расчёт бесплатно
+            </Link>
+            <p className="text-center text-[#445566] text-xs mb-6">Введите товар → AI рассчитает маржу за 10 секунд</p>
 
             {/* Divider */}
             <div className="flex items-center gap-3 mb-6">
               <div className="flex-1 h-px bg-[#1a2d47]"/>
-              <span className="text-[#445566] text-xs font-medium">или оставьте заявку</span>
+              <span className="text-[#445566] text-xs font-medium">нужна доставка — оставьте заявку</span>
               <div className="flex-1 h-px bg-[#1a2d47]"/>
             </div>
 
@@ -288,19 +286,6 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
           ))}
         </div>
 
-        {/* AI calc cross-sell */}
-        <div className="border border-[#1a2d47] rounded-xl p-4 flex items-center gap-3 mb-6">
-          <div className="text-2xl">🤖</div>
-          <div className="flex-1">
-            <p className="font-semibold text-sm mb-0.5">Проверьте юнит-экономику</p>
-            <p className="text-[#8899aa] text-xs">AI-калькулятор рассчитает маржу на WB, Ozon и Kaspi</p>
-          </div>
-          <Link href="/ai-calculator"
-            onClick={() => trackGAEvent("import_to_calculator_click", { category })}
-            className="text-xs text-[#00A86B] font-semibold whitespace-nowrap hover:text-white transition">
-            Открыть →
-          </Link>
-        </div>
       </main>
     </div>
   );
