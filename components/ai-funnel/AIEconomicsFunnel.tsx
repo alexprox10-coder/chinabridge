@@ -665,8 +665,12 @@ function PaywallBlock({
             Вы проверили {usedCount} {usedCount === 1 ? "товар" : usedCount < 5 ? "товара" : "товаров"} бесплатно
           </h2>
           <p className="text-xs text-[#8899aa] mt-1 leading-relaxed">
-            Продолжайте анализировать товары и сохраняйте расчёты в личном кабинете
+            Выберите: привезти текущий товар бесплатно через менеджера — или подключить PRO и анализировать сколько угодно
           </p>
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className="text-[10px] text-[#00A86B]">●</span>
+            <p className="text-[10px] text-[#5a7899]">224 предпринимателя использовали калькулятор на этой неделе</p>
+          </div>
           {ec && (
             <div className="mt-2 flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
               <span className="text-xl">{ec.verdict_emoji}</span>
@@ -743,7 +747,7 @@ function PaywallBlock({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#8899aa] mt-0.5">Безлимитные расчёты и история товаров</p>
+                <p className="text-xs text-[#8899aa] mt-0.5">Окупается на 1-й поставке · безлимитные расчёты и история</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-[#8899aa] mb-3">
@@ -2234,8 +2238,22 @@ export default function AIEconomicsFunnel() {
           {/* ── FULL CONTENT (always visible) ──────────────────────────── */}
           {(() => {
             // Full economics shown to everyone — TG capture is a soft CTA below
+            const productHint = s.extractedData?.product_name
+              ? encodeURIComponent(s.extractedData.product_name.slice(0, 30))
+              : "calc";
             return (
               <>
+                {/* PRIMARY CTA — immediately after result metrics */}
+                <a
+                  href={`https://t.me/ChinaBridgeLID_bot?start=bring_${productHint}`}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={() => analytics.aiFunnelImportClick?.()}
+                  className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-2xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
+                >
+                  🚀 Привезти этот товар → Telegram
+                </a>
+                <p className="text-center text-xs text-[#5a7899] -mt-3">Менеджер ответит за 5 минут · бесплатная консультация</p>
+
                 {/* Quick phone capture */}
                 {previewPhoneDone ? (
                   <div className="rounded-xl border border-[#00A86B]/30 bg-[#00A86B]/10 p-4 text-center">
