@@ -1189,7 +1189,7 @@ export default function AIEconomicsFunnel() {
   async function handleUrlSubmit() {
     if (!isPaidPro && calcCount >= effectiveLimit) { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount, verdict: s.economics?.verdict ?? undefined }); return; }
 
-    if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
+    if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); analytics.calculatorStart(); startedRef.current = true; }
     const url = s.urlInput.trim();
 
     if (url) {
@@ -1296,7 +1296,7 @@ export default function AIEconomicsFunnel() {
   }
 
   function handleQuickExample(ex: typeof QUICK_EXAMPLES[number]) {
-    if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); startedRef.current = true; }
+    if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); analytics.calculatorStart(); startedRef.current = true; }
     const parsed: ExtractedProduct = {
       product_name:    ex.product_name,
       product_name_cn: ex.product_name_cn,
@@ -1411,6 +1411,7 @@ export default function AIEconomicsFunnel() {
       }
 
       analytics.aiFunnelLeadCreated({ priority: data.priority });
+      analytics.leadCreated({ source: "contact_form" });
       analytics.saveAnalysisClicked();
       // Mark as registered when they complete the contact form
       if (!isRegistered) {
@@ -1418,6 +1419,7 @@ export default function AIEconomicsFunnel() {
         document.cookie = "cb_registered=1; max-age=31536000; path=/; samesite=lax";
         setIsRegistered(true);
         analytics.calcRegistered?.({ source: "contact_form" });
+        analytics.registerDone?.({ source: "contact_form" });
       }
       go("success", { leadId: data.lead_id, economics: data.economics, priority: data.priority, marketplace_config: data.marketplace_config });
     } catch {

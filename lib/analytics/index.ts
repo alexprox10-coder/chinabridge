@@ -145,5 +145,7 @@ export const analytics = {
   paymentSuccess:     ()                                          => { fire("payment_success",       "payment_success",      { category: "funnel" }); trackVkGoal("payment_success"); },
   subscriptionActive: ()                                          => { fire("subscription_active",   "subscription_active",  { category: "funnel" }); trackVkGoal("subscription_active"); },
   registerStart:      (p?: { source?: string })                  => fire("register_start",           "register_start",       { category: "funnel", ...p }),
+  registerDone:       (p?: { source?: string })                  => { fire("register_done",          "register_done",        { category: "funnel", ...p }); trackVkGoal("register_done"); },
+  leadCreated:        (p?: { source?: string })                  => { fire("lead_created",           "lead_created",         { category: "funnel", ...p }); trackVkGoal("lead_created"); },
   deliveryQuoteClick: (p?: { source?: string })                  => { fire("delivery_quote_click",   "delivery_quote_click", { category: "funnel", ...p }); trackVkGoal("delivery_quote_click"); },
 };
