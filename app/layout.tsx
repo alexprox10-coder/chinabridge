@@ -1,16 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
-
-const inter = Inter({
-  subsets: ["latin", "cyrillic"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  display: "swap",
-  preload: false,
-  fallback: ["system-ui", "arial"],
-  variable: "--font-inter",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://chinabridge.pro"),
@@ -82,7 +72,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" suppressHydrationWarning className={inter.variable}>
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
