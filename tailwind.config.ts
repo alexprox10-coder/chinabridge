@@ -18,7 +18,7 @@ const config: Config = {
         card: "#0f2644",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
       },
       animation: {
         "dash": "dash 20s linear infinite",
