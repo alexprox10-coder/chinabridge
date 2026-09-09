@@ -404,12 +404,13 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
 }) {
   const sym  = isKZ ? '₸' : '₽';
   const fmtC = (n: number) => isKZ ? fmtKzt(n) : fmt(n);
+  const cnyRate = Number(ec.cny_rate ?? 0);
   const deliveryLabel = delivery?.pricingRule === '97kapro_estimate'
     ? `${fmtC(ec.delivery_total_rub)} ${sym} (${isKZ ? '~$2.50/кг, 5-8 дн' : '~$3/кг авто'})`
     : `${fmtC(ec.delivery_total_rub)} ${sym}`;
   const commPct = ec.gross_revenue_rub > 0
     ? Math.round((ec.marketplace_fee_rub / ec.gross_revenue_rub) * 100) : 0;
-  const usdRate = ec.usd_rate ?? 90;
+  const usdRate = Number(ec.usd_rate ?? 90);
   const tariffUsd = isKZ ? 2.5 : 3.0;
   const estWeightKg = usdRate > 0 && tariffUsd > 0
     ? Math.round((ec.delivery_total_rub / usdRate / tariffUsd) * 10) / 10
@@ -417,8 +418,8 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
   const rows: Array<[string, string, boolean?, string?]> = [
     ["🛍️ Закупочная цена (всего)", `${fmtC(ec.purchase_total_rub)} ${sym}`,
       false, isKZ
-        ? `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${(ec.cny_rate * RUB_TO_KZT).toFixed(1)} ₸/¥`
-        : `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${ec.cny_rate.toFixed(1)} ₽/¥`],
+        ? `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${(cnyRate * RUB_TO_KZT).toFixed(1)} ₸/¥`
+        : `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${cnyRate.toFixed(1)} ₽/¥`],
     ["🚢 Международная доставка", deliveryLabel,
       false, isKZ
         ? `${estWeightKg} кг × $2.50/кг × ${usdRate.toFixed(0)} ₽/$ · карго Китай→КЗ (ChinaBridge)`
@@ -445,7 +446,7 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
     <div className="rounded-xl border border-[#243a5e] overflow-hidden text-sm">
       <div className="px-4 py-2 bg-[#0B1F3A] border-b border-[#243a5e] flex items-center justify-between flex-wrap gap-1">
         <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide">
-          P&amp;L · {ec.quantity} шт · курс {ec.cny_rate.toFixed(1)} ₽/¥
+          P&amp;L · {ec.quantity} шт · курс {cnyRate.toFixed(1)} ₽/¥
         </p>
         {tariffDate && (
           <span className="text-[10px] text-[#8899aa] border border-[#243a5e] rounded px-1.5 py-0.5">
@@ -466,7 +467,7 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
         ec.net_profit_rub >= 0 ? "bg-emerald-900/20 text-emerald-400" : "bg-red-900/20 text-red-400"
       }`}>
         <span>🎯 Чистая прибыль</span>
-        <span>{ec.net_profit_rub >= 0 ? "+" : ""}{fmtC(ec.net_profit_rub)} {sym} · {ec.margin_pct.toFixed(1)}%</span>
+        <span>{ec.net_profit_rub >= 0 ? "+" : ""}{fmtC(ec.net_profit_rub)} {sym} · {Number(ec.margin_pct ?? 0).toFixed(1)}%</span>
       </div>
       {commissionNote && (
         <p className="px-4 py-2 text-[10px] text-[#8899aa] border-t border-[#243a5e]/40">ℹ️ {commissionNote}</p>
@@ -731,7 +732,7 @@ function PaywallBlock({
               <div>
                 <p className="text-xs font-semibold text-white">{ec.verdict_label}</p>
                 <p className="text-[10px] text-[#8899aa]">
-                  Маржа {ec.margin_pct.toFixed(1)}% · ROI {ec.roi_pct.toFixed(0)}% · {Math.round(ec.net_profit_rub / ec.quantity).toLocaleString("ru-RU")} ₽/шт
+                  Маржа {Number(ec.margin_pct ?? 0).toFixed(1)}% · ROI {Number(ec.roi_pct ?? 0).toFixed(0)}% · {Math.round((ec.net_profit_rub ?? 0) / (ec.quantity || 1)).toLocaleString("ru-RU")} ₽/шт
                 </p>
               </div>
             </div>

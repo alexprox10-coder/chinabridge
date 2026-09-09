@@ -26,7 +26,7 @@ export default function MarketNewsBar() {
   useEffect(() => {
     fetch("/api/currency")
       .then(r => r.json())
-      .then(d => { if (d.ok) setRates({ cny: d.cny, usd: d.usd, eur: d.eur, source: d.source }); })
+      .then(d => { if (d.ok) setRates({ cny: Number(d.cny), usd: Number(d.usd), eur: Number(d.eur), source: d.source }); })
       .catch(() => {});
   }, []);
 
