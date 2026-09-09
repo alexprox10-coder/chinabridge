@@ -747,16 +747,16 @@ function PaywallBlock({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#8899aa] mt-0.5">Окупается на 1-й поставке · безлимитные расчёты и история</p>
+                <p className="text-xs text-[#8899aa] mt-0.5">Рабочее место для экономики SKU — безлимит, история, сравнение</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-[#8899aa] mb-3">
-              <span>✓ Безлимитные расчёты</span>
-              <span>✓ История расчётов</span>
-              <span>✓ AI-анализ ссылок 1688</span>
-              <span>✓ Сохранение результатов</span>
-              <span>✓ Все маркетплейсы</span>
-              <span>✓ AI-сценарии</span>
+              <span>✓ Безлимит + история</span>
+              <span>✓ Сравнение товаров</span>
+              <span>✓ AI-анализ 1688/Alibaba</span>
+              <span>✓ PDF-отчёт по SKU</span>
+              <span>✓ WB, Ozon, Kaspi</span>
+              <span>✓ Целевая цена закупки</span>
             </div>
 
             {/* Trust step — shown after first click, before redirect */}
@@ -916,6 +916,12 @@ export default function AIEconomicsFunnel() {
     }
   };
 
+  // Track calculator page open (fired once on mount)
+  useEffect(() => {
+    analytics.calculatorOpen();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Load usage counters from localStorage on mount (reset=1 clears state)
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('reset') === '1') {
@@ -985,6 +991,10 @@ export default function AIEconomicsFunnel() {
         window.history.replaceState({}, '', window.location.pathname);
         // Hide banner after 10s
         setTimeout(() => setShowProBanner(false), 10000);
+        // Track payment funnel completion
+        analytics.paymentSuccess();
+        analytics.subscriptionActive();
+        analytics.proActivated({ source: 'tochka_payment' });
       } else if (params.get('pay') === 'fail' || params.get('pay') === 'cancel') {
         window.history.replaceState({}, '', window.location.pathname);
         setShowPayCancel(true);
@@ -1016,7 +1026,10 @@ export default function AIEconomicsFunnel() {
   // Track funnel step entry for analytics
   useEffect(() => {
     if (s.step === "preview" && ec) analytics.aiFunnelPreviewShown({ verdict: ec.verdict });
-    if (s.step === "contact")      analytics.aiFunnelContactOpen();
+    if (s.step === "contact") {
+      analytics.aiFunnelContactOpen();
+      analytics.registerStart({ source: "contact_form" });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.step]);
 
@@ -1122,6 +1135,7 @@ export default function AIEconomicsFunnel() {
 
       analytics.unitEconomicsAutoCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total });
       analytics.fullCalculationCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total });
+      analytics.calcDone({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total });
 
       const corr: CorrectionData = {
         product_name:   pName,
@@ -2372,7 +2386,7 @@ export default function AIEconomicsFunnel() {
               <a
                 href="https://t.me/chinabridge_support24_bot?text=%D0%A5%D0%BE%D1%87%D1%83+%D1%80%D0%B0%D1%81%D1%81%D1%87%D0%B8%D1%82%D0%B0%D1%82%D1%8C+%D0%B4%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D1%83+%D0%BE%D1%82+%D0%BC%D0%BE%D0%B5%D0%B3%D0%BE+%D0%BF%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D1%89%D0%B8%D0%BA%D0%B0"
                 target="_blank" rel="noopener noreferrer"
-                onClick={() => { analytics.aiFunnelImportClick?.(); analytics.calculatorToDeliveryClick?.(); }}
+                onClick={() => { analytics.aiFunnelImportClick?.(); analytics.calculatorToDeliveryClick?.(); analytics.deliveryQuoteClick({ source: "calc_preview" }); }}
                 className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
               >
                 🚀 Рассчитать доставку от моего поставщика

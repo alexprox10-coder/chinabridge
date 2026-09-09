@@ -137,4 +137,13 @@ export const analytics = {
   manualCorrectionOpened:    ()                                          => fire("manual_correction_opened",    "manual_correction_opened",    { category: "product_analyzer" }),
   manualCorrectionSaved:     ()                                          => fire("manual_correction_saved",     "manual_correction_saved",     { category: "product_analyzer" }),
   unitEconomicsRecalculated: (p?: { verdict?: string })                 => fire("unit_economics_recalculated", "unit_economics_recalculated", { category: "product_analyzer", ...p }),
+
+  // ── VK Funnel full-tracking (ключевые шаги для Cost-per-X анализа) ─────────
+  calculatorOpen:     ()                                          => { fire("calculator_open",      "calculator_open",      { category: "funnel" }); trackVkGoal("calculator_open"); },
+  calcDone:           (p?: { verdict?: string; score?: number }) => { fire("calc_done",             "calc_done",            { category: "funnel", ...p }); trackVkGoal("calc_done"); },
+  landingView:        (p?: { source?: string })                  => { fire("landing_view",          "landing_view",         { category: "funnel", ...p }); trackVkGoal("landing_view"); },
+  paymentSuccess:     ()                                          => { fire("payment_success",       "payment_success",      { category: "funnel" }); trackVkGoal("payment_success"); },
+  subscriptionActive: ()                                          => { fire("subscription_active",   "subscription_active",  { category: "funnel" }); trackVkGoal("subscription_active"); },
+  registerStart:      (p?: { source?: string })                  => fire("register_start",           "register_start",       { category: "funnel", ...p }),
+  deliveryQuoteClick: (p?: { source?: string })                  => { fire("delivery_quote_click",   "delivery_quote_click", { category: "funnel", ...p }); trackVkGoal("delivery_quote_click"); },
 };

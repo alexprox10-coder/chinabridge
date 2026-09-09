@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, use, useTransition } from "react";
+import { useState, use, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { trackGAEvent } from "@/lib/analytics/ga";
+import { analytics } from "@/lib/analytics";
 
 const CATEGORIES: Record<string, {
   title: string;
@@ -115,6 +116,11 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
   const [product, setProduct] = useState("");
   const [loading, setLoading] = useState(false);
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    analytics.landingView({ source: cfg.source });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const notifyTgClick = (button: string) => {
     fetch("/api/tg-click", {
