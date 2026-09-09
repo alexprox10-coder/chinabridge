@@ -121,9 +121,9 @@ const ANALYZE_STAGES = [
 // Approximate CNY→RUB for sale price estimation (real rate comes from API)
 const EST_CNY_RATE    = 12.5;
 const MARKUP_MULTIPLE = 2.5;
-// KZT→RUB: 1₸ ≈ 0.17₽ (1₽ ≈ 5.9₸), актуально сентябрь 2026
-const KZT_TO_RUB      = 0.17;
-const RUB_TO_KZT      = 5.88; // обратный курс для отображения ₸
+// KZT→RUB: 1₸ = 0.188₽ (1₽ = 5.32₸), ЦБ РФ 10.09.2026
+const KZT_TO_RUB      = 0.188;
+const RUB_TO_KZT      = 5.32; // обратный курс для отображения ₸
 
 function estimateSalePrice(cny: number | null): string {
   if (!cny) return "";

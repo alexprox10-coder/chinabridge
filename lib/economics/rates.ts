@@ -1,7 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 
-const FALLBACK_CNY     = 12.5;
-const FALLBACK_USD     = 87.0;
+const FALLBACK_CNY     = 12.74; // ЦБ РФ 10.09.2026
+const FALLBACK_USD     = 85.46; // ЦБ РФ 10.09.2026
 const FALLBACK_CUSTOMS = 0.20; // 20% НДС при ввозе в РФ
 
 // fact_key → mp_commissions key mapping
