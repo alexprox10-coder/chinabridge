@@ -1079,6 +1079,7 @@ export default function AIEconomicsFunnel() {
       return;
     }
 
+    const capturedMarketplace = s.marketplace;
     const ed = s.extractedData;
     const unitPrice  = ed ? ((ed.unit_price_cny  ?? parseFloat(s.product.unit_price_cny)) || 0)
                            : parseFloat(s.product.unit_price_cny) || 0;
@@ -1155,11 +1156,12 @@ export default function AIEconomicsFunnel() {
         delivery:           data.delivery,
         priority:           data.priority,
         marketplace_config: data.marketplace_config,
+        marketplace:        capturedMarketplace,
         activeScenario:     "base",
         showCorrection:     false,
         correction:         corr,
       });
-      if (data.economics) saveToHistory(data.economics, s.marketplace, unitPrice, salePriceN, qty, pName);
+      if (data.economics) saveToHistory(data.economics, capturedMarketplace, unitPrice, salePriceN, qty, pName);
     } catch {
       go("preview", { error: "Ошибка сети. Попробуйте ещё раз." });
     }
@@ -1232,12 +1234,17 @@ export default function AIEconomicsFunnel() {
           }
 
           const estimated = estimateSalePrice(parsed.unit_price_cny);
+          const isKaspiSrc = url.includes('kaspi.kz');
 
           // ✅ Skip "product" step — go directly to marketplace
           setAllStagesDone(true);
           setTimeout(() => {
             setAllStagesDone(false);
-            go("marketplace", { extractedData: parsed, salePrice: estimated });
+            go("marketplace", {
+              extractedData: parsed,
+              salePrice: isKaspiSrc ? '' : estimated,
+              ...(isKaspiSrc ? { marketplace: 'kaspi', city_to: 'Алматы', country_to: 'Kazakhstan' } : {}),
+            });
           }, 400);
 
         } else {
