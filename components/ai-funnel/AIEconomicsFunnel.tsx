@@ -567,6 +567,7 @@ interface HistoryItem {
   net_profit_rub: number | null;
   marketplace: string | null;
   created_at: string;
+  economics_json: EconomicsResult | null;
 }
 
 function fmtHistoryDate(iso: string): string {
@@ -579,6 +580,7 @@ function fmtHistoryDate(iso: string): string {
 }
 
 function HistoryPanel({ items, onClose }: { items: HistoryItem[]; onClose: () => void }) {
+  const [openId, setOpenId] = useState<string | null>(null);
   return (
     <div className="border-t border-[#1e3a5f] pt-4 mt-3">
       <div className="flex items-center justify-between mb-3">
@@ -590,21 +592,51 @@ function HistoryPanel({ items, onClose }: { items: HistoryItem[]; onClose: () =>
           Расчёты появятся здесь после первого запроса
         </p>
       ) : (
-        <div className="space-y-2 max-h-60 overflow-y-auto pr-0.5">
-          {items.map(item => (
-            <div key={item.id} className="bg-white/5 hover:bg-white/8 rounded-xl px-3 py-2.5 flex items-center gap-3 transition-colors">
-              <span className="text-lg shrink-0">{item.verdict_emoji ?? '📦'}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate">
-                  {item.product_name ?? 'Товар без названия'}
-                </p>
-                <p className="text-[10px] text-[#8899aa] mt-0.5">
-                  {item.marketplace?.toUpperCase()} · Маржа {item.margin_pct != null ? Number(item.margin_pct).toFixed(1) : '—'}% · ROI {item.roi_pct != null ? Number(item.roi_pct).toFixed(0) : '—'}%
-                </p>
+        <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-0.5">
+          {items.map(item => {
+            const isOpen = openId === item.id;
+            const ec = item.economics_json;
+            return (
+              <div key={item.id} className="rounded-xl border border-[#243a5e] overflow-hidden">
+                <button
+                  onClick={() => setOpenId(isOpen ? null : item.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left"
+                >
+                  <span className="text-lg shrink-0">{item.verdict_emoji ?? '📦'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-white truncate">
+                      {item.product_name ?? 'Товар без названия'}
+                    </p>
+                    <p className="text-[10px] text-[#8899aa] mt-0.5">
+                      {item.marketplace?.toUpperCase()} · Маржа {item.margin_pct != null ? Number(item.margin_pct).toFixed(1) : '—'}% · ROI {item.roi_pct != null ? Number(item.roi_pct).toFixed(0) : '—'}%
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <p className="text-[10px] text-[#5a7899]">{fmtHistoryDate(item.created_at)}</p>
+                    <span className="text-[#5a7899] text-xs">{isOpen ? '▲' : '▼'}</span>
+                  </div>
+                </button>
+                {isOpen && (
+                  <div className="border-t border-[#243a5e]">
+                    {ec ? (
+                      <div className="p-3">
+                        <PnlTable
+                          ec={ec}
+                          delivery={null}
+                          mpLabel={item.marketplace ?? undefined}
+                          isKZ={item.marketplace === 'kaspi'}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-[#5a7899] text-center py-4">
+                        Детальный расчёт недоступен для старых записей
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-              <p className="text-[10px] text-[#5a7899] shrink-0">{fmtHistoryDate(item.created_at)}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

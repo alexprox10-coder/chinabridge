@@ -26,11 +26,14 @@ async function ensureTable(sql: any) {
       unit_price_cny NUMERIC(12,2),
       sale_price_rub NUMERIC(12,2),
       quantity     INTEGER,
+      economics_json JSONB,
       created_at   TIMESTAMPTZ DEFAULT NOW()
     )`;
   await sql`
     CREATE INDEX IF NOT EXISTS calc_history_session_idx
       ON calc_history (session_key, created_at DESC)`;
+  // Add column for existing tables (idempotent)
+  await sql`ALTER TABLE calc_history ADD COLUMN IF NOT EXISTS economics_json JSONB`.catch(() => {});
 }
 
 function getClientId(req: NextRequest): string | null {
@@ -53,7 +56,8 @@ export async function GET(req: NextRequest) {
     await ensureTable(sql);
     const rows = await sql`
       SELECT id, product_name, verdict, verdict_emoji, verdict_label,
-             margin_pct, roi_pct, net_profit_rub, marketplace, created_at
+             margin_pct, roi_pct, net_profit_rub, marketplace, created_at,
+             economics_json
       FROM calc_history
       WHERE session_key = ${sessionKey}
       ORDER BY created_at DESC
@@ -78,7 +82,7 @@ export async function POST(req: NextRequest) {
       INSERT INTO calc_history (
         session_key, client_id, product_name, verdict, verdict_emoji, verdict_label,
         margin_pct, roi_pct, net_profit_rub, marketplace,
-        unit_price_cny, sale_price_rub, quantity
+        unit_price_cny, sale_price_rub, quantity, economics_json
       ) VALUES (
         ${sessionKey}, ${clientId ?? null},
         ${String(body.product_name ?? '').slice(0, 200) || null},
@@ -91,7 +95,8 @@ export async function POST(req: NextRequest) {
         ${String(body.marketplace ?? '') || null},
         ${body.unit_price_cny != null ? Number(body.unit_price_cny) : null},
         ${body.sale_price_rub != null ? Number(body.sale_price_rub) : null},
-        ${body.quantity       != null ? Number(body.quantity)       : null}
+        ${body.quantity       != null ? Number(body.quantity)       : null},
+        ${JSON.stringify(body.economics ?? null)}
       )`;
   } catch { /* ignore save errors — history is non-critical */ }
 
