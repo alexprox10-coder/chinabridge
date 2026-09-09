@@ -404,8 +404,8 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
 }) {
   const sym  = isKZ ? '₸' : '₽';
   const fmtC = (n: number) => isKZ ? fmtKzt(n) : fmt(n);
-  const deliveryLabel = delivery?.pricingRule === 'estimate_4usd_kg'
-    ? `${fmtC(ec.delivery_total_rub)} ${sym} (~$2/кг авто)`
+  const deliveryLabel = delivery?.pricingRule === '97kapro_estimate'
+    ? `${fmtC(ec.delivery_total_rub)} ${sym} (${isKZ ? '~$2.50/кг, 5-8 дн' : '~$3/кг авто'})`
     : `${fmtC(ec.delivery_total_rub)} ${sym}`;
   const rows: Array<[string, string, boolean?]> = [
     ["🛍️ Закупочная цена (всего)",     `${fmtC(ec.purchase_total_rub)} ${sym}`],

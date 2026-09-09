@@ -1,7 +1,7 @@
 # Graph Report - chinabridge  (2026-09-08)
 
 ## Corpus Check
-- 758 files · ~1,018,773 words
+- 758 files · ~1,018,739 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `771c2f21`
+- Built from commit: `8feb6f7b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1288,7 +1288,7 @@ Cohesion: 0.50
 Nodes (3): maxDuration, POST(), runtime
 
 ## Knowledge Gaps
-- **1402 isolated node(s):** `EconomicsInput`, `EconomicsOutput`, `ExtractedPost`, `AnalyticsRow`, `CrmStats` (+1397 more)
+- **1402 isolated node(s):** `Step`, `ProductData`, `ExtractedProduct`, `CorrectionData`, `FunnelState` (+1397 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **57 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -1296,12 +1296,12 @@ Nodes (3): maxDuration, POST(), runtime
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `AdminNav()` connect `AdminNav.tsx` to `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `lib/finance/types.ts`, `ContentPageClient.tsx`, `SeoClustersClient.tsx`, `admin/settings/billing/page.tsx`, `AiOsDashboard.tsx`, `LeadDetail.tsx`, `PlatformDashboard.tsx`, `pricing/page.tsx`, `SalesCompaniesClient.tsx`, `market-intelligence/db.ts`, `intelligence/page.tsx`, `rate-engine/types.ts`, `client-portal/types.ts`, `integrations/page.tsx`, `tenders/page.tsx`, `VkIntentClient.tsx`, `TgMonitorClient.tsx`, `SalesDashboard.tsx`, `getTenantById`, `campaigns/page.tsx`, `reports/page.tsx`, `VkAdsDashboard.tsx`, `CreateWizard.tsx`, `context.ts`, `ai-cto/db.ts`, `SalesDashboardClient.tsx`, `outreach-leads/page.tsx`, `proposals/page.tsx`, `WbSellersClient.tsx`, `ImportLead`, `chat/page.tsx`?**
-  _High betweenness centrality (0.130) - this node is a cross-community bridge._
+  _High betweenness centrality (0.122) - this node is a cross-community bridge._
 - **Why does `isAuthorized()` connect `isAuthorized` to `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `client-portal/api.ts`, `vk-ads/sync/route.ts`, `ceo/report/route.ts`, `AiOsDashboard.tsx`, `notifications/route.ts`, `orders/pdf/route.ts`, `payments/route.ts`, `product-finder/route.ts`, `supplier-finder/route.ts`, `getLeads`, `payments/[id]/route.ts`, `expenses/route.ts`, `SalesDashboard.tsx`, `partners/db.ts`, `sales/data.ts`, `reports/page.tsx`, `getTenantId`, `admin/leads/route.ts`, `finance/api.ts`, `payments/create/route.ts`?**
-  _High betweenness centrality (0.070) - this node is a cross-community bridge._
+  _High betweenness centrality (0.052) - this node is a cross-community bridge._
 - **Why does `createLead()` connect `createLead` to `partner-portal/api.ts`, `tender-intelligence/route.ts`, `calculator.ts`, `crm/client.ts`, `market-intelligence/leads/route.ts`, `vk-ads/sync/route.ts`, `import-leads/crm.ts`, `admin/leads/route.ts`, `api/leads/route.ts`, `economics/route.ts`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
-- **What connects `EconomicsInput`, `EconomicsOutput`, `ExtractedPost` to the rest of the system?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **What connects `Step`, `ProductData`, `ExtractedProduct` to the rest of the system?**
   _1402 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `content/db.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.055964653902798235 - nodes in this community are weakly interconnected._

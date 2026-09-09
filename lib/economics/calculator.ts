@@ -250,8 +250,8 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
     : cost!.sale_price * usdRate
     : 0;
 
-  // ChinaBridge авто-ставка клиенту: $2/кг (18-22 дня, мин 30кг)
-  const DEFAULT_CARGO_USD_PER_KG = 2;
+  // ChinaBridge ставка клиенту: KZ $2.50/кг 5-8 дн (97Kapro), RU $3.00/кг 18-25 дн
+  const DEFAULT_CARGO_USD_PER_KG = isKZ ? 2.5 : 3.0;
   const estimatedDeliveryRub = (weightKg ?? 0.5) * DEFAULT_CARGO_USD_PER_KG * usdRate * qty;
   const deliveryRub = hasRate ? rateDeliveryRub : estimatedDeliveryRub;
 
@@ -328,9 +328,9 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
       deliveryRub:   Math.round(deliveryRub),
       deliveryCost:  hasRate ? cost!.sale_price        : Math.round(deliveryRub),
       currency:      hasRate ? cost!.currency           : 'RUB',
-      daysMin:       hasRate ? cost!.delivery_days_min  : (isKZ ? 12 : 10),
-      daysMax:       hasRate ? cost!.delivery_days_max  : (isKZ ? 18 : 16),
-      pricingRule:   hasRate ? cost!.selected_rule_name : 'estimate_4usd_kg',
+      daysMin:       hasRate ? cost!.delivery_days_min  : (isKZ ? 5 : 18),
+      daysMax:       hasRate ? cost!.delivery_days_max  : (isKZ ? 8 : 25),
+      pricingRule:   hasRate ? cost!.selected_rule_name : '97kapro_estimate',
     },
   };
 }

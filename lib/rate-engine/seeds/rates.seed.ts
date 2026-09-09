@@ -16,118 +16,123 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
   };
 
   return [
-    // ── Yiwu → Almaty (truck) — 4 weight tiers ──────────────────
+    // ── Yiwu/Guangzhou → Almaty (97Kapro, 5-8 days) — density-based ──
+    // Costs: 600+=$1.30, 400-600=$1.35, 300-400=$1.40, 250-300=$1.45,
+    //        200-250=$1.50, 170-200=$1.60, 140-170=$1.70, 120-140=$1.80
+    // ChinaBridge sells at: cost + ~65-80% markup
     {
       ...truckBase,
-      carrier_name: 'Market | Yiwu → Almaty',
+      carrier_name: '97Kapro | Yiwu/GZ → Almaty',
       route_id: String(routeMap['yiwu_almaty_truck'] ?? ''),
-      min_weight: 0, max_weight: 100,
-      price_value: 5.5,
-      delivery_days_min: 18, delivery_days_max: 25,
+      min_weight: 0, max_weight: 50,
+      price_value: 3.50,  // light/bulky (<120 kg/m³): cost ~$1.80-1.90 + markup
+      delivery_days_min: 5, delivery_days_max: 8,
     },
     {
       ...truckBase,
-      carrier_name: 'Market | Yiwu → Almaty',
+      carrier_name: '97Kapro | Yiwu/GZ → Almaty',
       route_id: String(routeMap['yiwu_almaty_truck'] ?? ''),
-      min_weight: 100, max_weight: 300,
-      price_value: 4.5,
-      delivery_days_min: 18, delivery_days_max: 25,
+      min_weight: 50, max_weight: 200,
+      price_value: 3.00,  // medium density (120-170 kg/m³): cost ~$1.70-1.80 + markup
+      delivery_days_min: 5, delivery_days_max: 8,
     },
     {
       ...truckBase,
-      carrier_name: 'Market | Yiwu → Almaty',
+      carrier_name: '97Kapro | Yiwu/GZ → Almaty',
       route_id: String(routeMap['yiwu_almaty_truck'] ?? ''),
-      min_weight: 300, max_weight: 1000,
-      price_value: 3.8,
-      delivery_days_min: 18, delivery_days_max: 25,
+      min_weight: 200, max_weight: 500,
+      price_value: 2.50,  // typical marketplace goods (200-300 kg/m³): cost $1.45-1.50 + markup
+      delivery_days_min: 5, delivery_days_max: 8,
     },
     {
       ...truckBase,
-      carrier_name: 'Market | Yiwu → Almaty',
+      carrier_name: '97Kapro | Yiwu/GZ → Almaty',
       route_id: String(routeMap['yiwu_almaty_truck'] ?? ''),
-      min_weight: 1000, max_weight: 0,
-      price_value: 3.3,
-      delivery_days_min: 18, delivery_days_max: 25,
+      min_weight: 500, max_weight: 0,
+      price_value: 2.20,  // heavy/dense (400+ kg/m³): cost $1.30-1.40 + markup
+      delivery_days_min: 5, delivery_days_max: 8,
     },
 
-    // ── Guangzhou → Almaty (truck) — 2 tiers ─────────────────────
+    // ── Guangzhou → Almaty (97Kapro) ─────────────────────────────
     {
       ...truckBase,
-      carrier_name: 'Market | Guangzhou → Almaty',
+      carrier_name: '97Kapro | Guangzhou → Almaty',
       route_id: String(routeMap['guangzhou_almaty_truck'] ?? ''),
       min_weight: 100, max_weight: 500,
-      price_value: 4.8,
-      delivery_days_min: 20, delivery_days_max: 30,
+      price_value: 2.60,
+      delivery_days_min: 5, delivery_days_max: 8,
     },
     {
       ...truckBase,
-      carrier_name: 'Market | Guangzhou → Almaty',
+      carrier_name: '97Kapro | Guangzhou → Almaty',
       route_id: String(routeMap['guangzhou_almaty_truck'] ?? ''),
       min_weight: 500, max_weight: 0,
-      price_value: 4.0,
-      delivery_days_min: 20, delivery_days_max: 30,
+      price_value: 2.20,
+      delivery_days_min: 5, delivery_days_max: 8,
     },
 
-    // ── Shenzhen → Almaty (truck) — 2 tiers ──────────────────────
+    // ── Shenzhen → Almaty (97Kapro) ──────────────────────────────
     {
       ...truckBase,
-      carrier_name: 'Market | Shenzhen → Almaty',
+      carrier_name: '97Kapro | Shenzhen → Almaty',
       route_id: String(routeMap['shenzhen_almaty_truck'] ?? ''),
       min_weight: 100, max_weight: 500,
-      price_value: 5.0,
-      delivery_days_min: 20, delivery_days_max: 30,
+      price_value: 2.70,
+      delivery_days_min: 5, delivery_days_max: 8,
     },
     {
       ...truckBase,
-      carrier_name: 'Market | Shenzhen → Almaty',
+      carrier_name: '97Kapro | Shenzhen → Almaty',
       route_id: String(routeMap['shenzhen_almaty_truck'] ?? ''),
       min_weight: 500, max_weight: 0,
-      price_value: 4.2,
-      delivery_days_min: 20, delivery_days_max: 30,
+      price_value: 2.30,
+      delivery_days_min: 5, delivery_days_max: 8,
     },
 
-    // ── Yiwu → Moscow (truck) — 3 tiers ──────────────────────────
+    // ── Yiwu → Moscow (97Kapro express) — 3 tiers ────────────────
+    // Costs (cat A): 200-300=$2.00-2.20, 300-400=$1.80, 400-600=$1.70
+    // ChinaBridge sells at cost + ~65% markup
     {
       ...truckBase,
-      carrier_name: 'Market | Yiwu → Moscow',
+      carrier_name: '97Kapro | Yiwu → Moscow',
       route_id: String(routeMap['yiwu_moscow_truck'] ?? ''),
       min_weight: 100, max_weight: 300,
-      price_value: 5.5,
-      delivery_days_min: 25, delivery_days_max: 35,
+      price_value: 4.00,
+      delivery_days_min: 18, delivery_days_max: 25,
     },
     {
       ...truckBase,
-      carrier_name: 'Market | Yiwu → Moscow',
+      carrier_name: '97Kapro | Yiwu → Moscow',
       route_id: String(routeMap['yiwu_moscow_truck'] ?? ''),
       min_weight: 300, max_weight: 1000,
-      price_value: 4.5,
-      delivery_days_min: 25, delivery_days_max: 35,
+      price_value: 3.50,
+      delivery_days_min: 18, delivery_days_max: 25,
     },
     {
       ...truckBase,
-      carrier_name: 'Market | Yiwu → Moscow',
+      carrier_name: '97Kapro | Yiwu → Moscow',
       route_id: String(routeMap['yiwu_moscow_truck'] ?? ''),
       min_weight: 1000, max_weight: 0,
-      price_value: 3.8,
-      delivery_days_min: 25, delivery_days_max: 35,
+      price_value: 3.00,
+      delivery_days_min: 18, delivery_days_max: 25,
     },
 
-    // ── Guangzhou → Moscow (truck) — 2 tiers ─────────────────────
+    // ── Guangzhou → Moscow (97Kapro) ─────────────────────────────
     {
       ...truckBase,
-      carrier_name: 'Market | Guangzhou → Moscow',
+      carrier_name: '97Kapro | Guangzhou → Moscow',
       route_id: String(routeMap['guangzhou_moscow_truck'] ?? ''),
       min_weight: 100, max_weight: 500,
-      price_value: 6.0,
-      delivery_days_min: 30, delivery_days_max: 40,
+      price_value: 3.80,
+      delivery_days_min: 18, delivery_days_max: 25,
     },
     {
       ...truckBase,
-      carrier_name: 'Market | Guangzhou → Moscow',
+      carrier_name: '97Kapro | Guangzhou → Moscow',
       route_id: String(routeMap['guangzhou_moscow_truck'] ?? ''),
       min_weight: 500, max_weight: 0,
-      price_value: 4.8,
-      delivery_days_min: 30, delivery_days_max: 40,
+      price_value: 3.20,
+      delivery_days_min: 18, delivery_days_max: 25,
     },
 
     // ── Heihe → Blagoveshchensk (truck) — 2 tiers ────────────────
