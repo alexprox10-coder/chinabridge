@@ -416,7 +416,9 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
     : 0.5;
   const rows: Array<[string, string, boolean?, string?]> = [
     ["🛍️ Закупочная цена (всего)", `${fmtC(ec.purchase_total_rub)} ${sym}`,
-      false, `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${ec.cny_rate.toFixed(1)} ₽/¥`],
+      false, isKZ
+        ? `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${(ec.cny_rate * RUB_TO_KZT).toFixed(1)} ₸/¥`
+        : `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${ec.cny_rate.toFixed(1)} ₽/¥`],
     ["🚢 Международная доставка", deliveryLabel,
       false, isKZ
         ? `${estWeightKg} кг × $2.50/кг × ${usdRate.toFixed(0)} ₽/$ · карго Китай→КЗ (ChinaBridge)`
