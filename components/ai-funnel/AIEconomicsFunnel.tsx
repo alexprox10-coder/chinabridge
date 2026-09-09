@@ -409,11 +409,18 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
     : `${fmtC(ec.delivery_total_rub)} ${sym}`;
   const commPct = ec.gross_revenue_rub > 0
     ? Math.round((ec.marketplace_fee_rub / ec.gross_revenue_rub) * 100) : 0;
+  const usdRate = ec.usd_rate ?? 90;
+  const tariffUsd = isKZ ? 2.5 : 3.0;
+  const estWeightKg = usdRate > 0 && tariffUsd > 0
+    ? Math.round((ec.delivery_total_rub / usdRate / tariffUsd) * 10) / 10
+    : 0.5;
   const rows: Array<[string, string, boolean?, string?]> = [
     ["🛍️ Закупочная цена (всего)", `${fmtC(ec.purchase_total_rub)} ${sym}`,
       false, `≈ ${fmtC(ec.unit_price_rub)} ${sym}/шт × ${ec.quantity} шт · курс ${ec.cny_rate.toFixed(1)} ₽/¥`],
     ["🚢 Международная доставка", deliveryLabel,
-      false, isKZ ? "карго из Китая до Казахстана (тариф ChinaBridge $2.50/кг)" : "карго из Китая до склада МП (тариф ChinaBridge $3/кг авто)"],
+      false, isKZ
+        ? `${estWeightKg} кг × $2.50/кг × ${usdRate.toFixed(0)} ₽/$ · карго Китай→КЗ (ChinaBridge)`
+        : `${estWeightKg} кг × $3.00/кг × ${usdRate.toFixed(0)} ₽/$ · карго Китай→РФ (ChinaBridge авто)`],
     ...(isKZ
       ? [] as Array<[string, string, boolean?, string?]>
       : [["🏛️ Таможня (~20% от закупки)", `${fmtC(ec.customs_rub)} ${sym}`,
