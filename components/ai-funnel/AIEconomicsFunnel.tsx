@@ -2507,9 +2507,31 @@ export default function AIEconomicsFunnel() {
                 {!showAIConsultant ? (
                   <button
                     onClick={() => { setShowAIConsultant(true); analytics.aiFunnelImportClick?.(); analytics.consultantStarted?.(); }}
-                    className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-2xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
+                    className="w-full rounded-2xl border-2 border-[#00A86B]/60 bg-gradient-to-br from-[#00180e] to-[#001008] hover:border-[#00A86B] transition-all active:scale-[0.98] overflow-hidden group"
+                    style={{ boxShadow: "0 0 24px rgba(0,168,107,0.18), 0 4px 16px rgba(0,0,0,0.5)" }}
                   >
-                    🤖 Получить консультацию AI
+                    {/* Header row */}
+                    <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+                      <div className="relative shrink-0">
+                        <div className="w-11 h-11 rounded-full bg-[#00A86B]/20 border-2 border-[#00A86B]/50 flex items-center justify-center text-xl">
+                          🤖
+                        </div>
+                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#00A86B] border-2 border-[#001008]">
+                          <span className="absolute inset-0 rounded-full bg-[#00A86B] animate-ping opacity-75" />
+                        </span>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-bold text-white leading-tight">Алексей · AI-консультант</p>
+                        <p className="text-[11px] text-[#00A86B] font-medium">● онлайн · отвечает мгновенно</p>
+                      </div>
+                      <span className="text-[#00A86B] text-xl group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                    {/* Preview message */}
+                    <div className="mx-4 mb-4 rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 text-left">
+                      <p className="text-xs text-[#ccddee] leading-relaxed">
+                        Помогу разобраться с этим товаром: расчёт поставки, схема закупки, риски. С чего начнём?
+                      </p>
+                    </div>
                   </button>
                 ) : (
                   <AIConsultantPanel

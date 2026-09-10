@@ -269,6 +269,23 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
          : c.sale_price * usdRate;
   }
 
+  // Fallback per-kg estimates when DB rate not matched (e.g. small weight below min_weight bracket)
+  const wt = weightKg ?? 0;
+  const vol = 0; // volume not passed from calculator UI yet
+
+  function airFallbackRub(): number {
+    // Air LCL: chargeable weight = max(actual_kg, volume_m3 * 200)
+    const cw = Math.max(wt, vol * 200);
+    const usdPerKg = cw >= 300 ? 6.0 : cw >= 100 ? 8.0 : 12.0;
+    return Math.max(cw * usdPerKg, 50) * usdRate;
+  }
+
+  function seaFallbackRub(): number {
+    // Sea LCL estimate: max($2.5/kg, $150/CBM), min $200
+    const costUsd = Math.max(200, Math.max(wt * 2.5, vol * 150));
+    return costUsd * usdRate;
+  }
+
   // Выбираем основной вариант: truck если доступен, иначе первый доступный
   const cost = truckResult ?? airResult ?? seaResult;
   const hasRate = !!(cost && cost.sale_price > 0);
@@ -281,14 +298,27 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
     icon: string,
     c: typeof truckResult,
   ): DeliveryOption {
-    const rub = toRub(c);
+    let rub = toRub(c);
+    let daysMin = c?.delivery_days_min;
+    let daysMax = c?.delivery_days_max;
+
+    // Use market estimates when DB rate missing (no rate matched for this weight)
+    if (rub === 0 && transport_type === 'air') {
+      rub = airFallbackRub();
+      daysMin = 5; daysMax = 10;
+    }
+    if (rub === 0 && transport_type === 'sea') {
+      rub = seaFallbackRub();
+      daysMin = 35; daysMax = 50;
+    }
+
     const available = rub > 0;
     return {
       transport_type, label, icon, available,
       deliveryRub: Math.round(rub),
       costPerUnit: available ? Math.round(rub / qty) : 0,
-      daysMin:     c?.delivery_days_min,
-      daysMax:     c?.delivery_days_max,
+      daysMin,
+      daysMax,
       pricingRule: c?.selected_rule_name,
     };
   }

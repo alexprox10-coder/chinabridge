@@ -153,7 +153,20 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       delivery_days_min: 3, delivery_days_max: 7,
     },
 
-    // ── Air: China → Russia / Kazakhstan (general) — 2 tiers ─────
+    // ── Air: China → Russia / Kazakhstan (general) — 3 tiers ─────
+    // Small parcels 1-100 kg (авиа LCL): $12/kg — premium for small volume
+    {
+      carrier_name: 'Market | Air China → RU/KZ (small)',
+      transport_type: 'air',
+      cargo_type: 'general',
+      rate_type: 'KG',
+      currency: 'USD',
+      rate_source: M,
+      status: 'active',
+      min_weight: 0, max_weight: 100,
+      price_value: 12.0,
+      delivery_days_min: 5, delivery_days_max: 10,
+    },
     {
       carrier_name: 'Market | Air China → RU/KZ',
       transport_type: 'air',
