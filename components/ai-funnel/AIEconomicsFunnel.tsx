@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { analytics } from "@/lib/analytics";
 import { MARKETPLACES, detectCommissionPct } from "@/lib/economics/marketplaces";
 import MarketNewsBar from "@/components/calculator/MarketNewsBar";
+import AIConsultantPanel from "@/components/ai-consultant/AIConsultantPanel";
+import type { CalcContext } from "@/lib/ai/agents/import-consultant";
 import type {
   EconomicsResult,
   EconomicsScenario,
@@ -1524,6 +1526,9 @@ export default function AIEconomicsFunnel() {
   const [previewPhoneSubmitting, setPreviewPhoneSubmitting] = useState(false);
   const [previewPhoneDone,       setPreviewPhoneDone]       = useState(false);
 
+  const [showAIConsultant,       setShowAIConsultant]       = useState(false);
+  const [aiConsultantSessionId]                             = useState(() => `ac_${crypto.randomUUID()}`);
+
   async function handleInlineCapture() {
     if (!inlineTg.trim()) return;
     setInlineSubmitting(true);
@@ -2412,18 +2417,55 @@ export default function AIEconomicsFunnel() {
             const productHint = s.extractedData?.product_name
               ? encodeURIComponent(s.extractedData.product_name.slice(0, 30))
               : "calc";
+
+            // Build CalcContext for AI Consultant
+            const aiCtx: CalcContext = {
+              product_name:         s.product.product_name || s.extractedData?.product_name || "Товар",
+              unit_price_cny:       parseFloat(s.product.unit_price_cny) || 0,
+              sale_price_rub:       ec.sale_price_rub,
+              quantity:             ec.quantity,
+              weight_kg:            parseFloat(s.product.weight_kg) || 0,
+              marketplace:          s.marketplace || "wb",
+              city_to:              s.city_to || "Москва",
+              country_to:           s.country_to || "RU",
+              verdict:              ec.verdict,
+              verdict_label:        ec.verdict_label,
+              margin_pct:           ec.margin_pct,
+              roi_pct:              ec.roi_pct,
+              net_profit_per_unit:  ec.net_profit_rub / ec.quantity,
+              delivery_rub:         s.delivery?.deliveryRub ?? null,
+              delivery_days_min:    s.delivery?.daysMin ?? null,
+              delivery_days_max:    s.delivery?.daysMax ?? null,
+              cny_rate:             Number(ec.cny_rate ?? 12.88),
+            };
+
             return (
               <>
-                {/* PRIMARY CTA — immediately after result metrics */}
+                {/* AI CONSULTANT — primary conversion block */}
+                {!showAIConsultant ? (
+                  <button
+                    onClick={() => { setShowAIConsultant(true); analytics.aiFunnelImportClick?.(); }}
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-2xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
+                  >
+                    🤖 Получить консультацию AI
+                  </button>
+                ) : (
+                  <AIConsultantPanel
+                    calcContext={aiCtx}
+                    sessionId={aiConsultantSessionId}
+                    onClose={() => setShowAIConsultant(false)}
+                  />
+                )}
+                <p className="text-center text-xs text-[#5a7899] -mt-3">AI отвечает мгновенно · менеджер за 5 минут</p>
+
+                {/* SECONDARY CTA — Telegram direct */}
                 <a
                   href={`https://t.me/ChinaBridgeLID_bot?start=bring_${productHint}`}
                   target="_blank" rel="noopener noreferrer"
-                  onClick={() => analytics.aiFunnelImportClick?.()}
-                  className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-2xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-2 py-3 border border-[#1e3a5e] hover:border-[#00A86B]/40 text-[#8899aa] hover:text-white font-semibold rounded-2xl transition-all text-sm"
                 >
                   🚀 Привезти этот товар → Telegram
                 </a>
-                <p className="text-center text-xs text-[#5a7899] -mt-3">Менеджер ответит за 5 минут · бесплатная консультация</p>
 
                 {/* Quick phone capture */}
                 {previewPhoneDone ? (
