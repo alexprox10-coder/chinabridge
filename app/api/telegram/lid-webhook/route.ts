@@ -297,19 +297,37 @@ export async function POST(req: NextRequest) {
           },
         }
       );
+      return NextResponse.json({ ok: true });
     }
-    // bare /start or landing param (e.g. /start electronics, /start наушники)
+    // bare /start or landing param (e.g. /start electronics, /start landing_import_electronics)
     {
-      const isLandingParam = param && !param.startsWith("pdf_") && param !== "calc";
-      const greeting = isLandingParam
-        ? `👋 ${firstName}, привет!\n\nМы получили вашу заявку на <b>${param}</b>.\n\nМенеджер ответит вам в течение 5 минут с реальной ценой доставки 📦`
-        : `👋 ${firstName}, привет!\n\nЭто ChinaBridge — доставка из Китая в Россию и Казахстан.\n\nНапишите какой товар хотите привезти — менеджер ответит в течение 5 минут 📦`;
+      const isLandingParam = param && !param.startsWith("pdf_") && param !== "calc" && param !== "start";
+
+      // Clean param: "landing_import_electronics" → "электроника"
+      const CATEGORY_MAP: Record<string, string> = {
+        electronics: "электроника", electronic: "электроника",
+        clothes: "одежда", clothing: "одежда",
+        toys: "игрушки", toy: "игрушки",
+        beauty: "косметика", cosmetics: "косметика",
+        sports: "спорт", sport: "спорт",
+        home: "товары для дома", household: "товары для дома",
+        auto: "автотовары", tools: "инструменты",
+      };
+      const cleanParam = isLandingParam
+        ? param.replace(/^landing_import_|^landing_|^bring_|^import_/g, "").toLowerCase()
+        : "";
+      const categoryLabel = CATEGORY_MAP[cleanParam] ?? (cleanParam && cleanParam.length < 40 ? cleanParam : "");
+
+      const greeting = categoryLabel
+        ? `👋 ${firstName}, привет!\n\nВы интересуетесь <b>${categoryLabel} из Китая</b>.\n\nЧтобы получить реальную цену — напишите:\n• Что именно хотите привезти\n• Примерный объём (шт или кг)\n• Куда доставить\n\nОтвечаем за 3–5 минут ⚡`
+        : `👋 ${firstName}, привет!\n\nЭто ChinaBridge — доставка товаров из Китая в Россию и Казахстан.\n\nЧтобы получить реальную цену доставки — напишите:\n• Какой товар\n• Примерный объём\n• Откуда и куда\n\nОтвечаем за 3–5 минут ⚡`;
 
       await sendMsg(chatId, greeting, {
         reply_markup: {
-          inline_keyboard: [[
-            { text: "📊 Рассчитать маржу", url: "https://chinabridge.pro/ai-calculator" },
-          ]],
+          inline_keyboard: [
+            [{ text: "💰 Рассчитать стоимость онлайн", url: "https://chinabridge.pro/ai-calculator" }],
+            [{ text: "❓ Как это работает", url: "https://chinabridge.pro/#how" }],
+          ],
         },
       });
 
@@ -322,7 +340,7 @@ export async function POST(req: NextRequest) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: MANAGER_CHAT_ID,
-            text: `🔔 <b>Лид открыл бот с лендинга</b>\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>${param ? `\n📦 Товар/категория: ${param}` : ""}\n\n📲 Написать: ${message?.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`}`,
+            text: `🔔 <b>Лид открыл бот с лендинга</b>\n\n👤 ${firstName} (${uname})\n🆔 chat_id: <code>${chatId}</code>${categoryLabel ? `\n📦 Категория: ${categoryLabel}` : param ? `\n📦 Параметр: ${param}` : ""}\n\n📲 Написать: ${message?.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`}`,
             parse_mode: "HTML",
           }),
         }).catch(() => null);
