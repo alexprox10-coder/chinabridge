@@ -2890,43 +2890,6 @@ export default function AIEconomicsFunnel() {
               onChange={setCorrection}
               onRecalculate={handleRecalculate}
             />
-            {/* Soft TG CTA — not a gate, just a suggestion */}
-            {!inlineLeadId && (
-              <div className="bg-[#00A86B]/5 border border-[#00A86B]/30 rounded-xl p-4">
-                <p className="text-sm font-semibold text-white mb-1">📩 Сохранить расчёт в Telegram</p>
-                <p className="text-xs text-[#8899aa] mb-3">
-                  Пришлём P&amp;L таблицу и план оптимизации — бесплатно
-                </p>
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="text"
-                    value={inlineTg}
-                    onChange={e => setInlineTg(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
-                    placeholder="@username"
-                    className={inp()}
-                  />
-                  <input
-                    type="text"
-                    value={inlineName}
-                    onChange={e => setInlineName(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && inlineTg.trim() && handleInlineCapture()}
-                    placeholder="Ваше имя (необязательно)"
-                    className={inp()}
-                  />
-                  <button
-                    onClick={handleInlineCapture}
-                    disabled={!inlineTg.trim() || inlineSubmitting}
-                    className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all text-sm"
-                  >
-                    {inlineSubmitting ? "Отправляем..." : "📩 Получить расчёт в Telegram"}
-                  </button>
-                </div>
-                <p className="text-xs text-[#8899aa] mt-2 text-center">
-                  Бесплатно · без спама · ответим в течение дня
-                </p>
-              </div>
-            )}
           </>
 
           {/* CTA */}
