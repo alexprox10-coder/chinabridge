@@ -87,6 +87,7 @@ async function runCalc(body: Record<string, unknown>) {
   return {
     economics:          result.economics,
     delivery:           result.delivery,
+    deliveryOptions:    result.deliveryOptions,
     priority:           result.priority,
     marketplace_config: mp ? { id: mp.id, label: mp.label, tariff_date: mp.tariff_date, commission_note: mp.commission_note } : null,
   };

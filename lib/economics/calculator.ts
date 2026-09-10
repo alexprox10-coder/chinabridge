@@ -23,6 +23,18 @@ export interface EconomicsInput {
   moq?:           number;       // minimum order quantity поставщика
 }
 
+export interface DeliveryOption {
+  transport_type: 'truck' | 'air' | 'sea';
+  label:          string;
+  icon:           string;
+  deliveryRub:    number;
+  costPerUnit:    number;
+  daysMin?:       number;
+  daysMax?:       number;
+  available:      boolean;
+  pricingRule?:   string;
+}
+
 export interface EconomicsOutput {
   economics: EconomicsResult;
   delivery: {
@@ -34,6 +46,7 @@ export interface EconomicsOutput {
     daysMax?:     number;
     pricingRule?: string;
   };
+  deliveryOptions: DeliveryOption[];
   priority: 'HOT' | 'WARM' | 'COLD';
 }
 
@@ -234,21 +247,57 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
     : 0;
   const mpLogTotal = mpLogPerUnit * qty;
 
-  // Международная доставка (Rate Engine, best-effort)
-  const cost = await calculateCostBreakdown({
+  // Международная доставка — 3 вида параллельно (truck / air / sea)
+  const baseDeliveryInput = {
     country_from: 'China',
     city_from:    '',
     country_to:   countryTo,
     city_to:      cityTo,
     weight:       weightKg,
-  }).catch(() => null);
+  };
 
+  const [truckResult, airResult, seaResult] = await Promise.all([
+    calculateCostBreakdown({ ...baseDeliveryInput, transport_type: 'truck' as const }).catch(() => null),
+    calculateCostBreakdown({ ...baseDeliveryInput, transport_type: 'air'   as const }).catch(() => null),
+    calculateCostBreakdown({ ...baseDeliveryInput, transport_type: 'sea'   as const }).catch(() => null),
+  ]);
+
+  function toRub(c: typeof truckResult) {
+    if (!c || c.sale_price <= 0) return 0;
+    return c.currency === 'RUB' ? c.sale_price
+         : c.currency === 'CNY' ? c.sale_price * cnyRate
+         : c.sale_price * usdRate;
+  }
+
+  // Выбираем основной вариант: truck если доступен, иначе первый доступный
+  const cost = truckResult ?? airResult ?? seaResult;
   const hasRate = !!(cost && cost.sale_price > 0);
-  const rateDeliveryRub = hasRate
-    ? cost!.currency === 'RUB' ? cost!.sale_price
-    : cost!.currency === 'CNY' ? cost!.sale_price * cnyRate
-    : cost!.sale_price * usdRate
-    : 0;
+  const rateDeliveryRub = hasRate ? toRub(cost) : 0;
+
+  // Формируем deliveryOptions
+  function makeOption(
+    transport_type: DeliveryOption['transport_type'],
+    label: string,
+    icon: string,
+    c: typeof truckResult,
+  ): DeliveryOption {
+    const rub = toRub(c);
+    const available = rub > 0;
+    return {
+      transport_type, label, icon, available,
+      deliveryRub: Math.round(rub),
+      costPerUnit: available ? Math.round(rub / qty) : 0,
+      daysMin:     c?.delivery_days_min,
+      daysMax:     c?.delivery_days_max,
+      pricingRule: c?.selected_rule_name,
+    };
+  }
+
+  const deliveryOptions: DeliveryOption[] = [
+    makeOption('truck', 'Авто',  '🚛', truckResult),
+    makeOption('air',   'Авиа',  '✈️', airResult),
+    makeOption('sea',   'Море',  '🚢', seaResult),
+  ];
 
   // P&L
   const unitPriceRub     = unitPrice * rate;
@@ -324,6 +373,7 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
   return {
     economics,
     priority,
+    deliveryOptions,
     delivery: {
       hasRate: true, // always true — exact rate or estimate
       deliveryRub:   Math.round(deliveryRub),

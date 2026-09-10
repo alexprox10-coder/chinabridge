@@ -80,6 +80,8 @@ interface FunnelState {
   // Result
   economics:         EconomicsResult | null;
   delivery:          { hasRate: boolean; deliveryRub: number; daysMin?: number; daysMax?: number; pricingRule?: string } | null;
+  deliveryOptions:   Array<{ transport_type: string; label: string; icon: string; deliveryRub: number; costPerUnit: number; daysMin?: number; daysMax?: number; available: boolean }> | null;
+  selectedDelivery:  string;  // 'truck' | 'air' | 'sea' — default 'truck'
   marketplace_config: { id: string; label: string; tariff_date: string; commission_note: string } | null;
   leadId:            string | null;
   error:             string | null;
@@ -905,6 +907,8 @@ export default function AIEconomicsFunnel() {
     email:             "",
     economics:         null,
     delivery:          null,
+    deliveryOptions:   null,
+    selectedDelivery:  "truck",
     marketplace_config: null,
     leadId:            null,
     error:             null,
@@ -1221,6 +1225,8 @@ export default function AIEconomicsFunnel() {
       go("preview", {
         economics:          data.economics,
         delivery:           data.delivery,
+        deliveryOptions:    data.deliveryOptions ?? null,
+        selectedDelivery:   "truck",
         priority:           data.priority,
         marketplace_config: data.marketplace_config,
         marketplace:        capturedMarketplace,
@@ -1447,6 +1453,8 @@ export default function AIEconomicsFunnel() {
       go("preview", {
         economics:          data.economics,
         delivery:           data.delivery,
+        deliveryOptions:    data.deliveryOptions ?? null,
+        selectedDelivery:   "truck",
         priority:           data.priority,
         marketplace_config: data.marketplace_config,
         showCorrection:     false,
@@ -2395,21 +2403,35 @@ export default function AIEconomicsFunnel() {
             );
           })()}
 
-          {/* Key metrics */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: "Маржа",       value: `${ec.margin_pct.toFixed(1)}%`,              hi: ec.verdict === "green" },
-              { label: "ROI",         value: `${ec.roi_pct.toFixed(0)}%`,                 hi: false },
-              { label: "Прибыль/шт", value: s.marketplace === 'kaspi'
-                ? `${fmtKzt(ec.net_profit_rub / ec.quantity)} ₸`
-                : `${fmt(ec.net_profit_rub / ec.quantity)} ₽`, hi: false },
-            ].map(m => (
-              <div key={m.label} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-[10px] text-[#8899aa] mb-1 uppercase tracking-wide">{m.label}</p>
-                <p className={`text-lg font-bold ${m.hi ? "text-[#00A86B]" : "text-white"}`}>{m.value}</p>
+          {/* Key metrics — computed from selected delivery option */}
+          {(() => {
+            const selOptH = s.deliveryOptions?.find(o => o.transport_type === s.selectedDelivery && o.available)
+              ?? s.deliveryOptions?.find(o => o.available) ?? null;
+            const selRubH   = selOptH?.deliveryRub ?? ec.delivery_total_rub;
+            const deltaH    = selRubH - ec.delivery_total_rub;
+            const profitH   = ec.net_profit_rub - deltaH;
+            const totalH    = ec.total_cost_rub + deltaH;
+            const marginH   = ec.gross_revenue_rub > 0 ? (profitH / ec.gross_revenue_rub) * 100 : 0;
+            const roiH      = totalH > 0 ? (profitH / totalH) * 100 : 0;
+            const verdictH  = marginH >= 25 ? 'green' : marginH >= 10 ? 'yellow' : 'red';
+            const isKZH     = s.marketplace === 'kaspi';
+            return (
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: "Маржа",       value: `${marginH.toFixed(1)}%`,  hi: verdictH === "green" },
+                  { label: "ROI",         value: `${roiH.toFixed(0)}%`,     hi: false },
+                  { label: "Прибыль/шт", value: isKZH
+                    ? `${fmtKzt(profitH / ec.quantity)} ₸`
+                    : `${fmt(profitH / ec.quantity)} ₽`, hi: false },
+                ].map(m => (
+                  <div key={m.label} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                    <p className="text-[10px] text-[#8899aa] mb-1 uppercase tracking-wide">{m.label}</p>
+                    <p className={`text-lg font-bold ${m.hi ? "text-[#00A86B]" : "text-white"}`}>{m.value}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })()}
 
           {/* ── FULL CONTENT (always visible) ──────────────────────────── */}
           {(() => {
@@ -2418,7 +2440,24 @@ export default function AIEconomicsFunnel() {
               ? encodeURIComponent(s.extractedData.product_name.slice(0, 30))
               : "calc";
 
-            // Build CalcContext for AI Consultant
+            // Delivery option selected by user (or default truck)
+            const selOpt = s.deliveryOptions?.find(o => o.transport_type === s.selectedDelivery)
+              ?? s.deliveryOptions?.find(o => o.available)
+              ?? null;
+            const selDeliveryRub = selOpt?.deliveryRub ?? s.delivery?.deliveryRub ?? 0;
+            const selDaysMin     = selOpt?.daysMin     ?? s.delivery?.daysMin;
+            const selDaysMax     = selOpt?.daysMax     ?? s.delivery?.daysMax;
+
+            // Recalculate key P&L metrics for selected delivery (client-side)
+            const origDelivery   = ec.delivery_total_rub;
+            const deliveryDelta  = selDeliveryRub - origDelivery;
+            const effNetProfit   = ec.net_profit_rub - deliveryDelta;
+            const effTotalCost   = ec.total_cost_rub + deliveryDelta;
+            const effMargin      = ec.gross_revenue_rub > 0 ? (effNetProfit / ec.gross_revenue_rub) * 100 : 0;
+            const effROI         = effTotalCost > 0 ? (effNetProfit / effTotalCost) * 100 : 0;
+            const effVerdict     = effMargin >= 25 ? 'green' as const : effMargin >= 10 ? 'yellow' as const : 'red' as const;
+
+            // Build CalcContext for AI Consultant (uses selected delivery)
             const aiCtx: CalcContext = {
               product_name:         s.product.product_name || s.extractedData?.product_name || "Товар",
               unit_price_cny:       parseFloat(s.product.unit_price_cny) || 0,
@@ -2428,14 +2467,14 @@ export default function AIEconomicsFunnel() {
               marketplace:          s.marketplace || "wb",
               city_to:              s.city_to || "Москва",
               country_to:           s.country_to || "RU",
-              verdict:              ec.verdict,
-              verdict_label:        ec.verdict_label,
-              margin_pct:           ec.margin_pct,
-              roi_pct:              ec.roi_pct,
-              net_profit_per_unit:  ec.net_profit_rub / ec.quantity,
-              delivery_rub:         s.delivery?.deliveryRub ?? null,
-              delivery_days_min:    s.delivery?.daysMin ?? null,
-              delivery_days_max:    s.delivery?.daysMax ?? null,
+              verdict:              effVerdict,
+              verdict_label:        effMargin >= 25 ? 'Перспективная' : effMargin >= 10 ? 'Требует проверки' : 'Слабая экономика',
+              margin_pct:           Math.round(effMargin * 10) / 10,
+              roi_pct:              Math.round(effROI * 10) / 10,
+              net_profit_per_unit:  effNetProfit / ec.quantity,
+              delivery_rub:         selDeliveryRub || null,
+              delivery_days_min:    selDaysMin ?? null,
+              delivery_days_max:    selDaysMax ?? null,
               cny_rate:             Number(ec.cny_rate ?? 12.88),
             };
 
@@ -2628,7 +2667,68 @@ export default function AIEconomicsFunnel() {
                 isKZ={s.marketplace === 'kaspi'}
               />
             )}
-            <PnlTable ec={ec} delivery={s.delivery}
+            {/* ── Delivery Mode Selector ──────────────────────────────────── */}
+            {s.deliveryOptions && s.deliveryOptions.some(o => o.available) && (
+              <div className="mb-2">
+                <p className="text-[11px] text-[#5a7899] font-semibold uppercase tracking-wider mb-2 px-1">Способ доставки</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {s.deliveryOptions.map(opt => {
+                    const isSelected = s.selectedDelivery === opt.transport_type;
+                    const optDelta   = (opt.deliveryRub - origDelivery);
+                    const optMargin  = ec.gross_revenue_rub > 0
+                      ? ((ec.net_profit_rub - optDelta) / ec.gross_revenue_rub) * 100 : 0;
+                    const isKZfmt    = s.marketplace === 'kaspi';
+                    const fmt        = (n: number) => isKZfmt
+                      ? `${Math.round(n * 500).toLocaleString('ru-RU')} ₸`
+                      : `${Math.round(n).toLocaleString('ru-RU')} ₽`;
+                    return (
+                      <button
+                        key={opt.transport_type}
+                        onClick={() => {
+                          if (!opt.available) return;
+                          setS(p => ({ ...p, selectedDelivery: opt.transport_type,
+                            delivery: p.delivery ? { ...p.delivery, deliveryRub: opt.deliveryRub, daysMin: opt.daysMin, daysMax: opt.daysMax, pricingRule: opt.pricingRule } : p.delivery,
+                          }));
+                        }}
+                        disabled={!opt.available}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all text-center
+                          ${!opt.available
+                            ? 'opacity-40 cursor-not-allowed border-[#1a2e44] bg-transparent'
+                            : isSelected
+                              ? 'border-[#00A86B] bg-[#00A86B]/10 shadow-sm shadow-[#00A86B]/20'
+                              : 'border-[#1a3a5e] bg-[#070f1d] hover:border-[#2a5a8e] hover:bg-[#0a1a2e]'
+                          }`}
+                      >
+                        <span className="text-xl">{opt.icon}</span>
+                        <span className={`text-xs font-bold ${isSelected ? 'text-[#00A86B]' : 'text-white'}`}>{opt.label}</span>
+                        {opt.available ? (
+                          <>
+                            <span className="text-[10px] text-[#8899aa]">{fmt(opt.deliveryRub)}</span>
+                            <span className="text-[10px] text-[#5a7899]">
+                              {opt.daysMin && opt.daysMax ? `${opt.daysMin}–${opt.daysMax} дн` : ''}
+                            </span>
+                            <span className={`text-[10px] font-semibold mt-0.5 ${optMargin >= 25 ? 'text-[#00A86B]' : optMargin >= 10 ? 'text-yellow-400' : 'text-red-400'}`}>
+                              {optMargin.toFixed(1)}% маржа
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-[10px] text-[#334455]">скоро</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <PnlTable ec={{ ...ec,
+              delivery_total_rub: selDeliveryRub || ec.delivery_total_rub,
+              total_cost_rub:     effTotalCost,
+              net_profit_rub:     Math.round(effNetProfit),
+              margin_pct:         Math.round(effMargin * 10) / 10,
+              roi_pct:            Math.round(effROI * 10) / 10,
+              verdict:            effVerdict,
+            }} delivery={s.delivery ? { ...s.delivery, daysMin: selDaysMin, daysMax: selDaysMax, deliveryRub: selDeliveryRub } : s.delivery}
               mpLabel={s.marketplace_config?.label}
               tariffDate={s.marketplace_config?.tariff_date}
               commissionNote={s.marketplace_config?.commission_note}
