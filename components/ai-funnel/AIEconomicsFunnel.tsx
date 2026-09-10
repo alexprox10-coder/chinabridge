@@ -2520,6 +2520,60 @@ export default function AIEconomicsFunnel() {
 
             return (
               <>
+                {/* ── Delivery Mode Selector — FIRST after metrics ──────── */}
+                {s.deliveryOptions && s.deliveryOptions.some(o => o.available) && (
+                  <div className="mb-1">
+                    <p className="text-[11px] text-[#5a7899] font-semibold uppercase tracking-wider mb-2 px-1">Способ доставки</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {s.deliveryOptions.map(opt => {
+                        const isSelected = s.selectedDelivery === opt.transport_type;
+                        const optDelta   = (opt.deliveryRub - origDelivery);
+                        const optMargin  = ec.gross_revenue_rub > 0
+                          ? ((ec.net_profit_rub - optDelta) / ec.gross_revenue_rub) * 100 : 0;
+                        const isKZfmt    = s.marketplace === 'kaspi';
+                        const fmtOpt     = (n: number) => isKZfmt
+                          ? `${Math.round(n * 500).toLocaleString('ru-RU')} ₸`
+                          : `${Math.round(n).toLocaleString('ru-RU')} ₽`;
+                        return (
+                          <button
+                            key={opt.transport_type}
+                            onClick={() => {
+                              if (!opt.available) return;
+                              setS(p => ({ ...p, selectedDelivery: opt.transport_type,
+                                delivery: p.delivery ? { ...p.delivery, deliveryRub: opt.deliveryRub, daysMin: opt.daysMin, daysMax: opt.daysMax, pricingRule: opt.pricingRule } : p.delivery,
+                              }));
+                            }}
+                            disabled={!opt.available}
+                            className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all text-center
+                              ${!opt.available
+                                ? 'opacity-40 cursor-not-allowed border-[#1a2e44] bg-transparent'
+                                : isSelected
+                                  ? 'border-[#00A86B] bg-[#00A86B]/10 shadow-sm shadow-[#00A86B]/20'
+                                  : 'border-[#1a3a5e] bg-[#070f1d] hover:border-[#2a5a8e] hover:bg-[#0a1a2e]'
+                              }`}
+                          >
+                            <span className="text-xl">{opt.icon}</span>
+                            <span className={`text-xs font-bold ${isSelected ? 'text-[#00A86B]' : 'text-white'}`}>{opt.label}</span>
+                            {opt.available ? (
+                              <>
+                                <span className="text-[10px] text-[#8899aa]">{fmtOpt(opt.deliveryRub)}</span>
+                                <span className="text-[10px] text-[#5a7899]">
+                                  {opt.daysMin && opt.daysMax ? `${opt.daysMin}–${opt.daysMax} дн` : ''}
+                                </span>
+                                <span className={`text-[10px] font-semibold mt-0.5 ${optMargin >= 25 ? 'text-[#00A86B]' : optMargin >= 10 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                  {optMargin.toFixed(1)}% маржа
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-[10px] text-[#334455]">скоро</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* AI CONSULTANT — primary conversion block */}
                 {!showAIConsultant ? (
                   <button
@@ -2728,59 +2782,6 @@ export default function AIEconomicsFunnel() {
                 onSwitch={sc => setS(p => ({ ...p, activeScenario: sc }))}
                 isKZ={s.marketplace === 'kaspi'}
               />
-            )}
-            {/* ── Delivery Mode Selector ──────────────────────────────────── */}
-            {s.deliveryOptions && s.deliveryOptions.some(o => o.available) && (
-              <div className="mb-2">
-                <p className="text-[11px] text-[#5a7899] font-semibold uppercase tracking-wider mb-2 px-1">Способ доставки</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {s.deliveryOptions.map(opt => {
-                    const isSelected = s.selectedDelivery === opt.transport_type;
-                    const optDelta   = (opt.deliveryRub - origDelivery);
-                    const optMargin  = ec.gross_revenue_rub > 0
-                      ? ((ec.net_profit_rub - optDelta) / ec.gross_revenue_rub) * 100 : 0;
-                    const isKZfmt    = s.marketplace === 'kaspi';
-                    const fmt        = (n: number) => isKZfmt
-                      ? `${Math.round(n * 500).toLocaleString('ru-RU')} ₸`
-                      : `${Math.round(n).toLocaleString('ru-RU')} ₽`;
-                    return (
-                      <button
-                        key={opt.transport_type}
-                        onClick={() => {
-                          if (!opt.available) return;
-                          setS(p => ({ ...p, selectedDelivery: opt.transport_type,
-                            delivery: p.delivery ? { ...p.delivery, deliveryRub: opt.deliveryRub, daysMin: opt.daysMin, daysMax: opt.daysMax, pricingRule: opt.pricingRule } : p.delivery,
-                          }));
-                        }}
-                        disabled={!opt.available}
-                        className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all text-center
-                          ${!opt.available
-                            ? 'opacity-40 cursor-not-allowed border-[#1a2e44] bg-transparent'
-                            : isSelected
-                              ? 'border-[#00A86B] bg-[#00A86B]/10 shadow-sm shadow-[#00A86B]/20'
-                              : 'border-[#1a3a5e] bg-[#070f1d] hover:border-[#2a5a8e] hover:bg-[#0a1a2e]'
-                          }`}
-                      >
-                        <span className="text-xl">{opt.icon}</span>
-                        <span className={`text-xs font-bold ${isSelected ? 'text-[#00A86B]' : 'text-white'}`}>{opt.label}</span>
-                        {opt.available ? (
-                          <>
-                            <span className="text-[10px] text-[#8899aa]">{fmt(opt.deliveryRub)}</span>
-                            <span className="text-[10px] text-[#5a7899]">
-                              {opt.daysMin && opt.daysMax ? `${opt.daysMin}–${opt.daysMax} дн` : ''}
-                            </span>
-                            <span className={`text-[10px] font-semibold mt-0.5 ${optMargin >= 25 ? 'text-[#00A86B]' : optMargin >= 10 ? 'text-yellow-400' : 'text-red-400'}`}>
-                              {optMargin.toFixed(1)}% маржа
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-[10px] text-[#334455]">скоро</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             )}
 
             {/* Target Purchase Price — prominent callout BEFORE P&L table */}
