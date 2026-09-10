@@ -158,12 +158,33 @@ export async function POST(req: NextRequest) {
     const token  = process.env.CHINABRIDGE_LID_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN ?? '';
     const chatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID ?? '';
     if (token && chatId) {
-      const contact = telegram || phone;
-      const text = `🔔 <b>Лид с калькулятора (${source || 'form'})</b>\n\n📲 Контакт: <b>${contact}</b>${phone && telegram ? `\n📞 Телефон: ${phone}` : ''}\n\n⚡ Написать сразу: ${telegram.startsWith('@') ? `t.me/${telegram.slice(1)}` : contact}`;
+      const name = String(body.name ?? '').trim();
+
+      // Build a clickable "write now" link
+      let writeLink = '';
+      if (telegram) {
+        const handle = telegram.replace(/^@/, '');
+        writeLink = `<a href="https://t.me/${handle}">Написать в Telegram</a>`;
+      } else if (phone) {
+        const digits = phone.replace(/\D/g, '');
+        const normalized = digits.startsWith('8') && digits.length === 11 ? '7' + digits.slice(1) : digits;
+        writeLink = `<a href="https://wa.me/${normalized}">Написать в WhatsApp</a>`;
+      }
+
+      const lines = [
+        `🔔 <b>Лид с калькулятора (${source || 'form'})</b>`,
+        ``,
+        name    ? `👤 ${name}`    : '',
+        phone   ? `📞 ${phone}`   : '',
+        telegram ? `✈️ ${telegram}` : '',
+        ``,
+        writeLink ? `⚡ ${writeLink}` : '',
+      ].filter(Boolean).join('\n');
+
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+        body: JSON.stringify({ chat_id: chatId, text: lines, parse_mode: 'HTML' }),
         signal: AbortSignal.timeout(8000),
       }).catch(() => null);
     }
