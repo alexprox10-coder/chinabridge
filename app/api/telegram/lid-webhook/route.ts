@@ -367,8 +367,7 @@ export async function POST(req: NextRequest) {
         }
       } catch { /* ignore */ }
     }
-    // Non-reply manager message — ignore silently
-    return NextResponse.json({ ok: true });
+    // Non-reply manager message — fall through to AI response (for testing)
   }
 
   // ── Client message → AI response + forward to manager ────────────────────
