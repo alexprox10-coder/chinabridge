@@ -8,11 +8,40 @@ interface Message {
   text: string;
 }
 
-const INITIAL_CTАС = [
-  { id: "order",    icon: "🚀", label: "Хочу привезти этот товар",     msg: "Хочу заказать доставку этого товара. Что нужно сделать?" },
-  { id: "consult",  icon: "💬", label: "Нужна консультация по схеме",  msg: "Расскажите подробнее о схеме работы. Как выглядит процесс закупки?" },
-  { id: "delivery", icon: "📦", label: "Сколько стоит доставка?",      msg: "Сколько будет стоить доставка этой партии? Какие сроки?" },
-];
+function getInitialCTAs(ctx: CalcContext) {
+  const hasSupplier = ctx.supplier_exists === true;
+  const noSupplier  = ctx.supplier_exists === false;
+
+  if (hasSupplier) {
+    return [
+      { id: "delivery", icon: "🚛", label: "Как привезти мой товар?",        msg: "У меня есть поставщик на 1688. Как организовать доставку в " + ctx.city_to + "?" },
+      { id: "compare",  icon: "✈️", label: "Авто vs Авиа — что лучше?",      msg: "Сравни авто и авиа доставку для моего товара. Что выгоднее?" },
+      { id: "start",    icon: "📋", label: "Что нужно для оформления?",       msg: "Что мне нужно подготовить чтобы оформить доставку через вас?" },
+    ];
+  }
+
+  if (noSupplier) {
+    return [
+      { id: "order",    icon: "🚀", label: "Хочу привезти этот товар",        msg: "Хочу привезти этот товар из Китая. С чего начать?" },
+      { id: "supplier", icon: "🔍", label: "Как найти поставщика?",            msg: "У меня нет поставщика. Помогите найти на 1688 или Alibaba?" },
+      { id: "budget",   icon: "💰", label: "Сколько нужно денег на старт?",   msg: "Сколько нужно денег чтобы начать? Какой минимальный бюджет?" },
+    ];
+  }
+
+  if (ctx.verdict === "red") {
+    return [
+      { id: "improve",  icon: "📊", label: "Как улучшить экономику?",         msg: "Экономика слабая. Что можно сделать чтобы увеличить маржу?" },
+      { id: "price",    icon: "🎯", label: "Снизить закупочную цену",          msg: "Как найти этот товар дешевле у поставщика?" },
+      { id: "order",    icon: "🚀", label: "Всё равно хочу привезти",          msg: "Хочу привезти этот товар несмотря на маржу. Что нужно?" },
+    ];
+  }
+
+  return [
+    { id: "order",    icon: "🚀", label: "Хочу привезти этот товар",          msg: "Хочу заказать доставку этого товара. Что нужно сделать?" },
+    { id: "consult",  icon: "💬", label: "Расскажите о схеме работы",         msg: "Расскажите подробнее о схеме работы. Как выглядит процесс закупки?" },
+    { id: "delivery", icon: "📦", label: "Сколько стоит доставка?",           msg: "Сколько будет стоить доставка этой партии? Какие сроки?" },
+  ];
+}
 
 interface Props {
   calcContext: CalcContext;
@@ -28,6 +57,7 @@ export default function AIConsultantPanel({ calcContext, sessionId, onClose }: P
   const [leadDone,   setLeadDone]   = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
+  const initialCTAs = getInitialCTAs(calcContext);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,7 +129,7 @@ export default function AIConsultantPanel({ calcContext, sessionId, onClose }: P
       </div>
 
       {/* Context chip */}
-      <div className="px-4 pt-3 pb-2">
+      <div className="px-4 pt-3 pb-0">
         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
           <span className="text-sm">{calcContext.verdict === "green" ? "🟢" : calcContext.verdict === "yellow" ? "🟡" : "🔴"}</span>
           <div className="flex-1 min-w-0">
@@ -113,11 +143,28 @@ export default function AIConsultantPanel({ calcContext, sessionId, onClose }: P
         </div>
       </div>
 
+      {/* Delivery options chips */}
+      {calcContext.delivery_options && calcContext.delivery_options.length > 0 && (
+        <div className="px-4 pt-2">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+            {calcContext.delivery_options.map(opt => (
+              <div key={opt.type} className="flex-shrink-0 flex items-center gap-1.5 bg-[#0a1a2e] border border-[#1a3a5e] rounded-lg px-2 py-1.5">
+                <span className="text-[11px]">{opt.type === "truck" ? "🚛" : opt.type === "air" ? "✈️" : "🚢"}</span>
+                <div>
+                  <p className="text-[10px] text-white font-semibold leading-tight">{opt.rub_per_unit.toLocaleString("ru-RU")} {currency}/шт</p>
+                  <p className="text-[9px] text-[#5a7899] leading-tight">{opt.days_min}–{opt.days_max} дн</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* CTA buttons (only before first message) */}
       {!started && (
-        <div className="px-4 py-2 flex flex-col gap-2">
+        <div className="px-4 pt-2 pb-2 flex flex-col gap-2">
           <p className="text-[10px] text-[#5a7899] text-center mb-1">Выберите, что вас интересует:</p>
-          {INITIAL_CTАС.map(cta => (
+          {initialCTAs.map(cta => (
             <button
               key={cta.id}
               onClick={() => send(cta.msg)}

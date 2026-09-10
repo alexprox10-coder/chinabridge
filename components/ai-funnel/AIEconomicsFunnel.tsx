@@ -2481,11 +2481,15 @@ export default function AIEconomicsFunnel() {
             const effVerdict     = effMargin >= 25 ? 'green' as const : effMargin >= 10 ? 'yellow' as const : 'red' as const;
 
             // Build CalcContext for AI Consultant (uses selected delivery)
+            const isKZCtx = s.country_to === "KZ" || s.marketplace === "kaspi";
+            const ctxCurrency = isKZCtx ? "₸" : "₽";
+            const ctxRate = Number(ec.cny_rate ?? 12.88);
+            const qty = ec.quantity || 1;
             const aiCtx: CalcContext = {
               product_name:         s.product.product_name || s.extractedData?.product_name || "Товар",
               unit_price_cny:       parseFloat(s.product.unit_price_cny) || 0,
               sale_price_rub:       ec.sale_price_rub,
-              quantity:             ec.quantity,
+              quantity:             qty,
               weight_kg:            parseFloat(s.product.weight_kg) || 0,
               marketplace:          s.marketplace || "wb",
               city_to:              s.city_to || "Москва",
@@ -2494,12 +2498,25 @@ export default function AIEconomicsFunnel() {
               verdict_label:        effMargin >= 25 ? 'Перспективная' : effMargin >= 10 ? 'Требует проверки' : 'Слабая экономика',
               margin_pct:           Math.round(effMargin * 10) / 10,
               roi_pct:              Math.round(effROI * 10) / 10,
-              net_profit_per_unit:  effNetProfit / ec.quantity,
+              net_profit_per_unit:  effNetProfit / qty,
               delivery_rub:         selDeliveryRub || null,
               delivery_days_min:    selDaysMin ?? null,
               delivery_days_max:    selDaysMax ?? null,
-              cny_rate:             Number(ec.cny_rate ?? 12.88),
+              cny_rate:             ctxRate,
+              // P0 #8 enriched context
+              supplier_exists:      supplierExists,
+              delivery_options:     s.deliveryOptions
+                ?.filter(o => o.available)
+                .map(o => ({
+                  type:        o.transport_type as "truck" | "air" | "sea",
+                  label:       o.label,
+                  rub:         o.deliveryRub,
+                  rub_per_unit: o.costPerUnit,
+                  days_min:    o.daysMin ?? 0,
+                  days_max:    o.daysMax ?? 0,
+                })),
             };
+            void ctxCurrency; // suppress unused warning
 
             return (
               <>
