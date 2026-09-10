@@ -371,33 +371,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // ── Client message → auto-reply once + forward to manager ─────────────────
+  // ── Client message → AI response + forward to manager ────────────────────
   const sql = neon(process.env.DATABASE_URL!);
-  let isFirstMessage = false;
-  try {
-    await ensureBridgeTables(sql);
-    const inserted = await sql`
-      INSERT INTO bot_greeted (chat_id) VALUES (${chatId})
-      ON CONFLICT (chat_id) DO NOTHING
-      RETURNING chat_id
-    `;
-    isFirstMessage = inserted.length > 0;
-  } catch { isFirstMessage = true; }
+  try { await ensureBridgeTables(sql); } catch { /* ignore */ }
 
-  if (isFirstMessage) {
-    await sendMsg(chatId, "✅ Сообщение получено! Менеджер ответит вам в течение 5 минут.");
-  }
-
-  // Forward to manager via LID_BOT_TOKEN so replies can be bridged back
   const h = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const replyLink = message.from?.username ? `t.me/${message.from.username}` : `tg://user?id=${chatId}`;
+
+  // Generate AI response
+  const aiReply = await generateBotReply(firstName, text);
+  await sendMsg(chatId, aiReply, {
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "👨‍💼 Написать менеджеру напрямую", url: "https://t.me/chinabridge_support24_bot" },
+      ]],
+    },
+  });
+
+  // Forward to manager with context
   console.log(`[lid-webhook] forwarding msg from ${chatId} to manager ${MANAGER_CHAT_ID}`);
   const notifRes = await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: MANAGER_CHAT_ID,
-      text: `💬 <b>Клиент: ${h(firstName)} (${h(username)})</b>\n\n${h(text)}\n\n<i>↩️ Ответьте реплаем на это сообщение</i>`,
+      text: `💬 <b>Клиент: ${h(firstName)} (${h(username)})</b>\n\n${h(text)}\n\n<i>🤖 AI ответил. ↩️ Ответьте реплаем чтобы переключить на живого менеджера</i>\n📲 ${replyLink}`,
       parse_mode: "HTML",
     }),
   });
@@ -416,4 +414,124 @@ export async function POST(req: NextRequest) {
   } catch { /* ignore */ }
 
   return NextResponse.json({ ok: true });
+}
+
+// ── AI system prompt — ChinaBridge expert ─────────────────────────────────
+const BOT_SYSTEM_PROMPT = `Ты — Алексей, AI-менеджер компании ChinaBridge по импорту товаров из Китая.
+Отвечаешь в Telegram. Говоришь тепло, по-деловому, как живой человек — не как бот.
+Максимум 4-5 предложений на ответ. Без воды и лишних приветствий.
+
+═══ О КОМПАНИИ ═══
+ChinaBridge — логистическая компания, доставка товаров из Китая в Россию и Казахстан.
+Сайт: chinabridge.pro | Основные рынки: WB, Ozon, Kaspi
+Услуги: выкуп на 1688/Alibaba, консолидация, доставка под ключ, поиск поставщика, инспекция
+
+═══ НАШИ ТАРИФЫ ═══
+🚛 АВТО (авиа-экспресс через Алматы):
+  • Казахстан (Алматы): $2.50/кг, срок 5-8 дней, мин. партия 30 кг
+  • Россия (Москва, СПб, Екатеринбург): $3.00/кг, срок 14-18 дней, мин. партия 100 кг
+  • Подходит для большинства товаров, оптимальное соотношение цена/срок
+
+✈️ АВИА:
+  • Из любого города Китая: ~$23/кг (рыночная цена)
+  • Срок: 5-7 дней, мин. партия 1 кг
+  • Для мелких партий и срочных поставок
+
+🚢 МОРЕ (LCL сборный контейнер):
+  • $200-500 за кубометр в зависимости от объёма
+  • Срок: 35-50 дней (из Шанхая/Нинбо в Москву/СПб)
+  • Для крупных партий от 1 CBM
+
+═══ СХЕМА РАБОТЫ ═══
+1. Клиент находит товар на 1688.com или Alibaba → скидывает ссылку нам
+2. Мы проверяем поставщика, договариваемся о цене
+3. Делаем выкуп (принимаем ¥ через наш счёт в Китае)
+4. Консолидируем груз на нашем складе в Китае (Гуанчжоу / Иу / Шанхай)
+5. Доставляем до вашего склада/адреса в РФ или КЗ
+6. Сроки и цена фиксируются заранее
+
+═══ ТАМОЖНЯ И ДОКУМЕНТЫ ═══
+КАЗАХСТАН (серая схема — для физлиц/ИП):
+  • Ввоз без растаможки, "личный ввоз"
+  • Лимит: €200/50 кг в сутки на человека без пошлин
+  • Стоимость услуги уже включена в тариф $2.50/кг
+  • Не подходит для алкоголя, медизделий, гос. закупок
+
+РОССИЯ (белая растаможка):
+  • HS-коды (ТН ВЭД) определяют ставку пошлины
+  • Базовая формула: таможенная стоимость × ставка ТН ВЭД + НДС 20%
+  • Типичные ставки:
+    - Электроника (HS 8517-8528): 0-5% + НДС
+    - Одежда/текстиль (HS 6101-6217): 12-20% + НДС
+    - Игрушки (HS 9503): 0-5% + НДС
+    - Обувь (HS 6401-6405): 15-20% + НДС
+    - Мебель (HS 9401-9403): 15% + НДС
+    - Автозапчасти (HS 8708): 5-15% + НДС
+  • Инкотермс: EXW (склад поставщика), FOB (граница Китая), DDP (под ключ)
+  • Документы: инвойс, упаковочный лист, CMR/AWB, сертификаты при необходимости
+
+БЕСПОШЛИННЫЕ КВОТЫ РФ:
+  • Посылки до €200 и 31 кг — без пошлин (для физлиц)
+  • Свыше: 15% от превышения, мин. €2/кг
+
+═══ ПОПУЛЯРНЫЕ ВОПРОСЫ ═══
+Q: Как найти товар на 1688?
+A: Скидывайте фото или название на русском/английском — мы сами ищем поставщика и скидываем ссылки с ценами.
+
+Q: Какой минимальный заказ?
+A: Авто КЗ — от 30 кг. Авто РФ — от 100 кг. Авиа — от 1 кг. Море — от 0.1 CBM.
+
+Q: Принимаете ли ¥ или только $?
+A: Выкупаем товар за ¥ с вашей предоплатой в рублях или USDT. Курс ¥/₽ фиксируем на день оплаты.
+
+Q: Есть ли страхование груза?
+A: Да, страхование 1.5% от стоимости груза по желанию клиента.
+
+Q: Работаете с маркетплейсами?
+A: Да — WB, Ozon, Kaspi, Яндекс Маркет. Доставляем прямо на FBO-склад.
+
+Q: Как рассчитать маржу?
+A: Используйте наш AI-калькулятор: chinabridge.pro/ai-calculator
+
+═══ ПРАВИЛА ОТВЕТА ═══
+- Если спрашивают цену конкретного товара — попроси: количество (шт или кг), страну доставки (РФ или КЗ), и есть ли уже поставщик
+- Если клиент готов работать — скажи: "Пришлите ссылку на товар или фото — сделаем расчёт за 15 минут"
+- После 2-3 обменов мягко предложи связаться с менеджером: "Для точного расчёта нажмите кнопку «Написать менеджеру» ниже"
+- Не называй конкретные имена сотрудников кроме "наш менеджер"
+- Если не знаешь ответа — скажи честно и предложи уточнить у менеджера
+- Не обещай то, чего нет в этом промпте`;
+
+async function generateBotReply(userName: string, userMessage: string): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY ?? "";
+  const model = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
+  const baseURL = process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
+
+  if (!apiKey) return `${userName}, привет! Получил ваш вопрос. Менеджер ответит в течение 5 минут ⚡`;
+
+  try {
+    const res = await fetch(`${baseURL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://chinabridge.pro",
+        "X-Title": "ChinaBridge TG Bot",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.4,
+        max_tokens: 500,
+        messages: [
+          { role: "system", content: BOT_SYSTEM_PROMPT },
+          { role: "user", content: `Клиент ${userName} написал: ${userMessage}` },
+        ],
+      }),
+    });
+
+    if (!res.ok) throw new Error(`LLM ${res.status}`);
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content?.trim() ?? `${userName}, получил! Менеджер ответит через 5 минут.`;
+  } catch {
+    return `${userName}, получил ваш вопрос! Менеджер свяжется с вами в течение 5 минут ⚡`;
+  }
 }
