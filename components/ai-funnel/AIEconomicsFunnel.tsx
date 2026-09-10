@@ -667,15 +667,22 @@ function PaywallBlock({
   const [showTrustStep, setShowTrustStep] = useState(false);
   const [paymentLink,   setPaymentLink]   = useState<string | null>(null);
   const [linkError,     setLinkError]     = useState(false);
+  // Telegram capture step
+  const [tgInput,       setTgInput]       = useState("");
+  const [tgSubmitted,   setTgSubmitted]   = useState(false);
+  const [tgError,       setTgError]       = useState("");
 
-  // Pre-fetch payment link on mount so final tap is a direct <a href> gesture (VK WebView compat)
-  useEffect(() => {
-    let cancelled = false;
+  function fetchPaymentLink(telegram: string) {
     setPayLoading(true);
-    fetch("/api/payments/calculator-subscribe", { method: "POST" })
+    setLinkError(false);
+    const tg = telegram.trim().replace(/^@/, "");
+    fetch("/api/payments/calculator-subscribe", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ telegram: tg }),
+    })
       .then(r => r.json())
       .then(data => {
-        if (cancelled) return;
         if (data.ok && data.paymentLink) {
           try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
           setPaymentLink(data.paymentLink);
@@ -683,10 +690,17 @@ function PaywallBlock({
           setLinkError(true);
         }
       })
-      .catch(() => { if (!cancelled) setLinkError(true); })
-      .finally(() => { if (!cancelled) setPayLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+      .catch(() => setLinkError(true))
+      .finally(() => setPayLoading(false));
+  }
+
+  function handleTgSubmit() {
+    const tg = tgInput.trim();
+    if (!tg) { setTgError("Введите ваш Telegram @username"); return; }
+    setTgError("");
+    setTgSubmitted(true);
+    fetchPaymentLink(tg);
+  }
 
   function handleProCtaClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -816,16 +830,47 @@ function PaywallBlock({
               <span>✓ WB, Ozon, Kaspi</span>
             </div>
 
-            {/* Trust step — shown after first click, before redirect */}
-            {showTrustStep ? (
+            {/* Step 1: Telegram input (always first) */}
+            {!tgSubmitted ? (
+              <div className="flex flex-col gap-2">
+                <div className="rounded-xl bg-[#0b1a2e] border border-[#243a5e] px-3 py-2.5">
+                  <p className="text-xs text-white font-semibold mb-1">Укажите ваш Telegram</p>
+                  <p className="text-[10px] text-[#8899aa]">После оплаты бот пришлёт код активации — работает на любом устройстве.</p>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="@username"
+                    value={tgInput}
+                    onChange={e => { setTgInput(e.target.value); setTgError(""); }}
+                    onKeyDown={e => e.key === "Enter" && handleTgSubmit()}
+                    className="flex-1 px-3 py-2.5 bg-[#0B1F3A] border border-[#243a5e] focus:border-[#229ED9]/60 rounded-xl text-white text-sm placeholder:text-[#5a7899] outline-none"
+                  />
+                  <button
+                    onClick={handleTgSubmit}
+                    className="px-4 py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl transition-colors"
+                  >
+                    →
+                  </button>
+                </div>
+                {tgError && <p className="text-xs text-red-400">{tgError}</p>}
+                <button
+                  onClick={() => { setTgSubmitted(true); fetchPaymentLink(""); }}
+                  className="text-[10px] text-[#5a7899] hover:text-[#8899aa] text-center underline"
+                >
+                  Пропустить (доступ только на этом устройстве)
+                </button>
+              </div>
+            ) : showTrustStep ? (
+              /* Step 3: Trust step — confirm redirect */
               <div className="flex flex-col gap-2">
                 <div className="rounded-xl bg-[#0b1a2e] border border-[#243a5e] px-3 py-2.5 text-xs text-[#8899aa] leading-relaxed">
-                  Вы перейдёте на страницу оплаты нашего партнёра.{" "}
-                  <span className="text-white">После успешной оплаты вы вернётесь автоматически</span>{" "}
-                  и Pro активируется сразу.
+                  Вы перейдёте на страницу оплаты.{" "}
+                  <span className="text-white">После оплаты бот @ChinaBridgeLID_bot пришлёт код</span>{" "}
+                  для активации PRO.
                 </div>
                 {linkError ? (
-                  <p className="text-xs text-red-400 text-center">Ошибка загрузки. Обновите страницу и попробуйте снова.</p>
+                  <p className="text-xs text-red-400 text-center">Ошибка загрузки. Обновите страницу.</p>
                 ) : payLoading || !paymentLink ? (
                   <div className="py-2.5 bg-[#229ED9]/50 rounded-xl text-white text-sm font-semibold text-center">
                     Загружаем ссылку...
@@ -840,10 +885,11 @@ function PaywallBlock({
                   </a>
                 )}
                 <button onClick={() => setShowTrustStep(false)} className="text-xs text-[#5a7899] hover:text-white text-center">
-                  Отмена
+                  Назад
                 </button>
               </div>
             ) : (
+              /* Step 2: CTA button */
               <>
                 <button
                   onClick={handleProCtaClick}
@@ -853,7 +899,7 @@ function PaywallBlock({
                   {payLoading ? "Подготавливаем оплату..." : linkError ? "Ошибка — обновите страницу" : "Подключить Pro — 490 ₽/мес"}
                 </button>
                 <p className="mt-2 text-[10px] text-[#5a7899] text-center leading-relaxed">
-                  Безопасная оплата через платёжный сервис партнёра. После оплаты Pro активируется автоматически.
+                  Безопасная оплата через платёжный сервис партнёра. После оплаты бот пришлёт код активации.
                 </p>
               </>
             )}

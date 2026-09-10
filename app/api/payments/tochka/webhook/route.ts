@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       WHERE operation_id = ${operationId}
     `;
 
-    // 3. If APPROVED — check if this is a billing plan payment and activate tenant
+    // 3. If APPROVED — check billing plan payment and activate tenant
     if (status === "APPROVED") {
       const rows = await sql`
         SELECT tenant_id, plan, amount
@@ -91,21 +91,84 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Telegram notification to manager via pay bot
+      // 4. Handle calculator subscription: send Telegram verification code
+      const pendingRows = await sql`
+        SELECT telegram_username FROM calc_pending_payments
+        WHERE operation_id = ${operationId} AND status = 'pending'
+        LIMIT 1
+      ` as Array<{ telegram_username: string | null }>;
+
+      if (pendingRows.length > 0) {
+        const telegramUsername = pendingRows[0].telegram_username;
+        const until = new Date(Date.now() + 30 * 86400_000);
+
+        // Generate 6-digit code
+        const authCode = String(Math.floor(100000 + Math.random() * 900000));
+        const codeExpires = new Date(Date.now() + 30 * 60_000); // 30 min
+
+        await sql`
+          UPDATE calc_pending_payments
+          SET auth_code = ${authCode},
+              auth_code_expires = ${codeExpires.toISOString()},
+              subscribed_until  = ${until.toISOString()},
+              status = 'code_sent'
+          WHERE operation_id = ${operationId}
+        `;
+
+        // Also write to calc_subscriptions so check-paid works on any device
+        if (telegramUsername) {
+          await sql`
+            INSERT INTO calc_subscriptions (client_id, client_email, subscribed_until, amount_rub)
+            VALUES (${"tg:" + telegramUsername}, ${telegramUsername}, ${until.toISOString()}, 490)
+            ON CONFLICT (client_id)
+            DO UPDATE SET subscribed_until = EXCLUDED.subscribed_until
+          `.catch(() => null);
+        }
+
+        // Send code via @ChinaBridgeLID_bot if telegram username provided
+        if (telegramUsername) {
+          const lidToken = process.env.CHINABRIDGE_LID_BOT_TOKEN;
+          if (lidToken) {
+            const msgText = [
+              `🎉 <b>Оплата прошла успешно!</b>`,
+              ``,
+              `Ваш код для активации PRO-доступа к калькулятору:`,
+              ``,
+              `<code>${authCode}</code>`,
+              ``,
+              `Введите этот код на странице оплаты. Код действует 30 минут.`,
+            ].join('\n');
+            await fetch(`https://api.telegram.org/bot${lidToken}/sendMessage`, {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({
+                chat_id:    "@" + telegramUsername.replace(/^@/, ""),
+                text:       msgText,
+                parse_mode: 'HTML',
+              }),
+              signal: AbortSignal.timeout(8000),
+            }).catch(() => null);
+          }
+        }
+      }
+
+      // 5. Telegram notification to manager
       const tgToken  = process.env.TELEGRAM_PAY_BOT_TOKEN ?? process.env.TELEGRAM_BOT_TOKEN;
       const tgChatId = process.env.TELEGRAM_PAY_CHAT_ID ?? process.env.TELEGRAM_MANAGER_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
       if (tgToken && tgChatId) {
-        const amountRub = payment?.amount ? `${Number(payment.amount).toLocaleString('ru-RU')} ₽` : '—';
+        const amountRub = payment?.amount ? `${Number(payment.amount).toLocaleString('ru-RU')} ₽` : '490 ₽';
         const plan      = payment?.plan ? String(payment.plan) : 'calculator';
+        const tgUser    = pendingRows?.[0]?.telegram_username ?? '—';
         const text = [
           `💳 <b>Новая оплата!</b>`,
           ``,
           `📦 Тариф: <b>${plan}</b>`,
           `💰 Сумма: <b>${amountRub}</b>`,
+          tgUser !== '—' ? `📱 Telegram: @${tgUser}` : '',
           `🆔 operation_id: <code>${operationId}</code>`,
           ``,
           `✅ Подписка активирована автоматически`,
-        ].join('\n');
+        ].filter(Boolean).join('\n');
         await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
