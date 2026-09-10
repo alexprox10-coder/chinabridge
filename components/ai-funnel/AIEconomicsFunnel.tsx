@@ -801,7 +801,8 @@ function PaywallBlock({
                   <div className="flex items-baseline gap-1.5 flex-wrap">
                     <p className="text-sm font-bold text-white">PRO</p>
                     <span className="text-base font-black text-[#229ED9]">490 ₽</span>
-                    <span className="text-[10px] text-[#8899aa]">/мес</span>
+                    <span className="text-xs text-[#5a7899] line-through">1 990 ₽</span>
+                    <span className="text-[10px] text-[#8899aa]">/мес первый месяц</span>
                   </div>
                   {!isGreen && (
                     <span className="text-[10px] bg-[#229ED9] text-white rounded-full px-2 py-0.5 font-semibold">

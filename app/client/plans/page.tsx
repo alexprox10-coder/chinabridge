@@ -31,7 +31,8 @@ const PLANS = [
     name: "PRO",
     badge: null,
     price: "490 ₽",
-    period: "в месяц",
+    originalPrice: "1 990 ₽",
+    period: "мес · первый месяц",
     description: "Безлимитные расчёты + 10 расчётов бесплатно при регистрации",
     features: [
       "Безлимитные расчёты AI-калькулятора",
@@ -163,12 +164,17 @@ export default function PlansPage() {
             </div>
 
             <div className="mb-4">
-              <span className={`text-2xl font-bold ${plan.highlight ? "text-green-700" : "text-slate-900"}`}>
-                {plan.price}
-              </span>
-              {plan.period && (
-                <span className="text-xs text-slate-500 ml-1">{plan.period}</span>
-              )}
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className={`text-2xl font-bold ${plan.highlight ? "text-green-700" : "text-slate-900"}`}>
+                  {plan.price}
+                </span>
+                {"originalPrice" in plan && plan.originalPrice && (
+                  <span className="text-sm text-slate-400 line-through">{plan.originalPrice as string}</span>
+                )}
+                {plan.period && (
+                  <span className="text-xs text-slate-500">{plan.period}</span>
+                )}
+              </div>
             </div>
 
             <ul className="flex flex-col gap-1.5 mb-4 flex-1">
