@@ -160,25 +160,29 @@ export async function POST(req: NextRequest) {
     if (token && chatId) {
       const name = String(body.name ?? '').trim();
 
-      // Build a clickable "write now" link
-      let writeLink = '';
+      // Normalize phone for links
+      const digits = phone.replace(/\D/g, '');
+      const normalizedPhone = digits.startsWith('8') && digits.length === 11 ? '7' + digits.slice(1) : digits;
+
+      const contactLinks: string[] = [];
       if (telegram) {
         const handle = telegram.replace(/^@/, '');
-        writeLink = `<a href="https://t.me/${handle}">Написать в Telegram</a>`;
-      } else if (phone) {
-        const digits = phone.replace(/\D/g, '');
-        const normalized = digits.startsWith('8') && digits.length === 11 ? '7' + digits.slice(1) : digits;
-        writeLink = `<a href="https://wa.me/${normalized}">Написать в WhatsApp</a>`;
+        contactLinks.push(`<a href="https://t.me/${handle}">✈️ Telegram</a>`);
+      }
+      if (normalizedPhone) {
+        contactLinks.push(`<a href="https://wa.me/${normalizedPhone}">💬 WhatsApp</a>`);
+        contactLinks.push(`<a href="viber://chat?number=%2B${normalizedPhone}">📲 Viber</a>`);
+        contactLinks.push(`<a href="tel:+${normalizedPhone}">📞 Позвонить</a>`);
       }
 
       const lines = [
         `🔔 <b>Лид с калькулятора (${source || 'form'})</b>`,
         ``,
-        name    ? `👤 ${name}`    : '',
-        phone   ? `📞 ${phone}`   : '',
+        name     ? `👤 ${name}`  : '',
+        phone    ? `📱 ${phone}` : '',
         telegram ? `✈️ ${telegram}` : '',
         ``,
-        writeLink ? `⚡ ${writeLink}` : '',
+        contactLinks.length ? `⚡ ${contactLinks.join('  |  ')}` : '',
       ].filter(Boolean).join('\n');
 
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
