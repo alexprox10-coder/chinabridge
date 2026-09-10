@@ -80,7 +80,7 @@ interface FunnelState {
   // Result
   economics:         EconomicsResult | null;
   delivery:          { hasRate: boolean; deliveryRub: number; daysMin?: number; daysMax?: number; pricingRule?: string } | null;
-  deliveryOptions:   Array<{ transport_type: string; label: string; icon: string; deliveryRub: number; costPerUnit: number; daysMin?: number; daysMax?: number; available: boolean }> | null;
+  deliveryOptions:   Array<{ transport_type: string; label: string; icon: string; deliveryRub: number; costPerUnit: number; daysMin?: number; daysMax?: number; available: boolean; pricingRule?: string }> | null;
   selectedDelivery:  string;  // 'truck' | 'air' | 'sea' — default 'truck'
   marketplace_config: { id: string; label: string; tariff_date: string; commission_note: string } | null;
   leadId:            string | null;
