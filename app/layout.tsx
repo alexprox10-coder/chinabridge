@@ -51,18 +51,33 @@ const orgSchema = {
       "url": "https://chinabridge.pro",
       "description": "Импорт товаров из Китая под ключ в Россию и Казахстан. Доставка, таможня, поиск поставщиков для Wildberries и Ozon.",
       "foundingDate": "2019",
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "contactType": "customer service",
-        "availableLanguage": ["Russian"],
-        "email": "info@chinabridge.pro"
-      },
-      "address": {
-        "@type": "PostalAddress",
-        "addressCountry": "RU",
-        "addressLocality": "Благовещенск",
-        "addressRegion": "Амурская область"
-      },
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "availableLanguage": ["Russian", "Chinese"],
+          "url": "https://t.me/ChinaBridgeLID_bot"
+        },
+        {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "availableLanguage": ["Russian"],
+          "email": "info@chinabridge.pro"
+        }
+      ],
+      "address": [
+        {
+          "@type": "PostalAddress",
+          "addressCountry": "RU",
+          "addressLocality": "Благовещенск",
+          "addressRegion": "Амурская область"
+        },
+        {
+          "@type": "PostalAddress",
+          "addressCountry": "CN",
+          "addressLocality": "Гуанчжоу"
+        }
+      ],
       "areaServed": ["RU", "KZ", "BY", "AM"],
       "sameAs": ["https://t.me/chinabridgeline"]
     },
@@ -71,7 +86,12 @@ const orgSchema = {
       "@id": "https://chinabridge.pro/#website",
       "url": "https://chinabridge.pro",
       "name": "ChinaBridge",
-      "publisher": { "@id": "https://chinabridge.pro/#organization" }
+      "publisher": { "@id": "https://chinabridge.pro/#organization" },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://chinabridge.pro/ai-calculator?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     }
   ]
 };
