@@ -67,7 +67,6 @@ export default function Footer() {
               фабрики и доставляем товары в Казахстан и Россию.
             </p>
             <p className="text-xs text-[#8899aa]/60 mb-4">
-              ИП Попков Виталий Михайлович<br />
               ИНН 280114439648
             </p>
             <div className="flex gap-3">
