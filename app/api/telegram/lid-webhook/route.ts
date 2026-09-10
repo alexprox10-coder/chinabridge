@@ -387,31 +387,6 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Forward to manager with context
-  console.log(`[lid-webhook] forwarding msg from ${chatId} to manager ${MANAGER_CHAT_ID}`);
-  const notifRes = await fetch(`https://api.telegram.org/bot${LID_BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: MANAGER_CHAT_ID,
-      text: `💬 <b>Клиент: ${h(firstName)} (${h(username)})</b>\n\n${h(text)}\n\n<i>🤖 AI ответил. ↩️ Ответьте реплаем чтобы переключить на живого менеджера</i>\n📲 ${replyLink}`,
-      parse_mode: "HTML",
-    }),
-  });
-
-  // Save mapping: manager notification message_id → client chat_id
-  try {
-    const notifData = await notifRes.json();
-    if (!notifData?.ok) console.error("[lid-webhook] forward TG error:", JSON.stringify(notifData));
-    if (notifData?.ok && notifData?.result?.message_id) {
-      await sql`
-        INSERT INTO bot_message_map (manager_msg_id, client_chat_id, client_name)
-        VALUES (${notifData.result.message_id}, ${chatId}, ${`${firstName} (${username})`})
-        ON CONFLICT (manager_msg_id) DO NOTHING
-      `;
-    }
-  } catch { /* ignore */ }
-
   return NextResponse.json({ ok: true });
 }
 
