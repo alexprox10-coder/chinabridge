@@ -30,7 +30,7 @@ const PLANS = [
     id: "subscriber",
     name: "PRO",
     badge: null,
-    price: "1 990 ₽",
+    price: "490 ₽",
     period: "в месяц",
     description: "Безлимитные расчёты + 10 расчётов бесплатно при регистрации",
     features: [
@@ -44,7 +44,7 @@ const PLANS = [
       "Поиск товаров — бесплатно",
     ],
     limits: [],
-    cta: { label: "Подключить за 1 990 ₽/мес", href: "", external: false, pay: true },
+    cta: { label: "Подключить за 490 ₽/мес", href: "", external: false, pay: true },
     current: false,
     highlight: false,
     color: "green",
@@ -76,7 +76,7 @@ const VS_COMPETITORS = [
   {
     feature: "Цена",
     competitors: "3 000 – 15 000 ₽/мес",
-    chinabridge: "Бесплатно / 1 990 ₽/мес",
+    chinabridge: "Бесплатно / 490 ₽/мес",
     win: true,
   },
   {
@@ -134,7 +134,7 @@ export default function PlansPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Тарифы</h1>
         <p className="text-slate-500 mt-1">
-          Калькулятор доставки и поиск товаров — бесплатно. AI-калькулятор маржи: 5 расчётов гостю / 10 расчётов после регистрации, далее 1 990 ₽/мес безлимит.
+          Калькулятор доставки и поиск товаров — бесплатно. AI-калькулятор маржи: 5 расчётов гостю / 10 расчётов после регистрации, далее 490 ₽/мес безлимит.
         </p>
       </div>
 
@@ -238,7 +238,7 @@ export default function PlansPage() {
           <p className="text-sm font-semibold text-slate-800">Что бесплатно всегда</p>
           <p className="text-sm text-slate-600 mt-1">
             <strong>Калькулятор доставки</strong> и <strong>Поиск товаров</strong> — без ограничений и без регистрации.
-            Платная подписка (1 990 ₽/мес) распространяется только на AI-калькулятор юнит-экономики после первых 5 расчётов (гость) или 10 расчётов (после регистрации).
+            Платная подписка (490 ₽/мес) распространяется только на AI-калькулятор юнит-экономики после первых 5 расчётов (гость) или 10 расчётов (после регистрации).
           </p>
         </div>
       </div>
