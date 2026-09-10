@@ -1,0 +1,38 @@
+# ChinaBridge
+
+ChinaBridge — сервис организации поставок из Китая в Россию и Казахстан.
+Сайт: https://chinabridge.pro
+
+## Основные направления
+
+- Доставка и консолидация грузов из Китая
+- Импорт и таможенное сопровождение (белый импорт с ГТД)
+- Работа с существующими поставщиками (контроль, инспекция)
+- Поиск и проверка новых поставщиков на 1688 и Alibaba
+- Оплата поставщику в юанях (прямой канал)
+- Импорт для маркетплейсов: Wildberries, Ozon, Kaspi
+
+## AI инструменты
+
+- Калькулятор стоимости доставки: chinabridge.pro/#calculator
+- AI-консультант по импорту: t.me/ChinaBridgeLID_bot
+
+## Основные страницы
+
+- / — Главная, калькулятор стоимости
+- /delivery — Направления и маршруты доставки
+- /delivery/import-electronics-from-china — Электроника из Китая
+- /delivery/cargo-guangzhou-almaty — Гуанчжоу → Алматы
+- /delivery/white-import-wb-ozon — Белый импорт для WB и Ozon
+- /delivery/pay-supplier-china — Оплата поставщику в юанях
+- /delivery/cargo-china-moscow — Доставка в Москву
+- /services — Все услуги
+- /faq — Ответы на частые вопросы
+
+## Контакты
+
+- Telegram AI-менеджер: https://t.me/ChinaBridgeLID_bot
+- Telegram канал: https://t.me/chinabridgeline
+
+> Для актуальных тарифов и расчётов используйте калькулятор на сайте:
+> https://chinabridge.pro/#calculator

@@ -66,6 +66,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: "https://chinabridge.pro/import/equipment", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
     { url: "https://chinabridge.pro/import/lighting", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
     { url: "https://chinabridge.pro/import/components", lastModified: new Date(), changeFrequency: "monthly", priority: 0.85 },
+    // SEO landing pages — добавлено 2026-09-10
+    { url: "https://chinabridge.pro/delivery/import-electronics-from-china", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    { url: "https://chinabridge.pro/delivery/cargo-guangzhou-almaty", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    { url: "https://chinabridge.pro/delivery/white-import-wb-ozon", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    { url: "https://chinabridge.pro/delivery/pay-supplier-china", lastModified: new Date(), changeFrequency: "monthly", priority: 0.95 },
+    { url: "https://chinabridge.pro/delivery/cargo-china-moscow", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     ...articleUrls,
   ];
 }
