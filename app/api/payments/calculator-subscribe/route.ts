@@ -1,11 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createTochkaPayment } from "@/lib/tochka/client";
+import { verifyClientToken } from "@/lib/client-portal/auth";
 import { neon } from "@neondatabase/serverless";
 
 export const runtime     = "nodejs";
 export const maxDuration = 30;
 
-const PRICE_RUB = 490;
+const PRICE_PROMO   = 490;
+const PRICE_REGULAR = 1990;
+
+async function getPriceForClient(clientToken: string | undefined): Promise<number> {
+  if (!clientToken || !process.env.DATABASE_URL) return PRICE_PROMO;
+  const session = await verifyClientToken(clientToken);
+  if (!session?.clientId) return PRICE_PROMO;
+  try {
+    const sql = neon(process.env.DATABASE_URL);
+    const rows = await sql`
+      SELECT 1 FROM calc_subscriptions
+      WHERE client_id = ${session.clientId}
+      LIMIT 1
+    `;
+    return rows.length > 0 ? PRICE_REGULAR : PRICE_PROMO;
+  } catch {
+    return PRICE_PROMO;
+  }
+}
 
 const CREATE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS calc_pending_payments (
@@ -21,7 +40,8 @@ const CREATE_TABLE_SQL = `
 
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin") ?? "https://chinabridge.pro";
-  const isLoggedIn = !!req.cookies.get("cb_client")?.value;
+  const clientToken = req.cookies.get("cb_client")?.value;
+  const isLoggedIn = !!clientToken;
 
   let telegram = "";
   try {
@@ -29,15 +49,22 @@ export async function POST(req: NextRequest) {
     telegram = (body?.telegram ?? "").trim().replace(/^@/, "");
   } catch { /* no body — anonymous payment */ }
 
+  const priceRub = await getPriceForClient(clientToken);
+  const isRenewal = priceRub === PRICE_REGULAR;
+
   const redirectUrl = `${origin}/calculator-success`;
   const failUrl = isLoggedIn
     ? `${origin}/client/plans?pay=cancel`
     : `${origin}/ai-calculator?pay=cancel`;
 
+  const purpose = isRenewal
+    ? `Продление подписки AI-калькулятор маржи ChinaBridge — ${priceRub} ₽/мес`
+    : `Подписка на AI-калькулятор маржи ChinaBridge — первый месяц ${priceRub} ₽`;
+
   try {
     const payment = await createTochkaPayment({
-      amount:      PRICE_RUB,
-      purpose:     "Подписка на AI-калькулятор маржи ChinaBridge — 1 месяц",
+      amount:      priceRub,
+      purpose,
       tenantId:    "tenant-chinabridge",
       plan:        "calculator",
       redirectUrl,
