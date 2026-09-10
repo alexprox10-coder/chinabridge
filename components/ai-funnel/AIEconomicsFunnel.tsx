@@ -667,22 +667,20 @@ function PaywallBlock({
   const [showTrustStep, setShowTrustStep] = useState(false);
   const [paymentLink,   setPaymentLink]   = useState<string | null>(null);
   const [linkError,     setLinkError]     = useState(false);
-  // Telegram capture step
-  const [tgInput,       setTgInput]       = useState("");
-  const [tgSubmitted,   setTgSubmitted]   = useState(false);
-  const [tgError,       setTgError]       = useState("");
+  // Detect logged-in state from cookie
+  const isLoggedIn = typeof document !== "undefined"
+    ? document.cookie.split(";").some(c => c.trim().startsWith("cb_client="))
+    : false;
 
-  function fetchPaymentLink(telegram: string) {
+  // Pre-fetch payment link on mount (only for logged-in users going to pay directly)
+  useEffect(() => {
+    if (!isLoggedIn) return; // anon users go to /client/login first
+    let cancelled = false;
     setPayLoading(true);
-    setLinkError(false);
-    const tg = telegram.trim().replace(/^@/, "");
-    fetch("/api/payments/calculator-subscribe", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ telegram: tg }),
-    })
+    fetch("/api/payments/calculator-subscribe", { method: "POST" })
       .then(r => r.json())
       .then(data => {
+        if (cancelled) return;
         if (data.ok && data.paymentLink) {
           try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
           setPaymentLink(data.paymentLink);
@@ -690,17 +688,11 @@ function PaywallBlock({
           setLinkError(true);
         }
       })
-      .catch(() => setLinkError(true))
-      .finally(() => setPayLoading(false));
-  }
-
-  function handleTgSubmit() {
-    const tg = tgInput.trim();
-    if (!tg) { setTgError("Введите ваш Telegram @username"); return; }
-    setTgError("");
-    setTgSubmitted(true);
-    fetchPaymentLink(tg);
-  }
+      .catch(() => { if (!cancelled) setLinkError(true); })
+      .finally(() => { if (!cancelled) setPayLoading(false); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleProCtaClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -830,44 +822,38 @@ function PaywallBlock({
               <span>✓ WB, Ozon, Kaspi</span>
             </div>
 
-            {/* Step 1: Telegram input (always first) */}
-            {!tgSubmitted ? (
+            {/* Anon: registration CTA */}
+            {!isLoggedIn ? (
               <div className="flex flex-col gap-2">
-                <div className="rounded-xl bg-[#0b1a2e] border border-[#243a5e] px-3 py-2.5">
-                  <p className="text-xs text-white font-semibold mb-1">Укажите ваш Telegram</p>
-                  <p className="text-[10px] text-[#8899aa]">После оплаты бот пришлёт код активации — работает на любом устройстве.</p>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="@username"
-                    value={tgInput}
-                    onChange={e => { setTgInput(e.target.value); setTgError(""); }}
-                    onKeyDown={e => e.key === "Enter" && handleTgSubmit()}
-                    className="flex-1 px-3 py-2.5 bg-[#0B1F3A] border border-[#243a5e] focus:border-[#229ED9]/60 rounded-xl text-white text-sm placeholder:text-[#5a7899] outline-none"
-                  />
-                  <button
-                    onClick={handleTgSubmit}
-                    className="px-4 py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl transition-colors"
-                  >
-                    →
-                  </button>
-                </div>
-                {tgError && <p className="text-xs text-red-400">{tgError}</p>}
-                <button
-                  onClick={() => { setTgSubmitted(true); fetchPaymentLink(""); }}
-                  className="text-[10px] text-[#5a7899] hover:text-[#8899aa] text-center underline"
+                <a
+                  href="/client/login?from=/ai-calculator"
+                  className="block w-full py-2.5 bg-[#00A86B] hover:bg-[#009560] text-white text-sm font-semibold rounded-xl text-center transition-colors"
+                  onClick={() => analytics.paywallProClicked?.()}
                 >
-                  Пропустить (доступ только на этом устройстве)
-                </button>
+                  Зарегистрироваться бесплатно →
+                </a>
+                <p className="text-[10px] text-[#5a7899] text-center">
+                  Бесплатно · 10 расчётов в подарок · Личный кабинет
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex-1 h-px bg-[#1e3a5f]" />
+                  <span className="text-[10px] text-[#5a7899]">или</span>
+                  <div className="flex-1 h-px bg-[#1e3a5f]" />
+                </div>
+                <a
+                  href="/client/login?from=/ai-calculator"
+                  className="text-xs text-[#8899aa] hover:text-white text-center underline"
+                >
+                  Уже есть аккаунт? Войти
+                </a>
               </div>
             ) : showTrustStep ? (
-              /* Step 3: Trust step — confirm redirect */
+              /* Logged-in: trust step before redirect */
               <div className="flex flex-col gap-2">
                 <div className="rounded-xl bg-[#0b1a2e] border border-[#243a5e] px-3 py-2.5 text-xs text-[#8899aa] leading-relaxed">
                   Вы перейдёте на страницу оплаты.{" "}
-                  <span className="text-white">После оплаты бот @ChinaBridgeLID_bot пришлёт код</span>{" "}
-                  для активации PRO.
+                  <span className="text-white">После оплаты PRO активируется автоматически</span>{" "}
+                  в вашем личном кабинете.
                 </div>
                 {linkError ? (
                   <p className="text-xs text-red-400 text-center">Ошибка загрузки. Обновите страницу.</p>
@@ -889,7 +875,7 @@ function PaywallBlock({
                 </button>
               </div>
             ) : (
-              /* Step 2: CTA button */
+              /* Logged-in: CTA */
               <>
                 <button
                   onClick={handleProCtaClick}
@@ -899,7 +885,7 @@ function PaywallBlock({
                   {payLoading ? "Подготавливаем оплату..." : linkError ? "Ошибка — обновите страницу" : "Подключить Pro — 490 ₽/мес"}
                 </button>
                 <p className="mt-2 text-[10px] text-[#5a7899] text-center leading-relaxed">
-                  Безопасная оплата через платёжный сервис партнёра. После оплаты бот пришлёт код активации.
+                  Безопасная оплата через платёжный сервис. PRO активируется в личном кабинете.
                 </p>
               </>
             )}
