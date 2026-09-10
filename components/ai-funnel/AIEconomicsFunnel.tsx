@@ -2610,29 +2610,33 @@ export default function AIEconomicsFunnel() {
                 {!showAIConsultant ? (
                   <button
                     onClick={() => { setShowAIConsultant(true); analytics.aiFunnelImportClick?.(); analytics.consultantStarted?.(); }}
-                    className="w-full rounded-2xl border-2 border-[#00A86B]/60 bg-gradient-to-br from-[#00180e] to-[#001008] hover:border-[#00A86B] transition-all active:scale-[0.98] overflow-hidden group"
-                    style={{ boxShadow: "0 0 24px rgba(0,168,107,0.18), 0 4px 16px rgba(0,0,0,0.5)" }}
+                    className="w-full rounded-2xl border-2 border-[#00A86B] bg-gradient-to-br from-[#00200f] to-[#001208] hover:from-[#002a14] hover:to-[#001810] transition-all active:scale-[0.98] overflow-hidden group"
+                    style={{ boxShadow: "0 0 32px rgba(0,168,107,0.35), 0 4px 20px rgba(0,0,0,0.6)" }}
                   >
                     {/* Header row */}
-                    <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+                    <div className="flex items-center gap-3 px-5 pt-5 pb-3">
                       <div className="relative shrink-0">
-                        <div className="w-11 h-11 rounded-full bg-[#00A86B]/20 border-2 border-[#00A86B]/50 flex items-center justify-center text-xl">
+                        <div className="w-14 h-14 rounded-full bg-[#00A86B]/25 border-2 border-[#00A86B] flex items-center justify-center text-2xl">
                           🤖
                         </div>
-                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#00A86B] border-2 border-[#001008]">
+                        <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-[#00A86B] border-2 border-[#001008]">
                           <span className="absolute inset-0 rounded-full bg-[#00A86B] animate-ping opacity-75" />
                         </span>
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-bold text-white leading-tight">Алексей · AI-консультант</p>
-                        <p className="text-[11px] text-[#00A86B] font-medium">● онлайн · отвечает мгновенно</p>
+                        <p className="text-base font-bold text-white leading-tight">Алексей · AI-консультант</p>
+                        <p className="text-xs text-[#00A86B] font-semibold mt-0.5">● онлайн · отвечает мгновенно</p>
+                        <p className="text-[11px] text-[#8899aa] mt-0.5">Задайте любой вопрос по товару</p>
                       </div>
-                      <span className="text-[#00A86B] text-xl group-hover:translate-x-1 transition-transform">→</span>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-[#00A86B] text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                        <span className="text-[10px] text-[#00A86B] font-semibold">бесплатно</span>
+                      </div>
                     </div>
-                    {/* Preview message */}
-                    <div className="mx-4 mb-4 rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 text-left">
-                      <p className="text-xs text-[#ccddee] leading-relaxed">
-                        Помогу разобраться с этим товаром: расчёт поставки, схема закупки, риски. С чего начнём?
+                    {/* Preview message bubble */}
+                    <div className="mx-5 mb-5 rounded-xl bg-[#00A86B]/10 border border-[#00A86B]/30 px-4 py-3 text-left">
+                      <p className="text-sm text-white leading-relaxed">
+                        Помогу разобраться с этим товаром: расчёт поставки, схема закупки, риски. <span className="text-[#00A86B] font-semibold">С чего начнём?</span>
                       </p>
                     </div>
                   </button>
@@ -2643,7 +2647,7 @@ export default function AIEconomicsFunnel() {
                     onClose={() => setShowAIConsultant(false)}
                   />
                 )}
-                <p className="text-center text-xs text-[#5a7899] -mt-3">AI отвечает мгновенно · менеджер за 5 минут</p>
+                <p className="text-center text-xs text-[#5a7899] -mt-2">AI отвечает мгновенно · если нужен менеджер — одна кнопка в чате</p>
 
                 {/* SECONDARY CTA — Telegram direct */}
                 <a
@@ -2651,33 +2655,8 @@ export default function AIEconomicsFunnel() {
                   target="_blank" rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-2 py-3 border border-[#1e3a5e] hover:border-[#00A86B]/40 text-[#8899aa] hover:text-white font-semibold rounded-2xl transition-all text-sm"
                 >
-                  🚀 Привезти этот товар → Telegram
+                  🚀 Написать напрямую в Telegram
                 </a>
-
-                {/* Quick phone capture */}
-                {previewPhoneDone ? (
-                  <div className="rounded-xl border border-[#00A86B]/30 bg-[#00A86B]/10 p-4 text-center">
-                    <p className="text-[#00A86B] font-semibold text-sm">✅ Номер принят! Менеджер перезвонит в течение 5 минут</p>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-[#1a3a5e] bg-[#071525] p-4">
-                    <p className="text-sm font-semibold text-white mb-0.5">📞 Хотите привезти этот товар?</p>
-                    <p className="text-xs text-[#8899aa] mb-3">Оставьте номер — менеджер перезвонит и рассчитает поставку под ключ</p>
-                    <div className="flex gap-2">
-                      <input type="tel" value={previewPhone} onChange={e => setPreviewPhone(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter") handlePreviewPhone(); }}
-                        placeholder="+7 (999) 000-00-00"
-                        className="flex-1 min-w-0 bg-[#0B1F3A] border border-[#243a5e] focus:border-[#4a8fff] rounded-xl px-3 py-3 text-sm placeholder:text-[#556677] outline-none transition-colors text-white"
-                      />
-                      <button onClick={handlePreviewPhone}
-                        disabled={previewPhone.replace(/\D/g, '').length < 10 || previewPhoneSubmitting}
-                        className="bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white font-bold px-5 rounded-xl text-sm shrink-0 transition active:scale-95">
-                        {previewPhoneSubmitting ? "..." : "Позвоните мне"}
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-[#445566] mt-2">Бесплатно · ответим за 5 минут</p>
-                  </div>
-                )}
 
           {/* ── RISK BLOCK + PDF CTA ─────────────────────────────────── */}
           {supplierExists !== true ? (
