@@ -11,20 +11,21 @@ function escapeNonAscii(json: string): string {
   );
 }
 
-async function post(url: string, payload: unknown): Promise<void> {
+async function post(url: string, payload: unknown, ascii = false): Promise<void> {
   const secret = process.env.N8N_WEBHOOK_SECRET ?? "";
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
+    const json = JSON.stringify(payload);
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(secret ? { "x-webhook-secret": secret } : {}),
       },
-      body: escapeNonAscii(JSON.stringify(payload)),
+      body: ascii ? escapeNonAscii(json) : json,
       signal: controller.signal,
     });
 
@@ -45,7 +46,7 @@ export async function sendLead(lead: Lead): Promise<void> {
   await post(url, {
     event: "lead.created",
     lead,
-  });
+  }, true); // ascii=true for legacy lead webhook
 }
 
 // Called from AI chat orchestrator (fire-and-forget)

@@ -97,8 +97,15 @@ export async function POST(req: NextRequest) {
         console.error("[ai-consultant] createLead failed", e);
       }
 
-      // n8n webhook
-      await sendLeadToWebhook(state.leadData as any, sid).catch(() => {});
+      // n8n webhook — override source/priority, send product_name from ctx (not leadData)
+      const score = result.leadScore ?? 0;
+      const webhookLead = {
+        ...state.leadData,
+        source:   "ai_consultant",
+        priority: score >= 70 ? "HOT" : score >= 40 ? "WARM" : "COLD",
+        product:  ctx.product_name,
+      };
+      await sendLeadToWebhook(webhookLead as any, sid).catch(() => {});
     }
 
     addMessage(state, "assistant", result.message);
