@@ -47,7 +47,7 @@ export default function AIConsultantPanel({ calcContext, sessionId, onClose }: P
         body: JSON.stringify({
           sessionId,
           message: text,
-          calcContext: messages.length === 0 ? calcContext : undefined,
+          calcContext, // always send — Vercel Lambda may be a cold instance
         }),
       });
       const data = await res.json();
