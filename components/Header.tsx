@@ -21,10 +21,7 @@ const pageLinks = [
 ];
 
 const toolLinks = [
-  { icon: "🧮", label: "Калькулятор доставки", href: "/delivery-calculator" },
   { icon: "🤖", label: "AI-калькулятор маржи", href: "/ai-calculator" },
-  { icon: "🔍", label: "Поиск товаров",        href: "/product-finder" },
-  { icon: "🏭", label: "Поиск поставщиков",    href: "/supplier-finder" },
   { icon: "📊", label: "Аудит импорта",        href: "/import-audit" },
   { icon: "📚", label: "База знаний",          href: "/knowledge" },
 ];
