@@ -2968,12 +2968,14 @@ export default function AIEconomicsFunnel() {
                 <p className="text-xs text-[#8899aa] mb-3">Зафиксируем расчёт и предложим схему доставки с точными ценами</p>
               </>
             )}
-            <button
-              onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict }); analytics.quoteRequested?.({ verdict: ec.verdict }); go("contact"); }}
-              className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank" rel="noopener noreferrer"
+              onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict }); analytics.quoteRequested?.({ verdict: ec.verdict }); }}
+              className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm flex items-center justify-center gap-2"
             >
-              {ec.verdict === "red" ? "📩 Получить решение от менеджера" : ec.verdict === "yellow" ? "📩 Получить план оптимизации" : "📩 Запустить импорт — получить расчёт в TG"}
-            </button>
+              {ec.verdict === "red" ? "📩 Написать AI-консультанту" : ec.verdict === "yellow" ? "📩 Написать AI-консультанту" : "📩 Написать AI-консультанту"}
+            </a>
           </div>
 
           {/* Telegram drip funnel CTA */}
@@ -3002,53 +3004,6 @@ export default function AIEconomicsFunnel() {
         </div>
       )}
 
-      {/* ── CONTACT ────────────────────────────────────────────────────────────── */}
-      {s.step === "contact" && (
-        <div className="flex flex-col gap-5">
-          <div>
-            <button onClick={() => go("preview")} className="text-xs text-[#8899aa] hover:text-white flex items-center gap-1 mb-3">
-              ← К результату
-            </button>
-            <h2 className="text-xl font-bold text-white mb-1">Как с вами связаться?</h2>
-            <p className="text-sm text-[#8899aa]">Пришлём полный расчёт и свяжемся за 15 минут</p>
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
-              Telegram <span className="text-[#00A86B]">*</span>
-            </label>
-            <input type="text" value={s.telegram} onChange={e => setS(p => ({ ...p, telegram: e.target.value }))}
-              placeholder="@username" autoFocus className={inp()} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-[#8899aa] block mb-1.5">WhatsApp</label>
-            <input type="tel" value={s.whatsapp} onChange={e => setS(p => ({ ...p, whatsapp: e.target.value }))}
-              placeholder="+7 (999) 000-00-00" className={inp()} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Телефон</label>
-            <input type="tel" value={s.phone} onChange={e => setS(p => ({ ...p, phone: e.target.value }))}
-              placeholder="+7 (999) 000-00-00" className={inp()} />
-            <p className="text-[11px] text-[#8899aa] mt-1">* Telegram, WhatsApp или телефон — что удобнее</p>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Имя</label>
-            <input type="text" value={s.name} onChange={e => setS(p => ({ ...p, name: e.target.value }))}
-              placeholder="Как вас зовут?" className={inp()} />
-          </div>
-
-          {s.error && <p className="text-red-400 text-xs">{s.error}</p>}
-
-          <button onClick={handleContactSubmit}
-            className="w-full py-3.5 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all">
-            Отправить и получить расчёт
-          </button>
-          <p className="text-center text-xs text-[#8899aa]">
-            Нажимая кнопку, вы соглашаетесь с{" "}
-            <a href="/privacy" className="text-[#00A86B] hover:underline">политикой конфиденциальности</a>
-          </p>
-        </div>
-      )}
 
       {/* ── SUCCESS ────────────────────────────────────────────────────────────── */}
       {s.step === "success" && ec && (
