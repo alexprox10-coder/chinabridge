@@ -171,8 +171,7 @@ export async function POST(req: NextRequest) {
       }
       if (normalizedPhone) {
         contactLinks.push(`<a href="https://wa.me/${normalizedPhone}">💬 WhatsApp</a>`);
-        contactLinks.push(`<a href="viber://chat?number=%2B${normalizedPhone}">📲 Viber</a>`);
-        contactLinks.push(`<a href="tel:+${normalizedPhone}">📞 Позвонить</a>`);
+contactLinks.push(`<a href="tel:+${normalizedPhone}">📞 Позвонить</a>`);
       }
 
       const lines = [
