@@ -21,11 +21,9 @@ const pageLinks = [
 
 const toolLinks = [
   { label: "🇰🇿 Доставка для Kaspi.kz", href: "/kaspi-china" },
-  { label: "🧮 Калькулятор доставки",    href: "/delivery-calculator" },
-  { label: "🔍 AI Поиск товаров",        href: "/product-finder" },
-  { label: "🏭 AI Поиск поставщиков",    href: "/supplier-finder" },
-  { label: "📚 База знаний",             href: "/knowledge" },
-  { label: "🤝 Партнёрская программа",   href: "/partners" },
+  { label: "🤖 AI-калькулятор маржи",   href: "/ai-calculator" },
+  { label: "📚 База знаний",            href: "/knowledge" },
+  { label: "🤝 Партнёрская программа",  href: "/partners" },
 ];
 
 const importLinks = [

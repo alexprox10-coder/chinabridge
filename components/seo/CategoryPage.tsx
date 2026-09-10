@@ -199,10 +199,10 @@ export function CategoryPage({ data }: { data: CategoryPageData }) {
             <p className="text-[#8899aa] mb-6">Менеджер ответит за 15 минут. Первая консультация бесплатно.</p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link
-                href="/signup"
+                href="/ai-calculator"
                 className="px-8 py-3.5 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all"
               >
-                Начать 14 дней бесплатно
+                Рассчитать маржу бесплатно →
               </Link>
               <a
                 href="https://t.me/chinabridge"

@@ -440,23 +440,15 @@ export function KnowledgeUI() {
               </div>
             </div>
 
-            {/* Quick tool links */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { icon: "🧮", label: "Калькулятор доставки", desc: "Рассчитайте стоимость", href: "/delivery-calculator" },
-                { icon: "🔍", label: "Поиск товаров",        desc: "AI находит варианты",  href: "/product-finder" },
-                { icon: "🏭", label: "Поиск поставщиков",    desc: "Supplier Score",        href: "/supplier-finder" },
-              ].map(tool => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className="card-glass rounded-xl p-4 hover:border-[#00A86B]/40 border border-transparent transition-all group"
-                >
-                  <div className="text-2xl mb-2">{tool.icon}</div>
-                  <p className="text-white text-sm font-medium group-hover:text-[#00A86B] transition-colors">{tool.label}</p>
-                  <p className="text-[#8899aa] text-xs mt-0.5">{tool.desc}</p>
-                </Link>
-              ))}
+            {/* AI Calculator CTA */}
+            <div className="card-glass rounded-xl p-4 border border-[#00A86B]/20">
+              <Link href="/ai-calculator" className="flex items-center gap-3 group">
+                <div className="text-2xl">🤖</div>
+                <div>
+                  <p className="text-white text-sm font-medium group-hover:text-[#00A86B] transition-colors">AI-калькулятор маржи</p>
+                  <p className="text-[#8899aa] text-xs mt-0.5">Юнит-экономика из Китая за 15 сек</p>
+                </div>
+              </Link>
             </div>
           </>
         )}
@@ -597,10 +589,10 @@ export function KnowledgeUI() {
               Написать в Telegram
             </a>
             <Link
-              href="/signup"
+              href="/ai-calculator"
               className="px-4 py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-white text-sm rounded-xl transition-all hover:bg-white/5"
             >
-              Начать 14 дней бесплатно
+              Открыть AI-калькулятор →
             </Link>
           </div>
         </div>
