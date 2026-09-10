@@ -452,11 +452,9 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
         <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide">
           P&amp;L · {ec.quantity} шт · курс {cnyRate.toFixed(1)} ₽/¥
         </p>
-        {tariffDate && (
-          <span className="text-[10px] text-[#8899aa] border border-[#243a5e] rounded px-1.5 py-0.5">
-            тарифы от {tariffDate}
-          </span>
-        )}
+        <span className="text-[10px] text-[#5a7899] border border-[#243a5e] rounded px-1.5 py-0.5">
+          {tariffDate ? `📅 тарифы актуальны на ${tariffDate}` : "Дата обновления не указана"}
+        </span>
       </div>
       {rows.map(([l, v, bold, hint]) => (
         <div key={l as string} className={`flex justify-between px-4 py-2 border-b border-[#243a5e]/40 last:border-0 gap-3 ${bold ? "bg-[#0B1F3A]" : ""}`}>
@@ -721,10 +719,10 @@ function PaywallBlock({
             ))}
           </div>
           <h2 className="text-lg font-bold text-white leading-tight">
-            Вы проверили {usedCount} {usedCount === 1 ? "товар" : usedCount < 5 ? "товара" : "товаров"} бесплатно
+            Вы проверили {usedCount} {usedCount === 1 ? "товар" : usedCount < 5 ? "товара" : "товаров"}
           </h2>
           <p className="text-xs text-[#8899aa] mt-1 leading-relaxed">
-            Выберите: привезти текущий товар бесплатно через менеджера — или подключить PRO и анализировать сколько угодно
+            Продолжайте анализировать товары и сохраняйте результаты в одном рабочем пространстве.
           </p>
           <div className="mt-2 flex items-center gap-1.5">
             <span className="text-[10px] text-[#00A86B]">●</span>
@@ -806,16 +804,16 @@ function PaywallBlock({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#8899aa] mt-0.5">Рабочее место для экономики SKU — безлимит, история, сравнение</p>
+                <p className="text-xs text-[#8899aa] mt-0.5">Рабочее место для анализа товаров — история, целевая цена, сценарии</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-[#8899aa] mb-3">
-              <span>✓ Безлимит + история</span>
-              <span>✓ Сравнение товаров</span>
-              <span>✓ AI-анализ 1688/Alibaba</span>
-              <span>✓ PDF-отчёт по SKU</span>
-              <span>✓ WB, Ozon, Kaspi</span>
+              <span>✓ 100 AI-анализов/мес</span>
+              <span>✓ История расчётов</span>
+              <span>✓ Сохранённые товары</span>
               <span>✓ Целевая цена закупки</span>
+              <span>✓ Сценарии экономики</span>
+              <span>✓ WB, Ozon, Kaspi</span>
             </div>
 
             {/* Trust step — shown after first click, before redirect */}
@@ -886,8 +884,10 @@ const EMPTY_CORRECTION: CorrectionData = {
 };
 
 export default function AIEconomicsFunnel() {
-  const startedRef    = useRef(false);
-  const handleCalcRef = useRef<((overrides?: { extractedData?: ExtractedProduct | null; marketplace?: string; city_to?: string; country_to?: string; salePrice?: string; }) => Promise<void>) | null>(null);
+  const startedRef       = useRef(false);
+  const handleCalcRef    = useRef<((overrides?: { extractedData?: ExtractedProduct | null; marketplace?: string; city_to?: string; country_to?: string; salePrice?: string; }) => Promise<void>) | null>(null);
+  const calcContainerRef = useRef<HTMLDivElement>(null);
+  const calcVisibleFired = useRef(false);
 
   const [s, setS] = useState<FunnelState>({
     step:              "input",
@@ -980,6 +980,22 @@ export default function AIEconomicsFunnel() {
   // Track calculator page open (fired once on mount)
   useEffect(() => {
     analytics.calculatorOpen();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Track when calculator enters viewport (fires once)
+  useEffect(() => {
+    const el = calcContainerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !calcVisibleFired.current) {
+        calcVisibleFired.current = true;
+        analytics.calculatorVisible?.();
+        obs.disconnect();
+      }
+    }, { threshold: 0.3 });
+    obs.observe(el);
+    return () => obs.disconnect();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1086,9 +1102,13 @@ export default function AIEconomicsFunnel() {
 
   // Track funnel step entry for analytics
   useEffect(() => {
-    if (s.step === "preview" && ec) analytics.aiFunnelPreviewShown({ verdict: ec.verdict });
+    if (s.step === "preview" && ec) {
+      analytics.aiFunnelPreviewShown({ verdict: ec.verdict });
+      analytics.consultantShown?.();
+    }
     if (s.step === "contact") {
       analytics.aiFunnelContactOpen();
+      analytics.contactFormShown?.();
       analytics.registerStart({ source: "contact_form" });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1143,6 +1163,7 @@ export default function AIEconomicsFunnel() {
     if (!isPaidPro && calcCount >= effectiveLimit) {
       setShowPaywall(true);
       analytics.paywallShown?.({ count: calcCount, verdict: s.economics?.verdict ?? undefined });
+      analytics.freeLimitReached?.({ count: calcCount });
       return;
     }
 
@@ -1262,7 +1283,7 @@ export default function AIEconomicsFunnel() {
   // ── URL / Description submit ────────────────────────────────────────────────
 
   async function handleUrlSubmit() {
-    if (!isPaidPro && calcCount >= effectiveLimit) { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount, verdict: s.economics?.verdict ?? undefined }); return; }
+    if (!isPaidPro && calcCount >= effectiveLimit) { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount, verdict: s.economics?.verdict ?? undefined }); analytics.freeLimitReached?.({ count: calcCount }); return; }
 
     if (!startedRef.current) { analytics.aiFunnelStart(); analytics.unitEconomicsOpen(); analytics.calculatorStart(); startedRef.current = true; }
     const url = s.urlInput.trim();
@@ -1506,7 +1527,9 @@ export default function AIEconomicsFunnel() {
 
       analytics.aiFunnelLeadCreated({ priority: data.priority });
       analytics.leadCreated({ source: "contact_form" });
+      analytics.contactSubmitted?.({ source: "contact_form" });
       analytics.saveAnalysisClicked();
+      if (data.priority === "HOT") analytics.hotLeadCreated?.({ score: 70 });
       // Mark as registered when they complete the contact form
       if (!isRegistered) {
         localStorage.setItem('cb_registered', 'true');
@@ -1757,7 +1780,7 @@ export default function AIEconomicsFunnel() {
         </div>
       </div>
     )}
-    <div className="card-glass rounded-2xl p-6 md:p-8">
+    <div ref={calcContainerRef} className="card-glass rounded-2xl p-6 md:p-8">
       {/* Progress */}
       {s.step !== "success" && (
         <div className="flex items-center gap-3 mb-7">
@@ -2483,7 +2506,7 @@ export default function AIEconomicsFunnel() {
                 {/* AI CONSULTANT — primary conversion block */}
                 {!showAIConsultant ? (
                   <button
-                    onClick={() => { setShowAIConsultant(true); analytics.aiFunnelImportClick?.(); }}
+                    onClick={() => { setShowAIConsultant(true); analytics.aiFunnelImportClick?.(); analytics.consultantStarted?.(); }}
                     className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-bold rounded-2xl transition-all text-base shadow-lg shadow-[#00A86B]/25 active:scale-[0.98]"
                   >
                     🤖 Получить консультацию AI
@@ -2721,6 +2744,25 @@ export default function AIEconomicsFunnel() {
               </div>
             )}
 
+            {/* Target Purchase Price — prominent callout BEFORE P&L table */}
+            {ec.target_price && (() => {
+              const tp = ec.target_price;
+              const val = `${Number(tp.max_purchase_price_cny).toFixed(1)} ¥`;
+              return (
+                <div
+                  onClick={() => analytics.targetPriceViewed()}
+                  className="rounded-xl border-2 border-[#F5A623]/40 bg-[#F5A623]/8 px-4 py-3.5 flex items-center gap-3 cursor-default"
+                >
+                  <div className="text-2xl shrink-0">🎯</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#F5A623]">Максимальная цена закупки</p>
+                    <p className="text-xl font-black text-white leading-tight">{val}</p>
+                    <p className="text-[10px] text-[#8899aa] mt-0.5">При цене выше — целевая маржа не достигается</p>
+                  </div>
+                </div>
+              );
+            })()}
+
             <PnlTable ec={{ ...ec,
               delivery_total_rub: selDeliveryRub || ec.delivery_total_rub,
               total_cost_rub:     effTotalCost,
@@ -2855,22 +2897,12 @@ export default function AIEconomicsFunnel() {
               </>
             )}
             <button
-              onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict }); go("contact"); }}
+              onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict }); analytics.quoteRequested?.({ verdict: ec.verdict }); go("contact"); }}
               className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
             >
               {ec.verdict === "red" ? "📩 Получить решение от менеджера" : ec.verdict === "yellow" ? "📩 Получить план оптимизации" : "📩 Запустить импорт — получить расчёт в TG"}
             </button>
           </div>
-
-          {ec.verdict === "red" && (
-            <a
-              href="https://t.me/ChinaBridgeLID_bot?start=calc"
-              target="_blank" rel="noopener noreferrer"
-              className="w-full py-2.5 border border-[#243a5e] hover:border-[#229ED9]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all flex items-center justify-center gap-2"
-            >
-              ✈️ Написать менеджеру напрямую в Telegram
-            </a>
-          )}
 
           {/* Telegram drip funnel CTA */}
               <TgSubscribeBanner />
@@ -3034,16 +3066,6 @@ export default function AIEconomicsFunnel() {
               </span>
               <span className="text-xs text-[#8899aa]">Кейсы и советы →</span>
             </a>
-
-            <div className="flex flex-col gap-1">
-              <a href="https://t.me/ChinaBridgeLID_bot?start=calc" target="_blank" rel="noopener noreferrer"
-                onClick={() => analytics.telegramClick()}
-                className="w-full py-2.5 border border-[#243a5e] hover:border-[#00A86B]/50 text-[#8899aa] hover:text-white text-sm rounded-xl transition-all block text-center"
-              >
-                Написать менеджеру в Telegram
-              </a>
-              <p className="text-center text-[10px] text-[#5a7899]">Откроется Telegram — нажмите <b>Start</b></p>
-            </div>
 
             {/* Share block */}
             <div className="pt-1 border-t border-[#243a5e]/60">

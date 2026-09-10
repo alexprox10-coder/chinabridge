@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { analytics } from "@/lib/analytics";
 import type { CalcContext } from "@/lib/ai/agents/import-consultant";
 
 interface Message {
@@ -56,6 +57,9 @@ export default function AIConsultantPanel({ calcContext, sessionId, onClose }: P
       }
       if (data.isLeadReady) {
         setLeadDone(true);
+      }
+      if ((data.leadScore ?? 0) >= 70) {
+        analytics.qualificationCompleted?.({ score: data.leadScore });
       }
     } catch {
       setMessages(prev => [...prev, { role: "assistant", text: "Ошибка соединения. Попробуйте ещё раз." }]);

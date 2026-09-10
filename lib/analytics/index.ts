@@ -77,6 +77,17 @@ export const analytics = {
   // ── Прочее ────────────────────────────────────────────────────────────────
   priceDownload:  () => fire("price_download",    "price_download",   { category: "content" }),
 
+  // ── AI Funnel — missing funnel events (P0 sprint) ────────────────────────
+  calculatorVisible:     ()                               => { fire("calculator_visible",       "calculator_visible",       { category: "funnel" }); trackVkGoal("calculator_visible"); },
+  consultantShown:       ()                               => fire("consultant_shown",           "consultant_shown",         { category: "ai_consultant" }),
+  consultantStarted:     ()                               => { fire("consultant_started",        "consultant_started",       { category: "ai_consultant" }); trackVkGoal("consultant_started"); },
+  qualificationCompleted:(p?: { score?: number })        => { fire("qualification_completed",   "qualification_completed",  { category: "ai_consultant", ...p }); trackVkGoal("qualification_completed"); },
+  hotLeadCreated:        (p?: { score?: number })        => { fire("hot_lead_created",          "hot_lead_created",         { category: "funnel", ...p }); trackVkGoal("hot_lead_created"); },
+  freeLimitReached:      (p?: { count?: number })        => { fire("free_limit_reached",        "free_limit_reached",       { category: "monetization", ...p }); trackVkGoal("free_limit_reached"); },
+  quoteRequested:        (p?: { verdict?: string })      => { fire("quote_requested",           "quote_requested",          { category: "funnel", ...p }); trackVkGoal("quote_requested"); },
+  contactFormShown:      ()                               => fire("contact_form_shown",          "contact_form_shown",       { category: "funnel" }),
+  contactSubmitted:      (p?: { source?: string })       => { fire("contact_submitted",         "contact_submitted",        { category: "funnel", ...p }); trackVkGoal("contact_submitted"); },
+
   // ── AI Unit Economics Funnel ───────────────────────────────────────────────
   aiFunnelStart:         ()                               => fire("ai_funnel_start",          "ai_funnel_start",          { category: "ai_funnel" }),
   aiFunnelUrlEntered:    ()                               => fire("ai_funnel_url_entered",     "ai_funnel_url_entered",    { category: "ai_funnel" }),
