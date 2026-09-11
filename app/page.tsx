@@ -107,7 +107,7 @@ export default function Home() {
 
         {/* ── VIDEO: Сборный груз ──────────────────────────────────────────── */}
         <section className="py-14 bg-[#050e1d]">
-          <div className="max-w-4xl mx-auto px-4">
+          <div className="max-w-2xl mx-auto px-4">
             <div className="text-center mb-6">
               <p className="text-xs font-semibold text-[#00A86B] uppercase tracking-widest mb-2">Сборный груз из Китая</p>
               <h2 className="text-2xl font-bold text-white">Как выглядит ваш груз на нашем складе</h2>

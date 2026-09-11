@@ -194,11 +194,11 @@ export default function AICalculatorPage() {
           </div>
 
           {/* ── VIDEO DEMO ─────────────────────────────────────────────────────────── */}
-          <div className="mt-14">
+          <div className="mt-14 max-w-2xl mx-auto">
             <div className="text-center mb-4">
-              <p className="text-xs font-semibold text-[#00A86B] uppercase tracking-widest mb-2">Как это работает</p>
-              <h2 className="text-xl font-bold text-white">AI-калькулятор в действии</h2>
-              <p className="text-sm text-[#8899aa] mt-1">Смотрите как за 15 секунд получить расчёт маржи</p>
+              <p className="text-xs font-semibold text-[#00A86B] uppercase tracking-widest mb-2">Сборный груз</p>
+              <h2 className="text-xl font-bold text-white">Наш склад в Китае</h2>
+              <p className="text-sm text-[#8899aa] mt-1">Еженедельные рейсы в Россию и Казахстан от 50 кг</p>
             </div>
             <div className="rounded-2xl overflow-hidden border border-[#243a5e] bg-black" style={{aspectRatio: '16/9'}}>
               <video
