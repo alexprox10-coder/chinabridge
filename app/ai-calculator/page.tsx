@@ -202,7 +202,7 @@ export default function AICalculatorPage() {
             </div>
             <div className="rounded-2xl overflow-hidden border border-[#243a5e] bg-[#0B1F3A]/60">
               <video
-                src="/cb_calc_final.mp4"
+                src="/cb_cargo_video.mp4"
                 autoPlay
                 muted
                 loop

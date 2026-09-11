@@ -104,6 +104,21 @@ export default function Home() {
         <KzRatesBanner />
         <Calculator />
         <HowItWorks />
+
+        {/* ── VIDEO: Сборный груз ──────────────────────────────────────────── */}
+        <section className="py-14 bg-[#050e1d]">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="text-center mb-6">
+              <p className="text-xs font-semibold text-[#00A86B] uppercase tracking-widest mb-2">Сборный груз из Китая</p>
+              <h2 className="text-2xl font-bold text-white">Как выглядит ваш груз на нашем складе</h2>
+              <p className="text-sm text-[#8899aa] mt-1">Еженедельные рейсы в Россию и Казахстан</p>
+            </div>
+            <div className="rounded-2xl overflow-hidden border border-[#1a3a5c] bg-[#0B1F3A]/60">
+              <video src="/cb_cargo_video.mp4" autoPlay muted loop playsInline className="w-full" />
+            </div>
+          </div>
+        </section>
+
         <WarehouseGallery />
         <ForWhom />
         <Advantages />
