@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
+import CountryDetectInit from "@/components/analytics/CountryDetectInit";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -122,6 +123,7 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-foreground antialiased font-sans">
         <AnalyticsProvider />
+        <CountryDetectInit />
         {children}
       </body>
     </html>

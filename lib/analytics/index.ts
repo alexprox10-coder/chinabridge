@@ -162,4 +162,6 @@ export const analytics = {
   registerDone:       (p?: { source?: string })                  => { fire("register_done",          "register_done",        { category: "funnel", ...p }); trackVkGoal("register_done"); },
   leadCreated:        (p?: { source?: string })                  => { fire("lead_created",           "lead_created",         { category: "funnel", ...p }); trackVkGoal("lead_created"); },
   deliveryQuoteClick: (p?: { source?: string })                  => { fire("delivery_quote_click",   "delivery_quote_click", { category: "funnel", ...p }); trackVkGoal("delivery_quote_click"); },
+  countryDetected:    (p?: { country?: string; source?: string }) => fire("country_detected",         "country_detected",     { category: "funnel", ...p }),
+  qualificationStarted: (p?: { country?: string })               => fire("qualification_started",    "qualification_started",{ category: "ai_consultant", ...p }),
 };

@@ -88,6 +88,9 @@ export default function AIConsultantPanel({ calcContext, sessionId, onClose }: P
       if (data.isLeadReady) {
         setLeadDone(true);
       }
+      if (data.qualificationStarted) {
+        analytics.qualificationStarted({ country: calcContext.country_to });
+      }
       if ((data.leadScore ?? 0) >= 70) {
         analytics.qualificationCompleted?.({ score: data.leadScore });
       }

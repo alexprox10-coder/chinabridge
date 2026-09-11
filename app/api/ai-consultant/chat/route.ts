@@ -55,6 +55,9 @@ export async function POST(req: NextRequest) {
 
     // Store qualifying signals from this response
     const qualData = state.leadData as any;
+    const qualificationJustStarted = !qualData.qualification_started &&
+      (result.purchaseTiming != null || result.weightBand != null);
+    if (qualificationJustStarted) qualData.qualification_started = true;
     if (result.purchaseTiming && !qualData.purchase_timing) {
       qualData.purchase_timing = result.purchaseTiming;
     }
@@ -138,11 +141,12 @@ export async function POST(req: NextRequest) {
     await saveSession(state);
 
     return NextResponse.json({
-      message:      result.message,
-      sessionId:    sid,
-      intent:       result.intent,
-      leadScore:    result.leadScore,
-      isLeadReady:  result.isLeadReady,
+      message:              result.message,
+      sessionId:            sid,
+      intent:               result.intent,
+      leadScore:            result.leadScore,
+      isLeadReady:          result.isLeadReady,
+      qualificationStarted: qualificationJustStarted || false,
     });
   } catch (err) {
     console.error("[ai-consultant/chat]", err);
