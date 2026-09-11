@@ -53,6 +53,21 @@ export async function POST(req: NextRequest) {
       updateLead(state, result.leadDataUpdate as any);
     }
 
+    // Store qualifying signals from this response
+    const qualData = state.leadData as any;
+    if (result.purchaseTiming && !qualData.purchase_timing) {
+      qualData.purchase_timing = result.purchaseTiming;
+    }
+    if (result.weightBand && !qualData.weight_band) {
+      qualData.weight_band = result.weightBand;
+    }
+    if (result.supplierStatus && qualData.supplier_status == null) {
+      qualData.supplier_status = result.supplierStatus;
+    }
+    if (result.intentScore != null) {
+      qualData.intent_score = result.intentScore;
+    }
+
     if (result.isLeadComplete && !state.isLeadSent) {
       markLeadSent(state);
 
@@ -84,7 +99,12 @@ export async function POST(req: NextRequest) {
           priority:            score >= 70 ? "HOT" : score >= 40 ? "WARM" : "COLD",
           estimated_value:     Math.round(ctx.net_profit_per_unit * ctx.quantity),
           manager:             "",
-          comment:             `Маржа ${Number(ctx.margin_pct ?? 0).toFixed(1)}% · ROI ${Number(ctx.roi_pct ?? 0).toFixed(0)}% · ${ctx.marketplace.toUpperCase()} · Score ${score}`,
+          comment:             [
+            `Маржа ${Number(ctx.margin_pct ?? 0).toFixed(1)}% · ROI ${Number(ctx.roi_pct ?? 0).toFixed(0)}% · ${ctx.marketplace.toUpperCase()} · Score ${score}`,
+            contactInfo.purchase_timing ? `Закупка: ${contactInfo.purchase_timing}` : null,
+            contactInfo.weight_band     ? `Объём: ${contactInfo.weight_band}` : null,
+            contactInfo.intent_score != null ? `Intent: ${contactInfo.intent_score}` : null,
+          ].filter(Boolean).join(" · "),
           source:              "ai_consultant",
           utm_source:          "",
           utm_campaign:        "",
@@ -101,9 +121,15 @@ export async function POST(req: NextRequest) {
       const score = result.leadScore ?? 0;
       const webhookLead = {
         ...state.leadData,
-        source:   "ai_consultant",
-        priority: score >= 70 ? "HOT" : score >= 40 ? "WARM" : "COLD",
-        product:  ctx.product_name,
+        source:          "ai_consultant",
+        priority:        score >= 70 ? "HOT" : score >= 40 ? "WARM" : "COLD",
+        product:         ctx.product_name,
+        country:         ctx.country_to,
+        marketplace:     ctx.marketplace,
+        purchase_timing: qualData.purchase_timing ?? null,
+        weight_band:     qualData.weight_band ?? null,
+        intent_score:    qualData.intent_score ?? null,
+        lead_score:      score,
       };
       await sendLeadToWebhook(webhookLead as any, sid).catch(() => {});
     }

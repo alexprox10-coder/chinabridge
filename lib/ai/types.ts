@@ -52,6 +52,11 @@ export interface AgentResult {
   handoffReason?: string;
   leadDataUpdate?: Partial<LeadData>;
   isLeadComplete?: boolean;
+  // Qualifying fields
+  purchaseTiming?: "NOW" | "WITHIN_MONTH" | "1_3_MONTHS" | "JUST_RESEARCHING" | null;
+  weightBand?: "LT50" | "50_200" | "200_500" | "GT500" | "CONTAINER" | null;
+  supplierStatus?: "HAS_SUPPLIER" | "NO_SUPPLIER" | "NOT_SURE" | null;
+  intentScore?: number | null;
 }
 
 // API response shape

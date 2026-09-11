@@ -4,6 +4,7 @@ export { reachGoal, trackMetrikaPageView, METRIKA_ID } from "./metrika";
 import { trackGAEvent } from "./ga";
 import { reachGoal } from "./metrika";
 import { trackVkGoal } from "@/components/analytics/VkPixel";
+import { getCountry } from "@/lib/utils/country-detect";
 
 // ── Product category classifier ──────────────────────────────────────────────
 const CATEGORY_MAP: [RegExp, string][] = [
@@ -27,8 +28,10 @@ export function classifyProduct(name: string): string {
 }
 
 function fire(gaName: string, goal: string, params?: Record<string, unknown>) {
-  trackGAEvent(gaName, { event_category: params?.category ?? "engagement", ...params });
-  reachGoal(goal, params);
+  const country = typeof window !== "undefined" ? getCountry() : undefined;
+  const enriched = country ? { country, ...params } : params;
+  trackGAEvent(gaName, { event_category: enriched?.category ?? "engagement", ...enriched });
+  reachGoal(goal, enriched);
 }
 
 export const analytics = {

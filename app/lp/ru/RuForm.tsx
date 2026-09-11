@@ -4,13 +4,13 @@ import Image from "next/image";
 import { setCountryContext } from "@/lib/utils/country-detect";
 import { analytics } from "@/lib/analytics";
 
-export default function KzForm() {
+export default function RuForm() {
   const [form, setForm] = useState({ name: "", phone: "", product: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
 
   useEffect(() => {
-    setCountryContext({ country: "KZ", source: "landing", currency: "KZT" });
-    analytics.landingView({ source: "lp_kz" });
+    setCountryContext({ country: "RU", source: "landing", currency: "RUB" });
+    analytics.landingView({ source: "lp_ru" });
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -26,14 +26,14 @@ export default function KzForm() {
             phone: form.phone,
             product: form.product || "Не указано",
             source: "website_form",
-            service: "VK-KZ",
+            service: "VK-RU",
             from_city: "Китай",
-            to_city: "Казахстан",
-            country_destination: "KZ",
+            to_city: "Россия",
+            country_destination: "RU",
           }),
         }),
         Promise.resolve(analytics.leadFormSubmit()),
-        Promise.resolve(analytics.leadCreated({ source: "lp_kz" })),
+        Promise.resolve(analytics.leadCreated({ source: "lp_ru" })),
       ]);
       setStatus("ok");
     } catch {
@@ -47,7 +47,7 @@ export default function KzForm() {
         <div className="text-5xl mb-4">✅</div>
         <h2 className="text-2xl font-bold text-white mb-2">Заявка принята!</h2>
         <p className="text-[#8899aa] text-sm mb-6">
-          Менеджер свяжется с вами в течение 15 минут
+          Менеджер свяжется в течение 15 минут
         </p>
         <a
           href="https://t.me/ChinaBridgeLID_bot"
@@ -64,7 +64,6 @@ export default function KzForm() {
 
   return (
     <div className="min-h-screen bg-[#060f1e] flex flex-col">
-      {/* Header — logo only */}
       <header className="px-4 pt-4 pb-2">
         <div className="max-w-lg mx-auto flex items-center gap-2">
           <span className="text-white font-bold text-lg">China<span className="text-[#00A86B]">Bridge</span></span>
@@ -72,7 +71,6 @@ export default function KzForm() {
         </div>
       </header>
 
-      {/* Hero */}
       <main className="flex-1 px-4 pt-4 pb-8 max-w-lg mx-auto w-full">
         {/* Photo */}
         <div className="relative rounded-2xl overflow-hidden mb-5 h-[180px] sm:h-[220px]">
@@ -92,26 +90,26 @@ export default function KzForm() {
 
         {/* Headline */}
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">
-          Доставка товаров<br />
+          Есть поставщик в Китае?<br />
           <span className="bg-gradient-to-r from-[#00A86B] to-[#00d48a] bg-clip-text text-transparent">
-            из Китая в Казахстан
+            Рассчитаем поставку в Россию
           </span>
         </h1>
         <p className="text-[#8899aa] text-sm mb-5">
-          Карго, сборные грузы — от 50 кг. Представитель в Китае на месте.
-          Оставьте заявку — менеджер ответит за 15 минут.
+          Менять поставщика не нужно. Рассчитаем закупку, логистику и экономику поставки для WB и Ozon.
+          Оставьте заявку — ответим за 15 минут.
         </p>
 
         {/* Trust chips */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {["📦 От 50 кг", "🇰🇿 Доставка в KZ", "🏭 Офис в Китае", "⚡ Ответим за 15 мин"].map(t => (
+          {["🏭 Офис в Китае", "🇷🇺 Доставка в РФ", "📦 WB / Ozon", "⚡ Ответим за 15 мин"].map(t => (
             <span key={t} className="text-xs bg-white/8 border border-white/10 text-white rounded-full px-3 py-1">{t}</span>
           ))}
         </div>
 
         {/* Calculator CTA */}
         <a
-          href="/ai-calculator?country=KZ"
+          href="/ai-calculator?country=RU"
           onClick={() => analytics.calculatorStart()}
           className="w-full mb-4 flex items-center justify-center gap-2 bg-[#00A86B]/10 border border-[#00A86B]/40 text-[#00A86B] font-semibold py-3.5 rounded-xl text-sm hover:bg-[#00A86B]/20 transition-colors"
         >
@@ -120,35 +118,29 @@ export default function KzForm() {
 
         {/* Form */}
         <form onSubmit={submit} className="flex flex-col gap-3">
-          <div>
-            <input
-              type="text"
-              required
-              placeholder="Ваше имя"
-              value={form.name}
-              onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-              className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3.5 text-white placeholder-[#556677] text-sm focus:outline-none focus:border-[#00A86B] transition-colors"
-            />
-          </div>
-          <div>
-            <input
-              type="tel"
-              required
-              placeholder="WhatsApp / Телефон"
-              value={form.phone}
-              onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-              className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3.5 text-white placeholder-[#556677] text-sm focus:outline-none focus:border-[#00A86B] transition-colors"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              placeholder="Что везёте из Китая? (необязательно)"
-              value={form.product}
-              onChange={e => setForm(p => ({ ...p, product: e.target.value }))}
-              className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3.5 text-white placeholder-[#556677] text-sm focus:outline-none focus:border-[#00A86B] transition-colors"
-            />
-          </div>
+          <input
+            type="text"
+            required
+            placeholder="Ваше имя"
+            value={form.name}
+            onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+            className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3.5 text-white placeholder-[#556677] text-sm focus:outline-none focus:border-[#00A86B] transition-colors"
+          />
+          <input
+            type="tel"
+            required
+            placeholder="WhatsApp / Telegram / Телефон"
+            value={form.phone}
+            onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+            className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3.5 text-white placeholder-[#556677] text-sm focus:outline-none focus:border-[#00A86B] transition-colors"
+          />
+          <input
+            type="text"
+            placeholder="Что везёте из Китая? (необязательно)"
+            value={form.product}
+            onChange={e => setForm(p => ({ ...p, product: e.target.value }))}
+            className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-3.5 text-white placeholder-[#556677] text-sm focus:outline-none focus:border-[#00A86B] transition-colors"
+          />
 
           <button
             type="submit"
@@ -159,11 +151,11 @@ export default function KzForm() {
           </button>
 
           {status === "err" && (
-            <p className="text-red-400 text-xs text-center">Ошибка. Напишите нам в Telegram: @ChinaBridgeLID_bot</p>
+            <p className="text-red-400 text-xs text-center">Ошибка. Напишите: @ChinaBridgeLID_bot</p>
           )}
         </form>
 
-        {/* WhatsApp alternative */}
+        {/* Divider + Telegram alt */}
         <div className="mt-4 flex items-center gap-2">
           <div className="flex-1 h-px bg-white/10" />
           <span className="text-[#556677] text-xs">или</span>
@@ -185,9 +177,9 @@ export default function KzForm() {
           <p className="text-white text-xs font-semibold uppercase tracking-wider mb-3">Как это работает</p>
           <div className="flex flex-col gap-3">
             {[
-              { n: "1", t: "Оставьте заявку", d: "Укажите имя и телефон — это займёт 30 секунд" },
-              { n: "2", t: "Менеджер перезвонит", d: "Обсудим товар, объём, маршрут и стоимость" },
-              { n: "3", t: "Забираем на складе в Китае", d: "Наш представитель на месте инспектирует и отправляет груз" },
+              { n: "1", t: "Оставьте заявку", d: "Укажите имя и контакт — 30 секунд" },
+              { n: "2", t: "Рассчитаем экономику", d: "Закупка, доставка, таможня, Wildberries или Ozon" },
+              { n: "3", t: "Заберём в Китае", d: "Наш представитель на складе инспектирует и отправляет" },
             ].map(s => (
               <div key={s.n} className="flex gap-3 items-start">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#00A86B]/20 text-[#00A86B] text-xs font-bold flex items-center justify-center">{s.n}</span>
@@ -207,7 +199,6 @@ export default function KzForm() {
             {[
               { name: "Wildberries", color: "text-purple-400", emoji: "🟣" },
               { name: "Ozon", color: "text-blue-400", emoji: "🔵" },
-              { name: "Kaspi", color: "text-red-400", emoji: "🔴" },
             ].map(mp => (
               <div key={mp.name} className="flex-1 bg-white/5 rounded-xl p-3 text-center">
                 <div className="text-xl mb-1">{mp.emoji}</div>
@@ -217,13 +208,11 @@ export default function KzForm() {
           </div>
         </div>
 
-        {/* Policy note */}
         <p className="text-[#445566] text-xs text-center mt-4">
           Нажимая кнопку, вы соглашаетесь с{" "}
           <a href="/privacy" className="underline">политикой конфиденциальности</a>
         </p>
 
-        {/* Link to main site */}
         <a
           href="https://chinabridge.pro"
           className="mt-6 w-full flex items-center justify-center gap-2 border border-white/15 text-white/70 font-medium py-4 rounded-xl text-sm hover:border-white/30 hover:text-white transition-colors"
