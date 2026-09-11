@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, use, useTransition, useEffect } from "react";
+import { use, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { trackGAEvent } from "@/lib/analytics/ga";
 import { analytics } from "@/lib/analytics";
-import { reachGoal } from "@/lib/analytics/metrika";
 
 const CATEGORIES: Record<string, {
   title: string;
@@ -21,14 +20,14 @@ const CATEGORIES: Record<string, {
 }> = {
   electronics: {
     title: "Электроника из Китая",
-    subtitle: "Найдём производителя, проверим фабрику, привезём с документами в Россию или Казахстан. Поставщик уже есть — менять не нужно.",
+    subtitle: "Найдём производителя, проверим фабрику, привезём с документами в Россию. Белый ввоз, полный пакет документов. Поставщик уже есть — менять не нужно.",
     placeholder: "Наушники, смартфоны, зарядки, умные часы...",
     emoji: "📱",
-    priceHint: "от $2.50/кг авто 5-8 дн · от $2.50/кг в КЗ · от $3/кг в РФ · авиа от $23/кг",
+    priceHint: "от $3.0/кг авто 12-16 дн · авиа от $23/кг · море от $1.1/кг · сборные партии от 50 кг",
     items: ["Смартфоны и планшеты", "Аудио и аксессуары", "Зарядки и кабели", "Умный дом", "Игровые устройства", "Камеры и фото"],
     caseTitle: "500 наушников из Shenzhen → Москва",
-    caseStats: [{ v: "5-8 дн.", l: "авто в КЗ" }, { v: "$2.50/кг", l: "авто ставка" }, { v: "38%", l: "маржа" }],
-    caseText: "Клиент нашёл поставщика на 1688, мы проверили фабрику, выкупили партию, организовали консолидацию и доставку с полным пакетом документов.",
+    caseStats: [{ v: "12-16 дн.", l: "авто в РФ" }, { v: "$3.0/кг", l: "авто ставка" }, { v: "Белый ввоз", l: "документы" }],
+    caseText: "Клиент нашёл поставщика на 1688, мы проверили фабрику, выкупили партию, организовали консолидацию и доставили с полным пакетом документов.",
     source: "landing_import_electronics",
   },
   "auto-parts": {
@@ -112,11 +111,6 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
   const cfg = CATEGORIES[category];
   if (!cfg) notFound();
 
-  const [done, setDone] = useState(false);
-  const [telegram, setTelegram] = useState("");
-  const [product, setProduct] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [, startTransition] = useTransition();
 
   useEffect(() => {
     analytics.landingView({ source: cfg.source });
@@ -131,28 +125,7 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
     }).catch(() => null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!telegram.trim()) return;
-    setLoading(true);
-    setTimeout(() => {
-      trackGAEvent("import_lead_submit", { category, telegram });
-      analytics.formSubmit({ form_id: `import_landing_${category}` });
-      analytics.leadFormSubmit();
-      reachGoal("form_submit");
-      reachGoal("messenger_click");
-    }, 0);
-    try {
-      await fetch("/api/landing-lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telegram, product, has_supplier: "no", city: "", source: cfg.source }),
-      });
-    } catch { /* silent */ }
-    startTransition(() => { setDone(true); setLoading(false); });
-  };
-
-  const TgIcon = () => (
+const TgIcon = () => (
     <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current flex-shrink-0">
       <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.652-.64.135-.954l11.57-4.461c.537-.194 1.006.131.969.06z"/>
     </svg>
@@ -176,15 +149,13 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
       </header>
 
       {/* Sticky bottom CTA mobile */}
-      {!done && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-[#060F1E]/97 backdrop-blur border-t border-[#1a2d47] px-4 py-3">
-          <Link href="/ai-calculator"
-            onClick={() => trackGAEvent("import_sticky_calc_click", { category })}
-            className="flex items-center justify-center gap-2 w-full bg-[#00A86B] hover:bg-[#009060] text-white font-bold py-3.5 rounded-xl text-sm transition active:scale-95">
-            🤖 Получить расчёт бесплатно
-          </Link>
-        </div>
-      )}
+      <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-[#060F1E]/97 backdrop-blur border-t border-[#1a2d47] px-4 py-3">
+        <Link href="/ai-calculator?country=RU"
+          onClick={() => trackGAEvent("import_sticky_calc_click", { category })}
+          className="flex items-center justify-center gap-2 w-full bg-[#00A86B] hover:bg-[#009060] text-white font-bold py-3.5 rounded-xl text-sm transition active:scale-95">
+          🤖 Получить расчёт бесплатно
+        </Link>
+      </div>
 
       <main className="max-w-lg mx-auto px-4 py-8 sm:py-14 pb-28 sm:pb-14">
 
@@ -212,68 +183,23 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
           <p className="text-center text-[#445566] text-xs mb-5">{cfg.priceHint}</p>
         )}
 
-        {!done ? (
           <>
             {/* Primary CTA — Calculator */}
-            <Link href="/ai-calculator"
-              onClick={() => trackGAEvent("import_hero_calc_click", { category })}
+            <Link href="/ai-calculator?country=RU"
+              onClick={() => { trackGAEvent("import_hero_calc_click", { category }); analytics.calculatorStart(); }}
               className="flex items-center justify-center gap-3 w-full bg-[#00A86B] hover:bg-[#009060] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-3 shadow-lg shadow-[#00A86B]/20">
               🤖 Получить расчёт бесплатно
             </Link>
-            <p className="text-center text-[#445566] text-xs mb-6">Введите товар → AI рассчитает маржу за 10 секунд</p>
+            <p className="text-center text-[#445566] text-xs mb-5">Введите товар → AI рассчитает маржу за 10 секунд</p>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex-1 h-px bg-[#1a2d47]"/>
-              <span className="text-[#445566] text-xs font-medium">нужна доставка — оставьте заявку</span>
-              <div className="flex-1 h-px bg-[#1a2d47]"/>
-            </div>
-
-            {/* Secondary — 1-step form */}
-            <form onSubmit={handleSubmit} className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-5 sm:p-6 mb-8">
-              <div className="flex flex-col gap-4">
-                <div>
-                  <label className="text-xs text-[#8899aa] mb-2 block font-medium uppercase tracking-wide">Ваш Telegram или телефон</label>
-                  <input type="text" value={telegram} onChange={e => setTelegram(e.target.value)}
-                    placeholder="@username или +7 999 000 00 00" required
-                    className="w-full bg-[#060F1E] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#445566] outline-none transition-colors"/>
-                </div>
-                <div>
-                  <label className="text-xs text-[#8899aa] mb-2 block font-medium uppercase tracking-wide">Что хотите привезти? <span className="text-[#334466]">(необязательно)</span></label>
-                  <input type="text" value={product} onChange={e => setProduct(e.target.value)}
-                    placeholder={cfg.placeholder}
-                    className="w-full bg-[#060F1E] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#445566] outline-none transition-colors"/>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {cfg.items.slice(0, 3).map(item => (
-                      <button key={item} type="button" onClick={() => setProduct(item)}
-                        className="text-xs px-2.5 py-1 rounded-lg bg-[#243a5e]/60 text-[#8899aa] hover:text-white hover:bg-[#243a5e] transition-colors">
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button type="submit" disabled={loading}
-                  className="w-full bg-[#00A86B] hover:bg-[#009060] disabled:opacity-60 text-white font-semibold py-3.5 rounded-xl transition active:scale-95">
-                  {loading ? "Отправляем..." : "Отправить заявку →"}
-                </button>
-              </div>
-            </form>
-          </>
-        ) : (
-          /* Done */
-          <div className="bg-[#0B1F3A] border border-[#00A86B]/40 rounded-2xl p-8 mb-8 text-center">
-            <div className="text-4xl mb-4">✅</div>
-            <h2 className="font-bold text-xl mb-2">Заявка принята!</h2>
-            <p className="text-[#8899aa] mb-6">Менеджер напишет в течение 15 минут с ценой и сроками.</p>
-            <a href={`https://t.me/ChinaBridgeLID_bot?start=${encodeURIComponent(product || category)}`}
-              target="_blank" rel="noopener noreferrer"
-              onClick={() => notifyTgClick("done_cta")}
-              className="inline-flex items-center gap-2 bg-[#229ED9] hover:bg-[#1a8dbf] text-white font-semibold px-6 py-3 rounded-xl transition">
+            {/* Secondary CTA — Telegram bot */}
+            <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+              onClick={() => { trackGAEvent("import_tg_click", { category }); analytics.telegramClick(); notifyTgClick("secondary_cta"); }}
+              className="flex items-center justify-center gap-2 w-full border border-[#243a5e] hover:border-[#00A86B]/40 text-[#8899aa] hover:text-white font-medium py-3.5 rounded-xl transition text-sm mb-8">
               <TgIcon />
-              Написать в Telegram сейчас
+              Написать AI-консультанту в Telegram
             </a>
-          </div>
-        )}
+          </>
 
         {/* Case */}
         <div className="bg-gradient-to-br from-[#00A86B]/10 to-[#00A86B]/5 border border-[#00A86B]/30 rounded-2xl p-5 mb-6">
