@@ -273,7 +273,7 @@ function ScoreBar({ label, score, max }: { label: string; score: number; max: nu
       <div className="flex-1 h-1.5 bg-[#243a5e] rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
-      <span className="w-10 text-right text-white font-medium">{score.toFixed(1)}/{max}</span>
+      <span className="w-10 text-right text-white font-medium">{Number(score ?? 0).toFixed(1)}/{max}</span>
     </div>
   );
 }
@@ -284,7 +284,7 @@ function ProductScoreCard({ ps }: { ps: ProductScore }) {
     <div className="rounded-xl border border-[#243a5e] overflow-hidden">
       <div className="px-4 py-3 bg-[#0B1F3A] border-b border-[#243a5e] flex items-center justify-between">
         <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide">Product Score</p>
-        <span className={`text-xl font-bold ${color}`}>{ps.total.toFixed(1)}<span className="text-sm text-[#8899aa] font-normal"> / 10</span></span>
+        <span className={`text-xl font-bold ${color}`}>{Number(ps.total ?? 0).toFixed(1)}<span className="text-sm text-[#8899aa] font-normal"> / 10</span></span>
       </div>
       <div className="px-4 py-3 flex flex-col gap-2">
         <p className="text-xs text-[#8899aa] mb-1">{ps.label} — {ps.explanation}</p>
@@ -376,11 +376,11 @@ function ScenariosBlock({
         <div className="grid grid-cols-3 gap-2 mb-2">
           <div className="text-center">
             <p className="text-[10px] text-[#8899aa] uppercase">Маржа</p>
-            <p className={`font-bold text-base ${verdictColor(cur.verdict)}`}>{cur.margin_pct.toFixed(1)}%</p>
+            <p className={`font-bold text-base ${verdictColor(cur.verdict)}`}>{Number(cur.margin_pct ?? 0).toFixed(1)}%</p>
           </div>
           <div className="text-center">
             <p className="text-[10px] text-[#8899aa] uppercase">ROI</p>
-            <p className="font-bold text-base text-white">{cur.roi_pct.toFixed(0)}%</p>
+            <p className="font-bold text-base text-white">{Number(cur.roi_pct ?? 0).toFixed(0)}%</p>
           </div>
           <div className="text-center">
             <p className="text-[10px] text-[#8899aa] uppercase">Прибыль</p>
@@ -1665,7 +1665,7 @@ export default function AIEconomicsFunnel() {
 
   async function handleShare(ec: EconomicsResult) {
     const mp   = s.marketplace_config?.label ?? s.marketplace.toUpperCase();
-    const text = `Проверил товар через AI-калькулятор ChinaBridge:\n${ec.verdict_emoji} ${ec.verdict_label}\nМаржа ${ec.margin_pct.toFixed(1)}% · ROI ${ec.roi_pct.toFixed(0)}% · Прибыль ${Math.round(ec.net_profit_rub / ec.quantity).toLocaleString("ru-RU")} ₽/шт (${mp})\n\nРассчитай свой товар →`;
+    const text = `Проверил товар через AI-калькулятор ChinaBridge:\n${ec.verdict_emoji} ${ec.verdict_label}\nМаржа ${Number(ec.margin_pct ?? 0).toFixed(1)}% · ROI ${Number(ec.roi_pct ?? 0).toFixed(0)}% · Прибыль ${Math.round((ec.net_profit_rub ?? 0) / (ec.quantity || 1)).toLocaleString("ru-RU")} ₽/шт (${mp})\n\nРассчитай свой товар →`;
     const url  = "https://chinabridge.pro/ai-calculator";
 
     if (navigator.share) {
@@ -1681,7 +1681,7 @@ export default function AIEconomicsFunnel() {
 
   function handleTgShare(ec: EconomicsResult) {
     const mp   = s.marketplace_config?.label ?? s.marketplace.toUpperCase();
-    const text = `Проверил товар через AI-калькулятор ChinaBridge: ${ec.verdict_emoji} ${ec.verdict_label}, маржа ${ec.margin_pct.toFixed(1)}%, ROI ${ec.roi_pct.toFixed(0)}% (${mp}). Рассчитай свой товар →`;
+    const text = `Проверил товар через AI-калькулятор ChinaBridge: ${ec.verdict_emoji} ${ec.verdict_label}, маржа ${Number(ec.margin_pct ?? 0).toFixed(1)}%, ROI ${Number(ec.roi_pct ?? 0).toFixed(0)}% (${mp}). Рассчитай свой товар →`;
     const url  = encodeURIComponent("https://chinabridge.pro/ai-calculator");
     window.open(`https://t.me/share/url?url=${url}&text=${encodeURIComponent(text)}`, "_blank");
   }
@@ -2473,8 +2473,8 @@ export default function AIEconomicsFunnel() {
             return (
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: "Маржа",       value: `${marginH.toFixed(1)}%`,  hi: verdictH === "green" },
-                  { label: "ROI",         value: `${roiH.toFixed(0)}%`,     hi: false },
+                  { label: "Маржа",       value: `${(isFinite(marginH) ? marginH : 0).toFixed(1)}%`,  hi: verdictH === "green" },
+                  { label: "ROI",         value: `${(isFinite(roiH) ? roiH : 0).toFixed(0)}%`,     hi: false },
                   { label: "Прибыль/шт", value: isKZH
                     ? `${fmtKzt(profitH / ec.quantity)} ₸`
                     : `${fmt(profitH / ec.quantity)} ₽`, hi: false },
@@ -2593,7 +2593,7 @@ export default function AIEconomicsFunnel() {
                                   {opt.daysMin && opt.daysMax ? `${opt.daysMin}–${opt.daysMax} дн` : ''}
                                 </span>
                                 <span className={`text-[10px] font-semibold mt-0.5 ${optMargin >= 25 ? 'text-[#00A86B]' : optMargin >= 10 ? 'text-yellow-400' : 'text-red-400'}`}>
-                                  {optMargin.toFixed(1)}% маржа
+                                  {(isFinite(optMargin) ? optMargin : 0).toFixed(1)}% маржа
                                 </span>
                               </>
                             ) : (
@@ -2897,17 +2897,17 @@ export default function AIEconomicsFunnel() {
           <div className="bg-[#00A86B]/5 border border-[#00A86B]/20 rounded-xl p-4">
             {ec.verdict === "red" ? (
               <>
-                <p className="text-sm font-semibold text-white mb-1">Маржа {ec.margin_pct.toFixed(1)}% — найдём поставщика дешевле</p>
+                <p className="text-sm font-semibold text-white mb-1">Маржа {Number(ec.margin_pct ?? 0).toFixed(1)}% — найдём поставщика дешевле</p>
                 <p className="text-xs text-[#8899aa] mb-3">Подберём 3 альтернативы с ценой на 15–30% ниже и пересчитаем маржу</p>
               </>
             ) : ec.verdict === "yellow" ? (
               <>
-                <p className="text-sm font-semibold text-white mb-1">Маржа {ec.margin_pct.toFixed(1)}% — есть потенциал до 25%+</p>
+                <p className="text-sm font-semibold text-white mb-1">Маржа {Number(ec.margin_pct ?? 0).toFixed(1)}% — есть потенциал до 25%+</p>
                 <p className="text-xs text-[#8899aa] mb-3">Покажем, где снизить логистику или комиссию, чтобы выйти на цель</p>
               </>
             ) : (
               <>
-                <p className="text-sm font-semibold text-white mb-1">Маржа {ec.margin_pct.toFixed(1)}% — товар готов к запуску</p>
+                <p className="text-sm font-semibold text-white mb-1">Маржа {Number(ec.margin_pct ?? 0).toFixed(1)}% — товар готов к запуску</p>
                 <p className="text-xs text-[#8899aa] mb-3">Зафиксируем расчёт и предложим схему доставки с точными ценами</p>
               </>
             )}

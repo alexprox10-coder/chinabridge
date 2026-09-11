@@ -135,7 +135,7 @@ export default function AIConsultantPanel({ calcContext, sessionId, onClose }: P
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-white truncate">{calcContext.product_name}</p>
             <p className="text-[10px] text-[#8899aa]">
-              Маржа <span className={`font-bold ${verdictColor}`}>{calcContext.margin_pct.toFixed(1)}%</span>
+              Маржа <span className={`font-bold ${verdictColor}`}>{Number(calcContext.margin_pct ?? 0).toFixed(1)}%</span>
               {" · "}Прибыль {Math.round(calcContext.net_profit_per_unit).toLocaleString("ru-RU")} {currency}/шт
               {" · "}{calcContext.marketplace.toUpperCase()}
             </p>

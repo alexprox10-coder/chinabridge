@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
           priority:            score >= 70 ? "HOT" : score >= 40 ? "WARM" : "COLD",
           estimated_value:     Math.round(ctx.net_profit_per_unit * ctx.quantity),
           manager:             "",
-          comment:             `Маржа ${ctx.margin_pct.toFixed(1)}% · ROI ${ctx.roi_pct.toFixed(0)}% · ${ctx.marketplace.toUpperCase()} · Score ${score}`,
+          comment:             `Маржа ${Number(ctx.margin_pct ?? 0).toFixed(1)}% · ROI ${Number(ctx.roi_pct ?? 0).toFixed(0)}% · ${ctx.marketplace.toUpperCase()} · Score ${score}`,
           source:              "ai_consultant",
           utm_source:          "",
           utm_campaign:        "",
