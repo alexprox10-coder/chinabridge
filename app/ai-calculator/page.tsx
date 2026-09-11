@@ -200,14 +200,12 @@ export default function AICalculatorPage() {
               <h2 className="text-xl font-bold text-white">Наш склад в Китае</h2>
               <p className="text-sm text-[#8899aa] mt-1">Еженедельные рейсы в Россию и Казахстан от 50 кг</p>
             </div>
-            <div className="rounded-2xl overflow-hidden border border-[#243a5e] bg-black" style={{aspectRatio: '16/9'}}>
-              <video
-                src="/cb_cargo_video.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="w-full h-full object-cover"
+            <div className="rounded-2xl overflow-hidden border border-[#243a5e]" style={{aspectRatio: '16/9'}}>
+              <iframe
+                src="https://www.youtube.com/embed/fwBtwO6HgAc?rel=0&modestbranding=1"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
               />
             </div>
           </div>
