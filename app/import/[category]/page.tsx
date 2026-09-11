@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { trackGAEvent } from "@/lib/analytics/ga";
 import { analytics } from "@/lib/analytics";
+import { reachGoal } from "@/lib/analytics/metrika";
 
 const CATEGORIES: Record<string, {
   title: string;
@@ -134,7 +135,13 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
     e.preventDefault();
     if (!telegram.trim()) return;
     setLoading(true);
-    setTimeout(() => trackGAEvent("import_lead_submit", { category, telegram }), 0);
+    setTimeout(() => {
+      trackGAEvent("import_lead_submit", { category, telegram });
+      analytics.formSubmit({ form_id: `import_landing_${category}` });
+      analytics.leadFormSubmit();
+      reachGoal("form_submit");
+      reachGoal("messenger_click");
+    }, 0);
     try {
       await fetch("/api/landing-lead", {
         method: "POST",

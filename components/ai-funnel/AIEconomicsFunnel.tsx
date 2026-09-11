@@ -105,10 +105,10 @@ function detectCountry(city: string): string {
 }
 
 const QUICK_EXAMPLES = [
-  { emoji: "👟", label: "Кроссовки",    margin_hint: "~26% маржа", product_name: "Кроссовки",          product_name_cn: "运动鞋",   product_name_en: "sneakers",            unit_price_cny: 80,  weight_kg: 0.8,  moq: 10 },
-  { emoji: "👗", label: "Одежда",       margin_hint: "~31% маржа", product_name: "Одежда",              product_name_cn: "服装",     product_name_en: "clothing",            unit_price_cny: 35,  weight_kg: 0.3,  moq: 50 },
-  { emoji: "🎧", label: "Наушники TWS", margin_hint: "~28% маржа", product_name: "Наушники TWS",        product_name_cn: "蓝牙耳机", product_name_en: "bluetooth earphones", unit_price_cny: 45,  weight_kg: 0.15, moq: 20 },
-  { emoji: "🧸", label: "Игрушки",      margin_hint: "~33% маржа", product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
+  { emoji: "👟", label: "Кроссовки",    margin_hint: "расчёт за 15 сек", product_name: "Кроссовки",          product_name_cn: "运动鞋",   product_name_en: "sneakers",            unit_price_cny: 80,  weight_kg: 0.8,  moq: 10 },
+  { emoji: "👗", label: "Одежда",       margin_hint: "расчёт за 15 сек", product_name: "Одежда",              product_name_cn: "服装",     product_name_en: "clothing",            unit_price_cny: 35,  weight_kg: 0.3,  moq: 50 },
+  { emoji: "🎧", label: "Наушники TWS", margin_hint: "расчёт за 15 сек", product_name: "Наушники TWS",        product_name_cn: "蓝牙耳机", product_name_en: "bluetooth earphones", unit_price_cny: 45,  weight_kg: 0.15, moq: 20 },
+  { emoji: "🧸", label: "Игрушки",      margin_hint: "расчёт за 15 сек", product_name: "Детские игрушки",     product_name_cn: "儿童玩具", product_name_en: "children toys",       unit_price_cny: 25,  weight_kg: 0.4,  moq: 20 },
 ];
 
 const ANON_LIMIT = 5;
@@ -2653,6 +2653,7 @@ export default function AIEconomicsFunnel() {
                 <a
                   href={`https://t.me/ChinaBridgeLID_bot?start=bring_${productHint}`}
                   target="_blank" rel="noopener noreferrer"
+                  onClick={() => { analytics.telegramClick(); analytics.quoteRequested?.({ verdict: ec.verdict }); }}
                   className="w-full flex items-center justify-center gap-2 py-3 border border-[#1e3a5e] hover:border-[#00A86B]/40 text-[#8899aa] hover:text-white font-semibold rounded-2xl transition-all text-sm"
                 >
                   🚀 Написать напрямую в Telegram
