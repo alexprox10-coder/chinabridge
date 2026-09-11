@@ -200,14 +200,14 @@ export default function AICalculatorPage() {
               <h2 className="text-xl font-bold text-white">AI-калькулятор в действии</h2>
               <p className="text-sm text-[#8899aa] mt-1">Смотрите как за 15 секунд получить расчёт маржи</p>
             </div>
-            <div className="rounded-2xl overflow-hidden border border-[#243a5e] bg-[#0B1F3A]/60">
+            <div className="rounded-2xl overflow-hidden border border-[#243a5e] bg-black" style={{aspectRatio: '16/9'}}>
               <video
                 src="/cb_cargo_video.mp4"
                 autoPlay
                 muted
                 loop
                 playsInline
-                className="w-full"
+                className="w-full h-full object-cover"
               />
             </div>
           </div>

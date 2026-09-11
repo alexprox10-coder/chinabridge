@@ -113,8 +113,8 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-white">Как выглядит ваш груз на нашем складе</h2>
               <p className="text-sm text-[#8899aa] mt-1">Еженедельные рейсы в Россию и Казахстан</p>
             </div>
-            <div className="rounded-2xl overflow-hidden border border-[#1a3a5c] bg-[#0B1F3A]/60">
-              <video src="/cb_cargo_video.mp4" autoPlay muted loop playsInline className="w-full" />
+            <div className="rounded-2xl overflow-hidden border border-[#1a3a5c] bg-black" style={{aspectRatio: '16/9'}}>
+              <video src="/cb_cargo_video.mp4" autoPlay muted loop playsInline className="w-full h-full object-cover" />
             </div>
           </div>
         </section>
