@@ -64,15 +64,13 @@ export default function KzAutoAccessoriesPage() {
           </div>
 
           {/* Primary CTA */}
-          <a
-            href="https://t.me/ChinaBridgeLID_bot"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/ai-calculator?country=KZ"
             onClick={() => analytics.calculatorStart()}
             className="flex items-center justify-center gap-3 w-full bg-[#00A86B] hover:bg-[#009060] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-3 shadow-lg shadow-[#00A86B]/20"
           >
             🤖 Рассчитать поставку бесплатно
-          </a>
+          </Link>
           <p className="text-center text-[#445566] text-xs mb-5">
             Укажите товар → рассчитаем закупку и доставку в Казахстан
           </p>
