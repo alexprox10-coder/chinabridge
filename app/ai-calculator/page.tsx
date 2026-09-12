@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { DynamicFunnel, DynamicSideBanners } from "./DynamicComponents";
+import { DynamicFunnel } from "./DynamicComponents";
 
 const CANONICAL = "https://chinabridge.pro/ai-calculator";
 
@@ -122,7 +122,6 @@ export default function AICalculatorPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
-      <DynamicSideBanners />
       <div className="relative min-h-screen bg-[#060f1e] pt-16 sm:pt-24 pb-24 sm:pb-24">
         {/* Background glow — absolute, not fixed, to avoid CLS */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
