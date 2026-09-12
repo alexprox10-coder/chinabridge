@@ -24,20 +24,31 @@ export default function KzAutoPartsPage() {
         <div className="max-w-lg mx-auto px-4 py-10 pb-20">
 
           {/* Hero */}
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-3">🔧</div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-4">
+          <div className="text-center mb-5">
+            <div className="text-4xl mb-2">🔧</div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00A86B]/30 bg-[#00A86B]/10 text-[#00A86B] text-xs font-medium mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
               Офис в Гуанчжоу · с 2019 года · 500+ клиентов
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-3">
+            <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-2">
               Нужна запчасть из Китая?
             </h1>
-            <p className="text-[#8899aa] text-sm leading-relaxed max-w-md mx-auto">
-              Найдём поставщика, проверим и организуем доставку в Казахстан.<br />
-              Представитель в Гуанчжоу — работаем напрямую с заводами.
+            <p className="text-[#8899aa] text-sm leading-relaxed max-w-md mx-auto mb-4">
+              Найдём поставщика, проверим и доставим в Казахстан. Работаем напрямую с заводами Гуанчжоу.
             </p>
           </div>
+
+          {/* Primary CTA — above the fold */}
+          <Link
+            href="/ai-calculator?country=KZ"
+            onClick={() => analytics.calculatorStart()}
+            className="flex items-center justify-center gap-3 w-full bg-[#00A86B] hover:bg-[#009060] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-2 shadow-lg shadow-[#00A86B]/20"
+          >
+            🤖 Узнать стоимость бесплатно
+          </Link>
+          <p className="text-center text-[#445566] text-xs mb-6">
+            Укажите запчасть / модель авто → рассчитаем за 15 минут
+          </p>
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mb-4">
@@ -54,18 +65,6 @@ export default function KzAutoPartsPage() {
           </div>
           <p className="text-center text-[#445566] text-xs mb-7">
             авто 5–8 дн · авиа от $23/кг · от 1 штуки
-          </p>
-
-          {/* Primary CTA */}
-          <Link
-            href="/ai-calculator?country=KZ"
-            onClick={() => analytics.calculatorStart()}
-            className="flex items-center justify-center gap-3 w-full bg-[#00A86B] hover:bg-[#009060] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-3 shadow-lg shadow-[#00A86B]/20"
-          >
-            🤖 Узнать стоимость бесплатно
-          </Link>
-          <p className="text-center text-[#445566] text-xs mb-5">
-            Укажите запчасть / модель авто → рассчитаем за 15 минут
           </p>
 
           {/* Secondary CTA */}
