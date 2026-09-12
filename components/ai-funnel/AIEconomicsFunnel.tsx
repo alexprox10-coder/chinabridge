@@ -153,6 +153,52 @@ function verdictBg(v?: "green" | "yellow" | "red") {
                           "bg-red-900/20 border-red-700/40";
 }
 
+// ── AI Verdict Hero Card (TZ §12) ─────────────────────────────────────────
+
+function VerdictCard({ ec, onView }: { ec: EconomicsResult; onView?: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const fired = useRef(false);
+
+  useEffect(() => {
+    if (!onView || !ref.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && !fired.current) { fired.current = true; onView(); } },
+      { threshold: 0.5 }
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [onView]);
+
+  const marginVal = Number(ec.margin_pct ?? 0);
+  const roiVal    = Number(ec.roi_pct ?? 0);
+
+  const whyText = ec.verdict === "green"
+    ? `Маржа ${marginVal.toFixed(1)}% и ROI ${roiVal.toFixed(0)}% — товар рентабелен при текущих ценах закупки и продажи`
+    : ec.verdict === "yellow"
+    ? `Маржа ${marginVal.toFixed(1)}% — прибыль возможна, но стоит снизить закупочную цену или повысить цену продажи`
+    : `Маржа ${marginVal.toFixed(1)}% — при текущих ценах товар не окупается. Проверьте расчёт или скорректируйте параметры`;
+
+  return (
+    <div ref={ref} className={`rounded-2xl p-5 border ${verdictBg(ec.verdict)}`}>
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-4xl">{ec.verdict_emoji}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] uppercase tracking-widest text-[#8899aa] mb-0.5 font-medium">AI-вердикт</p>
+          <p className={`font-bold text-xl leading-tight ${verdictColor(ec.verdict)}`}>{ec.verdict_label}</p>
+        </div>
+        {ec.product_score?.total != null && (
+          <div className="flex-shrink-0 text-center">
+            <p className="text-[10px] text-[#8899aa] mb-0.5">Оценка</p>
+            <p className={`text-2xl font-bold ${verdictColor(ec.verdict)}`}>{Number(ec.product_score.total).toFixed(1)}</p>
+            <p className="text-[10px] text-[#8899aa]">/10</p>
+          </div>
+        )}
+      </div>
+      <p className="text-xs text-[#8899aa] leading-relaxed">{whyText}</p>
+    </div>
+  );
+}
+
 // ── Telegram subscribe banner ──────────────────────────────────────────────
 
 function TgSubscribeBanner() {
@@ -452,8 +498,13 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
         <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide">
           P&amp;L · {ec.quantity} шт · курс {cnyRate.toFixed(1)} ₽/¥
         </p>
-        <span className="text-[10px] text-[#5a7899] border border-[#243a5e] rounded px-1.5 py-0.5">
-          {tariffDate ? `📅 тарифы актуальны на ${tariffDate}` : "Дата обновления не указана"}
+        <span
+          className="text-[10px] text-[#5a7899] border border-[#243a5e] rounded px-1.5 py-0.5 cursor-help"
+          title={tariffDate
+            ? `Комиссии маркетплейсов актуальны на ${tariffDate}. Источник: официальные тарифы WB/Ozon/Kaspi. Курс юань/рубль обновляется ежедневно от ЦБ РФ.`
+            : "Данные о тарифах маркетплейсов. Курс юань/рубль обновляется ежедневно от ЦБ РФ."}
+        >
+          {tariffDate ? `📅 тарифы актуальны на ${tariffDate}` : "Дата обновления не указана"} ⓘ
         </span>
       </div>
       {rows.map(([l, v, bold, hint]) => (
@@ -2401,16 +2452,8 @@ export default function AIEconomicsFunnel() {
             ← Изменить маркетплейс
           </button>
 
-          {/* Verdict */}
-          <div className={`rounded-xl p-4 text-center border ${verdictBg(ec.verdict)}`}>
-            <p className="text-3xl mb-1">{ec.verdict_emoji}</p>
-            <p className={`font-bold text-lg mb-1 ${verdictColor(ec.verdict)}`}>{ec.verdict_label}</p>
-            <p className="text-sm text-[#8899aa]">
-              {ec.verdict === "green"  ? "Товар имеет хороший потенциал для продажи" :
-               ec.verdict === "yellow" ? "Возможна прибыль, но требует оптимизации"  :
-                                         "При текущих ценах рентабельность под вопросом"}
-            </p>
-          </div>
+          {/* AI Verdict — hero card (TZ §12) */}
+          <VerdictCard ec={ec} onView={() => analytics.aiVerdictViewed?.({ verdict: ec.verdict ?? undefined, margin: Number(ec.margin_pct ?? 0) })} />
 
           {/* Supplier links — shown when user typed product name (no URL) AND has no supplier yet */}
           {supplierExists !== true && s.extractedData?.source_platform === "description" && s.extractedData.product_name && (() => {
@@ -2487,6 +2530,15 @@ export default function AIEconomicsFunnel() {
               </div>
             );
           })()}
+
+          {/* Trust disclaimer (TZ §10) */}
+          <div className="flex items-start gap-2 bg-[#0a1628] border border-[#1a3a5c] rounded-xl px-4 py-3">
+            <span className="text-sm flex-shrink-0 mt-0.5">ℹ️</span>
+            <p className="text-[11px] text-[#5a7899] leading-relaxed">
+              <span className="text-[#8899aa] font-medium">Предварительный расчёт.</span>{" "}
+              Итоговая стоимость может измениться после уточнения параметров товара, упаковки, маршрута и документов.
+            </p>
+          </div>
 
           {/* ── FULL CONTENT (always visible) ──────────────────────────── */}
           {(() => {

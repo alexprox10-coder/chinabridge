@@ -137,14 +137,14 @@ export default function AICalculatorPage() {
               AI Калькулятор импорта
             </p>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 sm:mb-4 leading-tight">
-              Аудит партии из Китая
+              Проверьте реальную себестоимость товара из Китая
               <span className="bg-gradient-to-r from-[#00A86B] to-[#00d48a] bg-clip-text text-transparent">
-                {" "}— юнит-экономика за 15 сек
+                {" "}до закупки
               </span>
             </h1>
             <p className="hidden sm:block text-[#8899aa] text-sm leading-relaxed max-w-lg mx-auto">
-              Не покупайте вслепую — вставьте ссылку с 1688 или Alibaba и получите
-              реальную маржу с учётом таможни, доставки и комиссии маркетплейса. 2 расчёта бесплатно.
+              Вставьте ссылку на 1688 или Alibaba — AI рассчитает закупочную цену, логистику,
+              основные импортные расходы, комиссии и потенциальную прибыль.
             </p>
           </div>
 
@@ -323,6 +323,68 @@ export default function AICalculatorPage() {
             >
               Нужен детальный расчёт доставки? → Калькулятор доставки
             </a>
+          </div>
+
+          {/* ── SEO TRUST BLOCK §44 ─────────────────────────────────────────────── */}
+          <div className="mt-16 border-t border-[#1a3a5c] pt-10">
+            <div className="text-center mb-8">
+              <p className="text-xs font-semibold text-[#00A86B] uppercase tracking-widest mb-2">Методология</p>
+              <h2 className="text-xl font-bold text-white">Как формируется расчёт</h2>
+              <p className="text-sm text-[#8899aa] mt-2 max-w-lg mx-auto">
+                Каждый элемент себестоимости рассчитывается на основе актуальных рыночных данных — без гаданий и усреднений
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  icon: "🏷️",
+                  title: "Закупочная цена",
+                  desc: "Цена товара у китайского поставщика конвертируется по актуальному курсу ЦБ РФ на день расчёта. Курс юань/рубль обновляется ежедневно."
+                },
+                {
+                  icon: "🚢",
+                  title: "Международная логистика",
+                  desc: "Стоимость карго Китай → Россия / Казахстан. Базовый тариф: $2.50/кг в КЗ, $3.00/кг в РФ. Автодоставка 18–22 дня, авиа 3–5 дней."
+                },
+                {
+                  icon: "🏛️",
+                  title: "Таможенные расходы",
+                  desc: "Для товаров в Россию учитывается НДС 20% и ввозная пошлина от 5% до 20% в зависимости от товарной группы. Для Казахстана — по нормам ЕАЭС."
+                },
+                {
+                  icon: "💳",
+                  title: "Комиссии маркетплейсов",
+                  desc: "Wildberries 23%, Ozon 20%, Kaspi 12.6%. Данные обновляются вручную при изменении тарифов площадок. Дата актуальности указана в каждом расчёте."
+                },
+                {
+                  icon: "📦",
+                  title: "Логистика маркетплейса",
+                  desc: "FBW/FBO — приёмка, хранение и доставка покупателю со склада маркетплейса. Рассчитывается исходя из веса и габаритов товара."
+                },
+                {
+                  icon: "🤖",
+                  title: "AI-вердикт",
+                  desc: "GPT-4o анализирует совокупность факторов: маржу, ROI, сезонность категории, логистическую сложность и конкурентность ниши. Вердикт — рекомендация, не гарантия."
+                },
+              ].map(item => (
+                <div key={item.title} className="flex gap-3 bg-[#0B1F3A]/50 border border-[#1a3a5c] rounded-xl p-4">
+                  <span className="text-xl flex-shrink-0 mt-0.5">{item.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-white mb-1">{item.title}</p>
+                    <p className="text-xs text-[#8899aa] leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-xl bg-[#00A86B]/8 border border-[#00A86B]/20 px-5 py-4 text-center">
+              <p className="text-xs text-[#8899aa] leading-relaxed max-w-xl mx-auto">
+                <span className="text-white font-semibold">Расчёт предварительный</span> — точные цифры формируются
+                после уточнения параметров партии, упаковки, маршрута и таможенных документов.
+                Итоговое коммерческое предложение готовит менеджер ChinaBridge.
+              </p>
+            </div>
           </div>
         </div>
       </div>

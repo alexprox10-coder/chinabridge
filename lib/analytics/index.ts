@@ -138,6 +138,7 @@ export const analytics = {
   importStarted:            (p?: { priority?: string })                => fire("import_started",              "import_started",             { category: "unit_economics", ...p }),
   scenarioSwitched:         (p?: { scenario?: string })                => fire("scenario_switched",           "scenario_switched",          { category: "unit_economics", ...p }),
   targetPriceViewed:        ()                                          => fire("target_price_viewed",        "target_price_viewed",        { category: "unit_economics" }),
+  aiVerdictViewed:          (p?: { verdict?: string; margin?: number }) => fire("ai_verdict_viewed",          "ai_verdict_viewed",          { category: "unit_economics", ...p }),
 
   // ── AI Product Analyzer v1.1 — воронка без промежуточной формы ───────────
   productUrlSubmitted:       ()                                          => fire("product_url_submitted",       "product_url_submitted",       { category: "product_analyzer" }),
