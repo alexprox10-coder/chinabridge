@@ -962,24 +962,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // ── Manager reply bridge ───────────────────────────────────────────────────
-  if (String(chatId) === String(MANAGER_CHAT_ID)) {
-    if (message.reply_to_message) {
-      try {
-        const sql = neon(process.env.DATABASE_URL!);
-        await ensureBridgeTables(sql);
-        const replyToMsgId = message.reply_to_message.message_id as number;
-        const rows = await sql`SELECT client_chat_id, client_name FROM bot_message_map WHERE manager_msg_id = ${replyToMsgId}`;
-        if (rows.length > 0) {
-          const clientChatId = rows[0].client_chat_id;
-          const clientName   = rows[0].client_name ?? "клиент";
-          await sendMsg(clientChatId, `<b>Менеджер ChinaBridge:</b>\n${text}`);
-          await sendMsg(MANAGER_CHAT_ID, `✅ Ответ отправлен → ${clientName}`);
-          return NextResponse.json({ ok: true });
-        }
-      } catch { /* ignore */ }
-    }
-    return NextResponse.json({ ok: true });
+  // ── Manager reply bridge (only for reply messages) ────────────────────────
+  if (String(chatId) === String(MANAGER_CHAT_ID) && message.reply_to_message) {
+    try {
+      const sql = neon(process.env.DATABASE_URL!);
+      await ensureBridgeTables(sql);
+      const replyToMsgId = message.reply_to_message.message_id as number;
+      const rows = await sql`SELECT client_chat_id, client_name FROM bot_message_map WHERE manager_msg_id = ${replyToMsgId}`;
+      if (rows.length > 0) {
+        const clientChatId = rows[0].client_chat_id;
+        const clientName   = rows[0].client_name ?? "клиент";
+        await sendMsg(clientChatId, `<b>Менеджер ChinaBridge:</b>\n${text}`);
+        await sendMsg(MANAGER_CHAT_ID, `✅ Ответ отправлен → ${clientName}`);
+        return NextResponse.json({ ok: true });
+      }
+    } catch { /* ignore */ }
+    // If no mapping found, fall through to AI handler so manager can still test the bot
   }
 
   // ── Client free-text message → AI + buttons ────────────────────────────────
@@ -989,9 +987,11 @@ export async function POST(req: NextRequest) {
 
   const session = await getSession(sql, chatId) ?? {} as Partial<BotSession>;
 
-  // Extract product from free text if not set
+  // Extract product from free text if not set (skip greetings/short phrases)
+  const GREETINGS = ["привет", "здравствуйте", "добрый день", "доброе утро", "добрый вечер", "hi", "hello", "хай", "салам", "сәлем"];
+  const isGreeting = GREETINGS.some(g => text.toLowerCase().trim() === g || text.toLowerCase().trim().startsWith(g + " "));
   const newSession: Partial<BotSession> = { first_name: firstName, username };
-  if (!session.product && text.length > 5) {
+  if (!session.product && text.length > 10 && !isGreeting) {
     newSession.product = text.slice(0, 200);
     newSession.lead_score = calcLeadScore({ ...session, product: text });
   }
