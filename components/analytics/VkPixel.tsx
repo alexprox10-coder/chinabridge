@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 
-const VK_PIXEL_ID = process.env.NEXT_PUBLIC_VK_PIXEL_ID;
+const VK_PIXEL_ID = process.env.NEXT_PUBLIC_VK_PIXEL_ID ?? "3787763";
 
 declare global {
   interface Window {

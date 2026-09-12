@@ -40,7 +40,7 @@ export const analytics = {
   leadFormSubmit: () => { fire("lead_form_submit",  "lead_form_submit", { category: "lead" }); trackVkGoal("lead"); },
 
   // ── Калькулятор ───────────────────────────────────────────────────────────
-  calculatorStart: () => fire("calculator_start", "calculator_start", { category: "calculator" }),
+  calculatorStart: () => { fire("calculator_start", "calculator_start", { category: "calculator" }); trackVkGoal("calculator_start"); },
   calculatorComplete: (params?: { route?: string; cost?: number; margin?: number }) =>
     fire("calculator_complete", "calculator_complete", { category: "calculator", ...params }),
   calculatorProductSearch: (productName: string) => {
