@@ -97,6 +97,9 @@ export interface EconomicsResult {
   target_price?: TargetPrice;
   scenarios?: EconomicsScenario[];
   supplier_risk?: SupplierRiskResult;
+  // §6 — Data source metadata
+  tariff_date?: string;
+  data_sources?: Array<{ fact_key: string; label: string; valid_from: string; source_url?: string | null }>;
 }
 
 export interface EconomicsScenario {

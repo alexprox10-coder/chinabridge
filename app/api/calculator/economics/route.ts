@@ -74,6 +74,15 @@ export async function POST(req: NextRequest) {
   const { getSystemRates } = await import('@/lib/economics/rates');
   const { cny: CNY_RATE, usd: USD_RATE, customs_rate: CUSTOMS_RATE } = await getSystemRates();
 
+  // §6 — fetch data source metadata for transparency
+  const sql6 = neon(process.env.DATABASE_URL!);
+  const ratesMeta = await sql6`
+    SELECT fact_key, valid_from, source_url FROM intel_facts
+    WHERE fact_key IN ('CNY_RATE', 'USD_RATE', 'CUSTOMS_DUTY_DEFAULT')
+    ORDER BY fact_key
+  `.catch(() => [] as Array<{ fact_key: string; valid_from: string; source_url: string | null }>);
+  const ratesDate = ratesMeta[0]?.valid_from?.slice(0, 10) ?? today;
+
   const qty             = Math.max(1, parseInt(body.quantity ?? '1') || 1);
   const commission      = parseFloat(body.marketplace_commission ?? '0');
   const adSpend         = parseFloat(body.ad_spend ?? '0');
@@ -216,6 +225,14 @@ export async function POST(req: NextRequest) {
     usd_rate:                 USD_RATE,
     marketplace_logistics_rub: 0,
     tax_rub:                  0,
+    // §6 — data source metadata
+    tariff_date:  ratesDate,
+    data_sources: [
+      { fact_key: 'CNY_RATE',             label: 'Курс CNY/RUB',        valid_from: ratesMeta.find(r => r.fact_key === 'CNY_RATE')?.valid_from?.slice(0, 10) ?? ratesDate, source_url: ratesMeta.find(r => r.fact_key === 'CNY_RATE')?.source_url },
+      { fact_key: 'USD_RATE',             label: 'Курс USD/RUB',        valid_from: ratesMeta.find(r => r.fact_key === 'USD_RATE')?.valid_from?.slice(0, 10) ?? ratesDate, source_url: ratesMeta.find(r => r.fact_key === 'USD_RATE')?.source_url },
+      { fact_key: 'CUSTOMS_DUTY_DEFAULT', label: 'Ставка таможни',      valid_from: ratesMeta.find(r => r.fact_key === 'CUSTOMS_DUTY_DEFAULT')?.valid_from?.slice(0, 10) ?? ratesDate, source_url: ratesMeta.find(r => r.fact_key === 'CUSTOMS_DUTY_DEFAULT')?.source_url },
+      { fact_key: 'MP_COMMISSION',        label: 'Тарифы маркетплейса', valid_from: ratesDate, source_url: null },
+    ],
   };
 
   return NextResponse.json({

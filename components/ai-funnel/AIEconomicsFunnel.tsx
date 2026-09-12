@@ -2943,7 +2943,7 @@ export default function AIEconomicsFunnel() {
                       <span className="text-sm font-black text-[#00A86B] tabular-nums">{fmtB(effTotalCost)}</span>
                     </div>
                     <p className="text-[10px] text-[#3a5a7c] mt-2">
-                      Тарифы актуальны на {s.marketplace_config?.tariff_date ?? "сегодня"} · Курс ЦБ обновляется ежедневно
+                      Тарифы актуальны на {ec.tariff_date ?? s.marketplace_config?.tariff_date ?? "сегодня"} · Курс ЦБ {ec.cny_rate.toFixed(2)} ₽ · обновляется ежедневно
                     </p>
                   </div>
                 </details>
