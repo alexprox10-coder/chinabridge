@@ -2452,6 +2452,14 @@ export default function AIEconomicsFunnel() {
             ← Изменить маркетплейс
           </button>
 
+          {/* §9 — Предварительный расчёт visual badge */}
+          <div className="flex items-center gap-2 -mb-2">
+            <span className="inline-flex items-center gap-1.5 bg-[#1a2e4a] border border-[#2a4a6e] rounded-full px-3 py-1 text-[10px] text-[#8899aa] font-medium">
+              📊 Предварительный расчёт
+            </span>
+            <span className="text-[10px] text-[#5a7899]">уточняется менеджером</span>
+          </div>
+
           {/* Supplier links — shown when user typed product name (no URL) AND has no supplier yet */}
           {supplierExists !== true && s.extractedData?.source_platform === "description" && s.extractedData.product_name && (() => {
             const cn = encodeURIComponent(s.extractedData!.product_name_cn || s.extractedData!.product_name);
@@ -2671,9 +2679,8 @@ export default function AIEconomicsFunnel() {
 
                 {/* AI CONSULTANT — primary conversion block */}
                 {!showAIConsultant ? (
-                  <button
-                    onClick={() => { setShowAIConsultant(true); analytics.aiFunnelImportClick?.(); analytics.consultantStarted?.(); }}
-                    className="w-full rounded-2xl border-2 border-[#00A86B] bg-gradient-to-br from-[#00200f] to-[#001208] hover:from-[#002a14] hover:to-[#001810] transition-all active:scale-[0.98] overflow-hidden group"
+                  <div
+                    className="w-full rounded-2xl border-2 border-[#00A86B] bg-gradient-to-br from-[#00200f] to-[#001208] overflow-hidden"
                     style={{ boxShadow: "0 0 32px rgba(0,168,107,0.35), 0 4px 20px rgba(0,0,0,0.6)" }}
                   >
                     {/* Header row */}
@@ -2691,13 +2698,9 @@ export default function AIEconomicsFunnel() {
                         <p className="text-xs text-[#00A86B] font-semibold mt-0.5">● онлайн · отвечает мгновенно</p>
                         <p className="text-[11px] text-[#8899aa] mt-0.5">Задайте любой вопрос по товару</p>
                       </div>
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-[#00A86B] text-2xl group-hover:translate-x-1 transition-transform">→</span>
-                        <span className="text-[10px] text-[#00A86B] font-semibold">бесплатно</span>
-                      </div>
                     </div>
                     {/* §46 — Context-aware preview bubble */}
-                    <div className="mx-5 mb-5 rounded-xl bg-[#00A86B]/10 border border-[#00A86B]/30 px-4 py-3 text-left">
+                    <div className="mx-5 mb-4 rounded-xl bg-[#00A86B]/10 border border-[#00A86B]/30 px-4 py-3">
                       <p className="text-sm text-white leading-relaxed">
                         Вижу, вы рассчитали{" "}
                         <span className="text-[#00A86B] font-semibold">
@@ -2707,7 +2710,30 @@ export default function AIEconomicsFunnel() {
                         <span className="text-[#00A86B] font-semibold">{aiCtx.city_to || "ваш город"}?</span>
                       </p>
                     </div>
-                  </button>
+                    {/* §19 — Quick-reply chips */}
+                    <div className="mx-5 mb-5 flex flex-col gap-2">
+                      <button
+                        onClick={() => { analytics.aiFunnelImportClick?.(); analytics.consultantStarted?.(); setShowAIConsultant(true); }}
+                        className="w-full py-2.5 bg-[#00A86B] hover:bg-[#009560] text-white text-sm font-bold rounded-xl transition-all active:scale-[0.98]"
+                      >
+                        ✅ Да, рассчитать поставку
+                      </button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => { setSupplierExists(true); analytics.supplierExistsYes?.(); analytics.consultantStarted?.(); setShowAIConsultant(true); }}
+                          className="py-2.5 bg-white/5 hover:bg-white/10 border border-[#1e3a5f] hover:border-[#00A86B]/40 text-white text-xs font-semibold rounded-xl transition-all"
+                        >
+                          🏭 Поставщик есть
+                        </button>
+                        <button
+                          onClick={() => { analytics.consultantStarted?.(); setShowAIConsultant(true); }}
+                          className="py-2.5 bg-white/5 hover:bg-white/10 border border-[#1e3a5f] text-[#8899aa] hover:text-white text-xs font-semibold rounded-xl transition-all"
+                        >
+                          👁 Просто смотрю
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <AIConsultantPanel
                     calcContext={aiCtx}
@@ -3033,6 +3059,50 @@ export default function AIEconomicsFunnel() {
               {ec.verdict === "red" ? "📩 Написать AI-консультанту" : ec.verdict === "yellow" ? "📩 Написать AI-консультанту" : "📩 Написать AI-консультанту"}
             </a>
           </div>
+
+          {/* §30/§31 — Сохранить расчёт + repeat user Pro nudge */}
+              {calcCount >= 2 && !isPaidPro && (
+                <div className="rounded-2xl border border-[#229ED9]/30 bg-[#229ED9]/5 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl flex-shrink-0 mt-0.5">💾</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white leading-tight">
+                        Вы уже рассчитали {calcCount} товара
+                      </p>
+                      <p className="text-xs text-[#8899aa] mt-1 leading-relaxed">
+                        Сохраните историю расчётов и разблокируйте безлимитный доступ
+                      </p>
+                      <div className="flex flex-col gap-2 mt-3">
+                        <a
+                          href="https://t.me/chinabridge_pro_bot?start=save_calc"
+                          target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-xs font-bold rounded-xl transition-all"
+                        >
+                          💾 Сохранить расчёт в Telegram
+                        </a>
+                        <button
+                          onClick={() => { setShowPaywall(true); analytics.paywallShown?.({ count: calcCount, verdict: ec?.verdict }); }}
+                          className="py-2.5 bg-white/5 border border-[#229ED9]/20 hover:border-[#229ED9]/50 text-[#229ED9] text-xs font-semibold rounded-xl transition-all"
+                        >
+                          🔑 ChinaBridge PRO — безлимитно
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {calcCount === 1 && !isPaidPro && (
+                <div className="flex items-center justify-between bg-[#0a1628] border border-[#1a3a5c] rounded-xl px-4 py-2.5">
+                  <p className="text-xs text-[#8899aa]">💾 Сохранить расчёт?</p>
+                  <a
+                    href="https://t.me/chinabridge_pro_bot?start=save_calc"
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-[#229ED9] hover:text-white font-semibold transition-colors"
+                  >
+                    Открыть TG бот →
+                  </a>
+                </div>
+              )}
 
           {/* Telegram drip funnel CTA */}
               <TgSubscribeBanner />

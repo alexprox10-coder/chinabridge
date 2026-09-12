@@ -236,6 +236,15 @@ export async function runImportConsultant(
       isLeadReady: parsed.isLeadReady === true,
     };
   } catch {
-    return { message: raw };
+    // §47 — fallback when AI response is not valid JSON or is empty
+    if (raw && raw.trim().length > 20) {
+      // AI returned plain text (not JSON) — use it directly
+      return { message: raw.trim() };
+    }
+    // §47 — category / context unknown: specific handoff message
+    const fallbackMsg = calcContext.product_name
+      ? `Не могу точно определить категорию товара «${calcContext.product_name.slice(0, 40)}». Уточните: вы рассматриваете это для перепродажи или личного использования? Наш менеджер поможет разобраться — напишите в Telegram @chinabridge_manager`
+      : `Расчёт не найден или данные недоступны. Пожалуйста, сначала введите товар в калькулятор — или напишите нашему менеджеру в Telegram @chinabridge_manager, он ответит в течение 15 минут.`;
+    return { message: fallbackMsg };
   }
 }
