@@ -162,7 +162,7 @@ export default function AICalculatorPage() {
           {/* Trust badges — hidden on mobile to keep form above fold */}
           <div className="hidden sm:flex flex-wrap justify-center gap-4 mb-8 text-xs text-[#8899aa]">
             {[
-              { icon: "🎁", text: "2 расчёта бесплатно" },
+              { icon: "🎁", text: "5 расчётов бесплатно" },
               { icon: "⚡", text: "Результат за 15 сек" },
               { icon: "🤖", text: "AI-анализ GPT-4o" },
               { icon: "🚀", text: "Реальные данные" },
