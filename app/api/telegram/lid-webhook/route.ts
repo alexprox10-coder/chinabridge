@@ -440,6 +440,7 @@ Q: Страхование? A: Да, 1.5% от стоимости груза.
 Q: Маркетплейсы? A: WB, Ozon, Kaspi — доставляем прямо на FBO-склад.
 
 ═══ ПРАВИЛА ОТВЕТА ═══
+- КРИТИЧНО: Если в КОНТЕКСТЕ КЛИЕНТА не указана страна — ОБЯЗАТЕЛЬНО спроси "Россия или Казахстан?" до любых расчётов и до вопроса о городе. Никогда не предполагай страну сам.
 - Если спрашивают цену — попроси: товар, кол-во/кг, страну (РФ или КЗ), есть ли поставщик.
 - Если клиент готов: "Пришлите ссылку или фото — сделаем расчёт за 15 минут".
 - После 2-3 обменов предложи связь с менеджером мягко.
@@ -462,13 +463,14 @@ async function generateBotReply(
   if (session) {
     const parts: string[] = [];
     if (session.country)  parts.push(`Страна клиента: ${session.country}`);
+    else                  parts.push(`Страна клиента: НЕ ИЗВЕСТНА — спроси "Россия или Казахстан?"`);
     if (session.vertical && session.vertical !== "GENERAL") parts.push(`Категория: ${session.vertical}`);
     if (session.product)  parts.push(`Товар: ${session.product}`);
     if (session.city)     parts.push(`Город: ${session.city}`);
     if (session.supplier_exists != null) parts.push(`Поставщик: ${session.supplier_exists ? "есть" : "нет"}`);
     if (session.weight_band) parts.push(`Объём: ${session.weight_band}`);
     if (session.purchase_timing) parts.push(`Сроки: ${session.purchase_timing}`);
-    if (parts.length > 0) contextBlock = `\n\n═══ КОНТЕКСТ КЛИЕНТА ═══\n${parts.join("\n")}`;
+    contextBlock = `\n\n═══ КОНТЕКСТ КЛИЕНТА ═══\n${parts.join("\n")}`;
   }
 
   try {
