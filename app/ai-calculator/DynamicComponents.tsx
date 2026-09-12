@@ -19,3 +19,13 @@ export const DynamicSideBanners = dynamic(
   () => import("@/components/calculator/SideBanners"),
   { ssr: false }
 );
+
+export const DynamicLeftPanel = dynamic(
+  () => import("@/components/ai-funnel/CalcLeftPanel"),
+  { ssr: false, loading: () => null }
+);
+
+export const DynamicRightPanel = dynamic(
+  () => import("@/components/ai-funnel/CalcRightPanel"),
+  { ssr: false, loading: () => null }
+);

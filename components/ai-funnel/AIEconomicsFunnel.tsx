@@ -1203,6 +1203,7 @@ export default function AIEconomicsFunnel() {
   const setProduct    = (k: keyof ProductData,    v: string) => setS(p => ({ ...p, product:    { ...p.product,    [k]: v } }));
   const setCorrection = (k: keyof CorrectionData, v: string) => setS(p => ({ ...p, correction: { ...p.correction, [k]: v } }));
 
+
   // ── Calculation helper (shared by auto and manual) ─────────────────────────
 
   async function loadHistory() {
@@ -1312,6 +1313,9 @@ export default function AIEconomicsFunnel() {
       analytics.unitEconomicsAutoCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total });
       analytics.fullCalculationCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total, marketplace: s.marketplace, product_category: classifyProduct(data.extractedData?.product_name ?? s.extractedData?.product_name ?? "") });
       analytics.calcDone({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total, marketplace: s.marketplace, product_category: classifyProduct(data.extractedData?.product_name ?? s.extractedData?.product_name ?? "") });
+      if (data.economics) {
+        window.dispatchEvent(new CustomEvent("cb:calc_done", { detail: { economics: data.economics, marketplace: capturedMarketplace, country_to: s.country_to, city_to: s.city_to, supplierExists } }));
+      }
 
       const corr: CorrectionData = {
         product_name:   pName,
@@ -1563,6 +1567,9 @@ export default function AIEconomicsFunnel() {
         marketplace_config: data.marketplace_config,
         showCorrection:     false,
       });
+      if (data.economics) {
+        window.dispatchEvent(new CustomEvent("cb:calc_done", { detail: { economics: data.economics, marketplace: s.marketplace, country_to: s.country_to, city_to: s.city_to, supplierExists } }));
+      }
       if (data.economics) saveToHistory(data.economics, s.marketplace, unitPrice, salePriceN, parseInt(s.product.quantity) || 1, s.correction.product_name || s.product.product_name);
     } catch {
       go("preview", { error: "Ошибка сети. Попробуйте ещё раз." });
@@ -1736,6 +1743,19 @@ export default function AIEconomicsFunnel() {
     const url  = encodeURIComponent("https://chinabridge.pro/ai-calculator");
     window.open(`https://t.me/share/url?url=${url}&text=${encodeURIComponent(text)}`, "_blank");
   }
+
+  // ── Side panel event bridge ────────────────────────────────────────────────
+  useEffect(() => {
+    const openConsultant = () => { analytics.consultantStarted?.(); setShowAIConsultant(true); };
+    const markSupplier   = () => { setSupplierExists(true); analytics.supplierExistsYes?.(); };
+    window.addEventListener("cb:open_consultant", openConsultant);
+    window.addEventListener("cb:supplier_exists", markSupplier);
+    return () => {
+      window.removeEventListener("cb:open_consultant", openConsultant);
+      window.removeEventListener("cb:supplier_exists", markSupplier);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Progress bar ────────────────────────────────────────────────────────────
 

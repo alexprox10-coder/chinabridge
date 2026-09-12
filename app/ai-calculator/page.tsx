@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { DynamicFunnel } from "./DynamicComponents";
+import { DynamicFunnel, DynamicLeftPanel, DynamicRightPanel } from "./DynamicComponents";
 
 const CANONICAL = "https://chinabridge.pro/ai-calculator";
 
@@ -129,6 +129,17 @@ export default function AICalculatorPage() {
           <div className="absolute -right-40 bottom-1/4 w-[500px] h-[500px] rounded-full bg-[#00A86B]/4 blur-[120px]" />
         </div>
 
+        {/* 3-column grid wrapper — xl only */}
+        <div className="relative xl:max-w-[1380px] xl:mx-auto xl:px-8">
+        <div className="xl:grid xl:grid-cols-[260px_1fr_260px] xl:gap-8 xl:items-start">
+
+        {/* LEFT PANEL — desktop only */}
+        <div className="hidden xl:block xl:sticky xl:top-28 xl:pt-4">
+          <DynamicLeftPanel />
+        </div>
+
+        {/* CENTER — existing content */}
+        <div>
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
           {/* Page header — compact on mobile */}
           <div className="text-center mb-4 sm:mb-10">
@@ -323,6 +334,11 @@ export default function AICalculatorPage() {
               Нужен детальный расчёт доставки? → Калькулятор доставки
             </a>
           </div>
+          {/* Mobile-only panels (after calculator content) */}
+          <div className="xl:hidden mt-8 flex flex-col gap-4">
+            <DynamicLeftPanel />
+            <DynamicRightPanel />
+          </div>
 
           {/* ── SEO TRUST BLOCK §44 ─────────────────────────────────────────────── */}
           <div className="mt-16 border-t border-[#1a3a5c] pt-10">
@@ -391,7 +407,16 @@ export default function AICalculatorPage() {
               </a>
             </div>
           </div>
+        </div>{/* max-w-2xl */}
+        </div>{/* center column */}
+
+        {/* RIGHT PANEL — desktop only */}
+        <div className="hidden xl:block xl:sticky xl:top-28 xl:pt-4">
+          <DynamicRightPanel />
         </div>
+
+        </div>{/* xl:grid */}
+        </div>{/* xl:max-w wrapper */}
       </div>
       <Footer />
     </main>
