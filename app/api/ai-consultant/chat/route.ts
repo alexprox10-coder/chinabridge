@@ -79,6 +79,32 @@ export async function POST(req: NextRequest) {
       try {
         const now = new Date().toISOString();
         const score = result.leadScore ?? 0;
+        const priority = score >= 70 ? "HOT" : score >= 40 ? "WARM" : "COLD";
+
+        // §48 — conversation summary: last 6 messages compressed
+        const history = (state as any).history ?? [];
+        const lastMsgs = history.slice(-6) as Array<{ role: string; content: string }>;
+        const convoSummary = lastMsgs.length > 0
+          ? lastMsgs.map(m => `[${m.role === "user" ? "К" : "А"}] ${String(m.content).slice(0, 120)}`).join("\n")
+          : "";
+
+        // §39 — AI Sales Brief comment
+        const supplierStr = ctx.supplier_exists === true ? "есть" : ctx.supplier_exists === false ? "нет" : "неизвестно";
+        const calcId = `eco-${sid.replace("ac_", "")}`;
+        const comment = [
+          `🤖 AI Sales Brief | Score:${score} | ${priority}`,
+          `Товар: ${ctx.product_name.slice(0, 60)} | ${ctx.marketplace.toUpperCase()} | ${ctx.city_to}, ${ctx.country_to}`,
+          `Закупка: ${ctx.unit_price_cny}¥ × ${ctx.quantity}шт | Продажа: ${ctx.sale_price_rub}₽`,
+          `Маржа: ${Number(ctx.margin_pct ?? 0).toFixed(1)}% · ROI: ${Number(ctx.roi_pct ?? 0).toFixed(0)}% | ${ctx.verdict_label}`,
+          `Поставщик: ${supplierStr}${contactInfo.purchase_timing ? ` | Закупка: ${contactInfo.purchase_timing}` : ""}${contactInfo.weight_band ? ` | Объём: ${contactInfo.weight_band}` : ""}`,
+          // §38 — calc_id + marketplace + supplier_exists
+          `calc_id: ${calcId} | mp: ${ctx.marketplace} | supplier: ${supplierStr}`,
+          // §34 — UTM info if available
+          contactInfo.utm_source ? `utm: ${contactInfo.utm_source}${contactInfo.utm_campaign ? `/${contactInfo.utm_campaign}` : ""}` : null,
+          // §48 — conversation log
+          convoSummary ? `\n--- Диалог (${lastMsgs.length} сообщений) ---\n${convoSummary}` : null,
+        ].filter(Boolean).join("\n");
+
         const crmLead = await createLead({
           lead_id:             `ac-${sid.replace("ac_", "")}`,
           created_at:          now,
@@ -99,18 +125,13 @@ export async function POST(req: NextRequest) {
           delivery_type:       "auto",
           service_type:        "full_service",
           status:              "NEW",
-          priority:            score >= 70 ? "HOT" : score >= 40 ? "WARM" : "COLD",
+          priority:            priority as "HOT" | "WARM" | "COLD",
           estimated_value:     Math.round(ctx.net_profit_per_unit * ctx.quantity),
           manager:             "",
-          comment:             [
-            `Маржа ${Number(ctx.margin_pct ?? 0).toFixed(1)}% · ROI ${Number(ctx.roi_pct ?? 0).toFixed(0)}% · ${ctx.marketplace.toUpperCase()} · Score ${score}`,
-            contactInfo.purchase_timing ? `Закупка: ${contactInfo.purchase_timing}` : null,
-            contactInfo.weight_band     ? `Объём: ${contactInfo.weight_band}` : null,
-            contactInfo.intent_score != null ? `Intent: ${contactInfo.intent_score}` : null,
-          ].filter(Boolean).join(" · "),
+          comment,
           source:              "ai_consultant",
-          utm_source:          "",
-          utm_campaign:        "",
+          utm_source:          contactInfo.utm_source ?? "",
+          utm_campaign:        contactInfo.utm_campaign ?? "",
         });
         const leadId = crmLead?.lead_id;
         if (leadId) {

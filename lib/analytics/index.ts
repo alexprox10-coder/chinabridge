@@ -96,9 +96,9 @@ export const analytics = {
   aiFunnelUrlEntered:    ()                               => fire("ai_funnel_url_entered",     "ai_funnel_url_entered",    { category: "ai_funnel" }),
   aiFunnelDescEntered:   ()                               => fire("ai_funnel_desc_entered",    "ai_funnel_desc_entered",   { category: "ai_funnel" }),
   aiFunnelAnalyzed:      (p?: { confidence?: string })   => fire("ai_funnel_analyzed",        "ai_funnel_analyzed",       { category: "ai_funnel", ...p }),
-  aiFunnelPreviewShown:  (p?: { verdict?: string })      => fire("ai_funnel_preview_shown",   "ai_funnel_preview_shown",  { category: "ai_funnel", ...p }),
+  aiFunnelPreviewShown:  (p?: { verdict?: string; marketplace?: string; product_category?: string }) => fire("ai_funnel_preview_shown",   "ai_funnel_preview_shown",  { category: "ai_funnel", ...p }),
   aiFunnelMpSelected:    (p?: { marketplace?: string })  => fire("ai_funnel_mp_selected",     "ai_funnel_mp_selected",    { category: "ai_funnel", ...p }),
-  aiFunnelFullCalc:      (p?: { verdict?: string })      => fire("ai_funnel_full_calc",       "ai_funnel_full_calc",      { category: "ai_funnel", ...p }),
+  aiFunnelFullCalc:      (p?: { verdict?: string; marketplace?: string; product_category?: string }) => fire("ai_funnel_full_calc",       "ai_funnel_full_calc",      { category: "ai_funnel", ...p }),
   aiFunnelContactOpen:   ()                               => fire("ai_funnel_contact_open",    "ai_funnel_contact_open",   { category: "ai_funnel" }),
   aiFunnelLeadCreated:   (p?: { priority?: string })     => { fire("ai_funnel_lead_created",    "ai_funnel_lead_created",   { category: "ai_funnel", ...p }); trackVkGoal("lead"); },
   aiFunnelSupplierClick: ()                               => fire("ai_funnel_supplier_click",  "ai_funnel_supplier_click", { category: "ai_funnel" }),
@@ -131,14 +131,14 @@ export const analytics = {
   marketplaceSelected:      (p?: { marketplace?: string })             => fire("marketplace_selected",        "marketplace_selected",       { category: "unit_economics", ...p }),
   destinationSelected:      (p?: { city?: string })                    => fire("destination_selected",        "destination_selected",       { category: "unit_economics", ...p }),
   fullCalculationStarted:   ()                                          => fire("full_calculation_started",   "full_calculation_started",   { category: "unit_economics" }),
-  fullCalculationCompleted: (p?: { verdict?: string; score?: number }) => fire("full_calculation_completed",  "full_calculation_completed", { category: "unit_economics", ...p }),
+  fullCalculationCompleted: (p?: { verdict?: string; score?: number; marketplace?: string; product_category?: string }) => fire("full_calculation_completed",  "full_calculation_completed", { category: "unit_economics", ...p }),
   saveAnalysisClicked:      ()                                          => fire("save_analysis_clicked",      "save_analysis_clicked",      { category: "unit_economics" }),
   supplierSearchClicked:    ()                                          => fire("supplier_search_clicked",    "supplier_search_clicked",    { category: "unit_economics" }),
   similarProductsClicked:   ()                                          => fire("similar_products_clicked",   "similar_products_clicked",   { category: "unit_economics" }),
   importStarted:            (p?: { priority?: string })                => fire("import_started",              "import_started",             { category: "unit_economics", ...p }),
   scenarioSwitched:         (p?: { scenario?: string })                => fire("scenario_switched",           "scenario_switched",          { category: "unit_economics", ...p }),
   targetPriceViewed:        ()                                          => fire("target_price_viewed",        "target_price_viewed",        { category: "unit_economics" }),
-  aiVerdictViewed:          (p?: { verdict?: string; margin?: number }) => fire("ai_verdict_viewed",          "ai_verdict_viewed",          { category: "unit_economics", ...p }),
+  aiVerdictViewed:          (p?: { verdict?: string; margin?: number; marketplace?: string }) => fire("ai_verdict_viewed",          "ai_verdict_viewed",          { category: "unit_economics", ...p }),
 
   // ── AI Product Analyzer v1.1 — воронка без промежуточной формы ───────────
   productUrlSubmitted:       ()                                          => fire("product_url_submitted",       "product_url_submitted",       { category: "product_analyzer" }),
@@ -155,7 +155,7 @@ export const analytics = {
 
   // ── VK Funnel full-tracking (ключевые шаги для Cost-per-X анализа) ─────────
   calculatorOpen:     ()                                          => { fire("calculator_open",      "calculator_open",      { category: "funnel" }); trackVkGoal("calculator_open"); },
-  calcDone:           (p?: { verdict?: string; score?: number }) => { fire("calc_done",             "calc_done",            { category: "funnel", ...p }); trackVkGoal("calc_done"); },
+  calcDone:           (p?: { verdict?: string; score?: number; marketplace?: string; product_category?: string }) => { fire("calc_done",             "calc_done",            { category: "funnel", ...p }); trackVkGoal("calc_done"); },
   landingView:        (p?: { source?: string })                  => { fire("landing_view",          "landing_view",         { category: "funnel", ...p }); trackVkGoal("landing_view"); },
   paymentSuccess:     ()                                          => { fire("payment_success",       "payment_success",      { category: "funnel" }); trackVkGoal("payment_success"); },
   subscriptionActive: ()                                          => { fire("subscription_active",   "subscription_active",  { category: "funnel" }); trackVkGoal("subscription_active"); },

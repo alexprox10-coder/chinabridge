@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { analytics } from "@/lib/analytics";
+import { analytics, classifyProduct } from "@/lib/analytics";
 import { MARKETPLACES, detectCommissionPct } from "@/lib/economics/marketplaces";
 import MarketNewsBar from "@/components/calculator/MarketNewsBar";
 import AIConsultantPanel from "@/components/ai-consultant/AIConsultantPanel";
@@ -1186,7 +1186,7 @@ export default function AIEconomicsFunnel() {
   // Track funnel step entry for analytics
   useEffect(() => {
     if (s.step === "preview" && ec) {
-      analytics.aiFunnelPreviewShown({ verdict: ec.verdict });
+      analytics.aiFunnelPreviewShown({ verdict: ec.verdict, marketplace: s.marketplace, product_category: classifyProduct(s.extractedData?.product_name ?? "") });
       analytics.consultantShown?.();
     }
     if (s.step === "contact") {
@@ -1310,8 +1310,8 @@ export default function AIEconomicsFunnel() {
       }
 
       analytics.unitEconomicsAutoCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total });
-      analytics.fullCalculationCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total });
-      analytics.calcDone({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total });
+      analytics.fullCalculationCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total, marketplace: s.marketplace, product_category: classifyProduct(data.extractedData?.product_name ?? s.extractedData?.product_name ?? "") });
+      analytics.calcDone({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total, marketplace: s.marketplace, product_category: classifyProduct(data.extractedData?.product_name ?? s.extractedData?.product_name ?? "") });
 
       const corr: CorrectionData = {
         product_name:   pName,
@@ -2973,7 +2973,7 @@ export default function AIEconomicsFunnel() {
             )}
 
             {/* AI Verdict — last in chain, after TargetPriceCard (TZ §4) */}
-            <VerdictCard ec={{ ...ec, verdict: effVerdict, margin_pct: Math.round(effMargin * 10) / 10, roi_pct: Math.round(effROI * 10) / 10 }} onView={() => analytics.aiVerdictViewed?.({ verdict: effVerdict, margin: Math.round(effMargin * 10) / 10 })} />
+            <VerdictCard ec={{ ...ec, verdict: effVerdict, margin_pct: Math.round(effMargin * 10) / 10, roi_pct: Math.round(effROI * 10) / 10 }} onView={() => analytics.aiVerdictViewed?.({ verdict: effVerdict, margin: Math.round(effMargin * 10) / 10, marketplace: s.marketplace })} />
 
             {!s.delivery?.hasRate && (
               <p className="text-xs text-amber-400/80 bg-amber-900/10 border border-amber-700/20 rounded-xl px-4 py-2">
@@ -3053,7 +3053,7 @@ export default function AIEconomicsFunnel() {
             <a
               href="https://t.me/ChinaBridgeLID_bot"
               target="_blank" rel="noopener noreferrer"
-              onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict }); analytics.quoteRequested?.({ verdict: ec.verdict }); }}
+              onClick={() => { analytics.aiFunnelFullCalc({ verdict: ec.verdict, marketplace: s.marketplace, product_category: classifyProduct(s.extractedData?.product_name ?? "") }); analytics.quoteRequested?.({ verdict: ec.verdict }); }}
               className="w-full py-3 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm flex items-center justify-center gap-2"
             >
               {ec.verdict === "red" ? "📩 Написать AI-консультанту" : ec.verdict === "yellow" ? "📩 Написать AI-консультанту" : "📩 Написать AI-консультанту"}
