@@ -384,6 +384,12 @@ export default function AICalculatorPage() {
                 после уточнения параметров партии, упаковки, маршрута и таможенных документов.
                 Итоговое коммерческое предложение готовит менеджер ChinaBridge.
               </p>
+              <a
+                href="/kak-rasschityvaetsya-import"
+                className="inline-flex items-center gap-1 mt-3 text-xs text-[#00A86B] hover:underline"
+              >
+                Подробная методология расчёта →
+              </a>
             </div>
           </div>
         </div>

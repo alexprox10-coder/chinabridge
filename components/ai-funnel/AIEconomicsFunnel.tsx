@@ -776,10 +776,10 @@ function PaywallBlock({
             ))}
           </div>
           <h2 className="text-lg font-bold text-white leading-tight">
-            Вы проверили {usedCount} {usedCount === 1 ? "товар" : usedCount < 5 ? "товара" : "товаров"}
+            ChinaBridge Pro — AI Unit Economics
           </h2>
           <p className="text-xs text-[#8899aa] mt-1 leading-relaxed">
-            Продолжайте анализировать товары и сохраняйте результаты в одном рабочем пространстве.
+            Вы уже проверили {usedCount} {usedCount === 1 ? "товар" : usedCount < 5 ? "товара" : "товаров"}. Продолжайте анализировать товары и сохраняйте результаты в Pro. <span className="text-white font-semibold">1 990 ₽/мес</span>
           </p>
           <div className="mt-2 flex items-center gap-1.5">
             <span className="text-[10px] text-[#00A86B]">●</span>
@@ -816,7 +816,7 @@ function PaywallBlock({
               <span className="text-2xl leading-none mt-0.5">🚢</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-bold text-white">Привезти товар</p>
+                  <p className="text-sm font-bold text-white">Нужно привезти товар?</p>
                   {isGreen && (
                     <span className="text-[10px] bg-[#00A86B] text-white rounded-full px-2 py-0.5 font-semibold">
                       Рекомендуем
@@ -834,7 +834,7 @@ function PaywallBlock({
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-[#00A86B] font-semibold">Открыть Telegram →</span>
+              <span className="text-xs text-[#00A86B] font-semibold">→ Рассчитать поставку</span>
               <p className="text-[10px] text-[#5a7899]">нажмите Start в боте</p>
             </div>
           </a>
@@ -2452,9 +2452,6 @@ export default function AIEconomicsFunnel() {
             ← Изменить маркетплейс
           </button>
 
-          {/* AI Verdict — hero card (TZ §12) */}
-          <VerdictCard ec={ec} onView={() => analytics.aiVerdictViewed?.({ verdict: ec.verdict ?? undefined, margin: Number(ec.margin_pct ?? 0) })} />
-
           {/* Supplier links — shown when user typed product name (no URL) AND has no supplier yet */}
           {supplierExists !== true && s.extractedData?.source_platform === "description" && s.extractedData.product_name && (() => {
             const cn = encodeURIComponent(s.extractedData!.product_name_cn || s.extractedData!.product_name);
@@ -2888,6 +2885,10 @@ export default function AIEconomicsFunnel() {
                   currency={s.extractedData?.price_currency ?? s.product.price_currency} />
               </div>
             )}
+
+            {/* AI Verdict — last in chain, after TargetPriceCard (TZ §4) */}
+            <VerdictCard ec={{ ...ec, verdict: effVerdict, margin_pct: Math.round(effMargin * 10) / 10, roi_pct: Math.round(effROI * 10) / 10 }} onView={() => analytics.aiVerdictViewed?.({ verdict: effVerdict, margin: Math.round(effMargin * 10) / 10 })} />
+
             {!s.delivery?.hasRate && (
               <p className="text-xs text-amber-400/80 bg-amber-900/10 border border-amber-700/20 rounded-xl px-4 py-2">
                 ⚠️ Стоимость международной доставки уточняется менеджером
