@@ -2510,7 +2510,21 @@ export default function AIEconomicsFunnel() {
             const roiH      = totalH > 0 ? (profitH / totalH) * 100 : 0;
             const verdictH  = marginH >= 25 ? 'green' : marginH >= 10 ? 'yellow' : 'red';
             const isKZH     = s.marketplace === 'kaspi';
-            return (
+            const unitCostH = ec.quantity > 0 ? totalH / ec.quantity : 0;
+            return (<>
+              {/* §20 — Главный output: себестоимость крупно */}
+              <div className="rounded-xl bg-[#0a1628] border border-[#1e3a5f] px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] text-[#5a7899] uppercase tracking-wide font-medium">Себестоимость</p>
+                  <p className="text-[11px] text-[#5a7899] mt-0.5">с доставкой, 1 шт</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-white tabular-nums">
+                    {isKZH ? `${fmtKzt(unitCostH)} ₸` : `${fmt(unitCostH)} ₽`}
+                  </p>
+                  <p className="text-[10px] text-[#5a7899] mt-0.5">из партии {ec.quantity} шт</p>
+                </div>
+              </div>
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: "Маржа",       value: `${(isFinite(marginH) ? marginH : 0).toFixed(1)}%`,  hi: verdictH === "green" },
@@ -2525,7 +2539,7 @@ export default function AIEconomicsFunnel() {
                   </div>
                 ))}
               </div>
-            );
+            </>);
           })()}
 
           {/* Trust disclaimer (TZ §10) */}
@@ -2682,10 +2696,15 @@ export default function AIEconomicsFunnel() {
                         <span className="text-[10px] text-[#00A86B] font-semibold">бесплатно</span>
                       </div>
                     </div>
-                    {/* Preview message bubble */}
+                    {/* §46 — Context-aware preview bubble */}
                     <div className="mx-5 mb-5 rounded-xl bg-[#00A86B]/10 border border-[#00A86B]/30 px-4 py-3 text-left">
                       <p className="text-sm text-white leading-relaxed">
-                        Помогу разобраться с этим товаром: расчёт поставки, схема закупки, риски. <span className="text-[#00A86B] font-semibold">С чего начнём?</span>
+                        Вижу, вы рассчитали{" "}
+                        <span className="text-[#00A86B] font-semibold">
+                          {(aiCtx.product_name || "товар").slice(0, 40)}
+                        </span>.{" "}
+                        Хотите узнать стоимость поставки в{" "}
+                        <span className="text-[#00A86B] font-semibold">{aiCtx.city_to || "ваш город"}?</span>
                       </p>
                     </div>
                   </button>
@@ -2861,6 +2880,47 @@ export default function AIEconomicsFunnel() {
                     <p className="text-[10px] text-[#8899aa] mt-0.5">При цене выше — целевая маржа не достигается</p>
                   </div>
                 </div>
+              );
+            })()}
+
+            {/* §5/§21 — Как рассчитана себестоимость */}
+            {(() => {
+              const isKZCtxB = s.marketplace === "kaspi";
+              const cur = isKZCtxB ? "₸" : "₽";
+              const fmtB = (v: number) => isKZCtxB ? `${fmtKzt(v)} ${cur}` : `${fmt(v)} ${cur}`;
+              const rows = [
+                { label: "Закупка", icon: "🛒", value: ec.purchase_total_rub },
+                { label: "Международная логистика", icon: "🚢", value: selDeliveryRub || ec.delivery_total_rub },
+                { label: "Таможенные расходы", icon: "🏛️", value: ec.customs_rub },
+                { label: "Комиссия маркетплейса", icon: "💳", value: ec.marketplace_fee_rub },
+                { label: "Логистика маркетплейса", icon: "📦", value: ec.marketplace_logistics_rub },
+                ...(ec.tax_rub > 0 ? [{ label: "Налоги", icon: "📋", value: ec.tax_rub }] : []),
+                ...(ec.other_costs_rub > 0 ? [{ label: "Прочие", icon: "➕", value: ec.other_costs_rub }] : []),
+              ];
+              return (
+                <details className="group rounded-xl border border-[#1e3a5f] bg-[#060f1e] overflow-hidden">
+                  <summary className="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-white/5 transition-colors list-none">
+                    <span className="text-xs font-semibold text-[#8899aa] flex items-center gap-1.5">
+                      📋 <span>Как рассчитана себестоимость</span>
+                    </span>
+                    <span className="text-[#5a7899] text-[10px] group-open:rotate-180 transition-transform inline-block">▼</span>
+                  </summary>
+                  <div className="px-4 pb-4 pt-1 flex flex-col">
+                    {rows.map(({ label, icon, value }, i) => (
+                      <div key={label} className={`flex items-center justify-between py-2 ${i < rows.length - 1 ? "border-b border-[#111f35]" : ""}`}>
+                        <span className="text-[11px] text-[#7a8fa8] flex items-center gap-1.5"><span>{icon}</span>{label}</span>
+                        <span className="text-[11px] font-semibold text-white tabular-nums">{fmtB(value)}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between pt-2.5 mt-1 border-t-2 border-[#1e3a5f]">
+                      <span className="text-xs font-bold text-white">Итоговая себестоимость</span>
+                      <span className="text-sm font-black text-[#00A86B] tabular-nums">{fmtB(effTotalCost)}</span>
+                    </div>
+                    <p className="text-[10px] text-[#3a5a7c] mt-2">
+                      Тарифы актуальны на {s.marketplace_config?.tariff_date ?? "сегодня"} · Курс ЦБ обновляется ежедневно
+                    </p>
+                  </div>
+                </details>
               );
             })()}
 
