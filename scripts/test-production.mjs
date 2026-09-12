@@ -32,6 +32,8 @@ console.log(`\n🧪 ChinaBridge Production Test Suite\n   BASE: ${BASE}\n`);
   const { status, body } = await json("/api/calculator/economics", {
     method: "POST",
     body: JSON.stringify({
+      name:                   "smoke-test",
+      phone:                  "+70000000000",
       product_name:           "Наушники Bluetooth",
       unit_price:             "150",
       price_currency:         "CNY",
