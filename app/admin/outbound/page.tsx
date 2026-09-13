@@ -207,22 +207,25 @@ export default function OutboundPage() {
   return (
     <div id="ob-admin-root" className="min-h-screen" style={{color:"#111827", background:"#F9FAFB"}}>
       <style>{`
-        #ob-admin-root { color: #111827; }
-        #ob-admin-root textarea {
+        #ob-admin-root { color: #111827 !important; background: #F9FAFB !important; }
+        #ob-admin-root * { -webkit-text-fill-color: unset; }
+        #ob-admin-root aside, #ob-admin-root aside * { -webkit-text-fill-color: unset; }
+        #ob-admin-root table td, #ob-admin-root table th {
           color: #111827 !important;
-          background: #ffffff !important;
           -webkit-text-fill-color: #111827 !important;
         }
-        #ob-admin-root select { color: #111827 !important; background: #ffffff !important; }
-        #ob-admin-root table thead th { color: #374151 !important; }
-        #ob-admin-root table tbody tr td { color: #111827 !important; }
+        #ob-admin-root textarea, #ob-admin-root input, #ob-admin-root select {
+          color: #111827 !important;
+          -webkit-text-fill-color: #111827 !important;
+          background: #ffffff !important;
+        }
       `}</style>
       <AdminNav />
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold" style={{color:"#111827"}}>🚀 AI Outbound Engine v1.0 <span style={{background:"#FF0000",color:"#FFFFFF",padding:"2px 8px",borderRadius:"4px",fontSize:"12px"}}>v{Date.now()}</span></h1>
+            <h1 className="text-2xl font-bold" style={{color:"#111827"}}>🚀 AI Outbound Engine v1.0</h1>
             <p className="text-sm mt-0.5" style={{color:"#6B7280"}}>
               {total} лидов · Пилот: KZ/RU Auto + Electronics
             </p>

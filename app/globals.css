@@ -20,6 +20,29 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── Admin panel: override dark marketing theme ─────────────────── */
+.admin-layout-root {
+  background: #F9FAFB !important;
+  color: #111827 !important;
+}
+.admin-layout-root > * {
+  -webkit-text-fill-color: unset;
+}
+/* table cells always dark */
+.admin-layout-root td,
+.admin-layout-root th {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+/* inputs & textareas always dark */
+.admin-layout-root input,
+.admin-layout-root textarea,
+.admin-layout-root select {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  background: #ffffff !important;
+}
+
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0B1F3A; }
 ::-webkit-scrollbar-thumb { background: #243a5e; border-radius: 3px; }
