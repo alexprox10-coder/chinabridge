@@ -205,7 +205,7 @@ export default function OutboundPage() {
   const econ = selected?.economics as { landed_cost_usd?: number; estimated_margin?: number; price_gap?: number } | undefined;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" style={{color:"#111827", background:"#F9FAFB"}}>
       <AdminNav />
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
