@@ -29,6 +29,7 @@ const GROUPS = [
       { href: "/admin/marketing",    label: "Маркетинг AI", icon: "📣" },
       { href: "/admin/content",      label: "Контент AI",   icon: "✍️" },
       { href: "/admin/ai-company",   label: "AI Кабинет",   icon: "🤖" },
+      { href: "/admin/ai-chat",      label: "AI Чат",       icon: "💬" },
     ],
   },
   {
