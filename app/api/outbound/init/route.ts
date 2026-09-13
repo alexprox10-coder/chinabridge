@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const rows = await sql.unsafe(`SELECT COUNT(*) as count FROM outbound_leads`);
+    const rows = await sql.unsafe(`SELECT COUNT(*) as count FROM outbound_leads`) as unknown as {count: string}[];
     results.push(`OK: rows=${rows[0]?.count ?? '?'}`);
   } catch (err: unknown) {
     results.push(`ERR count: ${err instanceof Error ? err.message : String(err)}`);
