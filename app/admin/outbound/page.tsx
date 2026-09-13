@@ -182,16 +182,23 @@ export default function OutboundPage() {
     addLog(`📤 ${lead.companyName} → CONTACTED`); loadLeads();
   }
 
-  async function markReplied(lead: OutboundLead, positive: boolean) {
+  async function markReply(lead: OutboundLead, responseStatus: string) {
+    const res = await fetch("/api/outbound/approve", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ outboundId: lead.outboundId, responseStatus }),
+    });
+    const data = await res.json();
+    const emoji: Record<string, string> = { POSITIVE: "✅", NEGATIVE: "❌", QUESTION: "❓", NOT_NOW: "🕐", UNSUBSCRIBE: "🚫" };
+    addLog(`${emoji[responseStatus] ?? "·"} ${lead.companyName} → ${responseStatus} → ${data.stage}`);
+    loadLeads(); loadKpis();
+  }
+
+  async function markQualified(lead: OutboundLead) {
     await fetch("/api/outbound/approve", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        outboundId: lead.outboundId,
-        stage: positive ? "REPLIED" : "CONTACTED",
-        responseStatus: positive ? "POSITIVE" : "NEGATIVE",
-      }),
+      body: JSON.stringify({ outboundId: lead.outboundId, stage: "QUALIFIED" }),
     });
-    addLog(`${positive ? "✅" : "❌"} ${lead.companyName} → ${positive ? "POSITIVE" : "NEGATIVE"}`);
+    addLog(`🎯 ${lead.companyName} → QUALIFIED (HOT check)`);
     loadLeads(); loadKpis();
   }
 
@@ -371,10 +378,16 @@ export default function OutboundPage() {
                                 className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">📤 Отправлено</button>
                             )}
                             {lead.stage === "CONTACTED" && (
-                              <>
-                                <button onClick={() => markReplied(lead, true)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">✅</button>
-                                <button onClick={() => markReplied(lead, false)} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">❌</button>
-                              </>
+                              <div className="flex gap-1 flex-wrap">
+                                <button onClick={() => markReply(lead, "POSITIVE")} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs" title="Положительный">✅</button>
+                                <button onClick={() => markReply(lead, "QUESTION")} className="px-2 py-1 bg-sky-100 text-sky-700 rounded text-xs" title="Задал вопрос">❓</button>
+                                <button onClick={() => markReply(lead, "NOT_NOW")} className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs" title="Не сейчас">🕐</button>
+                                <button onClick={() => markReply(lead, "NEGATIVE")} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs" title="Отказ">❌</button>
+                                <button onClick={() => markReply(lead, "UNSUBSCRIBE")} className="px-2 py-1 bg-gray-100 text-gray-500 rounded text-xs" title="Отписка">🚫</button>
+                              </div>
+                            )}
+                            {lead.stage === "REPLIED" && (
+                              <button onClick={() => markQualified(lead)} className="px-2 py-1 bg-teal-100 text-teal-700 rounded text-xs">🎯 Qualified</button>
                             )}
                           </div>
                         </td>
