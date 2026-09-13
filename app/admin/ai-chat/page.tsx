@@ -101,16 +101,35 @@ export default function AiChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load history on mount
+  // Load from localStorage instantly, then sync with DB
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem("ai_chat_history");
+      if (cached) {
+        const parsed = JSON.parse(cached) as Message[];
+        if (parsed?.length > 0) {
+          setMessages(parsed);
+          setHistoryLoading(false);
+        }
+      }
+    } catch {}
+
     fetch("/api/admin/ai-chat")
       .then(r => r.json())
       .then(d => {
-        if (d.ok) setMessages(d.messages ?? []);
+        if (d.ok && d.messages) setMessages(d.messages);
       })
       .catch(() => {})
       .finally(() => setHistoryLoading(false));
   }, []);
+
+  // Save to localStorage on every message update
+  useEffect(() => {
+    if (messages.length === 0) return;
+    try {
+      localStorage.setItem("ai_chat_history", JSON.stringify(messages.slice(-200)));
+    } catch {}
+  }, [messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -194,6 +213,7 @@ export default function AiChatPage() {
     if (!confirm("Очистить всю историю? Это нельзя отменить.")) return;
     await fetch("/api/admin/ai-chat", { method: "DELETE" });
     setMessages([]);
+    try { localStorage.removeItem("ai_chat_history"); } catch {}
   };
 
   const exportForClaudeCode = () => {

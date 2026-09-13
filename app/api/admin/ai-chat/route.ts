@@ -163,10 +163,15 @@ export async function POST(req: NextRequest) {
               const data = line.slice(6).trim();
               if (data === "[DONE]") {
                 if (fullText) {
-                  await sql`INSERT INTO ai_chat_history (role, content, model) VALUES ('assistant', ${fullText}, ${model})`.catch(() => {});
+                  try {
+                    await sql`INSERT INTO ai_chat_history (role, content, model) VALUES ('assistant', ${fullText}, ${model})`;
+                  } catch (saveErr) {
+                    console.error("[ai-chat] save assistant failed:", saveErr);
+                  }
                 }
                 controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-                continue;
+                controller.close();
+                return;
               }
               try {
                 const parsed = JSON.parse(data);
