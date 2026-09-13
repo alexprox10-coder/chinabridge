@@ -339,12 +339,12 @@ export default function OutboundPage() {
                       <tr key={lead.outboundId} className="hover:bg-gray-50">
                         <td className="px-4 py-2.5">
                           <div className="font-medium text-gray-900 max-w-[200px] truncate">{lead.companyName}</div>
-                          <div className="text-xs text-gray-400">{lead.city}, {lead.country} · {lead.phone || lead.email || "—"}</div>
+                          <div className="text-xs text-gray-600">{lead.city}, {lead.country} · {lead.phone || lead.email || "—"}</div>
                         </td>
                         <td className="px-4 py-2.5">
-                          <div className="text-xs text-gray-600">{lead.category}</div>
+                          <div className="text-xs text-gray-700 font-medium">{lead.category}</div>
                           {lead.marketplace !== "NONE" && lead.marketplace && (
-                            <div className="text-xs text-indigo-500">{lead.marketplace}</div>
+                            <div className="text-xs text-indigo-600 font-medium">{lead.marketplace}</div>
                           )}
                         </td>
                         <td className="px-4 py-2.5">
@@ -352,7 +352,7 @@ export default function OutboundPage() {
                             {lead.opportunityScore}
                           </span>
                           {lead.messageQualityScore > 0 && (
-                            <div className="text-xs text-gray-400">msg: {lead.messageQualityScore}</div>
+                            <div className="text-xs text-gray-500">msg: {lead.messageQualityScore}</div>
                           )}
                         </td>
                         <td className="px-4 py-2.5">
