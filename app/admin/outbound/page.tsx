@@ -205,7 +205,30 @@ export default function OutboundPage() {
   const econ = selected?.economics as { landed_cost_usd?: number; estimated_margin?: number; price_gap?: number } | undefined;
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{color:"#111827", background:"#F9FAFB"}}>
+    <div id="ob-admin-root" className="min-h-screen" style={{color:"#111827", background:"#F9FAFB"}}>
+      <style>{`
+        #ob-admin-root { color: #111827 !important; }
+        #ob-admin-root div,
+        #ob-admin-root p,
+        #ob-admin-root span,
+        #ob-admin-root td,
+        #ob-admin-root th,
+        #ob-admin-root label,
+        #ob-admin-root button { color: inherit; }
+        #ob-admin-root textarea {
+          color: #111827 !important;
+          background: #ffffff !important;
+          -webkit-text-fill-color: #111827 !important;
+        }
+        #ob-admin-root input {
+          color: #111827 !important;
+          -webkit-text-fill-color: #111827 !important;
+        }
+        #ob-admin-root table tbody tr td { color: #111827 !important; }
+        #ob-admin-root .text-gray-400 { color: #6B7280 !important; }
+        #ob-admin-root .text-gray-500 { color: #6B7280 !important; }
+        #ob-admin-root .text-gray-600 { color: #4B5563 !important; }
+      `}</style>
       <AdminNav />
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
