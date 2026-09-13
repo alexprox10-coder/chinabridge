@@ -44,12 +44,13 @@ export async function POST(req: NextRequest) {
 
     // Получаем лиды из n8n DataTable
     const dtRes = await fetch(
-      `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows?limit=${limit}`,
+      `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows?take=${limit}`,
       { headers: { "X-N8N-API-KEY": N8N_KEY }, signal: AbortSignal.timeout(30000) }
     );
 
     if (!dtRes.ok) {
-      return NextResponse.json({ ok: false, error: `n8n DataTable error: ${dtRes.status}` }, { status: 502 });
+      const errText = await dtRes.text().catch(() => "");
+      return NextResponse.json({ ok: false, error: `n8n DataTable error: ${dtRes.status} ${errText.slice(0,200)}` }, { status: 502 });
     }
 
     const dtData = await dtRes.json();
