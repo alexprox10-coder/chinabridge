@@ -222,7 +222,7 @@ export default function OutboundPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold" style={{color:"#111827"}}>🚀 AI Outbound Engine v1.0</h1>
+            <h1 className="text-2xl font-bold" style={{color:"#111827"}}>🚀 AI Outbound Engine v1.0 <span style={{background:"#FF0000",color:"#FFFFFF",padding:"2px 8px",borderRadius:"4px",fontSize:"12px"}}>v{Date.now()}</span></h1>
             <p className="text-sm mt-0.5" style={{color:"#6B7280"}}>
               {total} лидов · Пилот: KZ/RU Auto + Electronics
             </p>
