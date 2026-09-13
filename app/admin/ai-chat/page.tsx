@@ -97,6 +97,7 @@ export default function AiChatPage() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [model, setModel] = useState("anthropic/claude-opus-4-5");
   const [streamingMsg, setStreamingMsg] = useState<Message | null>(null);
+  const [toolStatus, setToolStatus] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -182,8 +183,16 @@ export default function AiChatPage() {
           if (data === "[DONE]") break;
           try {
             const parsed = JSON.parse(data);
+            if (parsed.status) {
+              setToolStatus(parsed.status);
+            }
             if (parsed.text) {
+              setToolStatus(null);
               fullText += parsed.text;
+              setStreamingMsg(prev => prev ? { ...prev, content: fullText } : null);
+            }
+            if (parsed.error) {
+              fullText += `\n❌ ${parsed.error}`;
               setStreamingMsg(prev => prev ? { ...prev, content: fullText } : null);
             }
           } catch { /* ignore */ }
@@ -199,6 +208,7 @@ export default function AiChatPage() {
     } finally {
       setLoading(false);
       setStreamingMsg(null);
+      setToolStatus(null);
       abortRef.current = null;
     }
   }, [input, model, loading]);
@@ -319,7 +329,17 @@ export default function AiChatPage() {
             );
           })}
 
-          {streamingMsg && <AssistantBubble msg={streamingMsg} streaming />}
+          {(streamingMsg || toolStatus) && (
+            <div>
+              {toolStatus && (
+                <div className="flex items-center gap-2 ml-9 mb-2">
+                  <span className="animate-spin text-xs">⚙️</span>
+                  <span className="text-xs animate-pulse" style={{ color: "#6366F1" }}>{toolStatus}</span>
+                </div>
+              )}
+              {streamingMsg && <AssistantBubble msg={streamingMsg} streaming />}
+            </div>
+          )}
 
           <div ref={bottomRef} />
         </div>
