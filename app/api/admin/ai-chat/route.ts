@@ -117,13 +117,11 @@ export async function POST(req: NextRequest) {
     // Save user message first
     await sql`INSERT INTO ai_chat_history (role, content, model) VALUES ('user', ${message}, ${model})`;
 
-    // Load last 80 messages for context (enough for 3 days of work)
+    // Load all history for full context (AI remembers everything)
     const history = await sql`
       SELECT role, content FROM ai_chat_history
-      ORDER BY created_at DESC LIMIT 80
+      ORDER BY created_at ASC LIMIT 500
     ` as { role: string; content: string }[];
-    history.reverse();
-
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
