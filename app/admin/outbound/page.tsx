@@ -338,21 +338,21 @@ export default function OutboundPage() {
                     {leads.map((lead) => (
                       <tr key={lead.outboundId} className="hover:bg-gray-50">
                         <td className="px-4 py-2.5">
-                          <div className="font-medium text-gray-900 max-w-[200px] truncate">{lead.companyName}</div>
-                          <div className="text-xs text-gray-600">{lead.city}, {lead.country} · {lead.phone || lead.email || "—"}</div>
+                          <div className="font-semibold max-w-[200px] truncate" style={{color:"#111827"}}>{lead.companyName}</div>
+                          <div className="text-xs mt-0.5" style={{color:"#4B5563"}}>{lead.city}, {lead.country} · {lead.phone || lead.email || "—"}</div>
                         </td>
                         <td className="px-4 py-2.5">
-                          <div className="text-xs text-gray-700 font-medium">{lead.category}</div>
+                          <div className="text-xs font-semibold" style={{color:"#374151"}}>{lead.category}</div>
                           {lead.marketplace !== "NONE" && lead.marketplace && (
-                            <div className="text-xs text-indigo-600 font-medium">{lead.marketplace}</div>
+                            <div className="text-xs font-medium" style={{color:"#4338CA"}}>{lead.marketplace}</div>
                           )}
                         </td>
                         <td className="px-4 py-2.5">
-                          <span className={`text-lg font-bold ${lead.opportunityScore >= 70 ? "text-green-600" : lead.opportunityScore >= 50 ? "text-yellow-600" : "text-gray-400"}`}>
+                          <span className={`text-lg font-bold ${lead.opportunityScore >= 70 ? "text-green-600" : lead.opportunityScore >= 50 ? "text-yellow-600" : "text-gray-500"}`}>
                             {lead.opportunityScore}
                           </span>
                           {lead.messageQualityScore > 0 && (
-                            <div className="text-xs text-gray-500">msg: {lead.messageQualityScore}</div>
+                            <div className="text-xs" style={{color:"#6B7280"}}>msg: {lead.messageQualityScore}</div>
                           )}
                         </td>
                         <td className="px-4 py-2.5">
