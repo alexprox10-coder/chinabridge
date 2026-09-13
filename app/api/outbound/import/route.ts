@@ -59,9 +59,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "outbound_leads table not found — run /api/outbound/init first" }, { status: 500 });
     }
 
+    const offset = (body.offset ?? 0) as number;
+
     // Получаем лиды из n8n DataTable
+    const n8nUrl = offset > 0
+      ? `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows?skip=${offset}`
+      : `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`;
+
     const dtRes = await fetch(
-      `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`,
+      n8nUrl,
       { headers: { "X-N8N-API-KEY": N8N_KEY }, signal: AbortSignal.timeout(30000) }
     );
 
