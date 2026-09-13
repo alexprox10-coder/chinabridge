@@ -20,44 +20,55 @@ interface OutboundLead {
   website: string;
   stage: Stage;
   opportunityScore: number;
+  companyScore: number;
   leadScore: number;
   reasonToContact: string;
   personalizedMessage: string;
   messageQualityScore: number;
   responseStatus: string;
+  pitchType: string;
+  chinaMatchStatus: string;
+  products: unknown[];
+  economics: Record<string, unknown>;
   source: string;
   vertical: string;
   createdAt: string;
 }
 
+interface KpiData {
+  total_leads: number;
+  funnel: Record<string, number>;
+  positive_reply_rate: number | null;
+  qualified_rate: number | null;
+  hot_count: number;
+  deal_count: number;
+  china_matched: number;
+  avg_opportunity_score: number;
+  avg_message_quality: number;
+}
+
 const STAGE_LABELS: Record<string, string> = {
-  FOUND: "Найден",
-  ENRICHED: "Обогащён",
-  PERSONALIZED: "Персонализирован",
-  READY_TO_CONTACT: "Готов к отправке",
-  APPROVED: "Одобрен",
-  CONTACTED: "Отправлено",
-  REPLIED: "Ответил",
-  QUALIFIED: "Квалифицирован",
-  HOT: "Горячий",
-  QUOTE: "КП",
-  DEAL: "Сделка",
-  ERROR: "Ошибка",
+  FOUND: "Найден", ENRICHED: "Обогащён", PRODUCTS_FOUND: "Товары", CHINA_MATCHED: "Китай",
+  ECONOMICS_READY: "Экономика", SCORED: "Оценён", PERSONALIZED: "Персонализирован",
+  READY_TO_CONTACT: "Готов", APPROVED: "Одобрен", CONTACTED: "Отправлено",
+  REPLIED: "Ответил", QUALIFIED: "Квалифицирован", HOT: "Горячий",
+  QUOTE: "КП", DEAL: "Сделка", ERROR: "Ошибка",
 };
 
 const STAGE_COLORS: Record<string, string> = {
-  FOUND: "bg-gray-100 text-gray-700",
-  ENRICHED: "bg-blue-100 text-blue-700",
-  PERSONALIZED: "bg-purple-100 text-purple-700",
-  READY_TO_CONTACT: "bg-yellow-100 text-yellow-700",
-  APPROVED: "bg-yellow-200 text-yellow-800",
-  CONTACTED: "bg-orange-100 text-orange-700",
-  REPLIED: "bg-cyan-100 text-cyan-700",
-  QUALIFIED: "bg-teal-100 text-teal-700",
-  HOT: "bg-red-100 text-red-700",
-  QUOTE: "bg-green-100 text-green-700",
-  DEAL: "bg-green-600 text-white",
-  ERROR: "bg-red-200 text-red-800",
+  FOUND: "bg-gray-100 text-gray-700", ENRICHED: "bg-blue-100 text-blue-700",
+  PRODUCTS_FOUND: "bg-sky-100 text-sky-700", CHINA_MATCHED: "bg-indigo-100 text-indigo-700",
+  ECONOMICS_READY: "bg-violet-100 text-violet-700", SCORED: "bg-purple-100 text-purple-700",
+  PERSONALIZED: "bg-purple-100 text-purple-700", READY_TO_CONTACT: "bg-yellow-100 text-yellow-700",
+  APPROVED: "bg-yellow-200 text-yellow-800", CONTACTED: "bg-orange-100 text-orange-700",
+  REPLIED: "bg-cyan-100 text-cyan-700", QUALIFIED: "bg-teal-100 text-teal-700",
+  HOT: "bg-red-100 text-red-700", QUOTE: "bg-green-100 text-green-700",
+  DEAL: "bg-green-600 text-white", ERROR: "bg-red-200 text-red-800",
+};
+
+const CHINA_MATCH_BADGE: Record<string, string> = {
+  MATCHED: "bg-green-100 text-green-700", PARTIAL: "bg-yellow-100 text-yellow-700",
+  UNKNOWN: "bg-gray-100 text-gray-500",
 };
 
 const VERTICALS = [
@@ -68,19 +79,25 @@ const VERTICALS = [
   { value: "RU_ELECTRONICS", label: "RU — Электроника" },
 ];
 
+const PIPELINE_STAGES: Stage[] = [
+  "FOUND", "SCORED", "PERSONALIZED", "READY_TO_CONTACT", "CONTACTED", "REPLIED", "QUALIFIED", "HOT", "DEAL"
+];
+
 export default function OutboundPage() {
   const [leads, setLeads] = useState<OutboundLead[]>([]);
   const [stageCounts, setStageCounts] = useState<Record<string, number>>({});
   const [total, setTotal] = useState(0);
+  const [kpis, setKpis] = useState<KpiData | null>(null);
   const [loading, setLoading] = useState(false);
   const [filterStage, setFilterStage] = useState("");
   const [filterVertical, setFilterVertical] = useState("");
   const [selected, setSelected] = useState<OutboundLead | null>(null);
   const [editedMsg, setEditedMsg] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [importLoading, setImportLoading] = useState(false);
   const [enrichLoading, setEnrichLoading] = useState(false);
+  const [enrichV2Loading, setEnrichV2Loading] = useState(false);
   const [log, setLog] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<"leads" | "kpi">("leads");
 
   const addLog = (msg: string) => setLog((l) => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...l.slice(0, 49)]);
 
@@ -97,49 +114,50 @@ export default function OutboundPage() {
         setStageCounts(data.stageCounts ?? {});
         setTotal(data.total ?? 0);
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [filterStage, filterVertical]);
 
-  useEffect(() => { loadLeads(); }, [loadLeads]);
+  const loadKpis = useCallback(async () => {
+    const res = await fetch("/api/outbound/stats");
+    const data = await res.json();
+    if (data.ok) setKpis(data.kpis);
+  }, []);
 
-  async function importLeads() {
-    setImportLoading(true);
-    addLog("Импортирую лиды из DataTable...");
-    try {
-      const res = await fetch("/api/outbound/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit: 100, vertical: filterVertical || "KZ_AUTO", country: "KZ" }),
-      });
-      const data = await res.json();
-      addLog(data.ok ? `✅ Импортировано: ${data.imported}, пропущено дублей: ${data.skipped}` : `❌ ${data.error}`);
-      if (data.ok) loadLeads();
-    } finally {
-      setImportLoading(false);
-    }
-  }
+  useEffect(() => { loadLeads(); loadKpis(); }, [loadLeads, loadKpis]);
 
   async function enrichBatch() {
     setEnrichLoading(true);
-    addLog("AI обогащение (10 лидов)...");
+    addLog("AI обогащение v1 (10 лидов FOUND → PERSONALIZED)...");
     try {
       const res = await fetch("/api/outbound/enrich", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ batchSize: 10 }),
       });
       const data = await res.json();
       if (data.ok) {
-        addLog(`✅ Обработано: ${data.processed}. Результаты: ${data.results?.map((r: {company: string; opportunityScore?: number; ok: boolean}) => r.ok ? `${r.company} (${r.opportunityScore})` : `ERR`).join(", ")}`);
-        loadLeads();
-      } else {
-        addLog(`❌ ${data.error}`);
-      }
-    } finally {
-      setEnrichLoading(false);
-    }
+        addLog(`✅ v1: ${data.processed} лидов обработано`);
+        loadLeads(); loadKpis();
+      } else addLog(`❌ ${data.error}`);
+    } finally { setEnrichLoading(false); }
+  }
+
+  async function enrichV2Batch() {
+    setEnrichV2Loading(true);
+    addLog("🔬 AI Enrich v2 (5 лидов: Products → China → Economics → Score)...");
+    try {
+      const res = await fetch("/api/outbound/enrich-v2", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchSize: 5, stage: "PERSONALIZED" }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const summary = data.results?.map((r: { company: string; opportunityScore?: number; chinaMatchConfidence?: number; ok: boolean }) =>
+          r.ok ? `${r.company} (score:${r.opportunityScore}, match:${Math.round((r.chinaMatchConfidence ?? 0) * 100)}%)` : `ERR`
+        ).join("; ");
+        addLog(`✅ v2: ${data.processed} лидов. ${summary}`);
+        loadLeads(); loadKpis();
+      } else addLog(`❌ ${data.error}`);
+    } finally { setEnrichV2Loading(false); }
   }
 
   async function approve(action: "approve" | "reject" | "edit_approve") {
@@ -147,195 +165,231 @@ export default function OutboundPage() {
     setActionLoading(true);
     try {
       const res = await fetch("/api/outbound/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          outboundId: selected.outboundId,
-          action,
-          editedMessage: action === "edit_approve" ? editedMsg : undefined,
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outboundId: selected.outboundId, action, editedMessage: action === "edit_approve" ? editedMsg : undefined }),
       });
       const data = await res.json();
-      addLog(data.ok ? `✅ ${selected.companyName} → ${action === "reject" ? "отклонён" : "одобрен (уведомление в TG)"}` : `❌ ${data.error}`);
-      if (data.ok) {
-        setSelected(null);
-        loadLeads();
-      }
-    } finally {
-      setActionLoading(false);
-    }
+      addLog(data.ok ? `✅ ${selected.companyName} → ${action === "reject" ? "отклонён" : "одобрен → TG"}` : `❌ ${data.error}`);
+      if (data.ok) { setSelected(null); loadLeads(); loadKpis(); }
+    } finally { setActionLoading(false); }
   }
 
   async function markContacted(lead: OutboundLead) {
     await fetch("/api/outbound/approve", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ outboundId: lead.outboundId, stage: "CONTACTED", channel: "TELEGRAM" }),
     });
-    addLog(`📤 ${lead.companyName} → CONTACTED`);
-    loadLeads();
+    addLog(`📤 ${lead.companyName} → CONTACTED`); loadLeads();
   }
 
   async function markReplied(lead: OutboundLead, positive: boolean) {
     await fetch("/api/outbound/approve", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         outboundId: lead.outboundId,
         stage: positive ? "REPLIED" : "CONTACTED",
         responseStatus: positive ? "POSITIVE" : "NEGATIVE",
       }),
     });
-    addLog(`${positive ? "✅" : "❌"} ${lead.companyName} → ${positive ? "POSITIVE reply" : "NEGATIVE"}`);
-    loadLeads();
+    addLog(`${positive ? "✅" : "❌"} ${lead.companyName} → ${positive ? "POSITIVE" : "NEGATIVE"}`);
+    loadLeads(); loadKpis();
   }
 
-  const pipelineStages: Stage[] = ["FOUND", "PERSONALIZED", "READY_TO_CONTACT", "CONTACTED", "REPLIED", "QUALIFIED", "HOT", "DEAL"];
+  const econ = selected?.economics as { landed_cost_usd?: number; estimated_margin?: number; price_gap?: number } | undefined;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminNav />
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">🚀 AI Outbound Engine</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Всего лидов: <b>{total}</b> | Пилот v1.0 — KZ/RU Auto + Electronics
+            <h1 className="text-2xl font-bold text-gray-900">🚀 AI Outbound Engine v1.0</h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {total} лидов · Пилот: KZ/RU Auto + Electronics
             </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={importLeads}
-              disabled={importLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-            >
-              {importLoading ? "Импортирую..." : "📥 Импорт из DataTable"}
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={enrichBatch} disabled={enrichLoading}
+              className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50">
+              {enrichLoading ? "v1..." : "🤖 Enrich v1"}
             </button>
-            <button
-              onClick={enrichBatch}
-              disabled={enrichLoading}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
-            >
-              {enrichLoading ? "AI работает..." : "🤖 AI Enrichment (10)"}
+            <button onClick={enrichV2Batch} disabled={enrichV2Loading}
+              className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+              {enrichV2Loading ? "v2..." : "🔬 Enrich v2 (Products+China)"}
             </button>
-            <button onClick={loadLeads} className="px-3 py-2 bg-white border rounded-lg text-sm hover:bg-gray-50">
-              🔄
-            </button>
+            <button onClick={() => { loadLeads(); loadKpis(); }}
+              className="px-3 py-2 bg-white border rounded-lg text-sm hover:bg-gray-50">🔄</button>
           </div>
         </div>
 
-        {/* Pipeline Funnel */}
-        <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 mb-6">
-          {pipelineStages.map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStage(filterStage === s ? "" : s)}
-              className={`p-3 rounded-lg border text-center transition-all ${
-                filterStage === s ? "ring-2 ring-blue-500 bg-blue-50" : "bg-white hover:bg-gray-50"
-              }`}
-            >
-              <div className="text-2xl font-bold text-gray-900">{stageCounts[s] ?? 0}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{STAGE_LABELS[s] ?? s}</div>
+        {/* Tabs */}
+        <div className="flex gap-1 mb-4 border-b">
+          {(["leads", "kpi"] as const).map((t) => (
+            <button key={t} onClick={() => setActiveTab(t)}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === t ? "bg-white border border-b-white -mb-px text-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+              {t === "leads" ? "📋 Лиды" : "📊 KPI"}
             </button>
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-3 mb-4">
-          <select
-            value={filterVertical}
-            onChange={(e) => setFilterVertical(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm bg-white"
-          >
-            {VERTICALS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
-          </select>
-          <select
-            value={filterStage}
-            onChange={(e) => setFilterStage(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm bg-white"
-          >
-            <option value="">Все стадии</option>
-            {Object.entries(STAGE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </div>
-
-        {/* Leads Table */}
-        <div className="bg-white rounded-xl border overflow-hidden mb-6">
-          {loading ? (
-            <div className="p-8 text-center text-gray-400">Загрузка...</div>
-          ) : leads.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">
-              Нет лидов. Нажмите «Импорт из DataTable» чтобы загрузить 989 лидов из Алматы.
+        {activeTab === "kpi" && kpis && (
+          <div className="space-y-4 mb-6">
+            {/* Funnel KPIs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: "Всего лидов", value: kpis.total_leads, color: "text-gray-900" },
+                { label: "China Match", value: kpis.china_matched, color: "text-indigo-600" },
+                { label: "Avg Opp Score", value: kpis.avg_opportunity_score, color: "text-purple-600" },
+                { label: "HOT лидов", value: kpis.hot_count, color: "text-red-600" },
+              ].map((k) => (
+                <div key={k.label} className="bg-white rounded-xl border p-4">
+                  <div className={`text-3xl font-bold ${k.color}`}>{k.value}</div>
+                  <div className="text-xs text-gray-500 mt-1">{k.label}</div>
+                </div>
+              ))}
             </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Компания</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Город / Категория</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Score</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Стадия</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Действия</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {leads.map((lead) => (
-                  <tr key={lead.outboundId} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{lead.companyName}</div>
-                      <div className="text-xs text-gray-400">{lead.phone || lead.email || "—"}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>{lead.city}, {lead.country}</div>
-                      <div className="text-xs text-gray-400">{lead.category} {lead.marketplace !== "NONE" && lead.marketplace ? `· ${lead.marketplace}` : ""}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-lg font-bold ${lead.opportunityScore >= 70 ? "text-green-600" : lead.opportunityScore >= 50 ? "text-yellow-600" : "text-gray-400"}`}>
-                        {lead.opportunityScore}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${STAGE_COLORS[lead.stage] ?? "bg-gray-100"}`}>
-                        {STAGE_LABELS[lead.stage] ?? lead.stage}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        {lead.stage === "PERSONALIZED" && (
-                          <button
-                            onClick={() => { setSelected(lead); setEditedMsg(lead.personalizedMessage); }}
-                            className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200"
-                          >
-                            👁 Проверить
-                          </button>
-                        )}
-                        {lead.stage === "READY_TO_CONTACT" && (
-                          <button
-                            onClick={() => markContacted(lead)}
-                            className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs hover:bg-orange-200"
-                          >
-                            📤 Отправлено
-                          </button>
-                        )}
-                        {lead.stage === "CONTACTED" && (
-                          <>
-                            <button onClick={() => markReplied(lead, true)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">✅ Ответил</button>
-                            <button onClick={() => markReplied(lead, false)} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">❌ Нет</button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+            {/* Conversion rates */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {kpis.positive_reply_rate !== null && (
+                <div className="bg-white rounded-xl border p-4">
+                  <div className="text-2xl font-bold text-green-600">{kpis.positive_reply_rate}%</div>
+                  <div className="text-xs text-gray-500 mt-1">Positive Reply Rate</div>
+                </div>
+              )}
+              {kpis.qualified_rate !== null && (
+                <div className="bg-white rounded-xl border p-4">
+                  <div className="text-2xl font-bold text-teal-600">{kpis.qualified_rate}%</div>
+                  <div className="text-xs text-gray-500 mt-1">Qualified Rate</div>
+                </div>
+              )}
+              <div className="bg-white rounded-xl border p-4">
+                <div className="text-2xl font-bold text-green-700">{kpis.deal_count}</div>
+                <div className="text-xs text-gray-500 mt-1">Deals</div>
+              </div>
+            </div>
+            {/* Stage funnel */}
+            <div className="bg-white rounded-xl border p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Воронка по стадиям</h3>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                {Object.entries(kpis.funnel).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([stage, count]) => (
+                  <div key={stage} className="text-center">
+                    <div className="text-xl font-bold text-gray-900">{count}</div>
+                    <div className={`text-xs px-1.5 py-0.5 rounded-full mt-0.5 ${STAGE_COLORS[stage] ?? "bg-gray-100"}`}>{STAGE_LABELS[stage] ?? stage}</div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "leads" && (
+          <>
+            {/* Pipeline Funnel */}
+            <div className="grid grid-cols-5 lg:grid-cols-9 gap-1.5 mb-4">
+              {PIPELINE_STAGES.map((s) => (
+                <button key={s} onClick={() => setFilterStage(filterStage === s ? "" : s)}
+                  className={`p-2.5 rounded-lg border text-center transition-all ${filterStage === s ? "ring-2 ring-blue-500 bg-blue-50" : "bg-white hover:bg-gray-50"}`}>
+                  <div className="text-xl font-bold text-gray-900">{stageCounts[s] ?? 0}</div>
+                  <div className="text-xs text-gray-500 mt-0.5 leading-tight">{STAGE_LABELS[s] ?? s}</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Filters */}
+            <div className="flex gap-2 mb-3">
+              <select value={filterVertical} onChange={(e) => setFilterVertical(e.target.value)}
+                className="px-3 py-1.5 border rounded-lg text-sm bg-white">
+                {VERTICALS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
+              </select>
+              <select value={filterStage} onChange={(e) => setFilterStage(e.target.value)}
+                className="px-3 py-1.5 border rounded-lg text-sm bg-white">
+                <option value="">Все стадии</option>
+                {Object.entries(STAGE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
+
+            {/* Leads Table */}
+            <div className="bg-white rounded-xl border overflow-hidden mb-4">
+              {loading ? (
+                <div className="p-8 text-center text-gray-400">Загрузка...</div>
+              ) : leads.length === 0 ? (
+                <div className="p-8 text-center text-gray-400">Нет лидов в выбранном фильтре.</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="px-4 py-2.5 text-left font-medium text-gray-600">Компания</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-gray-600">Категория</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-gray-600">Score</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-gray-600">Китай</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-gray-600">Стадия</th>
+                      <th className="px-4 py-2.5 text-left font-medium text-gray-600">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {leads.map((lead) => (
+                      <tr key={lead.outboundId} className="hover:bg-gray-50">
+                        <td className="px-4 py-2.5">
+                          <div className="font-medium text-gray-900 max-w-[200px] truncate">{lead.companyName}</div>
+                          <div className="text-xs text-gray-400">{lead.city}, {lead.country} · {lead.phone || lead.email || "—"}</div>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="text-xs text-gray-600">{lead.category}</div>
+                          {lead.marketplace !== "NONE" && lead.marketplace && (
+                            <div className="text-xs text-indigo-500">{lead.marketplace}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={`text-lg font-bold ${lead.opportunityScore >= 70 ? "text-green-600" : lead.opportunityScore >= 50 ? "text-yellow-600" : "text-gray-400"}`}>
+                            {lead.opportunityScore}
+                          </span>
+                          {lead.messageQualityScore > 0 && (
+                            <div className="text-xs text-gray-400">msg: {lead.messageQualityScore}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${CHINA_MATCH_BADGE[lead.chinaMatchStatus] ?? "bg-gray-100 text-gray-400"}`}>
+                            {lead.chinaMatchStatus ?? "—"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${STAGE_COLORS[lead.stage] ?? "bg-gray-100"}`}>
+                            {STAGE_LABELS[lead.stage] ?? lead.stage}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex gap-1">
+                            {(lead.stage === "PERSONALIZED" || lead.stage === "SCORED") && (
+                              <button onClick={() => { setSelected(lead); setEditedMsg(lead.personalizedMessage); }}
+                                className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200">
+                                👁 Проверить
+                              </button>
+                            )}
+                            {lead.stage === "READY_TO_CONTACT" && (
+                              <button onClick={() => markContacted(lead)}
+                                className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">📤 Отправлено</button>
+                            )}
+                            {lead.stage === "CONTACTED" && (
+                              <>
+                                <button onClick={() => markReplied(lead, true)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">✅</button>
+                                <button onClick={() => markReplied(lead, false)} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">❌</button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Activity Log */}
         {log.length > 0 && (
-          <div className="bg-gray-900 rounded-xl p-4 font-mono text-xs text-green-400 max-h-40 overflow-y-auto">
+          <div className="bg-gray-900 rounded-xl p-4 font-mono text-xs text-green-400 max-h-32 overflow-y-auto">
             {log.map((l, i) => <div key={i}>{l}</div>)}
           </div>
         )}
@@ -344,52 +398,69 @@ export default function OutboundPage() {
       {/* Approval Modal */}
       {selected && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-xl font-bold">{selected.companyName}</h2>
-                <p className="text-sm text-gray-500">{selected.city}, {selected.country} · {selected.category} · Score: {selected.opportunityScore}</p>
+                <p className="text-sm text-gray-500">
+                  {selected.city}, {selected.country === "KZ" ? "Казахстан" : "Россия"} ·
+                  {selected.category} · Score: <b className="text-purple-600">{selected.opportunityScore}</b>
+                  {selected.chinaMatchStatus && selected.chinaMatchStatus !== "UNKNOWN" && (
+                    <span className={`ml-2 px-1.5 py-0.5 rounded text-xs ${CHINA_MATCH_BADGE[selected.chinaMatchStatus]}`}>
+                      China: {selected.chinaMatchStatus}
+                    </span>
+                  )}
+                </p>
               </div>
               <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
             </div>
 
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-xs font-semibold text-blue-700 mb-1">ПРИЧИНА ОБРАЩЕНИЯ</p>
+            {/* Economics summary */}
+            {econ && Object.keys(econ).length > 0 && (
+              <div className="mb-3 p-3 bg-indigo-50 rounded-lg">
+                <p className="text-xs font-semibold text-indigo-700 mb-1">📊 ЭКОНОМИКА (оценочная)</p>
+                <div className="text-xs text-indigo-900 grid grid-cols-3 gap-2">
+                  {econ.landed_cost_usd && <span>Landed cost: <b>${econ.landed_cost_usd}</b></span>}
+                  {econ.estimated_margin && <span>Margin: <b>{Math.round((econ.estimated_margin as number) * 100)}%</b></span>}
+                  {econ.price_gap && <span>Price gap: <b>{Math.round((econ.price_gap as number) * 100)}%</b></span>}
+                </div>
+              </div>
+            )}
+
+            <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs font-semibold text-blue-700 mb-1">💡 ПРИЧИНА ОБРАЩЕНИЯ</p>
               <p className="text-sm text-blue-900">{selected.reasonToContact || "—"}</p>
             </div>
 
             <div className="mb-4">
-              <p className="text-xs font-semibold text-gray-600 mb-2">СООБЩЕНИЕ (редактируемое)</p>
-              <textarea
-                value={editedMsg}
-                onChange={(e) => setEditedMsg(e.target.value)}
-                rows={5}
-                className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-300 resize-none"
-              />
-              <p className="text-xs text-gray-400 mt-1">Качество сообщения: {selected.messageQualityScore}/100</p>
+              <p className="text-xs font-semibold text-gray-600 mb-2">💬 СООБЩЕНИЕ (редактируемое)</p>
+              <textarea value={editedMsg} onChange={(e) => setEditedMsg(e.target.value)}
+                rows={5} className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-300 resize-none" />
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>Качество: {selected.messageQualityScore}/100</span>
+                <span>{selected.pitchType === "B2B_IMPORT" ? "B2B Import" : "Seller Outbound"}</span>
+              </div>
+            </div>
+
+            {/* Contact info */}
+            <div className="mb-4 text-xs text-gray-500 flex gap-4">
+              {selected.phone && <span>📞 {selected.phone}</span>}
+              {selected.email && <span>📧 {selected.email}</span>}
+              {selected.website && <a href={selected.website} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">🌐 сайт</a>}
             </div>
 
             <div className="flex gap-2">
-              <button
-                onClick={() => approve("approve")}
-                disabled={actionLoading}
-                className="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 disabled:opacity-50"
-              >
-                ✅ Одобрить и уведомить в TG
+              <button onClick={() => approve("approve")} disabled={actionLoading}
+                className="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 disabled:opacity-50">
+                ✅ Одобрить → TG
               </button>
-              <button
-                onClick={() => approve("edit_approve")}
-                disabled={actionLoading}
-                className="flex-1 py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 disabled:opacity-50"
-              >
-                ✏️ Сохранить правки и одобрить
+              <button onClick={() => approve("edit_approve")} disabled={actionLoading}
+                className="flex-1 py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 disabled:opacity-50">
+                ✏️ Правки → Одобрить
               </button>
-              <button
-                onClick={() => approve("reject")}
-                disabled={actionLoading}
-                className="px-4 py-2.5 bg-red-100 text-red-700 rounded-lg font-medium text-sm hover:bg-red-200 disabled:opacity-50"
-              >
-                ❌ Отклонить
+              <button onClick={() => approve("reject")} disabled={actionLoading}
+                className="px-4 py-2.5 bg-red-100 text-red-700 rounded-lg font-medium text-sm hover:bg-red-200 disabled:opacity-50">
+                ❌
               </button>
             </div>
           </div>
