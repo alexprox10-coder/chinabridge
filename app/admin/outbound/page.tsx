@@ -464,7 +464,8 @@ export default function OutboundPage() {
                 onChange={(e) => setEditedMsg(e.target.value)}
                 placeholder="Введите персональное сообщение для отправки..."
                 rows={6}
-                className="w-full border border-gray-300 rounded-lg p-3 text-sm text-gray-900 bg-white focus:ring-2 focus:ring-purple-300 focus:border-purple-300 resize-none placeholder-gray-400"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 placeholder-gray-400"
+                style={{ color: "#111827", backgroundColor: "#ffffff" }}
               />
               <div className="text-xs text-gray-400 mt-1 text-right">
                 {selected.pitchType === "B2B_IMPORT" ? "📦 B2B Import pitch" : "🛒 Seller Outbound pitch"}
