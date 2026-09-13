@@ -446,12 +446,28 @@ export default function OutboundPage() {
             </div>
 
             <div className="mb-4">
-              <p className="text-xs font-semibold text-gray-600 mb-2">💬 СООБЩЕНИЕ (редактируемое)</p>
-              <textarea value={editedMsg} onChange={(e) => setEditedMsg(e.target.value)}
-                rows={5} className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-300 resize-none" />
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>Качество: {selected.messageQualityScore}/100</span>
-                <span>{selected.pitchType === "B2B_IMPORT" ? "B2B Import" : "Seller Outbound"}</span>
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-xs font-semibold text-gray-600">💬 СООБЩЕНИЕ (редактируемое)</p>
+                {selected.messageQualityScore > 0 && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${selected.messageQualityScore >= 70 ? "bg-green-100 text-green-700" : selected.messageQualityScore >= 50 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>
+                    Качество: {selected.messageQualityScore}/100
+                  </span>
+                )}
+              </div>
+              {!editedMsg && (
+                <div className="mb-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                  ⚠️ Сообщение не сгенерировано. Напишите вручную или запустите Enrich v2 для этого лида.
+                </div>
+              )}
+              <textarea
+                value={editedMsg}
+                onChange={(e) => setEditedMsg(e.target.value)}
+                placeholder="Введите персональное сообщение для отправки..."
+                rows={6}
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm text-gray-900 bg-white focus:ring-2 focus:ring-purple-300 focus:border-purple-300 resize-none placeholder-gray-400"
+              />
+              <div className="text-xs text-gray-400 mt-1 text-right">
+                {selected.pitchType === "B2B_IMPORT" ? "📦 B2B Import pitch" : "🛒 Seller Outbound pitch"}
               </div>
             </div>
 
@@ -463,19 +479,21 @@ export default function OutboundPage() {
             </div>
 
             <div className="flex gap-2">
-              <button onClick={() => approve("approve")} disabled={actionLoading}
-                className="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 disabled:opacity-50">
-                ✅ Одобрить → TG
-              </button>
-              <button onClick={() => approve("edit_approve")} disabled={actionLoading}
-                className="flex-1 py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 disabled:opacity-50">
-                ✏️ Правки → Одобрить
+              <button
+                onClick={() => approve(editedMsg !== selected.personalizedMessage ? "edit_approve" : "approve")}
+                disabled={actionLoading || !editedMsg.trim()}
+                title={!editedMsg.trim() ? "Сначала напишите сообщение" : ""}
+                className="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {editedMsg !== selected.personalizedMessage && editedMsg.trim() ? "✏️ Правки → Одобрить" : "✅ Одобрить → TG"}
               </button>
               <button onClick={() => approve("reject")} disabled={actionLoading}
                 className="px-4 py-2.5 bg-red-100 text-red-700 rounded-lg font-medium text-sm hover:bg-red-200 disabled:opacity-50">
-                ❌
+                ❌ Отклонить
               </button>
             </div>
+            {!editedMsg.trim() && (
+              <p className="text-xs text-center text-amber-600 mt-2">Заполните сообщение для одобрения</p>
+            )}
           </div>
         </div>
       )}
