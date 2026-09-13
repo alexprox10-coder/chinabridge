@@ -328,6 +328,15 @@ export const outboundLeads = pgTable("outbound_leads", {
   // CRM link (when HOT)
   crmLeadId:            text("crm_lead_id").notNull().default(""),
 
+  // Evidence & Intelligence (v1.1)
+  evidenceScore:        integer("evidence_score").notNull().default(0),
+  evidenceData:         jsonb("evidence_data").notNull().default({}),
+  recommendedOffer:     text("recommended_offer").notNull().default(""),
+  nextBestAction:       text("next_best_action").notNull().default(""),
+  leadQuality:          text("lead_quality").notNull().default("UNREVIEWED"),
+  stageUpdatedAt:       text("stage_updated_at").notNull().default(""),
+  intentSignal:         text("intent_signal").notNull().default(""),
+
   // Approval
   approvedBy:           text("approved_by").notNull().default(""),
   approvedAt:           timestamp("approved_at"),

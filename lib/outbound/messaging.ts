@@ -18,11 +18,22 @@ export interface MessagingInput {
   matchConfidence: number;
 }
 
+export type RecommendedOffer =
+  | "DELIVERY" | "EXISTING_SUPPLIER_IMPORT" | "SOURCING"
+  | "CONSOLIDATION" | "WHITE_IMPORT" | "UNIT_ECONOMICS" | "OTHER";
+
+export type NextBestAction =
+  | "SHOW_ECONOMICS" | "ASK_SUPPLIER_STATUS" | "CALCULATE_DELIVERY"
+  | "OFFER_SOURCING" | "REQUEST_QUANTITY" | "CONTACT_NOW"
+  | "FOLLOW_UP" | "NO_ACTION";
+
 export interface MessagingResult {
   ok: boolean;
   reason_to_contact: string;
   personalized_message: string;
-  pitch_type: "SELLER_OUTBOUND" | "B2B_IMPORT";
+  pitch_type: "SELLER_OUTBOUND" | "B2B_IMPORT" | "SOURCING" | "DELIVERY";
+  recommended_offer: RecommendedOffer;
+  next_best_action: NextBestAction;
   message_quality_score: number;
   error?: string;
 }
@@ -48,27 +59,51 @@ export async function generateMessage(input: MessagingInput): Promise<MessagingR
 - Margin потенциал: ~${Math.round(economics.estimated_margin * 100)}%
 ` : "Экономика: данных недостаточно для конкретных цифр — не использовать числа.";
 
-  const prompt = `Ты — менеджер ChinaBridge. Задача: написать ПРИЧИНУ обращения и ПЕРВОЕ сообщение.
+  const hasChina = !!chinaMatch && (chinaMatch.match_confidence ?? 0) >= 0.5;
+  const chinaProduct = hasChina ? (chinaMatch!.product_name || "") : "";
+  const chinaPrice = hasChina ? `${chinaMatch!.price_min_cny}–${chinaMatch!.price_max_cny} CNY` : "";
 
-ДАННЫЕ О КОМПАНИИ:
-- Название: ${companyName}
-- Категория: ${category}
-- Город: ${cityDisplay}, ${countryDisplay}
-- Маркетплейс: ${marketplaceDisplay ?? "не определён"}
-- Товар: ${topProduct?.name ?? category}
+  const prompt = `Ты — менеджер по продажам ChinaBridge. Пишешь ПЕРВОЕ холодное сообщение конкретному бизнесу.
+
+КОМПАНИЯ: ${companyName}
+ГОРОД: ${cityDisplay}, ${countryDisplay}
+КАТЕГОРИЯ: ${category}
+МАРКЕТПЛЕЙС: ${marketplaceDisplay ?? "не определён"}
+ТОВАР: ${topProduct?.name ?? category}
+${hasChina ? `ТОВАР В КИТАЕ: ${chinaProduct} (${chinaPrice})` : ""}
+${hasChina ? `УВЕРЕННОСТЬ MATCH: ${Math.round((chinaMatch!.match_confidence ?? 0) * 100)}%` : ""}
 
 ${economicsContext}
 
-ПРАВИЛА:
-1. Причина обращения — почему именно этой компании интересно предложение? (1-2 предложения, конкретно)
-2. Сообщение — 3-4 предложения для Telegram/WhatsApp. Начать НЕ со "Здравствуйте". Упомянуть товар, маркетплейс, конкретный повод.
-3. НЕ писать "экономия 20-40%" если нет подтверждённых данных.
-4. НЕ писать "самая низкая цена". Предложить РАСЧЁТ, не гарантию.
+ЖЁСТКИЕ ПРАВИЛА (нарушение = провал):
+1. ЗАПРЕЩЕНО: "снизим на 20-40%", "самая низкая цена", "выгодно на X%", любые % без расчёта
+2. ЗАПРЕЩЕНО: "Здравствуйте", "Добрый день" в начале сообщения
+3. ЗАПРЕЩЕНО: шаблон "Мы помогаем оптовикам снижать себестоимость" — это для всех, не для них
+4. ОБЯЗАТЕЛЬНО: упомянуть конкретный товар компании, а не просто категорию
+5. ОБЯЗАТЕЛЬНО: объяснить ПОЧЕМУ именно им пишем (маркетплейс + товар + opportunity)
+6. Сообщение: 3-4 предложения, Telegram/WhatsApp формат, разговорный стиль
+7. Если нет экономики — предложи СДЕЛАТЬ расчёт, а не утверждай экономию
 
-pitch_type: "SELLER_OUTBOUND" (продавец с маркетплейса) или "B2B_IMPORT" (бизнес с импортом).
+ВЫБЕРИ pitch_type:
+- "SELLER_OUTBOUND" — продавец маркетплейса (Kaspi/WB/Ozon), может снизить себестоимость
+- "DELIVERY" — нужна доставка из Китая, есть поставщик
+- "SOURCING" — ищет поставщика в Китае
+- "B2B_IMPORT" — оптовый импортёр
 
-Ответ JSON:
-{"reason": "причина", "message": "текст", "pitch_type": "SELLER_OUTBOUND"}`;
+ВЫБЕРИ recommended_offer (один из):
+DELIVERY, EXISTING_SUPPLIER_IMPORT, SOURCING, CONSOLIDATION, WHITE_IMPORT, UNIT_ECONOMICS, OTHER
+
+ВЫБЕРИ next_best_action (один из):
+SHOW_ECONOMICS, ASK_SUPPLIER_STATUS, CALCULATE_DELIVERY, OFFER_SOURCING, REQUEST_QUANTITY, CONTACT_NOW
+
+Ответ строго JSON:
+{
+  "reason": "1-2 конкретных предложения — почему пишем именно им",
+  "message": "текст сообщения",
+  "pitch_type": "SELLER_OUTBOUND",
+  "recommended_offer": "UNIT_ECONOMICS",
+  "next_best_action": "SHOW_ECONOMICS"
+}`;
 
   try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -96,25 +131,44 @@ pitch_type: "SELLER_OUTBOUND" (продавец с маркетплейса) и�
       reason?: string;
       message?: string;
       pitch_type?: string;
+      recommended_offer?: string;
+      next_best_action?: string;
     };
 
     const reason = parsed.reason ?? "";
     const message = parsed.message ?? "";
-    const pitch_type = (parsed.pitch_type === "B2B_IMPORT" ? "B2B_IMPORT" : "SELLER_OUTBOUND") as "SELLER_OUTBOUND" | "B2B_IMPORT";
+    const validPitchTypes = ["SELLER_OUTBOUND", "B2B_IMPORT", "SOURCING", "DELIVERY"];
+    const pitch_type = (validPitchTypes.includes(parsed.pitch_type ?? "") ? parsed.pitch_type : "SELLER_OUTBOUND") as MessagingResult["pitch_type"];
+    const validOffers = ["DELIVERY","EXISTING_SUPPLIER_IMPORT","SOURCING","CONSOLIDATION","WHITE_IMPORT","UNIT_ECONOMICS","OTHER"];
+    const recommended_offer = (validOffers.includes(parsed.recommended_offer ?? "") ? parsed.recommended_offer : "OTHER") as MessagingResult["recommended_offer"];
+    const validActions = ["SHOW_ECONOMICS","ASK_SUPPLIER_STATUS","CALCULATE_DELIVERY","OFFER_SOURCING","REQUEST_QUANTITY","CONTACT_NOW","FOLLOW_UP","NO_ACTION"];
+    const next_best_action = (validActions.includes(parsed.next_best_action ?? "") ? parsed.next_best_action : "CONTACT_NOW") as MessagingResult["next_best_action"];
 
-    // Quality score: penalize for missing product/marketplace references
-    let quality = 60;
-    if (reason.length > 50) quality += 15;
-    if (message.includes(topProduct?.name ?? "") || message.includes(category)) quality += 10;
+    // Quality score — strict rules
+    let quality = 40;
+    if (reason.length > 60) quality += 15;
+    // Specific product mention
+    if (topProduct?.name && message.toLowerCase().includes(topProduct.name.toLowerCase().split(" ")[0])) quality += 15;
+    else if (message.includes(category)) quality += 5;
+    // Marketplace mention
     if (marketplaceDisplay && message.includes(marketplaceDisplay)) quality += 10;
-    if (message.length > 100 && message.length < 500) quality += 5;
+    // No generic spam phrases
+    const spamPhrases = ["снижать себестоимость", "20-40%", "30-50%", "самая низкая", "лучшие условия на рынке"];
+    const hasSpam = spamPhrases.some(p => message.toLowerCase().includes(p));
+    if (hasSpam) quality -= 25;
+    // Length ok
+    if (message.length > 80 && message.length < 500) quality += 10;
+    // Has economics reference only if valid
+    if (hasValidEconomics && message.includes("расчёт")) quality += 10;
 
     return {
       ok: true,
       reason_to_contact: reason,
       personalized_message: message,
       pitch_type,
-      message_quality_score: Math.min(100, quality),
+      recommended_offer,
+      next_best_action,
+      message_quality_score: Math.max(0, Math.min(100, quality)),
     };
   } catch (e) {
     return {
@@ -122,6 +176,8 @@ pitch_type: "SELLER_OUTBOUND" (продавец с маркетплейса) и�
       reason_to_contact: "",
       personalized_message: "",
       pitch_type: "SELLER_OUTBOUND",
+      recommended_offer: "OTHER",
+      next_best_action: "NO_ACTION",
       message_quality_score: 0,
       error: String(e),
     };

@@ -45,7 +45,7 @@ async function tg(text: string) {
 // §27: Notification after human approval
 function approvedText(lead: LeadRow, finalMessage: string) {
   return [
-    `✅ *ЛИД ОДОБРЕН → READY TO CONTACT*`,
+    `✅ *ЛИД ОДОБРЕН → APPROVED*`,
     ``,
     `🏢 *${lead.company_name}*`,
     `🌍 ${lead.city}, ${lead.country === "KZ" ? "Казахстан" : "Россия"}`,
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
 
     await sql`
       UPDATE outbound_leads SET
-        stage = 'READY_TO_CONTACT',
+        stage = 'APPROVED',
         personalized_message = ${finalMessage},
         approved_by = 'manager',
         approved_at = ${new Date().toISOString()},
@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
 
     await tg(approvedText(lead, finalMessage));
 
-    return NextResponse.json({ ok: true, stage: "READY_TO_CONTACT" });
+    return NextResponse.json({ ok: true, stage: "APPROVED" });
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
   }

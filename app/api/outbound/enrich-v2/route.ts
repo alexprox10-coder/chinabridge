@@ -5,7 +5,7 @@ import { neon } from "@neondatabase/serverless";
 import { discoverProducts } from "@/lib/outbound/product-discovery";
 import { findChinaMatch } from "@/lib/outbound/china-match";
 import { calculateEconomics, CATEGORY_WEIGHTS } from "@/lib/outbound/economics";
-import { calculateScore } from "@/lib/outbound/scoring";
+import { calculateScore, calculateEvidenceScore } from "@/lib/outbound/scoring";
 import { generateMessage } from "@/lib/outbound/messaging";
 
 export const runtime = "nodejs";
@@ -91,8 +91,8 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        // Stage 4: Opportunity Score
-        const score = calculateScore({
+        // Stage 4: Opportunity Score + Evidence Score
+        const scoreInput = {
           category,
           marketplace,
           phone,
@@ -101,7 +101,10 @@ export async function POST(req: NextRequest) {
           country: countryTyped,
           chinaMatch,
           economics,
-        });
+          products,
+        };
+        const score = calculateScore(scoreInput);
+        const evidence = calculateEvidenceScore(scoreInput);
 
         // Stage 5: Message Generation
         const messaging = await generateMessage({
@@ -116,7 +119,8 @@ export async function POST(req: NextRequest) {
           matchConfidence,
         });
 
-        // Persist everything
+        const now = new Date().toISOString();
+        // Persist everything including new evidence fields
         await sql`
           UPDATE outbound_leads SET
             stage = 'SCORED',
@@ -127,12 +131,18 @@ export async function POST(req: NextRequest) {
             economics = ${JSON.stringify(economics ?? {})},
             opportunity_score = ${score.opportunity_score},
             company_score = ${score.company_score},
+            evidence_score = ${evidence.evidence_score},
+            evidence_data = ${JSON.stringify({ breakdown: evidence.breakdown, label: evidence.label })},
             reason_to_contact = ${messaging.reason_to_contact},
             personalized_message = ${messaging.personalized_message},
             pitch_type = ${messaging.pitch_type},
+            recommended_offer = ${messaging.recommended_offer},
+            next_best_action = ${messaging.next_best_action},
             message_quality_score = ${messaging.message_quality_score},
+            lead_quality = ${evidence.evidence_score >= 60 ? 'VALID' : evidence.evidence_score >= 35 ? 'LOW_EVIDENCE' : 'WEAK'},
+            stage_updated_at = ${now},
             supplier_exists = false,
-            updated_at = ${new Date().toISOString()}
+            updated_at = ${now}
           WHERE outbound_id = ${outbound_id}
         `;
 
