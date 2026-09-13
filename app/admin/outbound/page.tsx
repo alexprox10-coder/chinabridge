@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 
 type Stage =
@@ -202,10 +202,34 @@ export default function OutboundPage() {
     loadLeads(); loadKpis();
   }
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.setProperty("color", "#111827", "important");
+    el.style.setProperty("-webkit-text-fill-color", "#111827", "important");
+    el.style.setProperty("background-color", "#ffffff", "important");
+    el.style.setProperty("opacity", "1", "important");
+  }, [selected, editedMsg]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    root.querySelectorAll("td, th").forEach((el) => {
+      (el as HTMLElement).style.setProperty("color", "#111827", "important");
+      (el as HTMLElement).style.setProperty("-webkit-text-fill-color", "#111827", "important");
+    });
+    root.querySelectorAll("td > div, td > span").forEach((el) => {
+      (el as HTMLElement).style.setProperty("-webkit-text-fill-color", "unset", "important");
+    });
+  }, [leads]);
+
   const econ = selected?.economics as { landed_cost_usd?: number; estimated_margin?: number; price_gap?: number } | undefined;
 
   return (
-    <div id="ob-admin-root" className="min-h-screen" style={{color:"#111827", background:"#F9FAFB"}}>
+    <div ref={rootRef} id="ob-admin-root" className="min-h-screen" style={{color:"#111827", background:"#F9FAFB"}}>
       <style>{`
         #ob-admin-root { color: #111827 !important; background: #F9FAFB !important; }
         #ob-admin-root * { -webkit-text-fill-color: unset; }
@@ -472,12 +496,13 @@ export default function OutboundPage() {
                 </div>
               )}
               <textarea
+                ref={textareaRef}
                 value={editedMsg}
                 onChange={(e) => setEditedMsg(e.target.value)}
                 placeholder="Введите персональное сообщение для отправки..."
                 rows={6}
-                className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 placeholder-gray-400"
-                style={{ color: "#111827", backgroundColor: "#ffffff" }}
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300"
+                style={{ color: "#111827", backgroundColor: "#ffffff", WebkitTextFillColor: "#111827", opacity: 1 }}
               />
               <div className="text-xs text-gray-400 mt-1 text-right">
                 {selected.pitchType === "B2B_IMPORT" ? "📦 B2B Import pitch" : "🛒 Seller Outbound pitch"}
