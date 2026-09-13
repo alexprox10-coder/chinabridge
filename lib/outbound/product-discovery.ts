@@ -89,7 +89,7 @@ export async function discoverProducts(
       throw new Error("No products in response");
     }
 
-    return { ok: true, ...parsed };
+    return { ...parsed, ok: true };
   } catch (e) {
     return { ok: false, category, import_notes: "", products: [], error: String(e) };
   }
