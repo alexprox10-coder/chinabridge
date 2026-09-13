@@ -59,11 +59,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "outbound_leads table not found — run /api/outbound/init first" }, { status: 500 });
     }
 
-    const offset = (body.offset ?? 0) as number;
+    const cursor = (body.cursor ?? null) as string | null;
 
-    // Получаем лиды из n8n DataTable
-    const n8nUrl = offset > 0
-      ? `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows?skip=${offset}`
+    // Получаем лиды из n8n DataTable (cursor pagination)
+    const n8nUrl = cursor
+      ? `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows?cursor=${encodeURIComponent(cursor)}`
       : `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`;
 
     const dtRes = await fetch(
@@ -77,7 +77,8 @@ export async function POST(req: NextRequest) {
     }
 
     const dtData = await dtRes.json();
-    const rows: Record<string, string>[] = dtData.rows ?? dtData.data ?? [];
+    const rows: Record<string, string>[] = dtData.data ?? dtData.rows ?? [];
+    const nextCursor: string | null = dtData.nextCursor ?? null;
 
     let imported = 0;
     let skipped  = 0;
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
       imported++;
     }
 
-    return NextResponse.json({ ok: true, imported, skipped, total: rows.length });
+    return NextResponse.json({ ok: true, imported, skipped, total: rows.length, nextCursor });
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
   }
