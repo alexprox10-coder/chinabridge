@@ -10,6 +10,7 @@ const GROUPS = [
       { href: "/admin/registrations",       label: "Регистрации ЛК", icon: "🆕" },
       { href: "/admin/pipeline",            label: "Воронка",        icon: "🗂" },
       { href: "/admin/leads",               label: "Лиды",           icon: "👥" },
+      { href: "/admin/outbound",            label: "Outbound AI",    icon: "🚀" },
       { href: "/admin/outreach-leads",      label: "Email Outreach", icon: "📧" },
       { href: "/admin/market-intelligence", label: "Поиск лидов",    icon: "🎯" },
       { href: "/admin/market-intelligence/vk-intent", label: "VK Intent Leads", icon: "📡" },

@@ -246,6 +246,107 @@ export const taxRates = pgTable("tax_rates", {
   status:        text("status").notNull().default("active"),
 });
 
+// ─── Outbound Leads ───────────────────────────────────────────────────────────
+// AI Outbound Engine v1.0 — pipeline от поиска лида до сделки
+
+export const outboundLeads = pgTable("outbound_leads", {
+  id:                   serial("id").primaryKey(),
+  outboundId:           text("outbound_id").notNull().unique(),
+  tenantId:             text("tenant_id").notNull().default("tenant-chinabridge"),
+
+  // State Machine
+  stage:                text("stage").notNull().default("FOUND"),
+  // FOUND → ENRICHED → ANALYZED → PRODUCTS_FOUND → CHINA_MATCHED →
+  // ECONOMICS_READY → SCORED → PERSONALIZED → READY_TO_CONTACT →
+  // APPROVED → CONTACTED → REPLIED → QUALIFIED → HOT → QUOTE → DEAL
+  // + ERROR / RETRY
+
+  // Company / Seller
+  companyName:          text("company_name").notNull().default(""),
+  sellerId:             text("seller_id").notNull().default(""),
+  domain:               text("domain").notNull().default(""),
+  website:              text("website").notNull().default(""),
+  marketplace:          text("marketplace").notNull().default(""),   // KASPI WB OZON NONE
+  marketplaceStore:     text("marketplace_store").notNull().default(""),
+  country:              text("country").notNull().default("KZ"),     // KZ RU
+  city:                 text("city").notNull().default(""),
+  category:             text("category").notNull().default(""),      // AUTO_ACCESSORIES ELECTRONICS etc.
+  address:              text("address").notNull().default(""),
+
+  // Contacts
+  phone:                text("phone").notNull().default(""),
+  email:                text("email").notNull().default(""),
+  telegram:             text("telegram").notNull().default(""),
+  whatsapp:             text("whatsapp").notNull().default(""),
+  vk:                   text("vk").notNull().default(""),
+
+  // Source
+  source:               text("source").notNull().default(""),        // GOOGLE_MAPS WB OZON KASPI HH_RU etc.
+  sourceUrl:            text("source_url").notNull().default(""),
+  sourceCount:          integer("source_count").notNull().default(1),
+
+  // Deduplication
+  dedupHash:            text("dedup_hash").notNull().default(""),
+
+  // Products (array of {name, url, price, currency})
+  products:             jsonb("products").notNull().default([]),
+  productsCount:        integer("products_count").notNull().default(0),
+
+  // China Match {product, source, supplier_url, china_price, currency, match_confidence}
+  chinaMatch:           jsonb("china_match").notNull().default({}),
+  chinaMatchStatus:     text("china_match_status").notNull().default("UNKNOWN"), // MATCHED UNKNOWN NOT_FOUND
+
+  // Economics {china_price, delivery, import_costs, landed_cost, selling_price, margin, price_gap}
+  economics:            jsonb("economics").notNull().default({}),
+
+  // Scores
+  opportunityScore:     integer("opportunity_score").notNull().default(0),
+  companyScore:         integer("company_score").notNull().default(0),
+  leadScore:            integer("lead_score").notNull().default(0),
+  intentScore:          integer("intent_score").notNull().default(0),
+  messageQualityScore:  integer("message_quality_score").notNull().default(0),
+
+  // Outbound Intelligence
+  reasonToContact:      text("reason_to_contact").notNull().default(""),
+  personalizedMessage:  text("personalized_message").notNull().default(""),
+  supplierExists:       boolean("supplier_exists").notNull().default(false),
+  pitchType:            text("pitch_type").notNull().default(""),    // SELLER_OUTBOUND B2B_IMPORT
+
+  // Outreach Tracking
+  channel:              text("channel").notNull().default(""),       // TELEGRAM WHATSAPP VK EMAIL PHONE
+  contactedAt:          timestamp("contacted_at"),
+  lastContactAt:        timestamp("last_contact_at"),
+  attemptCount:         integer("attempt_count").notNull().default(0),
+  deliveryStatus:       text("delivery_status").notNull().default(""),
+  responseStatus:       text("response_status").notNull().default("NO_REPLY"),
+  // NO_REPLY REPLIED POSITIVE NEGATIVE QUESTION NOT_NOW UNSUBSCRIBE
+
+  // Campaign
+  campaign:             text("campaign").notNull().default(""),
+  vertical:             text("vertical").notNull().default(""),      // KZ_AUTO KZ_ELECTRONICS RU_AUTO etc.
+
+  // CRM link (when HOT)
+  crmLeadId:            text("crm_lead_id").notNull().default(""),
+
+  // Approval
+  approvedBy:           text("approved_by").notNull().default(""),
+  approvedAt:           timestamp("approved_at"),
+
+  // Error handling
+  errorStage:           text("error_stage").notNull().default(""),
+  lastError:            text("last_error").notNull().default(""),
+  retryCount:           integer("retry_count").notNull().default(0),
+
+  createdAt:            text("created_at").notNull(),
+  updatedAt:            text("updated_at").notNull(),
+}, (t) => [
+  index("outbound_leads_tenant_idx").on(t.tenantId),
+  index("outbound_leads_stage_idx").on(t.stage),
+  index("outbound_leads_country_idx").on(t.country),
+  index("outbound_leads_vertical_idx").on(t.vertical),
+  index("outbound_leads_dedup_idx").on(t.dedupHash),
+]);
+
 // ─── Cash Flow ────────────────────────────────────────────────────────────────
 
 export const cashFlow = pgTable("cash_flow", {
