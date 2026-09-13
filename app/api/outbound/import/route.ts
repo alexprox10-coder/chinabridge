@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     // Получаем лиды из n8n DataTable
     const dtRes = await fetch(
-      `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows?take=${limit}`,
+      `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows?pageSize=${limit}`,
       { headers: { "X-N8N-API-KEY": N8N_KEY }, signal: AbortSignal.timeout(30000) }
     );
 
