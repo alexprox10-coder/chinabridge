@@ -33,6 +33,10 @@ export async function GET(req: NextRequest) {
     rowsCount: rowsLen,
     dataCount: dataLen,
     sample: isObj ? { ...parsed as object, rows: undefined, data: undefined } : parsed,
-    firstRow: isObj && "rows" in (parsed as object) ? (parsed as {rows: unknown[]}).rows?.[0] : null,
+    firstRow: isObj && "data" in (parsed as object)
+      ? (parsed as {data: unknown[]}).data?.[0]
+      : isObj && "rows" in (parsed as object)
+      ? (parsed as {rows: unknown[]}).rows?.[0]
+      : null,
   });
 }
