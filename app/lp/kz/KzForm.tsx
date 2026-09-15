@@ -74,21 +74,6 @@ export default function KzForm() {
 
       {/* Hero */}
       <main className="flex-1 px-4 pt-4 pb-8 max-w-lg mx-auto w-full">
-        {/* Photo */}
-        <div className="relative rounded-2xl overflow-hidden mb-5 h-[180px] sm:h-[220px]">
-          <Image
-            src="/photos/warehouse-office.jpg"
-            alt="ChinaBridge — офис и склад в Китае"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          <div className="absolute bottom-3 left-4">
-            <p className="text-white text-sm font-semibold">Наш офис и склад в Китае</p>
-            <p className="text-white/70 text-xs">Работаем с 2019 года · 500+ партий</p>
-          </div>
-        </div>
 
         {/* Headline */}
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">

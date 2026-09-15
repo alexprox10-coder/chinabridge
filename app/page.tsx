@@ -4,7 +4,6 @@ import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
 import KzRatesBanner from "@/components/KzRatesBanner";
 import RatesSection from "@/components/RatesSection";
-import WarehouseGallery from "@/components/WarehouseGallery";
 import ForWhom from "@/components/ForWhom";
 import Advantages from "@/components/Advantages";
 import GtdCompareBlock from "@/components/GtdCompareBlock";
@@ -124,8 +123,7 @@ export default function Home() {
           </div>
         </section>
 
-        <WarehouseGallery />
-        <ForWhom />
+<ForWhom />
         <Advantages />
         <GtdCompareBlock />
         <ImportEcosystemBlock />
