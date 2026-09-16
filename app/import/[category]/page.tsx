@@ -112,8 +112,11 @@ export default function ImportCategoryPage({ params }: { params: Promise<{ categ
   if (!cfg) notFound();
 
 
+  const vertical = category.replace(/-/g, "_");
+
   useEffect(() => {
     analytics.landingView({ source: cfg.source });
+    analytics.serviceCtaView({ page: cfg.source, country: "RU", vertical });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -150,8 +153,8 @@ const TgIcon = () => (
 
       {/* Sticky bottom CTA mobile */}
       <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-[#060F1E]/97 backdrop-blur border-t border-[#1a2d47] px-4 py-3">
-        <Link href="/ai-calculator?country=RU"
-          onClick={() => trackGAEvent("import_sticky_calc_click", { category })}
+        <Link href={`/ai-calculator?country=RU&vertical=${vertical}&from=${cfg.source}`}
+          onClick={() => { trackGAEvent("import_sticky_calc_click", { category }); analytics.stickyCtaClick({ page: cfg.source, country: "RU", vertical }); }}
           className="flex items-center justify-center gap-2 w-full bg-[#00A86B] hover:bg-[#009060] text-white font-bold py-3.5 rounded-xl text-sm transition active:scale-95">
           🤖 Получить расчёт бесплатно
         </Link>
@@ -185,8 +188,8 @@ const TgIcon = () => (
 
           <>
             {/* Primary CTA — Calculator */}
-            <Link href="/ai-calculator?country=RU"
-              onClick={() => { trackGAEvent("import_hero_calc_click", { category }); analytics.calculatorStart(); }}
+            <Link href={`/ai-calculator?country=RU&vertical=${vertical}&from=${cfg.source}`}
+              onClick={() => { trackGAEvent("import_hero_calc_click", { category }); analytics.calculatorStart(); analytics.serviceCtaClick({ page: cfg.source, country: "RU", vertical, cta_type: "calculator" }); }}
               className="flex items-center justify-center gap-3 w-full bg-[#00A86B] hover:bg-[#009060] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-3 shadow-lg shadow-[#00A86B]/20">
               🤖 Получить расчёт бесплатно
             </Link>

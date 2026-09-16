@@ -4,15 +4,17 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { analytics } from "@/lib/analytics";
 import { setCountryContext } from "@/lib/utils/country-detect";
+import { PrimaryConversionCTA, StickyMobileCTA } from "@/components/conversion/PrimaryConversionCTA";
 
 export default function WhiteImportPage() {
   useEffect(() => {
     setCountryContext({ country: "RU", source: "landing", currency: "RUB" });
     analytics.landingView({ source: "white_import" });
+    analytics.serviceCtaView({ page: "white_import", country: "RU", vertical: "white_import" });
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#071829] text-white">
+    <div className="min-h-screen bg-[#071829] text-white pb-20 sm:pb-0">
       {/* Header */}
       <header className="border-b border-[#243a5e]/50 px-4 py-4 flex items-center justify-between max-w-5xl mx-auto">
         <Link href="/" className="flex items-center gap-2">
@@ -36,14 +38,35 @@ export default function WhiteImportPage() {
 
         {/* Hero */}
         <h1 className="text-3xl sm:text-4xl font-bold text-center leading-tight mb-3">
-          Везём от вашего<br/>поставщика в Китае
+          Официальный импорт из Китая<br/>в Россию
         </h1>
         <p className="text-center text-[#8899aa] text-sm sm:text-base mb-2">
-          Заберём с фабрики, проверим качество, доставим в Россию.
+          Ваши поставщики в Китае уже есть? Мы организуем консолидацию,<br className="hidden sm:block" />
+          международную доставку и сопровождение официального импорта.
         </p>
         <p className="text-center text-[#556677] text-xs mb-8">
           от $1.1/кг морем · от $3.0/кг авто · сборные партии от 50 кг
         </p>
+
+        {/* PRIMARY CTA — above the fold */}
+        <div className="mb-3">
+          <PrimaryConversionCTA
+            type="CALCULATOR"
+            country="RU"
+            vertical="white_import"
+            page="white_import"
+            label="Получить расчёт поставки"
+          />
+        </div>
+        <div className="mb-8">
+          <PrimaryConversionCTA
+            type="TELEGRAM"
+            country="RU"
+            vertical="white_import"
+            page="white_import"
+            label="У меня уже есть поставщик — написать"
+          />
+        </div>
 
         {/* Trust strip */}
         <div className="flex flex-wrap justify-center gap-4 mb-10 text-xs text-[#8899aa]">
@@ -55,41 +78,46 @@ export default function WhiteImportPage() {
           ))}
         </div>
 
-        {/* CTA Card */}
-        <div className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-6 sm:p-8">
-          <p className="text-sm font-semibold text-white mb-2 text-center">Получите расчёт прямо сейчас</p>
-          <p className="text-xs text-[#8899aa] text-center mb-6">
-            AI-консультант задаст несколько вопросов и рассчитает стоимость под ваш товар за 2 минуты
-          </p>
-
-          {/* Primary CTA — Telegram bot */}
-          <a
-            href="https://t.me/ChinaBridgeLID_bot"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => analytics.telegramClick()}
-            className="w-full flex items-center justify-center gap-2 bg-[#00A86B] hover:bg-[#009060] text-white font-semibold py-4 rounded-xl transition active:scale-95 mb-3 text-sm"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-            </svg>
-            AI-консультант в Telegram
-          </a>
-
-          {/* Secondary CTA — calculator */}
-          <Link
-            href="/ai-calculator?country=RU"
-            onClick={() => analytics.calculatorStart()}
-            className="w-full flex items-center justify-center gap-2 border border-[#243a5e] hover:border-[#00A86B]/40 text-[#8899aa] hover:text-white font-medium py-3.5 rounded-xl transition text-sm"
-          >
-            🧮 Рассчитать стоимость в калькуляторе
-          </Link>
-
-          <div className="mt-5 flex flex-col gap-2">
+        {/* Process block */}
+        <div className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-5 sm:p-6 mb-6">
+          <p className="text-xs text-[#00A86B] font-semibold uppercase tracking-widest mb-4">Как это работает</p>
+          <div className="flex flex-col gap-3">
             {[
-              "Забираем с любой фабрики или склада в Китае",
-              "Консолидируем несколько поставщиков в одну партию",
-              "Белый ввоз с полным пакетом документов для РФ",
+              { n: "1", t: "Ваши поставщики в Китае", d: "Консолидируем несколько партий в одну отправку" },
+              { n: "2", t: "Международная перевозка", d: "Авто 12–16 дн, море 18–25 дн, авиа 5–7 дн" },
+              { n: "3", t: "Таможенное оформление", d: "Полный пакет документов для белого ввоза в РФ" },
+              { n: "4", t: "Выпуск и доставка", d: "До вашего склада, WB или Ozon" },
+            ].map(s => (
+              <div key={s.n} className="flex gap-3 items-start">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#00A86B]/20 text-[#00A86B] text-xs font-bold flex items-center justify-center">{s.n}</span>
+                <div>
+                  <p className="text-white text-sm font-medium">{s.t}</p>
+                  <p className="text-[#8899aa] text-xs mt-0.5">{s.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* CTA after process */}
+          <div className="mt-5">
+            <PrimaryConversionCTA
+              type="CALCULATOR"
+              country="RU"
+              vertical="white_import"
+              page="white_import"
+              label="Рассчитать поставку"
+            />
+          </div>
+        </div>
+
+        {/* Existing supplier block */}
+        <div className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-5 sm:p-6 mb-6">
+          <p className="text-sm font-semibold text-white mb-3">🏭 Поставщик уже есть — менять его не нужно</p>
+          <div className="flex flex-col gap-2 mb-5">
+            {[
+              "Заберём товар с любой фабрики или склада в Китае",
+              "Объединим партии от нескольких поставщиков",
+              "Организуем международную доставку",
+              "Сопроводим таможенное оформление под ключ",
             ].map(t => (
               <div key={t} className="flex items-start gap-2 text-xs text-[#8899aa]">
                 <span className="text-[#00A86B] mt-0.5 shrink-0">✓</span>
@@ -97,10 +125,17 @@ export default function WhiteImportPage() {
               </div>
             ))}
           </div>
+          <PrimaryConversionCTA
+            type="CALCULATOR"
+            country="RU"
+            vertical="white_import"
+            page="white_import"
+            label="Получить расчёт"
+          />
         </div>
 
         {/* Route options */}
-        <div className="mt-8 grid grid-cols-3 gap-3">
+        <div className="mb-6 grid grid-cols-3 gap-3">
           {[
             { icon: "🚢", label: "Море", detail: "$1.1/кг", sub: "18–25 дней" },
             { icon: "🚛", label: "Авто", detail: "$3.0/кг", sub: "12–16 дней" },
@@ -116,7 +151,7 @@ export default function WhiteImportPage() {
         </div>
 
         {/* Case */}
-        <div className="mt-6 bg-[#0B1F3A] border border-[#243a5e] rounded-xl p-5">
+        <div className="mb-6 bg-[#0B1F3A] border border-[#243a5e] rounded-xl p-5">
           <p className="text-xs text-[#556677] uppercase tracking-widest mb-3">Кейс</p>
           <p className="text-sm font-semibold text-white mb-2">500 единиц электроники с фабрики в Shenzhen → Москва</p>
           <div className="flex gap-4 mb-3">
@@ -127,9 +162,41 @@ export default function WhiteImportPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-[#8899aa]">Клиент работал с поставщиком 2 года — мы взяли логистику на себя. Белый ввоз, полный пакет документов.</p>
+          <p className="text-xs text-[#8899aa] mb-4">Клиент работал с поставщиком 2 года — мы взяли логистику на себя. Белый ввоз, полный пакет документов.</p>
+          {/* Final CTA */}
+          <PrimaryConversionCTA
+            type="CALCULATOR"
+            country="RU"
+            vertical="white_import"
+            page="white_import"
+            label="Рассчитать мою поставку"
+          />
+        </div>
+
+        {/* FAQ */}
+        <div className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl p-5">
+          <p className="text-xs text-[#00A86B] font-semibold uppercase tracking-widest mb-4">Частые вопросы</p>
+          {[
+            { q: "Нужно ли менять поставщика?", a: "Нет. Мы работаем с вашими текущими поставщиками — забираем товар с любого склада или фабрики в Китае." },
+            { q: "Какой минимальный объём?", a: "Сборные партии от 50 кг. Можно объединить нескольких поставщиков в одну отправку." },
+            { q: "Как оформляется таможня?", a: "Полный белый ввоз с ДТ, инвойсами и сертификатами. Оформляем через уполномоченного брокера." },
+          ].map(faq => (
+            <div key={faq.q} className="mb-4 last:mb-0">
+              <p className="text-sm font-semibold text-white mb-1">{faq.q}</p>
+              <p className="text-xs text-[#8899aa]">{faq.a}</p>
+            </div>
+          ))}
         </div>
       </main>
+
+      {/* Sticky mobile CTA */}
+      <StickyMobileCTA
+        type="CALCULATOR"
+        country="RU"
+        vertical="white_import"
+        page="white_import"
+        label="Получить расчёт бесплатно"
+      />
     </div>
   );
 }

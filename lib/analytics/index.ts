@@ -165,4 +165,11 @@ export const analytics = {
   deliveryQuoteClick: (p?: { source?: string })                  => { fire("delivery_quote_click",   "delivery_quote_click", { category: "funnel", ...p }); trackVkGoal("delivery_quote_click"); },
   countryDetected:    (p?: { country?: string; source?: string }) => fire("country_detected",         "country_detected",     { category: "funnel", ...p }),
   qualificationStarted: (p?: { country?: string })               => fire("qualification_started",    "qualification_started",{ category: "ai_consultant", ...p }),
+
+  // ── Service Page Conversion Funnel ────────────────────────────────────────
+  serviceCtaView:       (p: { page: string; country?: string; vertical?: string }) => fire("service_cta_view",       "service_cta_view",       { category: "service_funnel", ...p }),
+  serviceCtaClick:      (p: { page: string; country?: string; vertical?: string; cta_type?: string }) => { fire("service_cta_click",      "service_cta_click",      { category: "service_funnel", ...p }); trackVkGoal("service_cta_click"); },
+  deliveryRequestStart: (p?: { page?: string; country?: string; vertical?: string }) => { fire("delivery_request_start",  "delivery_request_start",  { category: "service_funnel", ...p }); trackVkGoal("delivery_request_start"); },
+  deliveryRequestSubmit:(p?: { page?: string; country?: string; vertical?: string }) => { fire("delivery_request_submit", "delivery_request_submit", { category: "service_funnel", ...p }); trackVkGoal("delivery_request_submit"); },
+  stickyCtaClick:       (p?: { page?: string; country?: string; vertical?: string }) => { fire("sticky_cta_click",         "sticky_cta_click",         { category: "service_funnel", ...p }); trackVkGoal("sticky_cta_click"); },
 };

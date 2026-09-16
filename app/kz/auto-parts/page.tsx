@@ -5,6 +5,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { analytics } from "@/lib/analytics";
+import { setCountryContext } from "@/lib/utils/country-detect";
+import { StickyMobileCTA } from "@/components/conversion/PrimaryConversionCTA";
 
 const TgIcon = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current flex-shrink-0">
@@ -14,7 +16,9 @@ const TgIcon = () => (
 
 export default function KzAutoPartsPage() {
   useEffect(() => {
+    setCountryContext({ country: "KZ", source: "landing", currency: "KZT" });
     analytics.landingView({ source: "kz_auto_parts" });
+    analytics.serviceCtaView({ page: "kz_auto_parts", country: "KZ", vertical: "auto_parts" });
   }, []);
 
   return (
@@ -40,8 +44,8 @@ export default function KzAutoPartsPage() {
 
           {/* Primary CTA — above the fold */}
           <Link
-            href="/ai-calculator?country=KZ"
-            onClick={() => analytics.calculatorStart()}
+            href="/ai-calculator?country=KZ&vertical=auto_parts&from=kz_auto_parts"
+            onClick={() => { analytics.calculatorStart(); analytics.serviceCtaClick({ page: "kz_auto_parts", country: "KZ", vertical: "auto_parts", cta_type: "calculator" }); }}
             className="flex items-center justify-center gap-3 w-full bg-[#00A86B] hover:bg-[#009060] active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-base transition mb-2 shadow-lg shadow-[#00A86B]/20"
           >
             🤖 Узнать стоимость бесплатно
@@ -114,6 +118,13 @@ export default function KzAutoPartsPage() {
         </div>
       </main>
       <Footer />
+      <StickyMobileCTA
+        type="CALCULATOR"
+        country="KZ"
+        vertical="auto_parts"
+        page="kz_auto_parts"
+        label="Узнать стоимость бесплатно"
+      />
     </>
   );
 }
