@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { getLeads } from "@/lib/crm/client";
+import { getLeads, runFunnelMigrations } from "@/lib/crm/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    await runFunnelMigrations();
     const leads = await getLeads();
 
     const byVertical: Record<string, number> = {};

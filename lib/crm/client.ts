@@ -5,6 +5,17 @@ import type { CRMLead, LeadUpdate } from "./types";
 
 const OWNER_TENANT_ID = "tenant-chinabridge";
 
+// Run column migrations idempotently (safe to call before any read)
+export async function runFunnelMigrations(): Promise<void> {
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL!);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "vertical" text`.catch(() => null);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "landing_page" text`.catch(() => null);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "calculator_used" text`.catch(() => null);
+  } catch { /* ignore — columns already exist or table doesn't yet */ }
+}
+
 // Bootstrap owner tenant + required tables via raw SQL (no Drizzle schema drift risk)
 let ownerTenantReady = false;
 async function ensureOwnerTenant(): Promise<void> {
