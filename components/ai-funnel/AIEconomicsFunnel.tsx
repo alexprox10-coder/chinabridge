@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { analytics, classifyProduct } from "@/lib/analytics";
 import { MARKETPLACES, detectCommissionPct } from "@/lib/economics/marketplaces";
@@ -967,8 +967,18 @@ const EMPTY_CORRECTION: CorrectionData = {
   weight_kg: "", quantity: "1", price_currency: "CNY",
 };
 
+// Tiny inner component so useSearchParams doesn't force the whole page into Suspense
+function URLContextReader({ onInit }: {
+  onInit: (country: string | null, vertical: string | null, from: string | null) => void;
+}) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    onInit(searchParams.get("country"), searchParams.get("vertical"), searchParams.get("from"));
+  }, [searchParams, onInit]);
+  return null;
+}
+
 export default function AIEconomicsFunnel() {
-  const searchParams     = useSearchParams();
   const startedRef       = useRef(false);
   const handleCalcRef    = useRef<((overrides?: { extractedData?: ExtractedProduct | null; marketplace?: string; city_to?: string; country_to?: string; salePrice?: string; }) => Promise<void>) | null>(null);
   const calcContainerRef = useRef<HTMLDivElement>(null);
@@ -976,6 +986,13 @@ export default function AIEconomicsFunnel() {
   // Funnel context from URL params (?country=KZ&vertical=auto_parts&from=kz_auto_parts)
   const urlVertical      = useRef<string | null>(null);
   const urlLandingPage   = useRef<string | null>(null);
+  const handleURLInit    = useCallback((country: string | null, vertical: string | null, from: string | null) => {
+    if (vertical) urlVertical.current = vertical;
+    if (from)     urlLandingPage.current = from;
+    if (country === "KZ") {
+      setS(p => ({ ...p, city_to: "Алматы", country_to: "Kazakhstan", marketplace: "kaspi" }));
+    }
+  }, []);
 
   const [s, setS] = useState<FunnelState>({
     step:              "input",
@@ -1006,18 +1023,6 @@ export default function AIEconomicsFunnel() {
     showCorrection:    false,
     correction:        EMPTY_CORRECTION,
   });
-
-  // Read URL context params once on mount — pre-set country/city for KZ traffic
-  useEffect(() => {
-    const country  = searchParams.get("country");
-    const vertical = searchParams.get("vertical");
-    const from     = searchParams.get("from");
-    if (vertical) urlVertical.current = vertical;
-    if (from)     urlLandingPage.current = from;
-    if (country === "KZ") {
-      setS(p => ({ ...p, city_to: "Алматы", country_to: "Kazakhstan", marketplace: "kaspi" }));
-    }
-  }, [searchParams]);
 
   // UI-only state
   const [stageIdx,       setStageIdx]       = useState(0);
@@ -1853,6 +1858,9 @@ export default function AIEconomicsFunnel() {
 
   return (
     <>
+    <Suspense fallback={null}>
+      <URLContextReader onInit={handleURLInit} />
+    </Suspense>
     {showExitIntent && (
       <ExitIntentPopup
         onClose={() => setShowExitIntent(false)}
