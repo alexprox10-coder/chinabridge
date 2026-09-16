@@ -197,9 +197,22 @@ export async function POST(req: NextRequest) {
         personalized_message = ${finalMessage},
         approved_by = 'manager',
         approved_at = ${new Date().toISOString()},
+        approval_status = 'APPROVED',
+        message_status = 'APPROVED',
         updated_at = ${new Date().toISOString()}
       WHERE outbound_id = ${outboundId}
-    `;
+    `.catch(async () => {
+      // Fallback if new columns not migrated yet
+      await sql`
+        UPDATE outbound_leads SET
+          stage = 'APPROVED',
+          personalized_message = ${finalMessage},
+          approved_by = 'manager',
+          approved_at = ${new Date().toISOString()},
+          updated_at = ${new Date().toISOString()}
+        WHERE outbound_id = ${outboundId}
+      `;
+    });
 
     await tg(approvedText(lead, finalMessage));
 
@@ -286,14 +299,29 @@ export async function PATCH(req: NextRequest) {
       WHERE outbound_id = ${outboundId}
     `;
 
-    // Update contacted_at if moving to CONTACTED
+    // Update contacted_at / sent_at if moving to CONTACTED
     if (newStage === "CONTACTED") {
       await sql`
         UPDATE outbound_leads SET
           contacted_at = ${now},
-          last_contact_at = ${now}
+          last_contact_at = ${now},
+          outreach_status = 'SENT'
         WHERE outbound_id = ${outboundId} AND contacted_at IS NULL
-      `;
+      `.catch(() =>
+        sql`UPDATE outbound_leads SET contacted_at=${now}, last_contact_at=${now} WHERE outbound_id=${outboundId} AND contacted_at IS NULL`
+      );
+      await sql`
+        UPDATE outbound_leads SET sent_at = ${now}
+        WHERE outbound_id = ${outboundId} AND sent_at IS NULL
+      `.catch(() => null);
+    }
+
+    // Update reply tracking fields
+    if (responseStatus === "POSITIVE" || responseStatus === "NEGATIVE" || responseStatus === "QUESTION" || responseStatus === "NOT_NOW") {
+      await sql`
+        UPDATE outbound_leads SET replied_at = ${now}, reply_status = ${responseStatus}
+        WHERE outbound_id = ${outboundId} AND replied_at IS NULL
+      `.catch(() => null);
     }
 
     return NextResponse.json({ ok: true, stage: newStage, responseStatus: newResponseStatus });

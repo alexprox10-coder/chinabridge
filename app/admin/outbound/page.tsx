@@ -20,6 +20,7 @@ interface OutboundLead {
   website: string;
   stage: Stage;
   opportunityScore: number;
+  rawOpportunityScore: number;
   evidenceScore: number;
   companyScore: number;
   leadScore: number;
@@ -34,11 +35,49 @@ interface OutboundLead {
   chinaMatch: Record<string, unknown>;
   products: Array<{ name: string; name_en?: string; price_min_kzt?: number; price_min_rub?: number; weight_kg?: number }>;
   economics: Record<string, unknown>;
-  evidenceData: Record<string, unknown>;
+  evidenceData: {
+    structured?: {
+      verified_facts: Array<{ fact: string; source: string; url?: string }>;
+      ai_inferences: Array<{ inference: string; confidence: string }>;
+      unknown: Array<{ field: string; why: string }>;
+    };
+    breakdown?: Record<string, number>;
+    label?: string;
+  };
   leadQuality: string;
   source: string;
   vertical: string;
   createdAt: string;
+  // New §6/§19/§22 ТЗ fields
+  companyId: string;
+  chinaSourceUrl: string;
+  chinaUnitPrice: number | null;
+  localSellingPrice: number | null;
+  dataQualityScore: number;
+  countryVerified: boolean;
+  companyVerified: boolean;
+  productVerified: boolean;
+  contactVerified: boolean;
+  sourceVerified: boolean;
+  messageStatus: string;
+  approvalStatus: string;
+  outreachStatus: string;
+  messageVersion: string;
+  quoteId: string;
+  dealId: string;
+}
+
+interface First100Kpis {
+  total_approved: number;
+  total_contacted: number;
+  approved_today: number;
+  daily_limit: number;
+  positive_replies: number;
+  qualified: number;
+  hot: number;
+  deals: number;
+  reply_rate: number | null;
+  progress_pct: number;
 }
 
 interface KpiData {
@@ -146,6 +185,8 @@ export default function OutboundPage() {
   const [log, setLog] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"leads" | "kpi">("leads");
   const [sortBy, setSortBy] = useState<"combined" | "opportunity" | "evidence" | "newest">("combined");
+  const [first100, setFirst100] = useState<First100Kpis | null>(null);
+  const [recalculating, setRecalculating] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -187,7 +228,10 @@ export default function OutboundPage() {
   const loadKpis = useCallback(async () => {
     const res = await fetch("/api/outbound/stats");
     const data = await res.json();
-    if (data.ok) setKpis(data.kpis);
+    if (data.ok) {
+      setKpis(data.kpis);
+      if (data.first_100) setFirst100(data.first_100);
+    }
   }, []);
 
   useEffect(() => { loadLeads(); loadKpis(); }, [loadLeads, loadKpis]);
@@ -266,6 +310,26 @@ export default function OutboundPage() {
       body: JSON.stringify({ outboundId: lead.outboundId, stage: "QUALIFIED" }),
     });
     addLog(`🎯 ${lead.companyName} → QUALIFIED`); loadLeads(); loadKpis();
+  }
+
+  async function recalculateLead(outboundId: string, companyName: string) {
+    setRecalculating(true);
+    addLog(`🔄 Пересчёт: ${companyName}...`);
+    try {
+      const res = await fetch("/api/outbound/enrich-v2", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outboundId }),
+      });
+      const data = await res.json();
+      if (data.ok && data.results?.[0]) {
+        const r = data.results[0];
+        addLog(`✅ Пересчитан: opp ${r.opportunityScore} (raw ${r.rawOpportunityScore}) ev ${r.evidenceScore} factor ${r.evidenceFactor}`);
+        loadLeads(); loadKpis();
+        setSelected(null);
+      } else {
+        addLog(`❌ Ошибка пересчёта: ${data.error ?? "unknown"}`);
+      }
+    } finally { setRecalculating(false); }
   }
 
   const econ = selected?.economics as {
@@ -386,6 +450,42 @@ export default function OutboundPage() {
                 <div className="text-xs mt-1" style={{ color: "#6B7280" }}>Deals</div>
               </div>
             </div>
+
+            {/* First-100 KPI Panel */}
+            {first100 && (
+              <div className="bg-white rounded-xl border p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold" style={{ color: "#374151" }}>🎯 Первые 100 контактов</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs font-bold" style={{ color: "#4338CA" }}>{first100.total_approved}/100</div>
+                    <div className="w-24 h-2 rounded-full" style={{ background: "#E5E7EB" }}>
+                      <div className="h-2 rounded-full" style={{ background: "#4338CA", width: `${Math.min(first100.progress_pct, 100)}%` }} />
+                    </div>
+                    <div className="text-xs" style={{ color: "#6B7280" }}>{first100.progress_pct}%</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                  {[
+                    { label: "Сегодня", value: `${first100.approved_today}/${first100.daily_limit}`, color: first100.approved_today >= first100.daily_limit ? "#DC2626" : "#16a34a" },
+                    { label: "Отправлено", value: first100.total_contacted, color: "#374151" },
+                    { label: "Положит.", value: first100.positive_replies, color: "#16a34a" },
+                    { label: "Reply rate", value: first100.reply_rate !== null ? `${first100.reply_rate}%` : "—", color: "#0d9488" },
+                    { label: "Qualified", value: first100.qualified, color: "#4338CA" },
+                    { label: "HOT 🔥", value: first100.hot, color: "#DC2626" },
+                  ].map((k) => (
+                    <div key={k.label} className="text-center p-2 rounded-lg" style={{ background: "#F9FAFB" }}>
+                      <div className="text-xl font-bold" style={{ color: k.color }}>{k.value}</div>
+                      <div className="text-xs mt-0.5" style={{ color: "#6B7280" }}>{k.label}</div>
+                    </div>
+                  ))}
+                </div>
+                {first100.approved_today >= first100.daily_limit && (
+                  <div className="mt-3 p-2 rounded-lg text-xs text-center" style={{ background: "#FEF2F2", color: "#991B1B" }}>
+                    🚫 Дневной лимит исчерпан ({first100.daily_limit}/день). Продолжение завтра.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -607,7 +707,40 @@ export default function OutboundPage() {
                     </div>
                   </div>
                 )}
+                {selected.dataQualityScore > 0 && (
+                  <div className="text-center">
+                    <div className="text-xs" style={{ color: "#6B7280" }}>Data Quality</div>
+                    <div className="text-2xl font-bold" style={{ color: selected.dataQualityScore >= 70 ? "#16a34a" : selected.dataQualityScore >= 50 ? "#ca8a04" : "#dc2626" }}>
+                      {selected.dataQualityScore}
+                    </div>
+                  </div>
+                )}
+                {selected.rawOpportunityScore > 0 && selected.rawOpportunityScore !== selected.opportunityScore && (
+                  <div className="text-center">
+                    <div className="text-xs" style={{ color: "#6B7280" }}>Raw Opp</div>
+                    <div className="text-lg font-semibold" style={{ color: "#9CA3AF" }}>{selected.rawOpportunityScore}</div>
+                    <div className="text-xs" style={{ color: "#9CA3AF" }}>×factor</div>
+                  </div>
+                )}
               </div>
+
+              {/* Data Quality flags */}
+              {(selected.countryVerified || selected.companyVerified || selected.productVerified || selected.contactVerified || selected.sourceVerified) && (
+                <div className="flex gap-2 flex-wrap mt-2">
+                  {[
+                    { key: "countryVerified", label: "🌍 Страна", val: selected.countryVerified },
+                    { key: "companyVerified", label: "🏢 Компания", val: selected.companyVerified },
+                    { key: "productVerified", label: "📦 Товар", val: selected.productVerified },
+                    { key: "contactVerified", label: "📞 Контакт", val: selected.contactVerified },
+                    { key: "sourceVerified", label: "🔗 Источник", val: selected.sourceVerified },
+                  ].map((f) => (
+                    <span key={f.key} className="text-xs px-2 py-0.5 rounded-full font-medium"
+                      style={{ background: f.val ? "#DCFCE7" : "#FEE2E2", color: f.val ? "#15803D" : "#991B1B" }}>
+                      {f.val ? "✓" : "✗"} {f.label}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="px-6 py-4 space-y-4">
@@ -618,65 +751,99 @@ export default function OutboundPage() {
                 <p className="text-sm" style={{ color: "#1E40AF" }}>{selected.reasonToContact || "—"}</p>
               </div>
 
-              {/* EVIDENCE BLOCK */}
-              {(cm || econ) && (
+              {/* STRUCTURED EVIDENCE (§3 ТЗ) */}
+              {selected.evidenceData?.structured ? (
+                <div className="space-y-2">
+                  {/* Verified Facts */}
+                  {selected.evidenceData.structured.verified_facts.length > 0 && (
+                    <div className="p-3 rounded-lg border" style={{ background: "#F0FDF4", borderColor: "#BBF7D0" }}>
+                      <div className="text-xs font-semibold mb-2" style={{ color: "#15803D" }}>✅ VERIFIED FACTS</div>
+                      <div className="space-y-1">
+                        {selected.evidenceData.structured.verified_facts.map((f, i) => (
+                          <div key={i} className="text-xs flex items-start gap-1.5">
+                            <span style={{ color: "#16a34a", flexShrink: 0 }}>●</span>
+                            <span style={{ color: "#111827" }}>
+                              {f.fact}
+                              {f.url && (
+                                <a href={f.url} target="_blank" rel="noreferrer" className="ml-1" style={{ color: "#2563EB" }}>↗</a>
+                              )}
+                              <span className="ml-1" style={{ color: "#9CA3AF" }}>({f.source})</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* AI Inferences */}
+                  {selected.evidenceData.structured.ai_inferences.length > 0 && (
+                    <div className="p-3 rounded-lg border" style={{ background: "#FFFBEB", borderColor: "#FDE68A" }}>
+                      <div className="text-xs font-semibold mb-2" style={{ color: "#92400E" }}>🤖 AI INFERENCE</div>
+                      <div className="space-y-1">
+                        {selected.evidenceData.structured.ai_inferences.map((inf, i) => (
+                          <div key={i} className="text-xs flex items-start gap-1.5">
+                            <span style={{ color: "#f59e0b", flexShrink: 0 }}>~</span>
+                            <span style={{ color: "#78350F" }}>
+                              {inf.inference}
+                              <span className="ml-1 px-1 rounded text-xs" style={{
+                                background: inf.confidence === "high" ? "#FEF9C3" : inf.confidence === "medium" ? "#FFEDD5" : "#FEE2E2",
+                                color: inf.confidence === "high" ? "#854D0E" : inf.confidence === "medium" ? "#9A3412" : "#991B1B",
+                              }}>{inf.confidence}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Unknowns */}
+                  {selected.evidenceData.structured.unknown.length > 0 && (
+                    <div className="p-3 rounded-lg border" style={{ background: "#FEF2F2", borderColor: "#FECACA" }}>
+                      <div className="text-xs font-semibold mb-2" style={{ color: "#991B1B" }}>❓ UNKNOWN</div>
+                      <div className="space-y-1">
+                        {selected.evidenceData.structured.unknown.map((u, i) => (
+                          <div key={i} className="text-xs" style={{ color: "#7F1D1D" }}>
+                            <span className="font-semibold">{u.field}:</span> {u.why}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Source links */}
+                  <div className="flex gap-2 flex-wrap">
+                    {selected.chinaSourceUrl && (
+                      <a href={selected.chinaSourceUrl} target="_blank" rel="noreferrer"
+                        className="text-xs px-2 py-1 rounded border"
+                        style={{ color: "#2563EB", borderColor: "#BFDBFE", background: "#EFF6FF" }}>
+                        🇨🇳 Открыть China Source →
+                      </a>
+                    )}
+                    {cm?.supplier_url && String(cm.supplier_url) !== selected.chinaSourceUrl && (
+                      <a href={String(cm.supplier_url)} target="_blank" rel="noreferrer"
+                        className="text-xs px-2 py-1 rounded border"
+                        style={{ color: "#4338CA", borderColor: "#C7D2FE", background: "#EEF2FF" }}>
+                        🔗 Supplier URL →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ) : (cm || econ) && (
                 <div className="p-3 rounded-lg border" style={{ background: "#F0FDF4", borderColor: "#BBF7D0" }}>
                   <div className="text-xs font-semibold mb-2" style={{ color: "#15803D" }}>🔍 ДОКАЗАТЕЛЬСТВА</div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    {selected.products[0] && (
-                      <div>
-                        <span style={{ color: "#6B7280" }}>Товар: </span>
-                        <span className="font-semibold" style={{ color: "#111827" }}>{selected.products[0].name}</span>
-                      </div>
-                    )}
-                    {selected.marketplace && selected.marketplace !== "NONE" && (
-                      <div>
-                        <span style={{ color: "#6B7280" }}>Маркетплейс: </span>
-                        <span className="font-semibold" style={{ color: "#4338CA" }}>{selected.marketplace}</span>
-                      </div>
-                    )}
                     {cm?.product_name && (
-                      <div>
-                        <span style={{ color: "#6B7280" }}>China товар: </span>
-                        <span className="font-semibold" style={{ color: "#111827" }}>{String(cm.product_name)}</span>
-                      </div>
+                      <div><span style={{ color: "#6B7280" }}>China товар: </span><span className="font-semibold">{String(cm.product_name)}</span></div>
                     )}
                     {cm?.price_min_cny && (
-                      <div>
-                        <span style={{ color: "#6B7280" }}>China цена: </span>
-                        <span className="font-semibold" style={{ color: "#111827" }}>{String(cm.price_min_cny)}–{String(cm.price_max_cny)} CNY</span>
-                      </div>
-                    )}
-                    {cm?.match_confidence && (
-                      <div>
-                        <span style={{ color: "#6B7280" }}>Match: </span>
-                        <span className="font-semibold" style={{ color: "#16a34a" }}>{Math.round(Number(cm.match_confidence) * 100)}%</span>
-                      </div>
+                      <div><span style={{ color: "#6B7280" }}>China цена: </span><span className="font-semibold">{String(cm.price_min_cny)}–{String(cm.price_max_cny)} CNY</span></div>
                     )}
                     {econ?.landed_cost_usd && (
-                      <div>
-                        <span style={{ color: "#6B7280" }}>Landed cost: </span>
-                        <span className="font-semibold" style={{ color: "#111827" }}>${String(econ.landed_cost_usd)}</span>
-                      </div>
+                      <div><span style={{ color: "#6B7280" }}>Landed cost: </span><span className="font-semibold">${String(econ.landed_cost_usd)}</span></div>
                     )}
                     {econ?.price_gap && (
-                      <div>
-                        <span style={{ color: "#6B7280" }}>Price gap: </span>
-                        <span className="font-semibold" style={{ color: "#16a34a" }}>~{Math.round(Number(econ.price_gap) * 100)}%</span>
-                      </div>
-                    )}
-                    {econ?.estimated_margin && (
-                      <div>
-                        <span style={{ color: "#6B7280" }}>Margin: </span>
-                        <span className="font-semibold" style={{ color: "#16a34a" }}>~{Math.round(Number(econ.estimated_margin) * 100)}%</span>
-                      </div>
+                      <div><span style={{ color: "#6B7280" }}>Price gap: </span><span className="font-semibold">~{Math.round(Number(econ.price_gap) * 100)}%</span></div>
                     )}
                   </div>
                   {cm?.supplier_url && (
-                    <a href={String(cm.supplier_url)} target="_blank" rel="noreferrer"
-                      className="inline-block mt-2 text-xs" style={{ color: "#2563EB" }}>
-                      🔗 Открыть источник →
-                    </a>
+                    <a href={String(cm.supplier_url)} target="_blank" rel="noreferrer" className="inline-block mt-2 text-xs" style={{ color: "#2563EB" }}>🔗 Открыть источник →</a>
                   )}
                 </div>
               )}
@@ -749,7 +916,7 @@ export default function OutboundPage() {
               </div>
 
               {/* Actions — SEPARATED: Approve vs Send */}
-              <div className="border-t border-gray-100 pt-4">
+              <div className="border-t border-gray-100 pt-4 space-y-2">
                 <div className="text-xs font-semibold mb-2" style={{ color: "#6B7280" }}>
                   Одобрение → APPROVED → затем нажмите «Отправить» в таблице
                 </div>
@@ -772,6 +939,28 @@ export default function OutboundPage() {
                     style={{ background: "#F3F4F6", color: "#374151" }}>
                     Закрыть
                   </button>
+                </div>
+                {/* Secondary actions: Recalculate + Open Sources */}
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => recalculateLead(selected.outboundId, selected.companyName)}
+                    disabled={recalculating}
+                    className="px-3 py-2 rounded-lg text-xs font-medium"
+                    style={{ background: "#EEF2FF", color: "#4338CA" }}>
+                    {recalculating ? "⏳ Пересчёт..." : "🔄 Recalculate"}
+                  </button>
+                  {selected.chinaSourceUrl && (
+                    <a href={selected.chinaSourceUrl} target="_blank" rel="noreferrer"
+                      className="px-3 py-2 rounded-lg text-xs font-medium"
+                      style={{ background: "#F0FDF4", color: "#15803D" }}>
+                      🇨🇳 Open Sources
+                    </a>
+                  )}
+                  {selected.companyId && (
+                    <span className="px-3 py-2 rounded-lg text-xs" style={{ background: "#F9FAFB", color: "#9CA3AF" }}>
+                      ID: {selected.companyId}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
