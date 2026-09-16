@@ -8,6 +8,13 @@ interface Message {
   content: string;
 }
 
+interface LeadContext {
+  company_name: string;
+  category: string;
+  opportunity_score: number;
+  consultant_context_message?: string;
+}
+
 const PROMPTS = [
   "Дай задачи на сегодня",
   "Найди горячих клиентов из базы",
@@ -17,16 +24,40 @@ const PROMPTS = [
   "Какой оффер предложить магазину электроники?",
 ];
 
-export function SalesChatClient() {
+export function SalesChatClient({ initialLeadId }: { initialLeadId?: string | null }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streamText, setStreamText] = useState("");
+  const [leadContext, setLeadContext] = useState<LeadContext | null>(null);
+  const [leadLoading, setLeadLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const leadLoadedRef = useRef(false);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamText]);
+
+  // §23: Load lead context when ?lead= param is present
+  useEffect(() => {
+    if (!initialLeadId || leadLoadedRef.current) return;
+    leadLoadedRef.current = true;
+    setLeadLoading(true);
+    fetch(`/api/outbound/context?id=${initialLeadId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && data.context) {
+          const ctx = data.context as LeadContext & { consultant_context_message?: string };
+          setLeadContext({ company_name: data.company_name, category: data.category, opportunity_score: data.opportunity_score, consultant_context_message: ctx.consultant_context_message });
+          if (ctx.consultant_context_message) {
+            setInput(ctx.consultant_context_message);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLeadLoading(false));
+  }, [initialLeadId]);
 
   const send = async (text?: string) => {
     const content = (text ?? input).trim();
@@ -122,6 +153,23 @@ export function SalesChatClient() {
           <span className="text-green-400 text-xs">Online</span>
         </div>
       </div>
+
+      {/* §23: Lead handoff banner */}
+      {leadLoading && (
+        <div className="flex-shrink-0 bg-amber-900/20 border-b border-amber-700/30 px-5 py-2 text-amber-400 text-xs">
+          ⏳ Загрузка контекста лида...
+        </div>
+      )}
+      {leadContext && !leadLoading && (
+        <div className="flex-shrink-0 bg-emerald-900/20 border-b border-emerald-700/30 px-5 py-2 flex items-center justify-between">
+          <div className="text-emerald-400 text-xs">
+            🤝 Handoff: <span className="font-semibold text-emerald-300">{leadContext.company_name}</span> · {leadContext.category} · Opportunity {leadContext.opportunity_score}/100
+          </div>
+          <Link href={`/admin/outbound?lead=${initialLeadId}`} className="text-emerald-600 hover:text-emerald-400 text-xs transition">
+            ← Назад к лиду
+          </Link>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">

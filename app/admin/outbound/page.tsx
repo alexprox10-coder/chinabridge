@@ -65,6 +65,8 @@ interface OutboundLead {
   messageVersion: string;
   quoteId: string;
   dealId: string;
+  campaign: string;
+  opportunityId: string;
 }
 
 interface First100Kpis {
@@ -183,10 +185,17 @@ export default function OutboundPage() {
   const [enrichLoading, setEnrichLoading] = useState(false);
   const [enrichV2Loading, setEnrichV2Loading] = useState(false);
   const [log, setLog] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<"leads" | "kpi">("leads");
+  const [activeTab, setActiveTab] = useState<"leads" | "kpi" | "companies">("leads");
   const [sortBy, setSortBy] = useState<"combined" | "opportunity" | "evidence" | "newest">("combined");
   const [first100, setFirst100] = useState<First100Kpis | null>(null);
   const [recalculating, setRecalculating] = useState(false);
+  // §29-31: New lead modal
+  const [showNewLead, setShowNewLead] = useState(false);
+  const [newLead, setNewLead] = useState({ companyName: "", city: "", country: "KZ", category: "", marketplace: "", phone: "", email: "", website: "", vertical: "", campaign: "OUTBOUND_V1" });
+  const [newLeadLoading, setNewLeadLoading] = useState(false);
+  // §5: Companies tab
+  const [companies, setCompanies] = useState<Array<{ company_id: string; company_name: string; country: string; opportunity_count: number; last_updated: string }>>([]);
+  const [companiesLoading, setCompaniesLoading] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -332,6 +341,37 @@ export default function OutboundPage() {
     } finally { setRecalculating(false); }
   }
 
+  // §5: Load companies
+  const loadCompanies = useCallback(async () => {
+    setCompaniesLoading(true);
+    try {
+      const res = await fetch("/api/outbound/create");
+      const data = await res.json();
+      if (data.ok) setCompanies(data.companies ?? []);
+    } finally { setCompaniesLoading(false); }
+  }, []);
+
+  // §29-31: Create new lead
+  async function createNewLead() {
+    if (!newLead.companyName || !newLead.country || !newLead.category) return;
+    setNewLeadLoading(true);
+    try {
+      const res = await fetch("/api/outbound/create", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newLead),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        addLog(`✅ Лид создан: ${newLead.companyName} → ${data.outboundId}`);
+        setShowNewLead(false);
+        setNewLead({ companyName: "", city: "", country: "KZ", category: "", marketplace: "", phone: "", email: "", website: "", vertical: "", campaign: "OUTBOUND_V1" });
+        loadLeads(); loadKpis();
+      } else {
+        addLog(`❌ Ошибка: ${data.error}`);
+      }
+    } finally { setNewLeadLoading(false); }
+  }
+
   const econ = selected?.economics as {
     landed_cost_usd?: number; estimated_margin?: number; price_gap?: number;
     calculation_valid?: boolean;
@@ -363,6 +403,10 @@ export default function OutboundPage() {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <button onClick={() => setShowNewLead(true)}
+              className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
+              ➕ Новый лид
+            </button>
             <button onClick={enrichBatch} disabled={enrichLoading}
               className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50">
               {enrichLoading ? "v1..." : "🤖 Enrich v1"}
@@ -378,13 +422,16 @@ export default function OutboundPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-4 border-b border-gray-200">
-          {(["leads", "kpi"] as const).map((t) => (
-            <button key={t} onClick={() => setActiveTab(t)}
+          {(["leads", "kpi", "companies"] as const).map((t) => (
+            <button key={t} onClick={() => {
+              setActiveTab(t);
+              if (t === "companies" && companies.length === 0) loadCompanies();
+            }}
               className="px-4 py-2 text-sm font-medium rounded-t-lg"
               style={activeTab === t
                 ? { background: "#fff", color: "#2563EB", border: "1px solid #e5e7eb", borderBottom: "1px solid #fff", marginBottom: -1 }
                 : { color: "#6B7280" }}>
-              {t === "leads" ? "📋 Лиды" : "📊 KPI"}
+              {t === "leads" ? "📋 Лиды" : t === "kpi" ? "📊 KPI" : "🏢 Компании"}
             </button>
           ))}
         </div>
@@ -956,6 +1003,13 @@ export default function OutboundPage() {
                       🇨🇳 Open Sources
                     </a>
                   )}
+                  {selected.stage === "REPLIED" && (
+                    <a href={`/admin/sales/chat?lead=${selected.outboundId}`}
+                      className="px-3 py-2 rounded-lg text-xs font-medium"
+                      style={{ background: "#F0F9FF", color: "#0369A1" }}>
+                      🤝 AI Consultant →
+                    </a>
+                  )}
                   {selected.companyId && (
                     <span className="px-3 py-2 rounded-lg text-xs" style={{ background: "#F9FAFB", color: "#9CA3AF" }}>
                       ID: {selected.companyId}
@@ -964,6 +1018,156 @@ export default function OutboundPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* §5: Companies tab */}
+      {activeTab === "companies" && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold" style={{ color: "#111827" }}>🏢 Компании ({companies.length})</h2>
+            <div className="flex gap-2">
+              <button onClick={loadCompanies} disabled={companiesLoading}
+                className="px-3 py-1.5 border rounded-lg text-sm bg-white" style={{ color: "#374151" }}>
+                {companiesLoading ? "⏳" : "🔄 Обновить"}
+              </button>
+              <button onClick={() => setShowNewLead(true)}
+                className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
+                ➕ Новая компания
+              </button>
+            </div>
+          </div>
+          {companiesLoading ? (
+            <div className="text-center py-8" style={{ color: "#9CA3AF" }}>Загрузка...</div>
+          ) : (
+            <div className="space-y-2">
+              {companies.map((c) => (
+                <div key={c.company_id} className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm" style={{ color: "#111827" }}>{c.company_name}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "#6B7280" }}>
+                      {c.country} · {c.opportunity_count} opportunity{c.opportunity_count !== 1 ? "" : ""} · ID: {c.company_id}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: "#EEF2FF", color: "#4338CA" }}>
+                      {c.opportunity_count} oppurt.
+                    </span>
+                    <button
+                      onClick={() => {
+                        setNewLead(prev => ({ ...prev, companyName: c.company_name, country: c.country }));
+                        setShowNewLead(true);
+                      }}
+                      className="px-2 py-0.5 rounded-lg text-xs font-medium"
+                      style={{ background: "#F0FDF4", color: "#15803D" }}>
+                      + Opportunity
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {companies.length === 0 && !companiesLoading && (
+                <div className="text-center py-8" style={{ color: "#9CA3AF" }}>Компании не найдены. Нажмите «Обновить».</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* §29-31: New Lead Modal */}
+      {showNewLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }}>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-2xl w-full max-w-lg mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold" style={{ color: "#111827" }}>➕ Новый лид / Opportunity</h2>
+              <button onClick={() => setShowNewLead(false)} style={{ color: "#9CA3AF" }}>✕</button>
+            </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Компания *</label>
+                  <input value={newLead.companyName} onChange={e => setNewLead(p => ({ ...p, companyName: e.target.value }))}
+                    placeholder="Название компании"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Категория *</label>
+                  <input value={newLead.category} onChange={e => setNewLead(p => ({ ...p, category: e.target.value }))}
+                    placeholder="electronics, textile..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Страна *</label>
+                  <select value={newLead.country} onChange={e => setNewLead(p => ({ ...p, country: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="KZ">Казахстан (KZ)</option>
+                    <option value="RU">Россия (RU)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Город</label>
+                  <input value={newLead.city} onChange={e => setNewLead(p => ({ ...p, city: e.target.value }))}
+                    placeholder="Алматы, Москва..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Маркетплейс</label>
+                  <select value={newLead.marketplace} onChange={e => setNewLead(p => ({ ...p, marketplace: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Не маркетплейс</option>
+                    <option value="KASPI">Kaspi</option>
+                    <option value="WB">Wildberries</option>
+                    <option value="OZON">Ozon</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Сайт</label>
+                  <input value={newLead.website} onChange={e => setNewLead(p => ({ ...p, website: e.target.value }))}
+                    placeholder="example.kz"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Телефон</label>
+                  <input value={newLead.phone} onChange={e => setNewLead(p => ({ ...p, phone: e.target.value }))}
+                    placeholder="+7..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Email</label>
+                  <input value={newLead.email} onChange={e => setNewLead(p => ({ ...p, email: e.target.value }))}
+                    placeholder="email@..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: "#374151" }}>Кампания</label>
+                <input value={newLead.campaign} onChange={e => setNewLead(p => ({ ...p, campaign: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={createNewLead}
+                disabled={newLeadLoading || !newLead.companyName || !newLead.category}
+                className="flex-1 py-2.5 rounded-lg font-medium text-sm text-white disabled:opacity-50"
+                style={{ background: "#16a34a" }}>
+                {newLeadLoading ? "Создаю..." : "✅ Создать лид → FOUND"}
+              </button>
+              <button onClick={() => setShowNewLead(false)}
+                className="px-4 py-2.5 rounded-lg font-medium text-sm"
+                style={{ background: "#F3F4F6", color: "#374151" }}>
+                Отмена
+              </button>
+            </div>
+            <p className="text-xs mt-2" style={{ color: "#9CA3AF" }}>
+              После создания запустите Enrich v2 для обогащения данными
+            </p>
           </div>
         </div>
       )}

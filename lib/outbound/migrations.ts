@@ -38,6 +38,10 @@ export async function runOutboundMigrations(): Promise<void> {
       `ALTER TABLE outbound_leads ADD COLUMN IF NOT EXISTS "deal_id" text NOT NULL DEFAULT ''`,
       `ALTER TABLE outbound_leads ADD COLUMN IF NOT EXISTS "sent_at" timestamp`,
       `ALTER TABLE outbound_leads ADD COLUMN IF NOT EXISTS "replied_at" timestamp`,
+      `ALTER TABLE outbound_leads ADD COLUMN IF NOT EXISTS "campaign" text NOT NULL DEFAULT 'OUTBOUND_V1'`,
+      `ALTER TABLE outbound_leads ADD COLUMN IF NOT EXISTS "opportunity_id" text NOT NULL DEFAULT ''`,
+      `ALTER TABLE outbound_leads ADD COLUMN IF NOT EXISTS "ai_consultant_context" jsonb`,
+      `ALTER TABLE outbound_leads ADD COLUMN IF NOT EXISTS "stage_updated_at" text NOT NULL DEFAULT ''`,
     ];
 
     for (const migration of columnMigrations) {

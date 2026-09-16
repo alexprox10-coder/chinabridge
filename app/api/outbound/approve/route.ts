@@ -93,8 +93,12 @@ function hotLeadText(lead: LeadRow) {
   ].filter((l) => l !== undefined).join("\n");
 }
 
-// §32-34: Handoff context to AI Consultant
+// §23+§32-34: Handoff context to AI Consultant — saves context to DB, sends TG with direct chat link
 async function handoffToConsultant(lead: LeadRow) {
+  const product = (lead.products as unknown[])?.[0] ?? null;
+  const cm = lead.china_match as { product_name?: string; price_min_cny?: number; price_max_cny?: number } | null;
+  const econ = lead.economics as { landed_cost_usd?: number; estimated_margin?: number } | null;
+
   const context = {
     lead_id: lead.outbound_id,
     company_name: lead.company_name,
@@ -102,16 +106,43 @@ async function handoffToConsultant(lead: LeadRow) {
     city: lead.city,
     category: lead.category,
     marketplace: lead.marketplace,
-    product: (lead.products as unknown[])?.[0] ?? null,
+    product,
     china_match: lead.china_match,
     economics: lead.economics,
     reason_to_contact: lead.reason_to_contact,
     pitch_type: lead.pitch_type,
     opportunity_score: lead.opportunity_score,
     campaign: "OUTBOUND_V1",
+    // Pre-built first message for AI Consultant
+    consultant_context_message: [
+      `Клиент ответил положительно на аутрич. Нужна помощь с продолжением диалога.`,
+      ``,
+      `**Компания:** ${lead.company_name}`,
+      `**Страна:** ${lead.country === "KZ" ? "Казахстан" : "Россия"}, ${lead.city}`,
+      `**Категория:** ${lead.category}`,
+      lead.marketplace && lead.marketplace !== "NONE" ? `**Маркетплейс:** ${lead.marketplace}` : "",
+      product ? `**Товар:** ${(product as {name?: string}).name ?? "—"}` : "",
+      cm?.product_name ? `**China источник:** ${cm.product_name} (${cm.price_min_cny}–${cm.price_max_cny} CNY)` : "",
+      econ?.landed_cost_usd ? `**Landed cost:** ~$${econ.landed_cost_usd}/ед.` : "",
+      econ?.estimated_margin ? `**Margin потенциал:** ~${Math.round(econ.estimated_margin * 100)}%` : "",
+      ``,
+      `**Причина обращения (original):** ${lead.reason_to_contact}`,
+      ``,
+      `Клиент уже проявил интерес. Следующий шаг — квалификация: уточни объёмы, текущего поставщика, сроки принятия решения.`,
+    ].filter(Boolean).join("\n"),
   };
 
-  // Notify manager with context link for AI Consultant session
+  // Save context to DB for AI Consultant to load via URL param
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(process.env.DATABASE_URL!);
+    await sql`
+      UPDATE outbound_leads SET ai_consultant_context = ${JSON.stringify(context)}
+      WHERE outbound_id = ${lead.outbound_id}
+    `.catch(() => null);
+  } catch {}
+
+  // Notify manager — direct link opens AI Consultant with pre-loaded context
   const handoffText = [
     `🤝 *ПОЛОЖИТЕЛЬНЫЙ ОТВЕТ → AI CONSULTANT*`,
     ``,
@@ -120,8 +151,8 @@ async function handoffToConsultant(lead: LeadRow) {
     ``,
     `Opportunity: ${lead.opportunity_score}/100`,
     ``,
-    `📋 Контекст передан AI Consultant. Откройте диалог:`,
-    `https://chinabridge.pro/admin/outbound?lead=${lead.outbound_id}`,
+    `📋 Контекст загружен. Откройте AI Consultant:`,
+    `https://chinabridge.pro/admin/sales/chat?lead=${lead.outbound_id}`,
     ``,
     `Следующий шаг: QUALIFY → HOT`,
   ].join("\n");
