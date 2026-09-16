@@ -172,4 +172,5 @@ export const analytics = {
   deliveryRequestStart: (p?: { page?: string; country?: string; vertical?: string }) => { fire("delivery_request_start",  "delivery_request_start",  { category: "service_funnel", ...p }); trackVkGoal("delivery_request_start"); },
   deliveryRequestSubmit:(p?: { page?: string; country?: string; vertical?: string }) => { fire("delivery_request_submit", "delivery_request_submit", { category: "service_funnel", ...p }); trackVkGoal("delivery_request_submit"); },
   stickyCtaClick:       (p?: { page?: string; country?: string; vertical?: string }) => { fire("sticky_cta_click",         "sticky_cta_click",         { category: "service_funnel", ...p }); trackVkGoal("sticky_cta_click"); },
+  highIntentVisitor:    (p?: { sessions?: number; country?: string })               => { fire("high_intent_visitor",      "high_intent_visitor",      { category: "service_funnel", ...p }); trackVkGoal("high_intent_visitor"); },
 };

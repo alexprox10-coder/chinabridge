@@ -14,7 +14,7 @@ export default function KzSessionTracker() {
       localStorage.setItem(KZ_SESSION_KEY, String(next));
 
       if (next >= 3) {
-        analytics.fire("high_intent_visitor", { sessions: next, country: "KZ" });
+        analytics.highIntentVisitor({ sessions: next, country: "KZ" });
       }
     } catch {
       // localStorage unavailable — skip silently
