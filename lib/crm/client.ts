@@ -82,9 +82,17 @@ async function ensureOwnerTenant(): Promise<void> {
         "markup_percent" numeric,
         "profit" numeric,
         "margin_percent" numeric,
-        "pricing_rule" text
+        "pricing_rule" text,
+        "vertical" text,
+        "landing_page" text,
+        "calculator_used" text
       )
     `;
+
+    // Add funnel context columns to existing tables (idempotent)
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "vertical" text`.catch(() => null);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "landing_page" text`.catch(() => null);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "calculator_used" text`.catch(() => null);
 
     await sql`
       INSERT INTO "tenants" (
@@ -150,6 +158,9 @@ function rowToLead(r: typeof crmLeads.$inferSelect): CRMLead {
     source:             r.source,
     utm_source:         r.utmSource,
     utm_campaign:       r.utmCampaign,
+    vertical:           r.vertical ?? undefined,
+    landing_page:       r.landingPage ?? undefined,
+    calculator_used:    r.calculatorUsed === "true",
     delivery_cost:      r.deliveryCost != null ? Number(r.deliveryCost) : undefined,
     carrier_cost:       r.carrierCost != null ? Number(r.carrierCost) : undefined,
     markup_percent:     r.markupPercent != null ? Number(r.markupPercent) : undefined,
@@ -242,6 +253,9 @@ export async function createLead(data: Omit<CRMLead, "id">, tenantIdOverride?: s
     source:             data.source,
     utmSource:          data.utm_source,
     utmCampaign:        data.utm_campaign,
+    vertical:           data.vertical ?? null,
+    landingPage:        data.landing_page ?? null,
+    calculatorUsed:     data.calculator_used != null ? String(data.calculator_used) : null,
     deliveryCost:       data.delivery_cost != null ? String(data.delivery_cost) : null,
     carrierCost:        data.carrier_cost != null ? String(data.carrier_cost) : null,
     markupPercent:      data.markup_percent != null ? String(data.markup_percent) : null,

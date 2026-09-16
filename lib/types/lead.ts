@@ -17,6 +17,11 @@ export interface Lead {
   service?: string;
   source: LeadSource;
   created_at: string;
+  // Funnel context
+  vertical?: string;
+  landing_page?: string;
+  calculator_used?: boolean;
+  country_destination?: string;
 }
 
 // What the client sends — id and created_at generated server-side

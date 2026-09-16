@@ -91,6 +91,10 @@ export interface CRMLead {
   source: string;
   utm_source: string;
   utm_campaign: string;
+  // Funnel context
+  vertical?: string;
+  landing_page?: string;
+  calculator_used?: boolean;
   // Cost Engine (optional — present when rate was calculated)
   delivery_cost?: number;
   carrier_cost?: number;

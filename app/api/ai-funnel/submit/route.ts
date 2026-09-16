@@ -201,6 +201,9 @@ contactLinks.push(`<a href="tel:+${normalizedPhone}">📞 Позвонить</a>
       status: 'NEW', priority: 'WARM', estimated_value: 0, manager: '',
       comment: `source: ${source}`, source: 'LEAD_MAGNET_UNIT_ECONOMICS',
       utm_source: source, utm_campaign: '',
+      vertical:        typeof body.vertical      === 'string' ? body.vertical.trim()      || undefined : undefined,
+      landing_page:    typeof body.landing_page  === 'string' ? body.landing_page.trim()  || undefined : undefined,
+      calculator_used: body.calculator_used === true ? true : undefined,
     }, 'tenant-chinabridge').catch(() => {});
     return NextResponse.json({ ok: true, lead_id: leadId });
   }
@@ -292,6 +295,9 @@ contactLinks.push(`<a href="tel:+${normalizedPhone}">📞 Позвонить</a>
       source:              'LEAD_MAGNET_UNIT_ECONOMICS',
       utm_source:          utmSource,
       utm_campaign:        utmCampaign,
+      vertical:            typeof body.vertical      === 'string' ? body.vertical.trim()      || undefined : undefined,
+      landing_page:        typeof body.landing_page  === 'string' ? body.landing_page.trim()  || undefined : undefined,
+      calculator_used:     body.calculator_used === true ? true : undefined,
       delivery_cost:       delivery.hasRate ? delivery.deliveryCost : undefined,
       carrier_cost:        undefined,
       markup_percent:      undefined,

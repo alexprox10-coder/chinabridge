@@ -21,6 +21,10 @@ async function notifyManagerTelegram(lead: Lead): Promise<void> {
     lead.from_city || lead.to_city
       ? `🗺 *Маршрут:* ${tg(lead.from_city ?? "Китай")} → ${tg(lead.to_city ?? "—")}` : null,
     `📍 *Источник:* ${tg(lead.source)}`,
+    lead.vertical ? `🏷 *Вертикаль:* ${tg(lead.vertical)}` : null,
+    lead.landing_page ? `📄 *Лендинг:* ${tg(lead.landing_page)}` : null,
+    lead.calculator_used ? `🤖 *Калькулятор:* использован` : null,
+    lead.country_destination ? `🌍 *Страна:* ${tg(lead.country_destination)}` : null,
     "",
     `🆔 \`${lead.id.slice(0, 8)}\``,
   ].filter(Boolean).join("\n");
@@ -75,6 +79,9 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
     "kaspi_landing", "vk_kz", "VK-KZ", "lp_kz", "b2bchina_landing",
     "wb_landing", "supplier_landing", "kz_import_landing", "phone_click",
     "TENDER_INTELLIGENCE",
+    "calculator", "ai_funnel", "white_import", "kz_auto_parts", "kz_auto_accessories",
+    "import_electronics", "import_auto_parts", "import_clothing", "import_furniture",
+    "import_equipment", "import_lighting", "import_components",
   ];
   if (!errors.source && !allowedSources.includes(b.source as string)) {
     errors.source = `source must be one of: ${allowedSources.join(", ")}`;
@@ -94,6 +101,10 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
     from_city: typeof b.from_city === "string" ? b.from_city.trim() || undefined : undefined,
     to_city:   typeof b.to_city   === "string" ? b.to_city.trim()   || undefined : undefined,
     service:   typeof b.service   === "string" ? b.service.trim()   || undefined : undefined,
+    vertical:           typeof b.vertical         === "string" ? b.vertical.trim()         || undefined : undefined,
+    landing_page:       typeof b.landing_page     === "string" ? b.landing_page.trim()     || undefined : undefined,
+    calculator_used:    typeof b.calculator_used  === "boolean" ? b.calculator_used : undefined,
+    country_destination: typeof b.country_destination === "string" ? b.country_destination.trim() || undefined : undefined,
   };
 
   return { input, errors: {} };
@@ -150,7 +161,7 @@ export async function POST(req: NextRequest) {
       quantity:           "",
       weight:             lead.weight ?? "",
       volume:             lead.volume ?? "",
-      country_destination: "",
+      country_destination: lead.country_destination ?? "",
       city_destination:   lead.to_city ?? "",
       delivery_type:      lead.service ?? "",
       service_type:       "",
@@ -162,6 +173,9 @@ export async function POST(req: NextRequest) {
       source:             lead.source,
       utm_source:         "",
       utm_campaign:       "",
+      vertical:           lead.vertical,
+      landing_page:       lead.landing_page,
+      calculator_used:    lead.calculator_used,
     });
   } catch (err) {
     console.error("[POST /api/leads] Neon save failed:", err);

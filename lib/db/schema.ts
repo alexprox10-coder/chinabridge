@@ -96,6 +96,10 @@ export const crmLeads = pgTable("crm_leads", {
   source:             text("source").notNull().default(""),
   utmSource:          text("utm_source").notNull().default(""),
   utmCampaign:        text("utm_campaign").notNull().default(""),
+  // Funnel context
+  vertical:           text("vertical"),
+  landingPage:        text("landing_page"),
+  calculatorUsed:     text("calculator_used"),
   // Cost Engine
   deliveryCost:       numeric("delivery_cost"),
   carrierCost:        numeric("carrier_cost"),

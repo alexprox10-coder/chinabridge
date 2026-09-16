@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { analytics, classifyProduct } from "@/lib/analytics";
 import { MARKETPLACES, detectCommissionPct } from "@/lib/economics/marketplaces";
 import MarketNewsBar from "@/components/calculator/MarketNewsBar";
@@ -967,10 +968,14 @@ const EMPTY_CORRECTION: CorrectionData = {
 };
 
 export default function AIEconomicsFunnel() {
+  const searchParams     = useSearchParams();
   const startedRef       = useRef(false);
   const handleCalcRef    = useRef<((overrides?: { extractedData?: ExtractedProduct | null; marketplace?: string; city_to?: string; country_to?: string; salePrice?: string; }) => Promise<void>) | null>(null);
   const calcContainerRef = useRef<HTMLDivElement>(null);
   const calcVisibleFired = useRef(false);
+  // Funnel context from URL params (?country=KZ&vertical=auto_parts&from=kz_auto_parts)
+  const urlVertical      = useRef<string | null>(null);
+  const urlLandingPage   = useRef<string | null>(null);
 
   const [s, setS] = useState<FunnelState>({
     step:              "input",
@@ -1001,6 +1006,18 @@ export default function AIEconomicsFunnel() {
     showCorrection:    false,
     correction:        EMPTY_CORRECTION,
   });
+
+  // Read URL context params once on mount — pre-set country/city for KZ traffic
+  useEffect(() => {
+    const country  = searchParams.get("country");
+    const vertical = searchParams.get("vertical");
+    const from     = searchParams.get("from");
+    if (vertical) urlVertical.current = vertical;
+    if (from)     urlLandingPage.current = from;
+    if (country === "KZ") {
+      setS(p => ({ ...p, city_to: "Алматы", country_to: "Kazakhstan", marketplace: "kaspi" }));
+    }
+  }, [searchParams]);
 
   // UI-only state
   const [stageIdx,       setStageIdx]       = useState(0);
@@ -1607,6 +1624,9 @@ export default function AIEconomicsFunnel() {
           country_to:      s.country_to,
           weight_kg:       ed ? (ed.weight_kg ?? undefined) : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
           supplier_exists: supplierExists,
+          vertical:        urlVertical.current || undefined,
+          landing_page:    urlLandingPage.current || undefined,
+          calculator_used: true,
         }),
       });
       const data = await res.json();
@@ -1682,6 +1702,9 @@ export default function AIEconomicsFunnel() {
             ? (ed.weight_kg ?? undefined)
             : (s.product.weight_kg ? parseFloat(s.product.weight_kg) : undefined),
           supplier_exists: supplierExists,
+          vertical:        urlVertical.current || undefined,
+          landing_page:    urlLandingPage.current || undefined,
+          calculator_used: true,
         }),
       });
       if (resp.ok) {
@@ -1709,6 +1732,8 @@ export default function AIEconomicsFunnel() {
           source:       "ai_funnel_preview_phone",
           weight_kg:    ed?.weight_kg?.toString() ?? s.product.weight_kg ?? "",
           quantity:     String(parseInt(s.product.quantity) || 1),
+          vertical:     urlVertical.current || undefined,
+          landing_page: urlLandingPage.current || undefined,
         }),
       });
       setPreviewPhoneDone(true);
