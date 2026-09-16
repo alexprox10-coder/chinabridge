@@ -7,6 +7,7 @@ import Link from "next/link";
 import { analytics } from "@/lib/analytics";
 import { setCountryContext } from "@/lib/utils/country-detect";
 import { StickyMobileCTA } from "@/components/conversion/PrimaryConversionCTA";
+import KzSessionTracker from "@/components/analytics/KzSessionTracker";
 
 const TgIcon = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current flex-shrink-0">
@@ -23,6 +24,7 @@ export default function KzAutoAccessoriesPage() {
 
   return (
     <>
+      <KzSessionTracker />
       <Header />
       <main className="min-h-screen bg-[#050e1d] text-white">
         <div className="max-w-lg mx-auto px-4 py-10 pb-20">

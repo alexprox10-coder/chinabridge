@@ -6,9 +6,8 @@ import CountryDetectInit from "@/components/analytics/CountryDetectInit";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["400", "600", "700"],
   display: "swap",
-  preload: false,
   fallback: ["system-ui", "arial"],
   variable: "--font-inter",
 });
