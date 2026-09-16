@@ -260,8 +260,7 @@ export async function POST(req: NextRequest) {
         dqFlags.data_quality_score = computeDqScore(dqFlags);
 
         // China source fields
-        const chinaMatchAny = chinaMatch as (typeof chinaMatch & { supplier_url?: string }) | null;
-        const china_source_url = chinaMatchAny?.supplier_url ?? "";
+        const china_source_url = chinaMatch?.supplier_url ?? "";
         const china_unit_price = chinaMatch ? ((chinaMatch.price_min_cny + chinaMatch.price_max_cny) / 2) : null;
         const local_selling_price =
           countryTyped === "KZ" ? (products[0]?.price_min_kzt ?? null) : (products[0]?.price_min_rub ?? null);

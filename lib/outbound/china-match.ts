@@ -6,6 +6,7 @@ export interface ChinaMatch {
   source: "1688" | "Alibaba" | "Taobao";
   search_1688: string;
   search_alibaba: string;
+  supplier_url?: string;
   price_min_cny: number;
   price_max_cny: number;
   moq: number;
@@ -34,6 +35,7 @@ match_confidence (0.0-1.0): насколько уверенно ты можеш�
   "source": "1688",
   "search_1688": "中文关键词",
   "search_alibaba": "english keyword",
+  "supplier_url": "https://detail.1688.com/offer/...",
   "price_min_cny": 15,
   "price_max_cny": 45,
   "moq": 50,
@@ -42,7 +44,8 @@ match_confidence (0.0-1.0): насколько уверенно ты можеш�
   "quality_level": "standard",
   "reliability_score": 78,
   "market_overview": "1-2 предложения о рынке"
-}`;
+}
+Для supplier_url: если знаешь реальный URL товара на 1688/Alibaba — укажи. Если нет — генерируй URL поиска: https://s.1688.com/selloffer/offerlist.htm?keywords=<search_1688>&n=y`;
 
 export async function findChinaMatch(
   productName: string,

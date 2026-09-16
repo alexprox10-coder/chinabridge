@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const sql = neon(process.env.DATABASE_URL!);
 
-    const [stageCounts, verticalCounts, categoryCounts, topLeads, recentActivity, first100] = await Promise.all([
+    const [stageCounts, verticalCounts, categoryCounts, topLeads, first100, recentActivity] = await Promise.all([
       // Stage funnel
       sql`
         SELECT stage, COUNT(*) as count
