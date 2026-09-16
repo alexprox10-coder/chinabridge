@@ -149,6 +149,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "outboundId and action required" }, { status: 400 });
     }
 
+    // §ТЗ Phase 9: 20 contacts/day hard limit (human-in-the-loop first 100-200)
+    if (action === "approve" || action === "edit_approve") {
+      const todayStart = new Date().toISOString().slice(0, 10) + "T00:00:00.000Z";
+      const dailyRows = await sql`
+        SELECT COUNT(*) as count FROM outbound_leads
+        WHERE approved_at >= ${todayStart}
+      `;
+      const approvedToday = Number((dailyRows[0] as { count: string }).count ?? 0);
+      if (approvedToday >= 20) {
+        return NextResponse.json(
+          { ok: false, error: "Daily contact limit reached (20/day). Resume tomorrow." },
+          { status: 429 }
+        );
+      }
+    }
+
     const rows = await sql`
       SELECT outbound_id, company_name, city, country, category, marketplace,
              phone, email, website, stage, opportunity_score, company_score,

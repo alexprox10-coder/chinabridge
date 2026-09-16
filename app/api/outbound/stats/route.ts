@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const sql = neon(process.env.DATABASE_URL!);
 
-    const [stageCounts, verticalCounts, categoryCounts, topLeads, recentActivity] = await Promise.all([
+    const [stageCounts, verticalCounts, categoryCounts, topLeads, recentActivity, first100] = await Promise.all([
       // Stage funnel
       sql`
         SELECT stage, COUNT(*) as count
@@ -42,6 +42,18 @@ export async function GET() {
         ORDER BY opportunity_score DESC
         LIMIT 20
       `,
+      // First 100 contacts KPI tracking
+      sql`
+        SELECT
+          COUNT(*) FILTER (WHERE approved_at IS NOT NULL) as total_approved,
+          COUNT(*) FILTER (WHERE stage IN ('CONTACTED','REPLIED','QUALIFIED','HOT','QUOTE','DEAL')) as total_contacted,
+          COUNT(*) FILTER (WHERE response_status = 'POSITIVE') as positive_replies,
+          COUNT(*) FILTER (WHERE stage IN ('QUALIFIED','HOT','QUOTE','DEAL')) as qualified,
+          COUNT(*) FILTER (WHERE stage = 'HOT') as hot,
+          COUNT(*) FILTER (WHERE stage = 'DEAL') as deals,
+          COUNT(*) FILTER (WHERE approved_at >= (NOW() - INTERVAL '1 day')::text) as approved_today
+        FROM outbound_leads
+      `,
       // Reply rates
       sql`
         SELECT
@@ -57,6 +69,16 @@ export async function GET() {
         FROM outbound_leads
       `,
     ]);
+
+    const f100 = first100[0] as {
+      total_approved: string;
+      total_contacted: string;
+      positive_replies: string;
+      qualified: string;
+      hot: string;
+      deals: string;
+      approved_today: string;
+    } | undefined;
 
     const activity = recentActivity[0] as {
       contacted: string;
@@ -94,9 +116,25 @@ export async function GET() {
       avg_message_quality: Number(activity?.avg_message_quality ?? 0),
     };
 
+    const totalContacted = Number(f100?.total_contacted ?? 0);
+    const positiveReplies = Number(f100?.positive_replies ?? 0);
+    const first100Kpis = {
+      total_approved: Number(f100?.total_approved ?? 0),
+      total_contacted: totalContacted,
+      approved_today: Number(f100?.approved_today ?? 0),
+      daily_limit: 20,
+      positive_replies: positiveReplies,
+      qualified: Number(f100?.qualified ?? 0),
+      hot: Number(f100?.hot ?? 0),
+      deals: Number(f100?.deals ?? 0),
+      reply_rate: totalContacted > 0 ? Math.round((positiveReplies / totalContacted) * 100) : null,
+      progress_pct: Math.min(100, Math.round((totalContacted / 100) * 100)),
+    };
+
     return NextResponse.json({
       ok: true,
       kpis,
+      first_100: first100Kpis,
       verticals: verticalCounts,
       categories: categoryCounts,
       top_leads: topLeads,
