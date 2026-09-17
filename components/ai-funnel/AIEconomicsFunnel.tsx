@@ -16,8 +16,10 @@ import type {
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
+type CalcMode = "marketplace" | "wholesale" | "b2b" | "delivery";
+
 // "product" step — fallback only when AI extraction fails
-type Step = "supplier_check" | "input" | "analyzing" | "product" | "marketplace" | "calculating" | "preview" | "contact" | "success";
+type Step = "mode_select" | "supplier_check" | "input" | "analyzing" | "product" | "marketplace" | "calculating" | "preview" | "contact" | "success" | "simple_input" | "simple_result";
 
 interface ProductData {
   product_name:   string;
@@ -57,8 +59,23 @@ interface CorrectionData {
   price_currency: "CNY" | "USD";
 }
 
+interface SimpleInputData {
+  product_name:           string;
+  product_link:           string;
+  unit_price:             string;
+  price_currency:         "CNY" | "USD";
+  quantity:               string;
+  weight_kg:              string;
+  city_to:                string;
+  country_to:             string;
+  wholesale_price:        string;
+  current_supplier_price: string;
+}
+
 interface FunnelState {
   step:              Step;
+  calculator_mode:   CalcMode | null;
+  simpleInput:       SimpleInputData;
   urlInput:          string;
   descInput:         string;
   // Manual fallback form
@@ -998,6 +1015,12 @@ const EMPTY_PRODUCT: ProductData = {
   weight_kg: "", product_link: "", price_currency: "CNY",
 };
 
+const EMPTY_SIMPLE_INPUT: SimpleInputData = {
+  product_name: "", product_link: "", unit_price: "", price_currency: "CNY",
+  quantity: "1", weight_kg: "", city_to: "Москва", country_to: "Russia",
+  wholesale_price: "", current_supplier_price: "",
+};
+
 const EMPTY_CORRECTION: CorrectionData = {
   product_name: "", unit_price_cny: "", sale_price: "",
   weight_kg: "", quantity: "1", price_currency: "CNY",
@@ -1005,11 +1028,11 @@ const EMPTY_CORRECTION: CorrectionData = {
 
 // Tiny inner component so useSearchParams doesn't force the whole page into Suspense
 function URLContextReader({ onInit }: {
-  onInit: (country: string | null, vertical: string | null, from: string | null) => void;
+  onInit: (country: string | null, vertical: string | null, from: string | null, mode: string | null) => void;
 }) {
   const searchParams = useSearchParams();
   useEffect(() => {
-    onInit(searchParams.get("country"), searchParams.get("vertical"), searchParams.get("from"));
+    onInit(searchParams.get("country"), searchParams.get("vertical"), searchParams.get("from"), searchParams.get("mode"));
   }, [searchParams, onInit]);
   return null;
 }
@@ -1022,16 +1045,27 @@ export default function AIEconomicsFunnel() {
   // Funnel context from URL params (?country=KZ&vertical=auto_parts&from=kz_auto_parts)
   const urlVertical      = useRef<string | null>(null);
   const urlLandingPage   = useRef<string | null>(null);
-  const handleURLInit    = useCallback((country: string | null, vertical: string | null, from: string | null) => {
+  const handleURLInit    = useCallback((country: string | null, vertical: string | null, from: string | null, mode: string | null) => {
     if (vertical) urlVertical.current = vertical;
     if (from)     urlLandingPage.current = from;
-    if (country === "KZ") {
-      setS(p => ({ ...p, city_to: "Алматы", country_to: "Kazakhstan", marketplace: "kaspi" }));
-    }
+    const validModes: CalcMode[] = ["marketplace", "wholesale", "b2b", "delivery"];
+    const parsedMode = mode && validModes.includes(mode as CalcMode) ? (mode as CalcMode) : null;
+    const isKZ = country === "KZ";
+    setS(p => ({
+      ...p,
+      ...(isKZ ? { city_to: "Алматы", country_to: "Kazakhstan", marketplace: "kaspi",
+        simpleInput: { ...p.simpleInput, city_to: "Алматы", country_to: "Kazakhstan" } } : {}),
+      ...(parsedMode ? {
+        calculator_mode: parsedMode,
+        step: parsedMode === "marketplace" ? "input" : "simple_input",
+      } : {}),
+    }));
   }, []);
 
   const [s, setS] = useState<FunnelState>({
-    step:              "input",
+    step:              "mode_select",
+    calculator_mode:   null,
+    simpleInput:       EMPTY_SIMPLE_INPUT,
     urlInput:          "",
     descInput:         "",
     product:           EMPTY_PRODUCT,
@@ -1290,6 +1324,70 @@ export default function AIEconomicsFunnel() {
 
   const effectiveLimit = isPaidPro ? 9999 : isRegistered ? REG_LIMIT : ANON_LIMIT;
 
+  // ── Simple calculator (wholesale / b2b / delivery modes) ──────────────────
+  const [simpleCalcLoading, setSimpleCalcLoading] = useState(false);
+  const [simpleError, setSimpleError] = useState<string | null>(null);
+
+  async function handleSimpleCalc() {
+    const si   = s.simpleInput;
+    const mode = s.calculator_mode;
+    const isDelivery = mode === "delivery";
+    const unitPrice  = parseFloat(si.unit_price) || 0;
+
+    if (!isDelivery && !unitPrice) { setSimpleError("Укажите закупочную цену товара"); return; }
+    if (!si.weight_kg && isDelivery) { setSimpleError("Укажите вес груза"); return; }
+    if (!si.city_to.trim()) { setSimpleError("Укажите город доставки"); return; }
+
+    setSimpleError(null);
+    setSimpleCalcLoading(true);
+
+    const qty       = Math.max(1, parseInt(si.quantity) || 1);
+    const salePrice = parseFloat(si.wholesale_price) || Math.max(1, unitPrice * 2.5);
+
+    try {
+      const res = await fetch("/api/ai-funnel/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          unit_price:     isDelivery ? 1 : unitPrice,
+          price_currency: si.price_currency,
+          sale_price:     isDelivery ? 1 : salePrice,
+          quantity:       qty,
+          marketplace:    "opt",
+          city_to:        si.city_to,
+          country_to:     si.country_to,
+          weight_kg:      si.weight_kg ? parseFloat(si.weight_kg) : undefined,
+          product_name:   si.product_name || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && data.economics) {
+        setS(p => ({
+          ...p, step: "simple_result",
+          economics:        data.economics,
+          delivery:         data.delivery,
+          deliveryOptions:  data.deliveryOptions,
+          marketplace_config: data.marketplace_config,
+          priority:         data.priority,
+          error:            null,
+        }));
+        analytics.simpleCalcDone({
+          mode:    mode ?? undefined,
+          country: si.country_to === "Kazakhstan" ? "KZ" : "RU",
+          vertical: urlVertical.current ?? undefined,
+        });
+      } else {
+        setSimpleError(data.error === "rate_limit"
+          ? "Лимит бесплатных расчётов исчерпан — попробуйте позже или активируйте PRO"
+          : "Ошибка расчёта — проверьте данные");
+      }
+    } catch {
+      setSimpleError("Ошибка соединения — попробуйте ещё раз");
+    } finally {
+      setSimpleCalcLoading(false);
+    }
+  }
+
   async function handleCalculate(overrides?: {
     extractedData?: ExtractedProduct | null;
     marketplace?:   string;
@@ -1365,7 +1463,7 @@ export default function AIEconomicsFunnel() {
 
       analytics.unitEconomicsAutoCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total });
       analytics.fullCalculationCompleted({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total, marketplace: s.marketplace, product_category: classifyProduct(data.extractedData?.product_name ?? s.extractedData?.product_name ?? "") });
-      analytics.calcDone({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total, marketplace: s.marketplace, product_category: classifyProduct(data.extractedData?.product_name ?? s.extractedData?.product_name ?? "") });
+      analytics.calcDone({ verdict: data.economics?.verdict, score: data.economics?.product_score?.total, marketplace: s.marketplace, product_category: classifyProduct(data.extractedData?.product_name ?? s.extractedData?.product_name ?? ""), ...(s.calculator_mode ? { calculator_mode: s.calculator_mode } : {}) });
       if (data.economics) {
         window.dispatchEvent(new CustomEvent("cb:calc_done", { detail: { economics: data.economics, marketplace: capturedMarketplace, country_to: s.country_to, city_to: s.city_to, supplierExists } }));
       }
@@ -1821,7 +1919,10 @@ export default function AIEconomicsFunnel() {
   // ── Progress bar ────────────────────────────────────────────────────────────
 
   const ec = s.economics;
-  const STEPS_ORDER: Step[] = ["input", "product", "marketplace", "preview", "contact", "success"];
+  const isSimpleMode = s.calculator_mode !== null && s.calculator_mode !== "marketplace";
+  const STEPS_ORDER: Step[] = isSimpleMode
+    ? ["simple_input", "simple_result", "contact", "success"]
+    : ["input", "product", "marketplace", "preview", "contact", "success"];
   const progressPct = Math.min(100,
     (STEPS_ORDER.indexOf(["analyzing", "calculating"].includes(s.step) ? "marketplace" : s.step) + 1)
     / STEPS_ORDER.length * 100
@@ -1949,14 +2050,431 @@ export default function AIEconomicsFunnel() {
     )}
     <div ref={calcContainerRef} className="card-glass rounded-2xl p-6 md:p-8">
       {/* Progress */}
-      {s.step !== "success" && (
+      {s.step !== "success" && s.step !== "mode_select" && (
         <div className="flex items-center gap-3 mb-7">
           <div className="flex-1 h-1 rounded-full bg-[#243a5e] overflow-hidden">
             <div className="h-full bg-[#00A86B] rounded-full transition-all duration-700" style={{ width: `${progressPct}%` }} />
           </div>
-          <span className="text-xs text-[#8899aa] whitespace-nowrap">AI Unit Economics</span>
+          <span className="text-xs text-[#8899aa] whitespace-nowrap">
+            {s.calculator_mode && s.calculator_mode !== "marketplace"
+              ? { wholesale: "Опт / B2B", b2b: "B2B расчёт", delivery: "Расчёт доставки" }[s.calculator_mode] ?? "AI Calculator"
+              : "AI Unit Economics"}
+          </span>
         </div>
       )}
+
+      {/* ── MODE SELECT ─────────────────────────────────────────────────────────── */}
+      {s.step === "mode_select" && (
+        <div className="flex flex-col gap-5">
+          <div className="text-center mb-1">
+            <p className="text-xl font-bold text-white">Что вы делаете с товаром?</p>
+            <p className="text-xs text-[#8899aa] mt-1.5">Выберите сценарий — получите точный расчёт</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              { mode: "marketplace" as CalcMode, icon: "🛒", title: "Маркетплейс",    sub: "WB · Ozon · Kaspi · Яндекс" },
+              { mode: "wholesale"  as CalcMode, icon: "📦", title: "Оптом",           sub: "Торговля, дистрибуция, магазин" },
+              { mode: "b2b"        as CalcMode, icon: "🏭", title: "Для бизнеса",     sub: "Комплектующие, оборудование" },
+              { mode: "delivery"   as CalcMode, icon: "🚚", title: "Только доставка", sub: "Поставщик есть, нужен расчёт" },
+            ] as { mode: CalcMode; icon: string; title: string; sub: string }[]).map(({ mode, icon, title, sub }) => (
+              <button key={mode}
+                onClick={() => {
+                  analytics.calculatorModeSelected({
+                    mode,
+                    country:  s.country_to === "Kazakhstan" ? "KZ" : "RU",
+                    vertical: urlVertical.current ?? undefined,
+                  });
+                  setS(p => ({
+                    ...p,
+                    calculator_mode: mode,
+                    step: mode === "marketplace" ? "input" : "simple_input",
+                  }));
+                }}
+                className="flex flex-col items-start gap-2 p-4 rounded-2xl border border-[#243a5e] hover:border-[#00A86B]/60 hover:bg-[#00A86B]/5 text-left transition-all group"
+              >
+                <span className="text-2xl">{icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-white group-hover:text-[#00A86B] transition-colors">{title}</p>
+                  <p className="text-[11px] text-[#8899aa] mt-0.5 leading-tight">{sub}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          <div className="rounded-xl border border-[#243a5e] bg-[#0a1a30]/60 px-4 py-3 text-xs">
+            <p className="text-[#8899aa] font-semibold mb-2 uppercase tracking-wide text-[10px]">Тарифы доставки из Китая</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+              <span className="text-white font-semibold">🇰🇿 Казахстан</span>
+              <span className="text-white font-semibold">🇷🇺 Россия</span>
+              <div className="flex justify-between"><span className="text-[#8899aa]">🚗 Авто</span><span className="text-[#00A86B] font-bold">$2.50/кг · 5–8 дн</span></div>
+              <div className="flex justify-between"><span className="text-[#8899aa]">🚗 Авто</span><span className="text-[#00A86B] font-bold">$3.00/кг · 18–22 дн</span></div>
+              <div className="flex justify-between"><span className="text-[#8899aa]">✈️ Авиа</span><span className="text-[#00A86B] font-bold">$23/кг · 3–5 дн</span></div>
+              <div className="flex justify-between"><span className="text-[#8899aa]">✈️ Авиа</span><span className="text-[#00A86B] font-bold">$23/кг · 5–8 дн</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SIMPLE INPUT (wholesale / b2b / delivery) ───────────────────────────── */}
+      {s.step === "simple_input" && s.calculator_mode && s.calculator_mode !== "marketplace" && (() => {
+        const si   = s.simpleInput;
+        const mode = s.calculator_mode;
+        const isDelivery = mode === "delivery";
+        const isKZ = si.country_to === "Kazakhstan";
+        const siSet = (field: keyof SimpleInputData, val: string) =>
+          setS(p => ({ ...p, simpleInput: { ...p.simpleInput, [field]: val } }));
+        const cityOptions = isKZ
+          ? ["Алматы", "Астана", "Шымкент", "Актобе"]
+          : ["Москва", "Санкт-Петербург", "Новосибирск"];
+
+        return (
+          <div className="flex flex-col gap-5">
+            <button onClick={() => setS(p => ({ ...p, step: "mode_select" }))}
+              className="text-xs text-[#8899aa] hover:text-white flex items-center gap-1 -mb-1">
+              ← Назад
+            </button>
+            <div>
+              <p className="text-base font-bold text-white">
+                { mode === "wholesale"  ? "📦 Расчёт оптовой партии"
+                : mode === "b2b"        ? "🏭 Расчёт стоимости поставки"
+                :                        "🚚 Расчёт стоимости доставки" }
+              </p>
+              <p className="text-xs text-[#8899aa] mt-1">Введите данные — AI посчитает landed cost</p>
+            </div>
+
+            {/* Country toggle */}
+            <div>
+              <label className="text-xs font-medium text-[#8899aa] block mb-2">Страна назначения</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["Russia", "Kazakhstan"] as const).map(ct => (
+                  <button key={ct}
+                    onClick={() => setS(p => ({
+                      ...p,
+                      simpleInput: { ...p.simpleInput, country_to: ct,
+                        city_to: ct === "Kazakhstan" ? "Алматы" : "Москва" },
+                    }))}
+                    className={`py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                      si.country_to === ct
+                        ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
+                        : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/40 hover:text-white"
+                    }`}
+                  >
+                    {ct === "Russia" ? "🇷🇺 Россия" : "🇰🇿 Казахстан"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* City */}
+            <div>
+              <label className="text-xs font-medium text-[#8899aa] block mb-2">Город доставки</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {cityOptions.map(c => (
+                  <button key={c}
+                    onClick={() => siSet("city_to", c)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      si.city_to === c
+                        ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
+                        : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/40 hover:text-white"
+                    }`}
+                  >{c}</button>
+                ))}
+              </div>
+              <input type="text" value={si.city_to}
+                onChange={e => siSet("city_to", e.target.value)}
+                placeholder="Или введите свой город..."
+                className="w-full bg-[#0d1f38] border border-[#243a5e] rounded-xl px-3 py-2 text-sm text-white placeholder-[#8899aa] focus:outline-none focus:border-[#00A86B]/60"
+              />
+            </div>
+
+            {/* Product name — optional for delivery */}
+            <div>
+              <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
+                {isDelivery ? "Что везёте (необязательно)" : "Товар"}
+              </label>
+              <input type="text" value={si.product_name}
+                onChange={e => siSet("product_name", e.target.value)}
+                placeholder={isDelivery ? "Автозапчасти, электроника, текстиль..." : "Название товара или категория"}
+                className="w-full bg-[#0B1F3A] border border-[#243a5e] rounded-xl px-3.5 py-3 text-sm placeholder:text-[#8899aa] outline-none transition-colors text-white focus:border-[#00A86B]/60"
+              />
+            </div>
+
+            {/* Purchase price — not for delivery */}
+            {!isDelivery && (
+              <div>
+                <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Закупочная цена в Китае</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input type="number" value={si.unit_price}
+                      onChange={e => siSet("unit_price", e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-[#0B1F3A] border border-[#243a5e] rounded-xl px-3.5 py-3 text-sm text-white placeholder:text-[#8899aa] outline-none focus:border-[#00A86B]/60"
+                    />
+                  </div>
+                  <select value={si.price_currency}
+                    onChange={e => siSet("price_currency", e.target.value)}
+                    className="px-3 py-3 bg-[#0B1F3A] border border-[#243a5e] rounded-xl text-sm text-white outline-none"
+                  >
+                    <option value="CNY">¥ CNY</option>
+                    <option value="USD">$ USD</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Quantity */}
+            {!isDelivery && (
+              <div>
+                <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Количество, шт</label>
+                <input type="number" value={si.quantity}
+                  onChange={e => siSet("quantity", e.target.value)}
+                  placeholder="100"
+                  className="w-full bg-[#0B1F3A] border border-[#243a5e] rounded-xl px-3.5 py-3 text-sm text-white placeholder:text-[#8899aa] outline-none focus:border-[#00A86B]/60"
+                />
+              </div>
+            )}
+
+            {/* Weight */}
+            <div>
+              <label className="text-xs font-medium text-[#8899aa] block mb-1.5">
+                {isDelivery ? "Вес груза, кг (общий)" : "Вес единицы, кг (примерно)"}
+              </label>
+              <input type="number" value={si.weight_kg}
+                onChange={e => siSet("weight_kg", e.target.value)}
+                placeholder={isDelivery ? "500" : "1.5"}
+                className="w-full bg-[#0B1F3A] border border-[#243a5e] rounded-xl px-3.5 py-3 text-sm text-white placeholder:text-[#8899aa] outline-none focus:border-[#00A86B]/60"
+              />
+              {isDelivery && <p className="text-[11px] text-[#8899aa] mt-1">Укажите общий вес всей партии, не единицы товара</p>}
+            </div>
+
+            {/* Wholesale sale price */}
+            {mode === "wholesale" && (
+              <div>
+                <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Планируемая цена продажи, ₽ (необязательно)</label>
+                <input type="number" value={si.wholesale_price}
+                  onChange={e => siSet("wholesale_price", e.target.value)}
+                  placeholder="Оставьте пустым — покажем только себестоимость"
+                  className="w-full bg-[#0B1F3A] border border-[#243a5e] rounded-xl px-3.5 py-3 text-sm text-white placeholder:text-[#8899aa] outline-none focus:border-[#00A86B]/60"
+                />
+              </div>
+            )}
+
+            {/* B2B current supplier price */}
+            {mode === "b2b" && (
+              <div>
+                <label className="text-xs font-medium text-[#8899aa] block mb-1.5">Текущая цена у поставщика, ₽/шт (необязательно)</label>
+                <input type="number" value={si.current_supplier_price}
+                  onChange={e => siSet("current_supplier_price", e.target.value)}
+                  placeholder="Для сравнения с прямым импортом"
+                  className="w-full bg-[#0B1F3A] border border-[#243a5e] rounded-xl px-3.5 py-3 text-sm text-white placeholder:text-[#8899aa] outline-none focus:border-[#00A86B]/60"
+                />
+              </div>
+            )}
+
+            {simpleError && (
+              <div className="flex items-start gap-2 bg-amber-900/20 border border-amber-500/30 rounded-xl px-4 py-3">
+                <span className="text-base leading-none mt-0.5">⚠️</span>
+                <p className="text-xs text-amber-300">{simpleError}</p>
+              </div>
+            )}
+
+            <button
+              onClick={handleSimpleCalc}
+              disabled={simpleCalcLoading}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#00A86B] hover:bg-[#008f59] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
+            >
+              {simpleCalcLoading
+                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Считаем...</>
+                : isDelivery ? "🚚 Рассчитать доставку" : "📊 Рассчитать стоимость партии"
+              }
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* ── SIMPLE RESULT (wholesale / b2b / delivery preview) ──────────────────── */}
+      {s.step === "simple_result" && s.economics && s.calculator_mode && s.calculator_mode !== "marketplace" && (() => {
+        const ec     = s.economics;
+        const mode   = s.calculator_mode;
+        const si     = s.simpleInput;
+        const isDelivery = mode === "delivery";
+        const isKZ   = si.country_to === "Kazakhstan";
+        const qty    = Math.max(1, parseInt(si.quantity) || 1);
+        const sym    = isKZ ? "₸" : "₽";
+
+        const fmtC = (n: number | null | undefined) =>
+          (n ?? 0).toLocaleString("ru-RU", { maximumFractionDigits: 0 });
+
+        // EconomicsResult already contains batch-level totals (purchase_total_rub = all units)
+        const purchaseTotal   = ec.purchase_total_rub ?? 0;
+        const deliveryTotal   = ec.delivery_total_rub ?? 0;
+        const customsTotal    = ec.customs_rub ?? 0;
+        const landedTotal     = ec.total_cost_rub ?? 0;
+        const costPerUnit     = ec.unit_cost_rub ?? 0;
+        const wholeSalePrice  = parseFloat(si.wholesale_price) || 0;
+        const currentSupplier = parseFloat(si.current_supplier_price) || 0;
+        const revenue         = wholeSalePrice > 0 ? wholeSalePrice * qty : 0;
+        const grossProfit     = revenue > 0 ? revenue - landedTotal : 0;
+        const grossMargin     = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+
+        const ctaLabel = {
+          wholesale: "📋 Получить оптовый расчёт поставки",
+          b2b:       "📋 Рассчитать регулярную поставку",
+          delivery:  "🚚 Получить точный расчёт доставки",
+        }[mode] ?? "📋 Получить расчёт";
+
+        const rows: [string, string, boolean?][] = [
+          ...(!isDelivery ? [["📦 Товар (закупка)", `${fmtC(purchaseTotal)} ${sym}`] as [string,string]] : []),
+          ["🚚 Доставка из Китая", `${fmtC(deliveryTotal)} ${sym}`],
+          ...(customsTotal > 0 ? [["🏛️ Таможня (оценка)", `${fmtC(customsTotal)} ${sym}`] as [string,string,boolean?]] : []),
+        ];
+        const totalLine: [string, string, boolean?] = ["✅ Итого стоимость партии", `${fmtC(landedTotal)} ${sym}`, true];
+
+        // Delivery transport info
+        const truckOption = s.deliveryOptions?.find(o => o.transport_type === "truck" && o.available);
+        const airOption   = s.deliveryOptions?.find(o => o.transport_type === "air"   && o.available);
+
+        return (
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <button onClick={() => setS(p => ({ ...p, step: "simple_input" }))}
+                className="text-xs text-[#8899aa] hover:text-white flex items-center gap-1">
+                ← Изменить данные
+              </button>
+              <span className="text-xs text-[#00A86B]">✓ Расчёт готов</span>
+            </div>
+
+            {/* Landed cost table */}
+            <div className="rounded-xl border border-[#243a5e] bg-[#0B1F3A]/40 overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#243a5e]/60 bg-[#0a1830]/60">
+                <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide">
+                  {isDelivery ? "Стоимость доставки" : `Стоимость партии · ${qty.toLocaleString("ru-RU")} шт`}
+                </p>
+              </div>
+              <div className="divide-y divide-[#243a5e]/40">
+                {rows.map(([label, value, bold]) => (
+                  <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                    <span className={`text-sm ${bold ? "text-white font-semibold" : "text-[#8899aa]"}`}>{label}</span>
+                    <span className={`text-sm font-mono ${bold ? "text-white font-bold" : "text-white"}`}>{value}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between px-4 py-3 bg-[#0d2040]/60">
+                  <span className="text-sm text-white font-bold">{totalLine[0]}</span>
+                  <span className="text-base text-[#00A86B] font-bold font-mono">{totalLine[1]}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Per-unit cost */}
+            {!isDelivery && (
+              <div className="flex items-center justify-between rounded-xl border border-[#243a5e] px-4 py-3">
+                <span className="text-sm text-[#8899aa]">Себестоимость / шт</span>
+                <span className="text-base font-bold text-white font-mono">{fmtC(costPerUnit)} {sym}</span>
+              </div>
+            )}
+
+            {/* Wholesale margin calculation */}
+            {!isDelivery && wholeSalePrice > 0 && (
+              <div className="rounded-xl border border-[#243a5e] bg-[#0B1F3A]/40 overflow-hidden">
+                <div className="divide-y divide-[#243a5e]/40">
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-sm text-[#8899aa]">Оптовая цена</span>
+                    <span className="text-sm text-white font-mono">{fmtC(wholeSalePrice)} {sym}/шт</span>
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-sm text-[#8899aa]">Выручка с партии</span>
+                    <span className="text-sm text-white font-mono">{fmtC(revenue)} {sym}</span>
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-sm text-white font-semibold">Валовая прибыль</span>
+                    <span className={`text-sm font-bold font-mono ${grossProfit >= 0 ? "text-[#00A86B]" : "text-red-400"}`}>
+                      {fmtC(grossProfit)} {sym}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-sm text-[#8899aa]">Маржа</span>
+                    <span className={`text-sm font-bold ${grossMargin >= 20 ? "text-[#00A86B]" : grossMargin >= 10 ? "text-amber-400" : "text-red-400"}`}>
+                      {grossMargin.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* B2B comparison */}
+            {mode === "b2b" && currentSupplier > 0 && costPerUnit > 0 && (
+              <div className="rounded-xl border border-[#243a5e]/60 bg-[#0a1a2e] px-4 py-3">
+                <p className="text-xs text-[#8899aa] mb-2 font-semibold">Сравнение с текущим поставщиком</p>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <p className="text-[11px] text-[#8899aa]">Текущая закупка</p>
+                    <p className="text-sm font-bold text-white font-mono">{fmtC(currentSupplier)} ₽/шт</p>
+                  </div>
+                  <div className="text-[#8899aa]">→</div>
+                  <div className="flex-1">
+                    <p className="text-[11px] text-[#8899aa]">Ориентир от нас</p>
+                    <p className="text-sm font-bold text-white font-mono">{fmtC(costPerUnit)} ₽/шт</p>
+                  </div>
+                </div>
+                <p className="text-[10px] text-amber-400/70 mt-2">* Предварительная оценка — точная цена зависит от товара, объёма и условий</p>
+              </div>
+            )}
+
+            {/* Delivery options */}
+            {(truckOption || airOption) && (
+              <div className="rounded-xl border border-[#243a5e] overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-[#243a5e]/60 bg-[#0a1830]/60">
+                  <p className="text-xs font-semibold text-[#8899aa] uppercase tracking-wide">Варианты доставки</p>
+                </div>
+                <div className="divide-y divide-[#243a5e]/40">
+                  {truckOption && (
+                    <div className="flex items-center justify-between px-4 py-2.5">
+                      <div>
+                        <span className="text-sm text-white">🚗 Авто</span>
+                        <span className="text-xs text-[#8899aa] ml-2">{truckOption.daysMin}–{truckOption.daysMax} дн</span>
+                      </div>
+                      <span className="text-sm font-bold text-[#00A86B] font-mono">
+                        {fmtC(truckOption.deliveryRub)} {sym}
+                      </span>
+                    </div>
+                  )}
+                  {airOption && (
+                    <div className="flex items-center justify-between px-4 py-2.5">
+                      <div>
+                        <span className="text-sm text-white">✈️ Авиа</span>
+                        <span className="text-xs text-[#8899aa] ml-2">{airOption.daysMin}–{airOption.daysMax} дн</span>
+                      </div>
+                      <span className="text-sm font-bold text-[#00A86B] font-mono">
+                        {fmtC(airOption.deliveryRub)} {sym}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <p className="text-[11px] text-[#8899aa] text-center">
+              * Предварительный расчёт · Точная стоимость — после согласования деталей
+            </p>
+
+            {/* CTA */}
+            <button
+              onClick={() => {
+                analytics.deliveryRequestClick({ mode, country: isKZ ? "KZ" : "RU", vertical: urlVertical.current ?? undefined });
+                setS(p => ({ ...p, step: "contact" }));
+              }}
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
+            >
+              {ctaLabel}
+            </button>
+            <button
+              onClick={() => setS(p => ({ ...p, step: "mode_select", economics: null, delivery: null, simpleInput: EMPTY_SIMPLE_INPUT, calculator_mode: null, error: null }))}
+              className="text-xs text-[#8899aa] hover:text-white underline text-center"
+            >
+              Рассчитать другой сценарий
+            </button>
+          </div>
+        );
+      })()}
 
       {/* ── SUPPLIER CHECK ─────────────────────────────────────────────────────── */}
       {s.step === "supplier_check" && (
@@ -3330,10 +3848,12 @@ export default function AIEconomicsFunnel() {
           <button
             onClick={() => {
               setS(p => ({
-                ...p, step: "input", economics: null, delivery: null, marketplace_config: null,
+                ...p, step: "mode_select", calculator_mode: null,
+                economics: null, delivery: null, marketplace_config: null,
                 leadId: null, error: null, scrapeError: null, extractedData: null,
                 urlInput: "", descInput: "", salePrice: "", activeScenario: "base",
                 showCorrection: false, correction: EMPTY_CORRECTION, product: EMPTY_PRODUCT,
+                simpleInput: EMPTY_SIMPLE_INPUT,
               }));
               startedRef.current = false;
             }}

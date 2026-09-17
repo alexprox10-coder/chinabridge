@@ -173,4 +173,9 @@ export const analytics = {
   deliveryRequestSubmit:(p?: { page?: string; country?: string; vertical?: string }) => { fire("delivery_request_submit", "delivery_request_submit", { category: "service_funnel", ...p }); trackVkGoal("delivery_request_submit"); },
   stickyCtaClick:       (p?: { page?: string; country?: string; vertical?: string }) => { fire("sticky_cta_click",         "sticky_cta_click",         { category: "service_funnel", ...p }); trackVkGoal("sticky_cta_click"); },
   highIntentVisitor:    (p?: { sessions?: number; country?: string })               => { fire("high_intent_visitor",      "high_intent_visitor",      { category: "service_funnel", ...p }); trackVkGoal("high_intent_visitor"); },
+
+  // ── Calculator v2 — mode selector ─────────────────────────────────────────
+  calculatorModeSelected: (p?: { mode?: string; country?: string; vertical?: string }) => { fire("calculator_mode_selected", "calculator_mode_selected", { category: "funnel", ...p }); trackVkGoal("calculator_mode_selected"); },
+  simpleCalcDone:         (p?: { mode?: string; country?: string; vertical?: string }) => { fire("simple_calc_done",         "simple_calc_done",         { category: "funnel", ...p }); trackVkGoal("calc_done"); },
+  deliveryRequestClick:   (p?: { mode?: string; country?: string; vertical?: string }) => { fire("delivery_request_click",   "delivery_request_click",   { category: "funnel", ...p }); trackVkGoal("delivery_request_click"); },
 };
