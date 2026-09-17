@@ -274,10 +274,11 @@ export async function calculateUnitEconomics(input: EconomicsInput): Promise<Eco
   const vol = 0; // volume not passed from calculator UI yet
 
   function airFallbackRub(): number {
-    // Air LCL: chargeable weight = max(actual_kg, volume_m3 * 200)
+    // Air LCL fallback: ChinaBridge client price $23/кг (авиа от 1 кг)
+    // Used only when no DB rate matched — matches the published rate shown in UI.
     const cw = Math.max(wt, vol * 200);
-    const usdPerKg = cw >= 300 ? 6.0 : cw >= 100 ? 8.0 : 12.0;
-    return Math.max(cw * usdPerKg, 50) * usdRate;
+    const usdPerKg = 23.0;
+    return Math.max(cw * usdPerKg, 23) * usdRate;
   }
 
   function seaFallbackRub(): number {
