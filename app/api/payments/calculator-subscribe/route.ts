@@ -35,6 +35,7 @@ const CREATE_TABLE_SQL = `
     status             TEXT NOT NULL DEFAULT 'pending',
     subscribed_until   TIMESTAMPTZ,
     expected_amount_rub INTEGER,
+    anon_ip            TEXT,
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )
 `;
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin") ?? "https://chinabridge.pro";
   const clientToken = req.cookies.get("cb_client")?.value;
   const isLoggedIn = !!clientToken;
+  const payerIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
   let telegram = "";
   try {
@@ -78,8 +80,8 @@ export async function POST(req: NextRequest) {
         const sql = neon(process.env.DATABASE_URL);
         await sql.unsafe(CREATE_TABLE_SQL);
         await sql`
-          INSERT INTO calc_pending_payments (operation_id, telegram_username, expected_amount_rub)
-          VALUES (${payment.operationId}, ${telegram || null}, ${priceRub})
+          INSERT INTO calc_pending_payments (operation_id, telegram_username, expected_amount_rub, anon_ip)
+          VALUES (${payment.operationId}, ${telegram || null}, ${priceRub}, ${payerIp})
           ON CONFLICT (operation_id) DO NOTHING
         `;
       } catch (dbErr) {

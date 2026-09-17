@@ -53,13 +53,19 @@ async function checkRateLimit(ip: string, isReg: boolean): Promise<{ allowed: bo
         ip text NOT NULL, date text NOT NULL, count integer DEFAULT 1 NOT NULL,
         PRIMARY KEY (ip, date)
       )`;
-    const rows = await sql`SELECT count FROM calc_anon_requests WHERE ip=${key} AND date=${date}`;
-    const cur  = Number(rows[0]?.count ?? 0);
-    if (cur >= limit) return { allowed: false, remaining: 0 };
-    await sql`
+
+    // Atomic increment-then-check: prevents TOCTOU race condition (§15).
+    // INSERT increments count in one DB roundtrip; RETURNING gives the new value.
+    // Over-limit requests still increment but are immediately rejected — harmless.
+    const result = await sql`
       INSERT INTO calc_anon_requests (ip, date, count) VALUES (${key}, ${date}, 1)
-      ON CONFLICT (ip, date) DO UPDATE SET count = calc_anon_requests.count + 1`;
-    return { allowed: true, remaining: limit - cur - 1 };
+      ON CONFLICT (ip, date) DO UPDATE SET count = calc_anon_requests.count + 1
+      RETURNING count
+    ` as Array<{ count: number }>;
+
+    const newCount = Number(result[0]?.count ?? 1);
+    if (newCount > limit) return { allowed: false, remaining: 0 };
+    return { allowed: true, remaining: limit - newCount };
   } catch { return { allowed: true, remaining: limit }; }
 }
 

@@ -42,6 +42,24 @@ export async function POST(req: NextRequest) {
       )
     `.catch(() => null);
 
+    // Pre-check: verify payment exists and belongs to this payment context
+    const preCheck = await sql`
+      SELECT status, subscribed_until, anon_ip
+      FROM calc_pending_payments
+      WHERE operation_id = ${operationId}
+      LIMIT 1
+    ` as Array<{ status: string; subscribed_until: string | null; anon_ip: string | null }>;
+
+    if (preCheck.length === 0) {
+      return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
+    }
+
+    // Log IP mismatch (don't block — mobile users may change IP between payment and claim)
+    const storedIp = preCheck[0].anon_ip;
+    if (storedIp && storedIp !== "unknown" && storedIp !== ip) {
+      console.warn(`[calc-claim] IP mismatch: payment_ip=${storedIp}, claim_ip=${ip}, op=${operationId}`);
+    }
+
     // Atomic single-use claim: UPDATE only succeeds if status='auto_verified'
     const claimed = await sql`
       UPDATE calc_pending_payments
@@ -65,21 +83,11 @@ export async function POST(req: NextRequest) {
         ON CONFLICT DO NOTHING
       `.catch(() => null);
     } else {
-      // Either already claimed (idempotent) or not verified — check current status
-      const rows = await sql`
-        SELECT status, subscribed_until
-        FROM calc_pending_payments
-        WHERE operation_id = ${operationId}
-        LIMIT 1
-      ` as Array<{ status: string; subscribed_until: string | null }>;
-
-      if (rows.length === 0) {
-        return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
-      }
-
-      if (rows[0].status === "claimed") {
-        // Idempotent: already claimed by this user (e.g. cookie lost, page refresh)
-        until = rows[0].subscribed_until ?? new Date(Date.now() + 30 * 86400_000).toISOString();
+      // UPDATE returned no rows: either already claimed (idempotent) or wrong status
+      const currentStatus = preCheck[0].status;
+      if (currentStatus === "claimed") {
+        // Idempotent: already claimed (e.g. cookie lost, page refresh)
+        until = preCheck[0].subscribed_until ?? new Date(Date.now() + 30 * 86400_000).toISOString();
       } else {
         return NextResponse.json({ ok: false, error: "not_verified" }, { status: 400 });
       }
