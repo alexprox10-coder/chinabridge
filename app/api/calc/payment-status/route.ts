@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       dbRow = rows[0];
       const hasTelegram = !!dbRow.telegram_username;
 
-      if (dbRow.status === "code_sent" || dbRow.status === "verified") {
+      if (dbRow.status === "code_sent" || dbRow.status === "verified" || dbRow.status === "auto_verified" || dbRow.status === "claimed") {
         return NextResponse.json({ status: "APPROVED", hasTelegram });
       }
     }

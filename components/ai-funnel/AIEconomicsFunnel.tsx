@@ -719,14 +719,18 @@ function PaywallBlock({
   const [showTrustStep, setShowTrustStep] = useState(false);
   const [paymentLink,   setPaymentLink]   = useState<string | null>(null);
   const [linkError,     setLinkError]     = useState(false);
+  // Anonymous checkout state
+  const [anonTg,      setAnonTg]      = useState("");
+  const [anonLoading, setAnonLoading] = useState(false);
+  const [anonError,   setAnonError]   = useState("");
   // Detect logged-in state from cookie
   const isLoggedIn = typeof document !== "undefined"
     ? document.cookie.split(";").some(c => c.trim().startsWith("cb_client="))
     : false;
 
-  // Pre-fetch payment link on mount (only for logged-in users going to pay directly)
+  // Pre-fetch payment link on mount (only for logged-in users)
   useEffect(() => {
-    if (!isLoggedIn) return; // anon users go to /client/login first
+    if (!isLoggedIn) return;
     let cancelled = false;
     setPayLoading(true);
     fetch("/api/payments/calculator-subscribe", { method: "POST" })
@@ -745,6 +749,30 @@ function PaywallBlock({
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function handleAnonPay() {
+    setAnonLoading(true);
+    setAnonError("");
+    try {
+      const res = await fetch("/api/payments/calculator-subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegram: anonTg.trim().replace(/^@/, "") }),
+      });
+      const data = await res.json();
+      if (data.ok && data.paymentLink) {
+        try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
+        analytics.checkoutStarted?.({ amount: 490 });
+        window.location.href = data.paymentLink;
+      } else {
+        setAnonError("Не удалось создать платёж. Попробуйте ещё раз.");
+        setAnonLoading(false);
+      }
+    } catch {
+      setAnonError("Ошибка сети. Попробуйте ещё раз.");
+      setAnonLoading(false);
+    }
+  }
 
   function handleProCtaClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -874,20 +902,28 @@ function PaywallBlock({
               <span>✓ WB, Ozon, Kaspi</span>
             </div>
 
-            {/* Anon: registration CTA */}
+            {/* Anon: direct checkout — no registration required */}
             {!isLoggedIn ? (
               <div className="flex flex-col gap-2">
-                <a
-                  href="/client/login?from=/ai-calculator"
-                  className="block w-full py-2.5 bg-[#00A86B] hover:bg-[#009560] text-white text-sm font-semibold rounded-xl text-center transition-colors"
-                  onClick={() => analytics.paywallProClicked?.()}
-                >
-                  Зарегистрироваться бесплатно →
-                </a>
-                <p className="text-[10px] text-[#5a7899] text-center">
-                  Бесплатно · 10 расчётов в подарок · Личный кабинет
+                <input
+                  type="text"
+                  placeholder="Telegram @username (необязательно)"
+                  value={anonTg}
+                  onChange={e => setAnonTg(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-[#0b1a2e] border border-[#243a5e] focus:border-[#229ED9]/60 rounded-xl text-white text-sm outline-none placeholder:text-[#4a6080]"
+                />
+                <p className="text-[10px] text-[#5a7899] leading-relaxed">
+                  Укажите Telegram — получите код активации. Без него PRO активируется автоматически.
                 </p>
-                <div className="flex items-center gap-2 mt-1">
+                {anonError && <p className="text-xs text-red-400">{anonError}</p>}
+                <button
+                  onClick={handleAnonPay}
+                  disabled={anonLoading}
+                  className="w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+                >
+                  {anonLoading ? "Переходим к оплате..." : "Оплатить 490 ₽ →"}
+                </button>
+                <div className="flex items-center gap-2">
                   <div className="flex-1 h-px bg-[#1e3a5f]" />
                   <span className="text-[10px] text-[#5a7899]">или</span>
                   <div className="flex-1 h-px bg-[#1e3a5f]" />
@@ -896,7 +932,7 @@ function PaywallBlock({
                   href="/client/login?from=/ai-calculator"
                   className="text-xs text-[#8899aa] hover:text-white text-center underline"
                 >
-                  Уже есть аккаунт? Войти
+                  Войти в личный кабинет
                 </a>
               </div>
             ) : showTrustStep ? (
@@ -1163,17 +1199,12 @@ export default function AIEconomicsFunnel() {
     // Handle Tochka payment redirect
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('pay') === 'ok') {
-        // Payment succeeded — show banner, mark as PRO
-        setIsPaidPro(true);
-        setIsRegistered(true);
+      if (params.get('pay') === 'success') {
+        // Payment succeeded — show banner; actual PRO state set by server check below
         setShowProBanner(true);
-        // Clear calc counter so paywall doesn't fire
         localStorage.removeItem('cb_calc_uses');
         window.history.replaceState({}, '', window.location.pathname);
-        // Hide banner after 10s
         setTimeout(() => setShowProBanner(false), 10000);
-        // Track payment funnel completion
         analytics.paymentSuccess();
         analytics.subscriptionActive();
         analytics.proActivated({ source: 'tochka_payment' });

@@ -24,8 +24,8 @@ export default function CalculatorSuccessPage() {
     setOpId(op);
 
     if (!op) {
-      // No operation ID — just activate via cookie (fallback for old links)
-      activateCookieDirect();
+      // No operation ID — check if already paid (e.g. cookie set by another flow)
+      activateCookieDirect("");
       return;
     }
 
@@ -42,21 +42,21 @@ export default function CalculatorSuccessPage() {
   function poll(op: string) {
     pollCount.current += 1;
     if (pollCount.current > 30) {
-      // 30 × 3s = 90s timeout — activate via cookie fallback
-      activateCookieDirect();
+      // 30 × 3s = 90s timeout — try to claim or check paid
+      activateCookieDirect(op);
       return;
     }
 
     fetch(`/api/calc/payment-status?op=${encodeURIComponent(op)}`)
       .then(r => r.json())
       .then((d: { status?: string; hasTelegram?: boolean }) => {
-        if (d.status === "APPROVED" || d.status === "code_sent" || d.status === "verified") {
+        if (d.status === "APPROVED" || d.status === "code_sent" || d.status === "auto_verified" || d.status === "verified") {
           setHasTg(!!d.hasTelegram);
           if (d.hasTelegram) {
             setPhase("code_input");
           } else {
-            // No telegram — activate via cookie directly
-            activateCookieDirect();
+            // No telegram — claim PRO via operation_id (webhook set auto_verified)
+            activateCookieDirect(op);
           }
         } else if (d.status === "DECLINED" || d.status === "EXPIRED") {
           setPhase("error");
@@ -70,16 +70,50 @@ export default function CalculatorSuccessPage() {
       });
   }
 
-  function activateCookieDirect() {
-    // Fallback: set cookie via set-pro endpoint
-    fetch("/api/calc/set-pro", { method: "POST" })
-      .then(() => {
-        try { localStorage.removeItem("cb_pending_op_id"); } catch { /* ignore */ }
-        try { localStorage.setItem("cb_paid_until", new Date(Date.now() + 30 * 86400_000).toISOString()); } catch { /* ignore */ }
-        setPhase("success");
-        setTimeout(() => router.push("/ai-calculator?pay=success"), 2000);
+  function activateCookieDirect(op: string) {
+    if (op) {
+      // Try to claim PRO by operation_id (for no-telegram auto_verified payments)
+      fetch("/api/auth/calc-claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operationId: op }),
       })
-      .catch(() => setPhase("error"));
+        .then(r => r.json())
+        .then(d => {
+          if (d.ok) {
+            try { localStorage.removeItem("cb_pending_op_id"); } catch { /* ignore */ }
+            try { localStorage.setItem("cb_paid_until", d.paidUntil); } catch { /* ignore */ }
+            setPhase("success");
+            setTimeout(() => router.push("/ai-calculator?pay=success"), 2000);
+          } else {
+            // Fall back: maybe cookie already set (e.g. retry)
+            return fetch("/api/calc/check-paid")
+              .then(r => r.json())
+              .then((pd: { isPaid?: boolean }) => {
+                if (pd.isPaid) {
+                  setPhase("success");
+                  setTimeout(() => router.push("/ai-calculator?pay=success"), 2000);
+                } else {
+                  setPhase("no_code");
+                }
+              });
+          }
+        })
+        .catch(() => setPhase("error"));
+    } else {
+      // No operation ID at all — check if already paid
+      fetch("/api/calc/check-paid")
+        .then(r => r.json())
+        .then((d: { isPaid?: boolean }) => {
+          if (d.isPaid) {
+            setPhase("success");
+            setTimeout(() => router.push("/ai-calculator?pay=success"), 2000);
+          } else {
+            setPhase("error");
+          }
+        })
+        .catch(() => setPhase("error"));
+    }
   }
 
   async function handleVerifyCode() {

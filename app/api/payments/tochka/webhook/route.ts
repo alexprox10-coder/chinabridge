@@ -102,31 +102,27 @@ export async function POST(req: NextRequest) {
         const telegramUsername = pendingRows[0].telegram_username;
         const until = new Date(Date.now() + 30 * 86400_000);
 
-        // Generate 6-digit code
-        const authCode = String(Math.floor(100000 + Math.random() * 900000));
-        const codeExpires = new Date(Date.now() + 30 * 60_000); // 30 min
-
-        await sql`
-          UPDATE calc_pending_payments
-          SET auth_code = ${authCode},
-              auth_code_expires = ${codeExpires.toISOString()},
-              subscribed_until  = ${until.toISOString()},
-              status = 'code_sent'
-          WHERE operation_id = ${operationId}
-        `;
-
-        // Also write to calc_subscriptions so check-paid works on any device
         if (telegramUsername) {
+          // Has telegram: generate 6-digit code and send via bot
+          const authCode = String(Math.floor(100000 + Math.random() * 900000));
+          const codeExpires = new Date(Date.now() + 30 * 60_000);
+
+          await sql`
+            UPDATE calc_pending_payments
+            SET auth_code = ${authCode},
+                auth_code_expires = ${codeExpires.toISOString()},
+                subscribed_until  = ${until.toISOString()},
+                status = 'code_sent'
+            WHERE operation_id = ${operationId}
+          `;
+
           await sql`
             INSERT INTO calc_subscriptions (client_id, client_email, subscribed_until, amount_rub)
             VALUES (${"tg:" + telegramUsername}, ${telegramUsername}, ${until.toISOString()}, 490)
             ON CONFLICT (client_id)
             DO UPDATE SET subscribed_until = EXCLUDED.subscribed_until
           `.catch(() => null);
-        }
 
-        // Send code via @ChinaBridgeLID_bot if telegram username provided
-        if (telegramUsername) {
           const lidToken = process.env.CHINABRIDGE_LID_BOT_TOKEN;
           if (lidToken) {
             const msgText = [
@@ -149,6 +145,14 @@ export async function POST(req: NextRequest) {
               signal: AbortSignal.timeout(8000),
             }).catch(() => null);
           }
+        } else {
+          // No telegram: auto-verify so client can claim cookie via /api/auth/calc-claim
+          await sql`
+            UPDATE calc_pending_payments
+            SET subscribed_until = ${until.toISOString()},
+                status = 'auto_verified'
+            WHERE operation_id = ${operationId}
+          `;
         }
       }
 
