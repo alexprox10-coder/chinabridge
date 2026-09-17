@@ -2538,6 +2538,10 @@ export default function AIEconomicsFunnel() {
       {/* ── INPUT ──────────────────────────────────────────────────────────────── */}
       {s.step === "input" && (
         <div className="flex flex-col gap-5">
+          <button onClick={() => setS(p => ({ ...p, step: "mode_select", calculator_mode: null }))}
+            className="text-xs text-[#8899aa] hover:text-white flex items-center gap-1 -mb-1">
+            ← Назад
+          </button>
           {/* Market news + currency rates */}
           <MarketNewsBar />
 
