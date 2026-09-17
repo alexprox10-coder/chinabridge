@@ -14,8 +14,14 @@ function getClientId(req: NextRequest): string | null {
   } catch { return null; }
 }
 
-// Dev-only: removes PRO subscription from DB + clears cookie
+// Dev-only: removes PRO subscription from DB + clears cookie (admin secret required)
 export async function POST(req: NextRequest) {
+  const ADMIN_SECRET = process.env.CALC_ADMIN_SECRET;
+  const secret = req.headers.get("x-admin-secret") ?? req.headers.get("authorization")?.replace("Bearer ", "");
+  if (!ADMIN_SECRET || secret !== ADMIN_SECRET) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+
   const clientId = getClientId(req);
 
   const res = NextResponse.json({ ok: true, clientId });

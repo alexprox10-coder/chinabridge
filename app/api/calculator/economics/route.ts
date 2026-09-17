@@ -7,7 +7,7 @@ import type { EconomicsResult } from '@/lib/calculator/types';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-const DAILY_LIMIT = 2;
+const DAILY_LIMIT = 5;
 
 function getIp(req: NextRequest): string {
   return (
@@ -21,7 +21,7 @@ async function checkAndIncrement(
   ip: string,
   date: string,
 ): Promise<{ allowed: boolean; remaining: number }> {
-  if (ip === 'unknown') return { allowed: true, remaining: DAILY_LIMIT };
+  if (ip === 'unknown') return { allowed: true, remaining: 0 };
   const sql = neon(process.env.DATABASE_URL!);
   try {
     await sql`

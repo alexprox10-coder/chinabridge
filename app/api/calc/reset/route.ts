@@ -3,24 +3,25 @@ import { neon } from "@neondatabase/serverless";
 
 export const dynamic = "force-dynamic";
 
+const ADMIN_SECRET = process.env.CALC_ADMIN_SECRET;
+
+// Admin-only: reset IP rate limit counter for a specific IP or current request's IP
 export async function POST(req: NextRequest) {
-  const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl) return NextResponse.json({ ok: false });
+  const secret = req.headers.get("x-admin-secret") ?? req.headers.get("authorization")?.replace("Bearer ", "");
+  if (!ADMIN_SECRET || secret !== ADMIN_SECRET) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
 
   const forwarded = req.headers.get("x-forwarded-for");
-  const ip = forwarded ? forwarded.split(",")[0].trim() : "127.0.0.1";
+  const ip = forwarded ? forwarded.split(",")[0].trim() : req.headers.get("x-real-ip") ?? "127.0.0.1";
+  const date = new Date().toISOString().slice(0, 10);
 
   try {
-    const sql = neon(dbUrl);
-    const key = `url:${ip}`;
-    const date = new Date().toISOString().slice(0, 10);
-    await sql`
-      CREATE TABLE IF NOT EXISTS calc_anon_requests (
-        ip text NOT NULL, date text NOT NULL, count integer DEFAULT 1 NOT NULL,
-        PRIMARY KEY (ip, date)
-      )`;
-    await sql`DELETE FROM calc_anon_requests WHERE ip = ${key} AND date = ${date}`;
-    return NextResponse.json({ ok: true });
+    const sql = neon(process.env.DATABASE_URL!);
+    // Reset both key formats used across routes
+    await sql`DELETE FROM calc_anon_requests WHERE ip = ${"aif:" + ip} AND date = ${date}`;
+    await sql`DELETE FROM calc_anon_requests WHERE ip = ${ip} AND date = ${date}`;
+    return NextResponse.json({ ok: true, ip });
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) });
   }

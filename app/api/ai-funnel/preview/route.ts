@@ -41,7 +41,8 @@ async function hasActiveSubscription(clientId: string): Promise<boolean> {
 
 async function checkRateLimit(ip: string, isReg: boolean): Promise<{ allowed: boolean; remaining: number }> {
   const limit = isReg ? REG_LIMIT : ANON_LIMIT;
-  if (ip === 'unknown') return { allowed: true, remaining: limit };
+  // unknown IP: allow one attempt only (no DB tracking possible) — prevents header-stripping bypass
+  if (ip === 'unknown') return { allowed: true, remaining: 0 };
   try {
     const sql  = neon(process.env.DATABASE_URL!);
     const date = new Date().toISOString().slice(0, 10);
