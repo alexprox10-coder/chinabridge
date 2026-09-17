@@ -70,6 +70,7 @@ interface SimpleInputData {
   country_to:             string;
   wholesale_price:        string;
   current_supplier_price: string;
+  formal_import:          "yes" | "no" | "";
 }
 
 interface FunnelState {
@@ -1018,7 +1019,7 @@ const EMPTY_PRODUCT: ProductData = {
 const EMPTY_SIMPLE_INPUT: SimpleInputData = {
   product_name: "", product_link: "", unit_price: "", price_currency: "CNY",
   quantity: "1", weight_kg: "", city_to: "Москва", country_to: "Russia",
-  wholesale_price: "", current_supplier_price: "",
+  wholesale_price: "", current_supplier_price: "", formal_import: "",
 };
 
 const EMPTY_CORRECTION: CorrectionData = {
@@ -2079,11 +2080,14 @@ export default function AIEconomicsFunnel() {
             ] as { mode: CalcMode; icon: string; title: string; sub: string }[]).map(({ mode, icon, title, sub }) => (
               <button key={mode}
                 onClick={() => {
-                  analytics.calculatorModeSelected({
-                    mode,
-                    country:  s.country_to === "Kazakhstan" ? "KZ" : "RU",
-                    vertical: urlVertical.current ?? undefined,
-                  });
+                  const country = s.country_to === "Kazakhstan" ? "KZ" : "RU";
+                  analytics.calculatorModeSelected({ mode, country, vertical: urlVertical.current ?? undefined });
+                  // Fire-and-forget DB track for mode breakdown dashboard
+                  fetch("/api/track/mode-select", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mode, country, vertical: urlVertical.current ?? "" }),
+                  }).catch(() => null);
                   setS(p => ({
                     ...p,
                     calculator_mode: mode,
@@ -2270,6 +2274,32 @@ export default function AIEconomicsFunnel() {
               </div>
             )}
 
+            {/* §15 White import: formal documents question (delivery only) */}
+            {isDelivery && (
+              <div className="rounded-xl border border-[#243a5e] bg-[#0B1F3A]/40 px-4 py-3">
+                <p className="text-xs font-medium text-[#8899aa] mb-2.5">Нужны официальные документы для ввоза товара?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["yes", "no"] as const).map(val => (
+                    <button key={val}
+                      onClick={() => siSet("formal_import", si.formal_import === val ? "" : val)}
+                      className={`py-2 rounded-xl text-sm font-medium border transition-all ${
+                        si.formal_import === val
+                          ? "bg-[#00A86B] border-[#00A86B] text-white"
+                          : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/40"
+                      }`}
+                    >
+                      {val === "yes" ? "✅ Да, нужны" : "❌ Нет, не нужны"}
+                    </button>
+                  ))}
+                </div>
+                {si.formal_import === "yes" && (
+                  <p className="text-[11px] text-amber-400/80 mt-2">
+                    Официальный импорт включает таможенное оформление и декларирование — покажем отдельной строкой
+                  </p>
+                )}
+              </div>
+            )}
+
             {simpleError && (
               <div className="flex items-start gap-2 bg-amber-900/20 border border-amber-500/30 rounded-xl px-4 py-3">
                 <span className="text-base leading-none mt-0.5">⚠️</span>
@@ -2449,6 +2479,40 @@ export default function AIEconomicsFunnel() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* §14 LCL / Сборный груз highlight (delivery only) */}
+            {isDelivery && (
+              <div className="rounded-xl border border-[#00A86B]/30 bg-[#00A86B]/5 px-4 py-3">
+                <p className="text-sm font-semibold text-white mb-1">📦 Сборная доставка (LCL)</p>
+                <p className="text-xs text-[#8899aa] mb-3">
+                  Не нужен целый контейнер — ваша партия едет в составе сборного груза. Идеально для партий 50–1 000 кг.
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                  <div className="bg-[#0a1a30] rounded-lg px-3 py-2">
+                    <p className="text-[#8899aa]">🇰🇿 Казахстан</p>
+                    <p className="text-[#00A86B] font-bold">$2.50/кг · 5–8 дн</p>
+                  </div>
+                  <div className="bg-[#0a1a30] rounded-lg px-3 py-2">
+                    <p className="text-[#8899aa]">🇷🇺 Россия</p>
+                    <p className="text-[#00A86B] font-bold">$3.00/кг · 18–22 дн</p>
+                  </div>
+                </div>
+                {si.formal_import === "yes" && (
+                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2 mb-3">
+                    <p className="text-xs text-amber-300">📋 Официальный импорт (ВЭД): включает таможенное оформление и декларирование товара</p>
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    analytics.deliveryRequestClick({ mode: "delivery", country: isKZ ? "KZ" : "RU", vertical: urlVertical.current ?? undefined });
+                    setS(p => ({ ...p, step: "contact" }));
+                  }}
+                  className="w-full py-2 rounded-xl text-sm font-medium border border-[#00A86B]/60 text-[#00A86B] hover:bg-[#00A86B]/10 transition-all"
+                >
+                  Рассчитать сборную доставку →
+                </button>
               </div>
             )}
 

@@ -19,6 +19,7 @@ interface FunnelData {
   };
   pendingByStatus: Array<{ status: string; cnt: string | number }>;
   dailyPayments: Array<{ day: string; cnt: string | number }>;
+  modeStats: Array<{ mode: string; country: string | null; cnt: string | number }>;
 }
 
 function pct(a: number, b: number) {
@@ -157,6 +158,63 @@ export default function CalcFunnelPage() {
                 </div>
               </div>
             </div>
+
+            {/* Mode breakdown */}
+            {(() => {
+              const modes = [
+                { key: "marketplace", label: "🛒 Маркетплейс" },
+                { key: "wholesale",   label: "📦 Опт" },
+                { key: "b2b",        label: "🏭 Для бизнеса" },
+                { key: "delivery",   label: "🚚 Доставка" },
+              ];
+              const modeStats = data.modeStats ?? [];
+              const total = modeStats.reduce((s, r) => s + Number(r.cnt), 0);
+              if (modeStats.length === 0) return (
+                <div className="bg-[#0b1a2e] border border-[#1e3a5f] rounded-2xl p-5 mb-6">
+                  <h2 className="text-sm font-semibold text-[#8899aa] mb-2">Разбивка по режимам (30 дней)</h2>
+                  <p className="text-xs text-[#5a7899]">Данные появятся после первых выборов режима</p>
+                </div>
+              );
+              // aggregate per mode
+              const byMode: Record<string, { ru: number; kz: number; total: number }> = {};
+              for (const row of modeStats) {
+                const m = row.mode;
+                if (!byMode[m]) byMode[m] = { ru: 0, kz: 0, total: 0 };
+                const cnt = Number(row.cnt);
+                byMode[m].total += cnt;
+                if (row.country === "KZ") byMode[m].kz += cnt;
+                else byMode[m].ru += cnt;
+              }
+              return (
+                <div className="bg-[#0b1a2e] border border-[#1e3a5f] rounded-2xl p-5 mb-6">
+                  <h2 className="text-sm font-semibold text-[#8899aa] mb-4">Разбивка по режимам (30 дней) · {total.toLocaleString()} выборов</h2>
+                  <div className="space-y-3">
+                    {modes.map(({ key, label }) => {
+                      const stat = byMode[key];
+                      if (!stat) return null;
+                      const pctVal = total > 0 ? Math.round((stat.total / total) * 100) : 0;
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-[#8899aa]">{label}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-[10px] text-[#5a7899]">
+                                🇷🇺 {stat.ru.toLocaleString()} · 🇰🇿 {stat.kz.toLocaleString()}
+                              </span>
+                              <span className="text-sm font-bold text-white w-16 text-right">{stat.total.toLocaleString()}</span>
+                              <span className="text-xs text-[#00A86B] w-8 text-right">{pctVal}%</span>
+                            </div>
+                          </div>
+                          <div className="h-2 bg-[#1e3a5f] rounded-full overflow-hidden">
+                            <div className="h-full bg-[#00A86B] rounded-full transition-all" style={{ width: `${pctVal}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Daily payments chart */}
             {data.dailyPayments.length > 0 && (

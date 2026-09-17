@@ -78,6 +78,15 @@ export async function GET(req: NextRequest) {
       ORDER BY day, event_name
     `.catch(() => [] as Array<{ day: string; event_name: string; cnt: number | string }>);
 
+    // Mode breakdown (last 30 days from calc_mode_stats)
+    const modeStats = await sql`
+      SELECT mode, country, COUNT(*) AS cnt
+      FROM calc_mode_stats
+      WHERE created_at > NOW() - INTERVAL '30 days'
+      GROUP BY mode, country
+      ORDER BY cnt DESC
+    `.catch(() => [] as Array<{ mode: string; country: string | null; cnt: number | string }>);
+
     const counts: Record<string, number> = {};
     for (const row of eventCounts) {
       counts[row.event_name] = Number(row.cnt);
@@ -98,6 +107,7 @@ export async function GET(req: NextRequest) {
       pendingByStatus: pendingStats,
       dailyPayments,
       dailyEvents,
+      modeStats,
     });
   } catch (err) {
     console.error("[admin/calc-funnel]", err);
