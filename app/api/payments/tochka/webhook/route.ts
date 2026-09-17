@@ -37,9 +37,33 @@ async function ensureLinksTable() {
       ...
     }
   }
+  Security: register webhook URL with ?secret=TOCHKA_WEBHOOK_SECRET appended.
+  Tochka will call that exact URL, so the secret is verified server-side.
 */
 
+async function ensureAuditTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS pro_activation_audit (
+      id               BIGSERIAL PRIMARY KEY,
+      operation_id     TEXT,
+      activation_source TEXT NOT NULL,
+      ip               TEXT,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `.catch(() => null);
+}
+
 export async function POST(req: NextRequest) {
+  // Verify webhook secret (TOCHKA_WEBHOOK_SECRET env var must be set and match ?secret= param)
+  const expectedSecret = process.env.TOCHKA_WEBHOOK_SECRET;
+  if (expectedSecret) {
+    const incomingSecret = req.nextUrl.searchParams.get("secret");
+    if (!incomingSecret || incomingSecret !== expectedSecret) {
+      console.warn("[tochka-webhook] secret mismatch — rejecting request");
+      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    }
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -62,10 +86,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 1. Update in tochka_payments table (billing plan payments)
+    // 1. Ensure audit table exists (idempotent)
+    await ensureAuditTable();
+
+    // 2. Update in tochka_payments table (billing plan payments)
     await updatePaymentStatus(operationId, status);
 
-    // 2. Update in tochka_payment_links table (manager-created links)
+    // 3. Update in tochka_payment_links table (manager-created links)
     await ensureLinksTable();
     await sql`
       UPDATE tochka_payment_links
@@ -73,7 +100,7 @@ export async function POST(req: NextRequest) {
       WHERE operation_id = ${operationId}
     `;
 
-    // 3. If APPROVED — check billing plan payment and activate tenant
+    // 4. If APPROVED — check billing plan payment and activate tenant
     if (status === "APPROVED") {
       const rows = await sql`
         SELECT tenant_id, plan, amount
@@ -123,6 +150,15 @@ export async function POST(req: NextRequest) {
             DO UPDATE SET subscribed_until = EXCLUDED.subscribed_until
           `.catch(() => null);
 
+          // Audit log: payment approved, code sent to Telegram
+          await sql`
+            INSERT INTO pro_activation_audit
+              (operation_id, activation_source, ip, created_at)
+            VALUES
+              (${operationId}, 'webhook-code-sent', 'tochka-webhook', NOW())
+            ON CONFLICT DO NOTHING
+          `.catch(() => null);
+
           const lidToken = process.env.CHINABRIDGE_LID_BOT_TOKEN;
           if (lidToken) {
             const msgText = [
@@ -153,6 +189,15 @@ export async function POST(req: NextRequest) {
                 status = 'auto_verified'
             WHERE operation_id = ${operationId}
           `;
+
+          // Audit log: payment approved by webhook, awaiting client claim
+          await sql`
+            INSERT INTO pro_activation_audit
+              (operation_id, activation_source, ip, created_at)
+            VALUES
+              (${operationId}, 'webhook-auto-verified', 'tochka-webhook', NOW())
+            ON CONFLICT DO NOTHING
+          `.catch(() => null);
         }
       }
 

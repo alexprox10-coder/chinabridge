@@ -4,8 +4,19 @@ import { neon } from "@neondatabase/serverless";
 export const runtime = "nodejs";
 
 function requireAdmin(req: NextRequest): boolean {
+  // Cookie-based auth (existing admin session)
   const adminCookie = req.cookies.get("cb_admin")?.value;
-  return !!adminCookie;
+  if (adminCookie) return true;
+
+  // Secret-based auth (CALC_ADMIN_SECRET via Authorization header or query param)
+  const secret = process.env.CALC_ADMIN_SECRET;
+  if (secret) {
+    const authHeader = req.headers.get("authorization");
+    if (authHeader === `Bearer ${secret}`) return true;
+    if (req.nextUrl.searchParams.get("secret") === secret) return true;
+  }
+
+  return false;
 }
 
 export async function GET(req: NextRequest) {
