@@ -44,8 +44,9 @@ async function checkRateLimit(ip: string, isReg: boolean): Promise<{ allowed: bo
   // unknown IP: allow one attempt only (no DB tracking possible) — prevents header-stripping bypass
   if (ip === 'unknown') return { allowed: true, remaining: 0 };
   try {
-    const sql  = neon(process.env.DATABASE_URL!);
-    const date = new Date().toISOString().slice(0, 10);
+    const sql = neon(process.env.DATABASE_URL!);
+    // 'lifetime' key: 5 free calcs total (not per-day) — consistent with UI paywall messaging
+    const date = 'lifetime';
     const key  = `aif:${ip}`;
     await sql`
       CREATE TABLE IF NOT EXISTS calc_anon_requests (

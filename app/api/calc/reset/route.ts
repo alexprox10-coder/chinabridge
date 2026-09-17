@@ -18,9 +18,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const sql = neon(process.env.DATABASE_URL!);
-    // Reset both key formats used across routes
-    await sql`DELETE FROM calc_anon_requests WHERE ip = ${"aif:" + ip} AND date = ${date}`;
-    await sql`DELETE FROM calc_anon_requests WHERE ip = ${ip} AND date = ${date}`;
+    // Reset lifetime counter (all date keys for this IP)
+    await sql`DELETE FROM calc_anon_requests WHERE ip = ${"aif:" + ip}`;
+    await sql`DELETE FROM calc_anon_requests WHERE ip = ${ip}`;
     return NextResponse.json({ ok: true, ip });
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) });

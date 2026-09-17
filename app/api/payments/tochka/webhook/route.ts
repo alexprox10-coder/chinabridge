@@ -118,15 +118,31 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 4. Handle calculator subscription: send Telegram verification code
+      // 5. Handle calculator subscription: verify amount + send Telegram code or auto-verify
+      const webhookAmountRub = data?.amount != null ? Number(data.amount) : null;
+
       const pendingRows = await sql`
-        SELECT telegram_username FROM calc_pending_payments
+        SELECT telegram_username, expected_amount_rub FROM calc_pending_payments
         WHERE operation_id = ${operationId} AND status = 'pending'
         LIMIT 1
-      ` as Array<{ telegram_username: string | null }>;
+      ` as Array<{ telegram_username: string | null; expected_amount_rub: number | null }>;
 
       if (pendingRows.length > 0) {
         const telegramUsername = pendingRows[0].telegram_username;
+        const expectedAmount   = pendingRows[0].expected_amount_rub;
+
+        // Amount verification: reject if webhook amount doesn't match what we created the payment for
+        if (expectedAmount != null && webhookAmountRub != null) {
+          if (Math.abs(webhookAmountRub - expectedAmount) > 1) {
+            console.warn(`[tochka-webhook] amount mismatch: expected=${expectedAmount}, got=${webhookAmountRub}, op=${operationId}`);
+            await sql`
+              UPDATE calc_pending_payments SET status = 'amount_mismatch'
+              WHERE operation_id = ${operationId} AND status = 'pending'
+            `.catch(() => null);
+            return NextResponse.json({ ok: false, error: "amount_mismatch" }, { status: 400 });
+          }
+        }
+
         const until = new Date(Date.now() + 30 * 86400_000);
 
         if (telegramUsername) {

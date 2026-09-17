@@ -34,6 +34,7 @@ const CREATE_TABLE_SQL = `
     auth_code_expires  TIMESTAMPTZ,
     status             TEXT NOT NULL DEFAULT 'pending',
     subscribed_until   TIMESTAMPTZ,
+    expected_amount_rub INTEGER,
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )
 `;
@@ -77,8 +78,8 @@ export async function POST(req: NextRequest) {
         const sql = neon(process.env.DATABASE_URL);
         await sql.unsafe(CREATE_TABLE_SQL);
         await sql`
-          INSERT INTO calc_pending_payments (operation_id, telegram_username)
-          VALUES (${payment.operationId}, ${telegram || null})
+          INSERT INTO calc_pending_payments (operation_id, telegram_username, expected_amount_rub)
+          VALUES (${payment.operationId}, ${telegram || null}, ${priceRub})
           ON CONFLICT (operation_id) DO NOTHING
         `;
       } catch (dbErr) {
