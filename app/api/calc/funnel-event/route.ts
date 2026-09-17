@@ -8,23 +8,6 @@ const ALLOWED_EVENTS = new Set([
   "checkout_started", "payment_success", "pro_activated", "paywall_closed",
 ]);
 
-async function ensureTable(sql: ReturnType<typeof neon>) {
-  await sql`
-    CREATE TABLE IF NOT EXISTS calc_funnel_events (
-      id           BIGSERIAL PRIMARY KEY,
-      event_name   TEXT NOT NULL,
-      anonymous_id TEXT,
-      session_id   TEXT,
-      operation_id TEXT,
-      calc_count   INTEGER,
-      source       TEXT,
-      metadata     JSONB,
-      ip           TEXT,
-      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `.catch(() => null);
-}
-
 export async function POST(req: NextRequest) {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { body = {}; }
@@ -39,7 +22,21 @@ export async function POST(req: NextRequest) {
   }
 
   const sql = neon(process.env.DATABASE_URL);
-  await ensureTable(sql);
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS calc_funnel_events (
+      id           BIGSERIAL PRIMARY KEY,
+      event_name   TEXT NOT NULL,
+      anonymous_id TEXT,
+      session_id   TEXT,
+      operation_id TEXT,
+      calc_count   INTEGER,
+      source       TEXT,
+      metadata     JSONB,
+      ip           TEXT,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `.catch(() => null);
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
