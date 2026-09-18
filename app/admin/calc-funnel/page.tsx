@@ -20,6 +20,8 @@ interface FunnelData {
   pendingByStatus: Array<{ status: string; cnt: string | number }>;
   dailyPayments: Array<{ day: string; cnt: string | number }>;
   modeStats: Array<{ mode: string; country: string | null; cnt: string | number }>;
+  stepFunnel: Array<{ step: string; total: string | number; users: string | number; kz: string | number; ru: string | number; mobile: string | number; desktop: string | number }>;
+  stepByMode: Array<{ step: string; calculator_mode: string; users: string | number }>;
 }
 
 function pct(a: number, b: number) {
@@ -121,6 +123,51 @@ export default function CalcFunnelPage() {
                 </div>
               </div>
             </div>
+
+            {/* Calculator Internal Funnel */}
+            {data.stepFunnel && data.stepFunnel.length > 0 && (() => {
+              const STEP_ORDER = ["calculator_view","calculator_start","input_started","fields_completed","calculation_started","calculation_success","result_view","delivery_request"];
+              const byStep: Record<string, typeof data.stepFunnel[0]> = {};
+              for (const r of data.stepFunnel) byStep[r.step] = r;
+              const rows = STEP_ORDER.map(s => ({ step: s, users: Number(byStep[s]?.users ?? 0), kz: Number(byStep[s]?.kz ?? 0), ru: Number(byStep[s]?.ru ?? 0), mobile: Number(byStep[s]?.mobile ?? 0) }));
+              const top = rows[0]?.users || 1;
+              return (
+                <div className="bg-[#0b1a2e] border border-[#1e3a5f] rounded-2xl p-5 mb-6">
+                  <h2 className="text-sm font-semibold text-[#8899aa] mb-1">Воронка внутри калькулятора (7 дней · уникальные пользователи)</h2>
+                  <p className="text-[10px] text-[#445566] mb-4">calculator_view → delivery_request · server-side tracking</p>
+                  <div className="space-y-3">
+                    {rows.map((row, i) => {
+                      const prevUsers = i > 0 ? rows[i-1].users : null;
+                      const dropPct   = prevUsers ? Math.round(((prevUsers - row.users) / prevUsers) * 100) : null;
+                      const convPct   = prevUsers ? Math.round((row.users / prevUsers) * 100) : null;
+                      const barW      = Math.round((row.users / top) * 100);
+                      return (
+                        <div key={row.step}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-[#8899aa] font-mono">{i+1}. {row.step}</span>
+                            <div className="flex items-center gap-3">
+                              {convPct !== null && (
+                                <span className={`text-xs font-semibold ${convPct >= 60 ? "text-[#00A86B]" : convPct >= 30 ? "text-amber-400" : "text-red-400"}`}>
+                                  {convPct}%
+                                </span>
+                              )}
+                              <span className="text-sm font-bold text-white w-12 text-right">{row.users}</span>
+                              <span className="text-[10px] text-[#445566] w-20 text-right">KZ:{row.kz} RU:{row.ru}</span>
+                            </div>
+                          </div>
+                          <div className="h-2 bg-[#1e3a5f] rounded-full overflow-hidden">
+                            <div className="h-full bg-[#00A86B] rounded-full" style={{ width: `${barW}%` }} />
+                          </div>
+                          {dropPct !== null && dropPct > 0 && (
+                            <p className="text-[10px] text-red-400 mt-0.5">↓ {dropPct}% отвал от предыдущего шага</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Subscriptions */}
             <div className="grid grid-cols-2 gap-4 mb-6">

@@ -87,6 +87,30 @@ export async function GET(req: NextRequest) {
       ORDER BY cnt DESC
     `.catch(() => [] as Array<{ mode: string; country: string | null; cnt: number | string }>);
 
+    // Calculator step funnel (last 7 days from calc_step_events)
+    const stepFunnel = await sql`
+      SELECT
+        step,
+        COUNT(*)                                      AS total,
+        COUNT(DISTINCT anonymous_id)                  AS users,
+        COUNT(*) FILTER (WHERE country = 'KZ')        AS kz,
+        COUNT(*) FILTER (WHERE country = 'RU')        AS ru,
+        COUNT(*) FILTER (WHERE device  = 'mobile')    AS mobile,
+        COUNT(*) FILTER (WHERE device  = 'desktop')   AS desktop
+      FROM calc_step_events
+      WHERE created_at > NOW() - INTERVAL '7 days'
+      GROUP BY step
+    `.catch(() => [] as Array<Record<string, unknown>>);
+
+    // Step funnel by calculator_mode (last 7 days)
+    const stepByMode = await sql`
+      SELECT step, calculator_mode, COUNT(DISTINCT anonymous_id) AS users
+      FROM calc_step_events
+      WHERE created_at > NOW() - INTERVAL '7 days'
+      GROUP BY step, calculator_mode
+      ORDER BY step, users DESC
+    `.catch(() => [] as Array<Record<string, unknown>>);
+
     const counts: Record<string, number> = {};
     for (const row of eventCounts) {
       counts[row.event_name] = Number(row.cnt);
@@ -95,19 +119,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       funnel: {
-        calc_view:       counts["calc_view"] ?? 0,
-        calc_done:       counts["calc_done"] ?? 0,
-        paywall_shown:   counts["paywall_shown"] ?? 0,
-        pro_click:       counts["pro_click"] ?? 0,
+        calc_view:        counts["calc_view"]        ?? 0,
+        calc_done:        counts["calc_done"]        ?? 0,
+        paywall_shown:    counts["paywall_shown"]    ?? 0,
+        pro_click:        counts["pro_click"]        ?? 0,
         checkout_started: counts["checkout_started"] ?? 0,
-        payment_success: counts["payment_success"] ?? 0,
-        pro_activated:   counts["pro_activated"] ?? 0,
+        payment_success:  counts["payment_success"]  ?? 0,
+        pro_activated:    counts["pro_activated"]    ?? 0,
       },
       subscriptions: subStats[0] ?? {},
       pendingByStatus: pendingStats,
       dailyPayments,
       dailyEvents,
       modeStats,
+      stepFunnel,
+      stepByMode,
     });
   } catch (err) {
     console.error("[admin/calc-funnel]", err);

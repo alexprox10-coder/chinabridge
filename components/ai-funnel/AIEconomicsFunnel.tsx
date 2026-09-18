@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { analytics, classifyProduct } from "@/lib/analytics";
+import { trackCalcStep, resetCalcSession } from "@/lib/analytics/calc-funnel-tracker";
 import { MARKETPLACES, detectCommissionPct } from "@/lib/economics/marketplaces";
 import MarketNewsBar from "@/components/calculator/MarketNewsBar";
 import AIConsultantPanel from "@/components/ai-consultant/AIConsultantPanel";
@@ -1156,8 +1157,39 @@ export default function AIEconomicsFunnel() {
   // Track calculator page open (fired once on mount)
   useEffect(() => {
     analytics.calculatorOpen();
+    resetCalcSession();
+    trackCalcStep("calculator_view");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Server-side funnel step tracking (watches step transitions)
+  const prevStepRef = useRef<string | null>(null);
+  useEffect(() => {
+    const step = s.step;
+    const prev = prevStepRef.current;
+    prevStepRef.current = step;
+    const meta = { country: s.simpleInput?.country_to === "Kazakhstan" ? "KZ" : "RU", calculator_mode: s.calculator_mode ?? "" };
+    if (step === "simple_input" || step === "input") {
+      if (prev === "mode_select" || prev === null) trackCalcStep("calculator_start", meta);
+    }
+    if (step === "analyzing") trackCalcStep("calculation_started", meta);
+    if (step === "preview")   { trackCalcStep("calculation_success", meta); trackCalcStep("result_view", meta); }
+    if (step === "simple_result") { trackCalcStep("calculation_success", meta); trackCalcStep("result_view", meta); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.step]);
+
+  // Detect first input interaction → input_started
+  const inputStartedRef = useRef(false);
+  useEffect(() => {
+    if (inputStartedRef.current) return;
+    const si = s.simpleInput;
+    const hasAnyInput = si.product_name || si.product_link || si.unit_price || si.weight_kg;
+    if (hasAnyInput && (s.step === "simple_input" || s.step === "input")) {
+      inputStartedRef.current = true;
+      trackCalcStep("input_started", { country: si.country_to === "Kazakhstan" ? "KZ" : "RU", calculator_mode: s.calculator_mode ?? "" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.simpleInput]);
 
   // Track when calculator enters viewport (fires once)
   useEffect(() => {
@@ -1341,6 +1373,8 @@ export default function AIEconomicsFunnel() {
 
     setSimpleError(null);
     setSimpleCalcLoading(true);
+    trackCalcStep("calculation_started", { country: si.country_to === "Kazakhstan" ? "KZ" : "RU", calculator_mode: mode ?? "" });
+    trackCalcStep("fields_completed",    { country: si.country_to === "Kazakhstan" ? "KZ" : "RU", calculator_mode: mode ?? "" });
 
     const qty       = Math.max(1, parseInt(si.quantity) || 1);
     const salePrice = parseFloat(si.wholesale_price) || Math.max(1, unitPrice * 2.5);
@@ -2507,6 +2541,7 @@ export default function AIEconomicsFunnel() {
                 <button
                   onClick={() => {
                     analytics.deliveryRequestClick({ mode: "delivery", country: isKZ ? "KZ" : "RU", vertical: urlVertical.current ?? undefined });
+                    trackCalcStep("delivery_request", { country: isKZ ? "KZ" : "RU", calculator_mode: "delivery" });
                     setS(p => ({ ...p, step: "contact" }));
                   }}
                   className="w-full py-2 rounded-xl text-sm font-medium border border-[#00A86B]/60 text-[#00A86B] hover:bg-[#00A86B]/10 transition-all"
@@ -2524,6 +2559,7 @@ export default function AIEconomicsFunnel() {
             <button
               onClick={() => {
                 analytics.deliveryRequestClick({ mode, country: isKZ ? "KZ" : "RU", vertical: urlVertical.current ?? undefined });
+                trackCalcStep("delivery_request", { country: isKZ ? "KZ" : "RU", calculator_mode: mode ?? "" });
                 setS(p => ({ ...p, step: "contact" }));
               }}
               className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#00A86B] hover:bg-[#008f59] text-white font-semibold rounded-xl transition-all text-sm"
