@@ -7,7 +7,11 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const isAdmin = req.cookies.get("cb_admin")?.value;
-  if (!isAdmin) return NextResponse.json({ ok: false, error: "admin only" }, { status: 401 });
+  const secret = req.headers.get("x-webhook-secret");
+  const validSecret = process.env.OUTBOUND_WEBHOOK_SECRET;
+  if (!isAdmin && (!validSecret || secret !== validSecret)) {
+    return NextResponse.json({ ok: false, error: "admin only" }, { status: 401 });
+  }
 
   const results: Record<string, unknown> = {};
   const dbUrl = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL ?? "";
