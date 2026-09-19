@@ -1,8 +1,6 @@
-// Parser Club Intake Qualifier — Claude Haiku 4.5
+// Parser Club Intake Qualifier — Claude Haiku 4.5 via OpenRouter
 // Classifies raw lead text: intent, score, stream, reply draft
 // OUTBOUND_ENABLE_AUTOREPLY=false is HARD default — reply draft is never auto-sent
-
-import Anthropic from "@anthropic-ai/sdk";
 
 export type LeadIntent =
   | "DELIVERY"
@@ -63,37 +61,18 @@ STREAM:
 
 ai_reply_draft: ТОЛЬКО на русском языке, дружелюбно, 2-3 предложения, без обещаний конкретных цен. Начинать с приветствия. НИКОГДА не упоминать что ты ИИ.
 
-Верни ТОЛЬКО JSON без markdown, без пояснений.`;
-
-const RESPONSE_SCHEMA = {
-  type: "object" as const,
-  properties: {
-    intent: { type: "string" },
-    lead_score: { type: "number" },
-    evidence_score: { type: "number" },
-    stream: { },
-    qualification_reason: { type: "string" },
-    key_signals: { type: "array", items: { type: "string" } },
-    ai_reply_draft: { type: "string" },
-    product_hint: { type: "string" },
-    geography_hint: { type: "string" },
-  },
-  required: ["intent", "lead_score", "evidence_score", "qualification_reason", "key_signals", "ai_reply_draft"],
-};
-
-let client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!client) {
-    client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  }
-  return client;
-}
+Верни ТОЛЬКО JSON без markdown, без пояснений:
+{"intent":"...","lead_score":0,"evidence_score":0,"stream":null,"qualification_reason":"...","key_signals":[],"ai_reply_draft":"...","product_hint":"...","geography_hint":"..."}`;
 
 export async function qualifyLead(
   text: string,
   context?: { username?: string; chat?: string; source?: string }
 ): Promise<QualificationResult> {
+  const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
+  if (!OPENROUTER_KEY) {
+    return buildFallback("OPENROUTER_API_KEY not set");
+  }
+
   const contextStr = context
     ? `\nКонтекст: источник=${context.source ?? "unknown"}, чат=${context.chat ?? "—"}, username=${context.username ?? "анонимно"}`
     : "";
@@ -101,20 +80,35 @@ export async function qualifyLead(
   const userMessage = `Сообщение клиента:\n${text}${contextStr}\n\nВерни JSON-оценку.`;
 
   try {
-    const response = await getClient().messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://chinabridge.pro",
+        "X-Title": "ChinaBridge Intake Qualifier",
+      },
+      body: JSON.stringify({
+        model: "anthropic/claude-haiku-4-5",
+        max_tokens: 512,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
+        ],
+      }),
     });
 
-    const raw = response.content[0].type === "text" ? response.content[0].text : "{}";
-    const parsed = JSON.parse(raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim());
+    if (!res.ok) return buildFallback(`OpenRouter ${res.status}`);
+
+    const data = await res.json();
+    const raw = data?.choices?.[0]?.message?.content ?? "{}";
+    const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(cleaned);
 
     return {
       intent: (parsed.intent as LeadIntent) ?? "UNKNOWN",
-      lead_score: Math.min(100, Math.max(0, Number(parsed.lead_score ?? 0))),
-      evidence_score: Math.min(100, Math.max(0, Number(parsed.evidence_score ?? 0))),
+      lead_score: clamp(Number(parsed.lead_score ?? 0)),
+      evidence_score: clamp(Number(parsed.evidence_score ?? 0)),
       stream: parsed.stream === 1 ? 1 : parsed.stream === 4 ? 4 : null,
       qualification_reason: String(parsed.qualification_reason ?? ""),
       key_signals: Array.isArray(parsed.key_signals) ? parsed.key_signals : [],
@@ -123,16 +117,24 @@ export async function qualifyLead(
       geography_hint: String(parsed.geography_hint ?? ""),
     };
   } catch {
-    return {
-      intent: "UNKNOWN",
-      lead_score: 0,
-      evidence_score: 0,
-      stream: null,
-      qualification_reason: "Ошибка квалификации",
-      key_signals: [],
-      ai_reply_draft: "",
-      product_hint: "",
-      geography_hint: "",
-    };
+    return buildFallback("parse error");
   }
+}
+
+function clamp(v: number): number {
+  return Math.min(100, Math.max(0, v));
+}
+
+function buildFallback(reason: string): QualificationResult {
+  return {
+    intent: "UNKNOWN",
+    lead_score: 0,
+    evidence_score: 0,
+    stream: null,
+    qualification_reason: reason,
+    key_signals: [],
+    ai_reply_draft: "",
+    product_hint: "",
+    geography_hint: "",
+  };
 }

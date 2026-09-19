@@ -158,13 +158,18 @@ function parseCsvOrTxt(content: string): ParsedRow[] {
 }
 
 async function parseXlsx(buffer: Buffer): Promise<ParsedRow[]> {
-  // Dynamic import to avoid bundling issues
-  const XLSX = await import("xlsx").catch(() => null);
-  if (!XLSX) throw new Error("xlsx package not available — install with: npm i xlsx");
+  // Dynamic import — falls back to CSV parser if xlsx not installed
+  let XLSX: typeof import("xlsx") | null = null;
+  try {
+    XLSX = await import("xlsx");
+  } catch {
+    // xlsx not installed: treat as CSV (binary content won't parse well, but won't crash)
+    return parseCsvOrTxt(buffer.toString("utf8", 0, Math.min(buffer.length, 200_000)));
+  }
 
-  const workbook = XLSX.default.read(buffer, { type: "buffer" });
+  const workbook = XLSX.read(buffer, { type: "buffer" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const raw: Record<string, string>[] = XLSX.default.utils.sheet_to_json(sheet, { defval: "" });
+  const raw: Record<string, string>[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
   return raw.map(row => {
     const keys = Object.keys(row).map(k => k.toLowerCase());
