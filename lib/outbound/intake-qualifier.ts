@@ -36,7 +36,8 @@ export interface QualificationResult {
   product_category: string;
   // Business context
   business_type: BusinessType;
-  supplier_exists: boolean;
+  supplier_exists: boolean | null;  // null = not mentioned
+  supplier_source: string | null;   // "1688", "alibaba", url, etc.
   // Cargo params
   weight_kg: number | null;
   volume_m3: number | null;
@@ -77,6 +78,11 @@ INTENT типы:
 - GENERAL_QUESTION — общий вопрос
 - NOISE — нерелевантное сообщение/спам
 - UNKNOWN — невозможно определить
+
+supplier_exists / supplier_source:
+- Если поставщик упомянут ("есть поставщик на 1688") → supplier_exists: true, supplier_source: "1688"
+- Если поставщик не упомянут → supplier_exists: null, supplier_source: null
+- НИКОГДА не ставь название платформы (1688, Alibaba, Taobao) в поле supplier_exists!
 
 STREAM:
 - 1 = China→KZ (основной поток ChinaBridge)
@@ -123,7 +129,8 @@ ai_reply_draft: ТОЛЬКО русский язык, 2-3 предложения
   "product": null,
   "product_category": "...",
   "business_type": "BUSINESS|INDIVIDUAL|UNKNOWN",
-  "supplier_exists": false,
+  "supplier_exists": null,
+  "supplier_source": null,
   "weight_kg": null,
   "volume_m3": null,
   "packages": null,
@@ -179,6 +186,18 @@ async function callOpenRouter(userMessage: string): Promise<string> {
   return data?.choices?.[0]?.message?.content ?? "{}";
 }
 
+function parseSupplier(p: Record<string, unknown>): { supplier_exists: boolean | null; supplier_source: string | null } {
+  const raw = p.supplier_exists;
+  const src = p.supplier_source ? String(p.supplier_source) : null;
+  if (raw === null || raw === undefined) return { supplier_exists: null, supplier_source: src };
+  if (typeof raw === "boolean") return { supplier_exists: raw, supplier_source: src };
+  if (raw === "true") return { supplier_exists: true, supplier_source: src };
+  if (raw === "false") return { supplier_exists: false, supplier_source: src };
+  // AI put the platform name in supplier_exists (e.g. "1688")
+  const platformName = String(raw);
+  return { supplier_exists: true, supplier_source: src ?? platformName };
+}
+
 function parseQualification(raw: string): QualificationResult {
   const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
   const p = JSON.parse(cleaned);
@@ -194,7 +213,7 @@ function parseQualification(raw: string): QualificationResult {
     product: p.product ? String(p.product) : null,
     product_category: String(p.product_category ?? ""),
     business_type: (p.business_type as BusinessType) ?? "UNKNOWN",
-    supplier_exists: Boolean(p.supplier_exists),
+    ...parseSupplier(p),
     weight_kg: p.weight_kg !== null && p.weight_kg !== undefined ? Number(p.weight_kg) : null,
     volume_m3: p.volume_m3 !== null && p.volume_m3 !== undefined ? Number(p.volume_m3) : null,
     packages: p.packages !== null && p.packages !== undefined ? Math.round(Number(p.packages)) : null,
@@ -217,7 +236,7 @@ function buildFallback(reason: string): QualificationResult {
   return {
     intent: "UNKNOWN", intent_subtype: "", country: "UNKNOWN", city: "",
     destination: "", product: null, product_category: "", business_type: "UNKNOWN",
-    supplier_exists: false, weight_kg: null, volume_m3: null, packages: null,
+    supplier_exists: null, supplier_source: null, weight_kg: null, volume_m3: null, packages: null,
     urgency: null, recommended_offer: "GENERAL", lead_score: 0, evidence_score: 0,
     confidence: 0, stream: null, qualification_reason: reason, key_signals: [],
     evidence: [], ai_reply_draft: "", product_hint: "", geography_hint: "",

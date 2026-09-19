@@ -10,7 +10,7 @@ interface EvidenceItem { field: string; value: unknown; source: string; type: st
 interface IntakeLead {
   id: string;
   source: string; source_type: string; source_url: string;
-  tg_username: string; tg_chat: string;
+  tg_username: string; tg_chat: string; source_message_id: string;
   intent: string; intent_subtype: string;
   lead_score: number; evidence_score: number; final_score: number; confidence: number;
   priority: Priority; stream: number | null;
@@ -27,6 +27,7 @@ interface IntakeLead {
   approval_status: ApprovalStatus;
   crm_lead_id: string;
   processing_status: string;
+  source_created_at: string | null;
   created_at: string;
   raw_text_preview: string;
   normalized_text_preview: string;
@@ -67,6 +68,22 @@ const URGENCY_COLORS: Record<string, string> = {
 };
 
 const n = (v: unknown) => Number(v ?? 0);
+
+function leadAge(lead: IntakeLead): { label: string; color: string; stale: boolean } {
+  const base = lead.source_created_at ?? lead.created_at;
+  const h = (Date.now() - new Date(base).getTime()) / 3600000;
+  if (h < 1) return { label: `${Math.round(h * 60)} мин`, color: "text-[#00A86B]", stale: false };
+  if (h < 6) return { label: `${Math.round(h)} ч`, color: "text-[#00A86B]", stale: false };
+  if (h < 24) return { label: `${Math.round(h)} ч`, color: "text-amber-400", stale: false };
+  if (h < 48) return { label: `${Math.round(h)} ч`, color: "text-red-400", stale: true };
+  return { label: `${Math.round(h / 24)} дн`, color: "text-[#445566]", stale: true };
+}
+
+function supplierFromEvidence(evidence: EvidenceItem[]): string | null {
+  const item = evidence.find(e => e.field === "supplier_exists" && typeof e.value === "string" && e.value !== "true" && e.value !== "false");
+  return item ? String(item.value) : null;
+}
+
 const parseArr = <T,>(v: T[] | string): T[] => {
   if (Array.isArray(v)) return v;
   try { return JSON.parse(v as string) as T[]; } catch { return []; }
@@ -159,6 +176,11 @@ export default function IntakeDashboard() {
   }
 
   const kpi = data?.kpi;
+  const fresh = data?.leads.filter(l => {
+    const h = (Date.now() - new Date(l.source_created_at ?? l.created_at).getTime()) / 3600000;
+    return h < 24;
+  }).length ?? 0;
+  const stale = (n(kpi?.total) - fresh);
 
   return (
     <div className="min-h-screen bg-[#060f1e] text-white p-6">
@@ -193,12 +215,24 @@ export default function IntakeDashboard() {
         {data && (
           <>
             {/* KPI Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
               {[
                 { label: "Всего", value: n(kpi?.total), color: "text-white" },
                 { label: "🔥 HOT", value: n(kpi?.hot), color: "text-red-400" },
                 { label: "⚡ HIGH", value: n(kpi?.high), color: "text-amber-400" },
                 { label: "📬 Ожидают", value: n(kpi?.pending_approval), color: "text-[#229ED9]" },
+              ].map(tile => (
+                <div key={tile.label} className="bg-[#0b1a2e] border border-[#1e3a5f] rounded-xl p-3 text-center">
+                  <p className="text-[10px] text-[#5a7899]">{tile.label}</p>
+                  <p className={`text-xl font-bold ${tile.color}`}>{tile.value}</p>
+                </div>
+              ))}
+            </div>
+            {/* SLA Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+              {[
+                { label: "⏱ Свежих < 24ч", value: fresh, color: "text-[#00A86B]" },
+                { label: "⚠️ Просрочен > 24ч", value: stale, color: stale > 0 ? "text-red-400" : "text-[#445566]" },
                 { label: "🏭 CRM создано", value: n(kpi?.crm_created), color: "text-[#00A86B]" },
                 { label: "Avg score", value: n(kpi?.avg_score).toFixed(1), color: "text-[#8899aa]" },
               ].map(tile => (
@@ -209,11 +243,11 @@ export default function IntakeDashboard() {
               ))}
             </div>
 
-            {/* Stats row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              {/* Intent breakdown */}
+            {/* Stats row — 4 разных измерения */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+              {/* Intent */}
               <div className="bg-[#0b1a2e] border border-[#1e3a5f] rounded-2xl p-5">
-                <h2 className="text-sm font-semibold text-[#8899aa] mb-3">По intent</h2>
+                <h2 className="text-sm font-semibold text-[#8899aa] mb-3">Intent</h2>
                 <div className="space-y-1.5">
                   {data.byIntent.slice(0, 7).map(row => (
                     <div key={row.intent} className="flex justify-between items-center">
@@ -230,15 +264,13 @@ export default function IntakeDashboard() {
                 </div>
               </div>
 
-              {/* Streams */}
+              {/* Потоки */}
               <div className="bg-[#0b1a2e] border border-[#1e3a5f] rounded-2xl p-5">
-                <h2 className="text-sm font-semibold text-[#8899aa] mb-3">Потоки и страны</h2>
+                <h2 className="text-sm font-semibold text-[#8899aa] mb-3">Поток</h2>
                 <div className="space-y-1.5">
                   {[
-                    { label: "Stream 1 (China→KZ)", value: n(kpi?.stream1), dot: "bg-[#00A86B]" },
-                    { label: "Stream 4 (Поставщик)", value: n(kpi?.stream4), dot: "bg-[#229ED9]" },
-                    { label: "Свой поставщик", value: n(kpi?.existing_supplier), dot: "bg-amber-500" },
-                    { label: "24ч", value: n(kpi?.last_24h), dot: "bg-[#1e3a5f]" },
+                    { label: "Stream 1  China→KZ", value: n(kpi?.stream1), dot: "bg-[#00A86B]" },
+                    { label: "Stream 4  Existing", value: n(kpi?.stream4), dot: "bg-[#229ED9]" },
                   ].map(r => (
                     <div key={r.label} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -248,27 +280,47 @@ export default function IntakeDashboard() {
                       <span className="text-sm font-bold text-white">{r.value}</span>
                     </div>
                   ))}
-                  <div className="border-t border-[#1e3a5f] pt-2 mt-2 space-y-1">
-                    {data.byCountry.slice(0, 3).map(c => (
-                      <div key={c.country} className="flex justify-between">
-                        <span className="text-[10px] text-[#5a7899]">{c.country}</span>
-                        <span className="text-[10px] text-white">{n(c.cnt)}</span>
-                      </div>
-                    ))}
+                  <div className="border-t border-[#1e3a5f] pt-2 mt-2 space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-[#8899aa]">Имеет поставщика</span>
+                      <span className="text-sm font-bold text-white">{n(kpi?.existing_supplier)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* §32 Funnel */}
+              {/* География */}
               <div className="bg-[#0b1a2e] border border-[#1e3a5f] rounded-2xl p-5">
-                <h2 className="text-sm font-semibold text-[#8899aa] mb-3">Воронка событий</h2>
+                <h2 className="text-sm font-semibold text-[#8899aa] mb-3">География</h2>
                 <div className="space-y-1.5">
-                  {data.funnel.slice(0, 8).map(f => (
-                    <div key={f.event} className="flex justify-between items-center">
-                      <span className="text-[10px] text-[#5a7899] font-mono">{f.event.replace("lead_", "")}</span>
-                      <span className="text-xs font-bold text-white">{n(f.cnt)}</span>
+                  {data.byCountry.slice(0, 6).map(c => (
+                    <div key={c.country} className="flex justify-between items-center">
+                      <span className="text-xs text-[#8899aa]">{c.country}</span>
+                      <span className="text-sm font-bold text-white">{n(c.cnt)}</span>
                     </div>
                   ))}
+                  {data.byCountry.length === 0 && <p className="text-[10px] text-[#445566]">Нет данных</p>}
+                </div>
+              </div>
+
+              {/* Воронка */}
+              <div className="bg-[#0b1a2e] border border-[#1e3a5f] rounded-2xl p-5">
+                <h2 className="text-sm font-semibold text-[#8899aa] mb-3">Воронка</h2>
+                <div className="space-y-1.5">
+                  {[
+                    "received","classified","hot","approved","rejected",
+                    "crm_created","reply_drafted","contacted","replied",
+                    "positive","quote_created","deal_created",
+                  ].map(ev => {
+                    const f = data.funnel.find(r => r.event === ev || r.event === `lead_${ev}`);
+                    if (!f && data.funnel.length > 0) return null;
+                    return (
+                      <div key={ev} className="flex justify-between items-center">
+                        <span className="text-[10px] text-[#5a7899] font-mono">{ev}</span>
+                        <span className="text-xs font-bold text-white">{f ? n(f.cnt) : 0}</span>
+                      </div>
+                    );
+                  })}
                   {data.funnel.length === 0 && <p className="text-[10px] text-[#445566]">Событий пока нет</p>}
                 </div>
               </div>
@@ -341,6 +393,14 @@ export default function IntakeDashboard() {
                 const signals = parseArr<string>(lead.key_signals);
                 const evidence = parseArr<EvidenceItem>(lead.evidence_data);
                 const hasCrm = !!lead.crm_lead_id;
+                const age = leadAge(lead);
+                const supplierSource = supplierFromEvidence(evidence);
+                const nextAction =
+                  hasCrm ? "CRM создан — связаться с лидом" :
+                  lead.approval_status === "APPROVED" ? "Готово к контакту → создайте CRM" :
+                  lead.approval_status === "REJECTED" ? "Отклонён" :
+                  lead.priority === "HOT" || lead.priority === "HIGH" ? "Требует ручного одобрения" :
+                  "Ожидает проверки";
 
                 return (
                   <div key={lead.id} className={`bg-[#0b1a2e] border rounded-2xl overflow-hidden ${
@@ -369,6 +429,10 @@ export default function IntakeDashboard() {
                           {lead.supplier_exists && <span className="text-[10px] text-[#00A86B]">✅ Поставщик есть</span>}
                           {lead.weight_kg && <span className="text-[10px] text-[#229ED9]">⚖️ {lead.weight_kg}кг</span>}
                           {lead.urgency && <span className={`text-[10px] ${URGENCY_COLORS[lead.urgency] ?? "text-[#8899aa]"}`}>⏰{lead.urgency}</span>}
+                          {/* Возраст лида */}
+                          <span className={`text-[10px] font-semibold ${age.color}`}>
+                            ⏱ {age.label}{age.stale ? " ⚠️" : ""}
+                          </span>
                           <span className={`text-[10px] font-semibold ml-auto ${APPROVAL_STYLES[lead.approval_status]}`}>
                             {lead.approval_status}{hasCrm ? " · CRM✓" : ""}
                           </span>
@@ -403,7 +467,7 @@ export default function IntakeDashboard() {
                             { label: "Lead Score", value: lead.lead_score, color: "text-amber-400" },
                             { label: "Evidence", value: lead.evidence_score, color: "text-[#229ED9]" },
                             { label: "Final Score", value: lead.final_score, color: "text-[#00A86B]" },
-                            { label: "Confidence", value: lead.confidence + "%", color: "text-[#8899aa]" },
+                            { label: "Уверенность AI", value: lead.confidence + "%", color: "text-[#8899aa]" },
                           ].map(s => (
                             <div key={s.label} className="bg-[#060f1e] rounded-lg p-2.5 text-center">
                               <p className="text-[9px] text-[#5a7899]">{s.label}</p>
@@ -427,6 +491,7 @@ export default function IntakeDashboard() {
                             { label: "Срочность", value: lead.urgency },
                             { label: "Оффер", value: lead.recommended_offer },
                             { label: "Поставщик", value: lead.supplier_exists ? "✅ Есть" : "❌ Нет" },
+                            { label: "Источник поставщика", value: supplierSource },
                           ].filter(f => f.value).map(f => (
                             <div key={f.label} className="bg-[#060f1e] rounded p-2">
                               <p className="text-[9px] text-[#5a7899]">{f.label}</p>
@@ -455,16 +520,21 @@ export default function IntakeDashboard() {
                           <div>
                             <p className="text-[10px] text-[#5a7899] mb-2">Evidence ({evidence.length} факт{evidence.length > 1 ? "а" : ""})</p>
                             <div className="space-y-1">
-                              {evidence.map((e, i) => (
-                                <div key={i} className="flex items-center gap-2 text-[10px]">
-                                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${e.type === "VERIFIED_FACT" ? "bg-[#00A86B]/20 text-[#00A86B]" : "bg-amber-900/20 text-amber-400"}`}>
-                                    {e.type === "VERIFIED_FACT" ? "FACT" : "INFER"}
-                                  </span>
-                                  <span className="text-[#5a7899]">{e.field}:</span>
-                                  <span className="text-white">{String(e.value ?? "—")}</span>
-                                  <span className="text-[#445566] ml-auto">[{e.source}]</span>
-                                </div>
-                              ))}
+                              {evidence.map((e, i) => {
+                                const isSupplierStr = e.field === "supplier_exists" && typeof e.value === "string" && e.value !== "true" && e.value !== "false";
+                                const displayField = isSupplierStr ? "supplier_source" : e.field;
+                                const displayValue = isSupplierStr ? e.value : (e.field === "supplier_exists" ? (e.value ? "true" : "false") : String(e.value ?? "—"));
+                                return (
+                                  <div key={i} className="flex items-center gap-2 text-[10px]">
+                                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${e.type === "VERIFIED_FACT" ? "bg-[#00A86B]/20 text-[#00A86B]" : "bg-amber-900/20 text-amber-400"}`}>
+                                      {e.type === "VERIFIED_FACT" ? "FACT" : "INFER"}
+                                    </span>
+                                    <span className="text-[#5a7899]">{displayField}:</span>
+                                    <span className="text-white">{String(displayValue)}</span>
+                                    <span className="text-[#445566] ml-auto">[{e.source}]</span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -481,17 +551,44 @@ export default function IntakeDashboard() {
                           </div>
                         )}
 
+                        {/* Next Action */}
+                        <div className="bg-[#060f1e] border border-[#1e3a5f] rounded-lg p-3">
+                          <p className="text-[9px] text-[#5a7899] mb-1">Следующее действие</p>
+                          <p className={`text-xs font-semibold ${hasCrm ? "text-[#00A86B]" : lead.approval_status === "REJECTED" ? "text-[#445566]" : lead.approval_status === "APPROVED" ? "text-[#229ED9]" : "text-amber-400"}`}>
+                            {nextAction}
+                          </p>
+                        </div>
+
                         {/* Source info */}
-                        {(lead.source_url || lead.tg_chat) && (
-                          <div className="text-[10px] text-[#445566] flex flex-wrap gap-3">
-                            {lead.tg_chat && <span>Чат: {lead.tg_chat}</span>}
-                            {lead.source_url && (
-                              <a href={lead.source_url} target="_blank" rel="noopener noreferrer" className="text-[#229ED9] hover:underline">
-                                Источник ↗
+                        <div className="bg-[#060f1e] border border-[#1e3a5f] rounded-lg p-3">
+                          <p className="text-[9px] text-[#5a7899] mb-2">Источник</p>
+                          <div className="space-y-1 text-[10px]">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[#5a7899]">Тип:</span>
+                              <span className="text-white capitalize">{lead.source_type || lead.source || "Telegram"}</span>
+                            </div>
+                            {lead.tg_chat && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-[#5a7899]">Чат:</span>
+                                <span className="text-white">{lead.tg_chat}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[#5a7899]">Дата:</span>
+                              <span className="text-white">
+                                {new Date(lead.source_created_at ?? lead.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
+                            {lead.source_url ? (
+                              <a href={lead.source_url} target="_blank" rel="noopener noreferrer"
+                                className="inline-block mt-1 text-[#229ED9] hover:underline font-medium">
+                                Открыть исходное сообщение ↗
                               </a>
+                            ) : (
+                              <span className="inline-block mt-1 text-[#445566]">Ссылка на источник недоступна</span>
                             )}
                           </div>
-                        )}
+                        </div>
 
                         {/* §18 Action buttons */}
                         <div className="flex items-center gap-3 pt-2 flex-wrap border-t border-[#1e3a5f]">
@@ -510,6 +607,14 @@ export default function IntakeDashboard() {
                               </button>
                             </>
                           )}
+
+                          {/* Open source */}
+                          {lead.source_url ? (
+                            <a href={lead.source_url} target="_blank" rel="noopener noreferrer"
+                              className="px-4 py-2 bg-[#0b1a2e] hover:bg-[#0d2040] border border-[#1e3a5f] text-[#229ED9] text-xs font-bold rounded-lg">
+                              💬 Открыть источник
+                            </a>
+                          ) : null}
 
                           {/* §18 CRM handoff button */}
                           {!hasCrm && lead.approval_status !== "REJECTED" && (
