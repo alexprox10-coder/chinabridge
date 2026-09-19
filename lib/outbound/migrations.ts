@@ -7,9 +7,8 @@ export async function runOutboundMigrations(): Promise<void> {
   const sql = neon(dbUrl);
 
   {
-    // Parser Club Intake: raw events table
-    try {
-      await sql.unsafe(`
+    // Parser Club Intake: raw events table — IF NOT EXISTS handles existing table, no catch needed
+    await sql.unsafe(`
         CREATE TABLE IF NOT EXISTS outbound_lead_events (
           id                   UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
           fingerprint          TEXT      UNIQUE NOT NULL,
@@ -59,7 +58,6 @@ export async function runOutboundMigrations(): Promise<void> {
           created_at           TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-    } catch { /* table already exists — add missing columns below */ }
 
     // Idempotent column additions for existing outbound_lead_events tables
     const intakeColumnMigrations = [
@@ -97,8 +95,7 @@ export async function runOutboundMigrations(): Promise<void> {
     }
 
     // Analytics events table (§31 ТЗ)
-    try {
-      await sql.unsafe(`
+    await sql.unsafe(`
         CREATE TABLE IF NOT EXISTS outbound_analytics_events (
           id          UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
           event       TEXT      NOT NULL,
@@ -111,11 +108,8 @@ export async function runOutboundMigrations(): Promise<void> {
           created_at  TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-    } catch { /* already exists */ }
 
-    try {
-      await sql.unsafe(`CREATE INDEX IF NOT EXISTS idx_oae_event ON outbound_analytics_events(event, created_at DESC)`);
-    } catch { /* already exists */ }
+    await sql.unsafe(`CREATE INDEX IF NOT EXISTS idx_oae_event ON outbound_analytics_events(event, created_at DESC)`);
 
     // §6 ТЗ — New Opportunity fields
     const columnMigrations = [
