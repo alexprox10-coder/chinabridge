@@ -1,136 +1,180 @@
-// Импорт лидов из n8n DataTable ZUdd2z8BpyvePLeX в outbound_leads
+// Parser Club File Import
+// POST /api/outbound/import  (multipart/form-data, field: "file")
+// Accepts XLSX / CSV / TXT — admin only
+// Batch-qualifies rows via Claude Haiku 4.5 with 2s delay between rows
+
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
-import crypto from "crypto";
+import { qualifyLead } from "@/lib/outbound/intake-qualifier";
+import { scoreIntakeLead, buildFingerprint } from "@/lib/outbound/intake-scorer";
+import { runOutboundMigrations } from "@/lib/outbound/migrations";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300; // large files need time
 
-const N8N_BASE = process.env.N8N_BASE_URL ?? "https://n8n.arendadom24.ru";
-const N8N_KEY  = process.env.N8N_API_KEY ?? "";
-const TABLE_ID = "ZUdd2z8BpyvePLeX";
-
-function makeDedup(...parts: string[]) {
-  return crypto.createHash("md5").update(parts.join("|").toLowerCase()).digest("hex");
-}
-
-function detectCategory(raw: string): string {
-  const c = raw.toLowerCase();
-  if (c.includes("авто") || c.includes("auto") || c.includes("запчаст")) return "AUTO_ACCESSORIES";
-  if (c.includes("электрон") || c.includes("телефон") || c.includes("компьютер")) return "ELECTRONICS";
-  if (c.includes("одежд") || c.includes("обувь") || c.includes("textile")) return "CLOTHING";
-  if (c.includes("мебел") || c.includes("дом") || c.includes("home")) return "HOME";
-  if (c.includes("строй") || c.includes("материал") || c.includes("инструм")) return "TOOLS";
-  if (c.includes("продукт") || c.includes("еда") || c.includes("food")) return "CONSUMER_GOODS";
-  return "OTHER";
-}
-
-function detectMarketplace(website: string): string {
-  if (!website) return "NONE";
-  if (website.includes("kaspi")) return "KASPI";
-  if (website.includes("wildberries") || website.includes("wb.ru")) return "WB";
-  if (website.includes("ozon")) return "OZON";
-  return "NONE";
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const limit = body.limit ?? 100;
-    const vertical = (body.vertical ?? "KZ_AUTO") as string;
-    const country  = (body.country  ?? "KZ") as string;
-
-    const sql = neon(process.env.DATABASE_URL!);
-
-    // Диагностика: проверим что таблица есть
-    let tableExists = false;
-    try {
-      const check = await sql`
-        SELECT 1 FROM information_schema.tables
-        WHERE table_schema='public' AND table_name='outbound_leads'
-        LIMIT 1
-      `;
-      tableExists = check.length > 0;
-    } catch {
-      return NextResponse.json({ ok: false, error: "DB connection failed" }, { status: 500 });
-    }
-
-    if (!tableExists) {
-      return NextResponse.json({ ok: false, error: "outbound_leads table not found — run /api/outbound/init first" }, { status: 500 });
-    }
-
-    const cursor = (body.cursor ?? null) as string | null;
-
-    // Получаем лиды из n8n DataTable (cursor pagination)
-    const n8nUrl = cursor
-      ? `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows?cursor=${encodeURIComponent(cursor)}`
-      : `${N8N_BASE}/api/v1/data-tables/${TABLE_ID}/rows`;
-
-    const dtRes = await fetch(
-      n8nUrl,
-      { headers: { "X-N8N-API-KEY": N8N_KEY }, signal: AbortSignal.timeout(30000) }
-    );
-
-    if (!dtRes.ok) {
-      const errText = await dtRes.text().catch(() => "");
-      return NextResponse.json({ ok: false, error: `n8n DataTable error: ${dtRes.status} ${errText.slice(0, 200)}` }, { status: 502 });
-    }
-
-    const dtData = await dtRes.json();
-    const rows: Record<string, string>[] = dtData.data ?? dtData.rows ?? [];
-    const nextCursor: string | null = dtData.nextCursor ?? null;
-
-    let imported = 0;
-    let skipped  = 0;
-
-    for (const row of rows) {
-      const companyName = row["company"] ?? row["Company"] ?? row["name"] ?? "";
-      const phone       = row["phone"]   ?? row["Phone"]   ?? "";
-      const website     = row["website"] ?? row["Website"] ?? "";
-      const category    = row["category"] ?? row["Category"] ?? "";
-      const city        = row["city"]    ?? row["City"]    ?? "Алматы";
-      const email       = row["email"]   ?? row["Email"]   ?? "";
-      const telegram    = row["telegram"] ?? "";
-      const source      = row["source"]  ?? "GOOGLE_MAPS";
-
-      if (!companyName) { skipped++; continue; }
-
-      const dedupHash = makeDedup(companyName, phone, website);
-
-      // Проверяем дубликат
-      const existing = await sql`
-        SELECT id FROM outbound_leads WHERE dedup_hash = ${dedupHash} LIMIT 1
-      `;
-      if (existing.length > 0) { skipped++; continue; }
-
-      const outboundId = `ob_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const now = new Date().toISOString();
-
-      let domain = "";
-      try {
-        if (website) domain = new URL(website.startsWith("http") ? website : `https://${website}`).hostname.replace("www.", "");
-      } catch { /* ignore invalid URLs */ }
-
-      await sql`
-        INSERT INTO outbound_leads (
-          outbound_id, tenant_id, stage, company_name, phone, website,
-          domain, marketplace, country, city, email, telegram,
-          category, source, dedup_hash, campaign, vertical,
-          created_at, updated_at
-        ) VALUES (
-          ${outboundId}, 'tenant-chinabridge', 'FOUND',
-          ${companyName}, ${phone}, ${website},
-          ${domain}, ${detectMarketplace(website)}, ${country}, ${city}, ${email}, ${telegram},
-          ${category || detectCategory(city + " " + companyName)},
-          ${source}, ${dedupHash}, 'pilot-v1', ${vertical},
-          ${now}, ${now}
-        )
-      `;
-      imported++;
-    }
-
-    return NextResponse.json({ ok: true, imported, skipped, total: rows.length, nextCursor });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const isAdmin = req.cookies.get("cb_admin")?.value;
+  if (!isAdmin) {
+    return NextResponse.json({ ok: false, error: "admin only" }, { status: 401 });
   }
+
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch {
+    return NextResponse.json({ ok: false, error: "invalid multipart" }, { status: 400 });
+  }
+
+  const file = formData.get("file") as File | null;
+  if (!file) {
+    return NextResponse.json({ ok: false, error: "no file" }, { status: 400 });
+  }
+
+  const source = String(formData.get("source") ?? "xlsx_import");
+  const fileName = file.name.toLowerCase();
+
+  let rows: ParsedRow[];
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (fileName.endsWith(".csv") || fileName.endsWith(".txt")) {
+      rows = parseCsvOrTxt(buffer.toString("utf8"));
+    } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+      rows = await parseXlsx(buffer);
+    } else {
+      return NextResponse.json({ ok: false, error: "unsupported format — use xlsx/csv/txt" }, { status: 400 });
+    }
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: `parse error: ${err}` }, { status: 400 });
+  }
+
+  if (!rows.length) {
+    return NextResponse.json({ ok: false, error: "no rows found" }, { status: 400 });
+  }
+
+  await runOutboundMigrations();
+  const sql = neon(process.env.DATABASE_URL!);
+  const approxDate = new Date().toISOString().slice(0, 10);
+
+  const results = { total: rows.length, saved: 0, duplicates: 0, noise: 0, errors: 0 };
+  const savedIds: string[] = [];
+
+  for (const row of rows.slice(0, 500)) { // cap at 500 per import
+    try {
+      const text = row.text.trim();
+      if (!text || text.length < 5) { results.noise++; continue; }
+
+      const fingerprint = buildFingerprint(row.username, row.chat, text, approxDate);
+
+      const existing = await sql`
+        SELECT id FROM outbound_lead_events WHERE fingerprint = ${fingerprint} LIMIT 1
+      `;
+      if (existing.length > 0) { results.duplicates++; continue; }
+
+      const qual = await qualifyLead(text, { username: row.username, chat: row.chat, source });
+      const score = scoreIntakeLead(qual);
+
+      if (qual.intent === "NOISE" || score.final_score < 5) {
+        await sql`
+          INSERT INTO outbound_lead_events
+            (fingerprint, source, raw_text, tg_username, tg_chat, intent,
+             lead_score, evidence_score, final_score, priority, stream,
+             qualification_reason, key_signals, ai_reply_draft, product_hint, geography_hint)
+          VALUES
+            (${fingerprint}, ${source}, ${text}, ${row.username}, ${row.chat}, ${qual.intent},
+             ${score.lead_score}, ${score.evidence_score}, ${score.final_score}, ${score.priority}, ${qual.stream},
+             ${qual.qualification_reason}, ${JSON.stringify(qual.key_signals)},
+             '', ${qual.product_hint}, ${qual.geography_hint})
+        `;
+        results.noise++;
+        continue;
+      }
+
+      const [event] = await sql`
+        INSERT INTO outbound_lead_events
+          (fingerprint, source, raw_text, tg_username, tg_chat, intent,
+           lead_score, evidence_score, final_score, priority, stream,
+           qualification_reason, key_signals, ai_reply_draft, product_hint, geography_hint)
+        VALUES
+          (${fingerprint}, ${source}, ${text}, ${row.username}, ${row.chat}, ${qual.intent},
+           ${score.lead_score}, ${score.evidence_score}, ${score.final_score}, ${score.priority}, ${qual.stream},
+           ${qual.qualification_reason}, ${JSON.stringify(qual.key_signals)},
+           ${qual.ai_reply_draft}, ${qual.product_hint}, ${qual.geography_hint})
+        RETURNING id
+      `;
+      results.saved++;
+      savedIds.push(event.id);
+
+      // Throttle Haiku calls: 2s gap between rows
+      await new Promise(r => setTimeout(r, 2000));
+    } catch {
+      results.errors++;
+    }
+  }
+
+  return NextResponse.json({ ok: true, results, saved_ids: savedIds.slice(0, 20) });
+}
+
+interface ParsedRow {
+  text: string;
+  username: string;
+  chat: string;
+}
+
+function parseCsvOrTxt(content: string): ParsedRow[] {
+  const lines = content.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return [];
+
+  // Detect delimiter
+  const firstLine = lines[0];
+  const delimiter = firstLine.includes("\t") ? "\t" : firstLine.includes(";") ? ";" : ",";
+
+  // Try to detect header
+  const hasHeader = /text|message|сообщение|username|chat/i.test(firstLine);
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+
+  const headerCols = hasHeader
+    ? firstLine.split(delimiter).map(h => h.toLowerCase().trim())
+    : null;
+
+  return dataLines.map(line => {
+    const cols = line.split(delimiter);
+    if (headerCols) {
+      const textIdx = headerCols.findIndex(h => /text|message|сообщение|content/i.test(h));
+      const userIdx = headerCols.findIndex(h => /username|user|автор/i.test(h));
+      const chatIdx = headerCols.findIndex(h => /chat|channel|группа/i.test(h));
+      return {
+        text: cols[textIdx >= 0 ? textIdx : 0]?.replace(/^["']|["']$/g, "").trim() ?? "",
+        username: cols[userIdx >= 0 ? userIdx : 1]?.replace(/^["']|["']$/g, "").trim() ?? "",
+        chat: cols[chatIdx >= 0 ? chatIdx : 2]?.replace(/^["']|["']$/g, "").trim() ?? "",
+      };
+    }
+    // No header: assume first col = text
+    return {
+      text: cols[0]?.replace(/^["']|["']$/g, "").trim() ?? "",
+      username: cols[1]?.replace(/^["']|["']$/g, "").trim() ?? "",
+      chat: cols[2]?.replace(/^["']|["']$/g, "").trim() ?? "",
+    };
+  }).filter(r => r.text.length > 0);
+}
+
+async function parseXlsx(buffer: Buffer): Promise<ParsedRow[]> {
+  // Dynamic import to avoid bundling issues
+  const XLSX = await import("xlsx").catch(() => null);
+  if (!XLSX) throw new Error("xlsx package not available — install with: npm i xlsx");
+
+  const workbook = XLSX.default.read(buffer, { type: "buffer" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const raw: Record<string, string>[] = XLSX.default.utils.sheet_to_json(sheet, { defval: "" });
+
+  return raw.map(row => {
+    const keys = Object.keys(row).map(k => k.toLowerCase());
+    const textKey = Object.keys(row).find((_, i) => /text|message|сообщение|content/i.test(keys[i])) ?? Object.keys(row)[0] ?? "";
+    const userKey = Object.keys(row).find((_, i) => /username|user|автор/i.test(keys[i])) ?? "";
+    const chatKey = Object.keys(row).find((_, i) => /chat|channel|группа/i.test(keys[i])) ?? "";
+    return {
+      text: String(row[textKey] ?? "").trim(),
+      username: String(row[userKey] ?? "").trim(),
+      chat: String(row[chatKey] ?? "").trim(),
+    };
+  }).filter(r => r.text.length > 0);
 }
