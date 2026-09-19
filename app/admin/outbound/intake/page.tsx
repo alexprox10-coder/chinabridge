@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 
 type Priority = "LOW" | "MEDIUM" | "HIGH" | "HOT";
 type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -66,7 +66,7 @@ const URGENCY_COLORS: Record<string, string> = {
 };
 
 const n = (v: unknown) => Number(v ?? 0);
-const parseArr = <T>(v: T[] | string): T[] => {
+const parseArr = <T,>(v: T[] | string): T[] => {
   if (Array.isArray(v)) return v;
   try { return JSON.parse(v as string) as T[]; } catch { return []; }
 };
