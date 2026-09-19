@@ -96,6 +96,12 @@ export async function runOutboundMigrations(): Promise<void> {
       try { await sql.unsafe(m); } catch { /* column already exists */ }
     }
 
+    // Guaranteed DDL via tagged template (sql.unsafe silently fails on some Neon plans)
+    try { await sql`ALTER TABLE outbound_lead_events ADD COLUMN IF NOT EXISTS supplier_exists BOOLEAN`; } catch { /* exists */ }
+    try { await sql`ALTER TABLE outbound_lead_events ADD COLUMN IF NOT EXISTS supplier_source TEXT NOT NULL DEFAULT ''`; } catch { /* exists */ }
+    try { await sql`ALTER TABLE outbound_lead_events ADD COLUMN IF NOT EXISTS source_created_at TIMESTAMP`; } catch { /* exists */ }
+    try { await sql`ALTER TABLE outbound_lead_events ADD COLUMN IF NOT EXISTS source_message_id TEXT NOT NULL DEFAULT ''`; } catch { /* exists */ }
+
     // Analytics events table (§31 ТЗ)
     await sql.unsafe(`
         CREATE TABLE IF NOT EXISTS outbound_analytics_events (
