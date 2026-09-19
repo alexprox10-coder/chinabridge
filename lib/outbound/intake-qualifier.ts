@@ -202,7 +202,7 @@ function parseQualification(raw: string): QualificationResult {
   const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
   const p = JSON.parse(cleaned);
 
-  const clamp = (v: unknown) => Math.min(100, Math.max(0, Number(v ?? 0)));
+  const clamp = (v: unknown) => Math.round(Math.min(100, Math.max(0, Number(v ?? 0))));
 
   return {
     intent: (p.intent as LeadIntent) ?? "UNKNOWN",
