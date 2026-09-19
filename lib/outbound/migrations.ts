@@ -4,7 +4,9 @@
 export async function runOutboundMigrations(): Promise<void> {
   try {
     const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL!);
+    // Use unpooled connection for DDL — PgBouncer pooled URL blocks CREATE TABLE
+    const dbUrl = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL!;
+    const sql = neon(dbUrl);
 
     // Parser Club Intake: raw events table
     try {
