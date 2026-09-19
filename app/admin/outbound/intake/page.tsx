@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 type Priority = "LOW" | "MEDIUM" | "HIGH" | "HOT";
 type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -161,6 +162,7 @@ export default function IntakeDashboard() {
 
   return (
     <div className="min-h-screen bg-[#060f1e] text-white p-6">
+      <AdminNav />
       <div className="max-w-6xl mx-auto">
 
         {/* Header */}
