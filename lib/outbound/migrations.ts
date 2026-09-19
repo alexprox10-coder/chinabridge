@@ -2,12 +2,11 @@
 // Pattern: ALTER TABLE ... ADD COLUMN IF NOT EXISTS (never fails if column exists)
 
 export async function runOutboundMigrations(): Promise<void> {
-  try {
-    const { neon } = await import("@neondatabase/serverless");
-    // Use unpooled connection for DDL — PgBouncer pooled URL blocks CREATE TABLE
-    const dbUrl = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL!;
-    const sql = neon(dbUrl);
+  const { neon } = await import("@neondatabase/serverless");
+  const dbUrl = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL!;
+  const sql = neon(dbUrl);
 
+  {
     // Parser Club Intake: raw events table
     try {
       await sql.unsafe(`
@@ -159,7 +158,5 @@ export async function runOutboundMigrations(): Promise<void> {
     for (const migration of columnMigrations) {
       try { await sql.unsafe(migration); } catch { /* column already exists */ }
     }
-  } catch {
-    // Silently ignore — columns already exist or table not yet created
   }
 }
