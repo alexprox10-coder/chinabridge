@@ -7,30 +7,32 @@ export async function runOutboundMigrations(): Promise<void> {
     const sql = neon(process.env.DATABASE_URL!);
 
     // Parser Club Intake: raw events table for deduplication
-    await sql.unsafe(`
-      CREATE TABLE IF NOT EXISTS outbound_lead_events (
-        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-        fingerprint TEXT        UNIQUE NOT NULL,
-        source      TEXT        NOT NULL DEFAULT 'parser_club',
-        raw_text    TEXT        NOT NULL DEFAULT '',
-        tg_username TEXT        NOT NULL DEFAULT '',
-        tg_chat     TEXT        NOT NULL DEFAULT '',
-        intent      TEXT        NOT NULL DEFAULT 'UNKNOWN',
-        lead_score  INTEGER     NOT NULL DEFAULT 0,
-        evidence_score INTEGER  NOT NULL DEFAULT 0,
-        final_score INTEGER     NOT NULL DEFAULT 0,
-        priority    TEXT        NOT NULL DEFAULT 'LOW',
-        stream      INTEGER,
-        qualification_reason TEXT NOT NULL DEFAULT '',
-        key_signals JSONB       NOT NULL DEFAULT '[]',
-        ai_reply_draft TEXT     NOT NULL DEFAULT '',
-        product_hint TEXT       NOT NULL DEFAULT '',
-        geography_hint TEXT     NOT NULL DEFAULT '',
-        outbound_lead_id UUID,
-        approval_status TEXT    NOT NULL DEFAULT 'PENDING',
-        created_at  TIMESTAMP   NOT NULL DEFAULT NOW()
-      )
-    `).catch(() => {});
+    try {
+      await sql.unsafe(`
+        CREATE TABLE IF NOT EXISTS outbound_lead_events (
+          id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+          fingerprint TEXT        UNIQUE NOT NULL,
+          source      TEXT        NOT NULL DEFAULT 'parser_club',
+          raw_text    TEXT        NOT NULL DEFAULT '',
+          tg_username TEXT        NOT NULL DEFAULT '',
+          tg_chat     TEXT        NOT NULL DEFAULT '',
+          intent      TEXT        NOT NULL DEFAULT 'UNKNOWN',
+          lead_score  INTEGER     NOT NULL DEFAULT 0,
+          evidence_score INTEGER  NOT NULL DEFAULT 0,
+          final_score INTEGER     NOT NULL DEFAULT 0,
+          priority    TEXT        NOT NULL DEFAULT 'LOW',
+          stream      INTEGER,
+          qualification_reason TEXT NOT NULL DEFAULT '',
+          key_signals JSONB       NOT NULL DEFAULT '[]',
+          ai_reply_draft TEXT     NOT NULL DEFAULT '',
+          product_hint TEXT       NOT NULL DEFAULT '',
+          geography_hint TEXT     NOT NULL DEFAULT '',
+          outbound_lead_id UUID,
+          approval_status TEXT    NOT NULL DEFAULT 'PENDING',
+          created_at  TIMESTAMP   NOT NULL DEFAULT NOW()
+        )
+      `);
+    } catch { /* table already exists */ }
 
     // §6 ТЗ — New Opportunity fields
     const columnMigrations = [
