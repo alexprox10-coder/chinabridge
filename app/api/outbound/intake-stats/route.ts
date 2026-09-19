@@ -100,7 +100,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   if (!isAdmin) return NextResponse.json({ ok: false, error: "admin only" }, { status: 401 });
 
   const { id, approval_status } = await req.json().catch(() => ({}));
-  if (!id || !["APPROVED", "REJECTED"].includes(approval_status)) {
+  if (!id || !["APPROVED", "REJECTED", "PENDING"].includes(approval_status)) {
     return NextResponse.json({ ok: false, error: "bad params" }, { status: 400 });
   }
 

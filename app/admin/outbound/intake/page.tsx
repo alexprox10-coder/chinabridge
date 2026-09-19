@@ -110,7 +110,7 @@ export default function IntakeDashboard() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  async function approve(id: string, status: "APPROVED" | "REJECTED") {
+  async function approve(id: string, status: ApprovalStatus) {
     setApprovingId(id);
     try {
       await fetch("/api/outbound/intake-stats", {
@@ -120,7 +120,7 @@ export default function IntakeDashboard() {
       });
       setData(prev => prev ? {
         ...prev,
-        leads: prev.leads.map(l => l.id === id ? { ...l, approval_status: status } : l),
+        leads: prev.leads.map(l => l.id === id ? { ...l, approval_status: status as ApprovalStatus } : l),
       } : prev);
     } finally { setApprovingId(null); }
   }

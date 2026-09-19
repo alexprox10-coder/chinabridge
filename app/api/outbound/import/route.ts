@@ -158,14 +158,16 @@ function parseCsvOrTxt(content: string): ParsedRow[] {
 }
 
 async function parseXlsx(buffer: Buffer): Promise<ParsedRow[]> {
-  // Dynamic import — falls back to CSV parser if xlsx not installed
-  let XLSX: typeof import("xlsx") | null = null;
+  // Dynamic import with webpack magic comment to suppress missing-module warning
+  // xlsx is optional: CSV fallback used if not installed
+  let XLSX: { read: Function; utils: { sheet_to_json: Function } } | null = null;
   try {
-    XLSX = await import("xlsx");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    XLSX = require(/* webpackIgnore: true */ "xlsx");
   } catch {
-    // xlsx not installed: treat as CSV (binary content won't parse well, but won't crash)
     return parseCsvOrTxt(buffer.toString("utf8", 0, Math.min(buffer.length, 200_000)));
   }
+  if (!XLSX) return parseCsvOrTxt(buffer.toString("utf8", 0, Math.min(buffer.length, 200_000)));
 
   const workbook = XLSX.read(buffer, { type: "buffer" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
