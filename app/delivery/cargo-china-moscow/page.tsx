@@ -105,7 +105,7 @@ export default function CargoMoscowPage() {
             Рассчитать стоимость →
           </Link>
           <Link
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=seo_delivery_moscow"
             target="_blank"
             className="inline-flex items-center gap-2 border border-[#243a5e] hover:border-[#00A86B] text-white px-6 py-3 rounded-xl transition-colors"
           >

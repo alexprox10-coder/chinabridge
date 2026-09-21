@@ -50,7 +50,7 @@ export default function RuForm() {
           Менеджер свяжется в течение 15 минут
         </p>
         <a
-          href="https://t.me/ChinaBridgeLID_bot"
+          href="https://t.me/ChinaBridgeLID_bot?start=landing_ru"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-[#229ED9] text-white font-semibold px-6 py-3 rounded-xl text-sm"
@@ -147,7 +147,7 @@ export default function RuForm() {
           <div className="flex-1 h-px bg-white/10" />
         </div>
         <a
-          href="https://t.me/ChinaBridgeLID_bot"
+          href="https://t.me/ChinaBridgeLID_bot?start=landing_ru"
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => analytics.telegramClick()}

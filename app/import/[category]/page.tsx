@@ -142,7 +142,7 @@ const TgIcon = () => (
           <Link href="/" className="text-white font-bold text-lg tracking-tight">
             China<span className="text-[#00A86B]">Bridge</span>
           </Link>
-          <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+          <a href="https://t.me/ChinaBridgeLID_bot?start=seo_import" target="_blank" rel="noopener noreferrer"
             onClick={() => { trackGAEvent("import_header_tg_click", { category }); notifyTgClick("header"); }}
             className="flex items-center gap-1.5 text-sm bg-[#229ED9]/15 hover:bg-[#229ED9]/30 text-[#229ED9] px-3 py-1.5 rounded-lg transition-colors font-medium">
             <TgIcon />
@@ -196,7 +196,7 @@ const TgIcon = () => (
             <p className="text-center text-[#445566] text-xs mb-5">Введите товар → AI рассчитает маржу за 10 секунд</p>
 
             {/* Secondary CTA — Telegram bot */}
-            <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+            <a href="https://t.me/ChinaBridgeLID_bot?start=seo_import" target="_blank" rel="noopener noreferrer"
               onClick={() => { trackGAEvent("import_tg_click", { category }); analytics.telegramClick(); notifyTgClick("secondary_cta"); }}
               className="flex items-center justify-center gap-2 w-full border border-[#243a5e] hover:border-[#00A86B]/40 text-[#8899aa] hover:text-white font-medium py-3.5 rounded-xl transition text-sm mb-8">
               <TgIcon />

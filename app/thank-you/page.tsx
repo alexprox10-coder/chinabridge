@@ -27,7 +27,7 @@ export default function ThankYouPage() {
         </div>
 
         <a
-          href="https://t.me/ChinaBridgeLID_bot"
+          href="https://t.me/ChinaBridgeLID_bot?start=landing"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full flex items-center justify-center gap-2 py-4 bg-[#229ED9] hover:bg-[#1a8bbf] text-white font-bold rounded-xl text-sm transition-all mb-3"

@@ -82,7 +82,7 @@ export default function KzAutoAccessoriesPage() {
 
           {/* Secondary CTA */}
           <a
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=seo_kz_autoacc"
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => analytics.telegramClick()}

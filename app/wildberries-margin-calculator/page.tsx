@@ -288,7 +288,7 @@ export default function WildberriesMarginCalculatorPage() {
             <p className="text-white font-bold mb-2">Хотите помощь с расчётом?</p>
             <p className="text-[#8899aa] text-sm mb-4">Менеджер подберёт товар и рассчитает реальную маржу под ваш бюджет</p>
             <a
-              href="https://t.me/ChinaBridgeLID_bot"
+              href="https://t.me/ChinaBridgeLID_bot?start=calc"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#229ED9] text-white font-bold px-6 py-3 rounded-xl text-sm"

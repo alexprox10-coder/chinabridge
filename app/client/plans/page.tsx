@@ -66,7 +66,7 @@ const PLANS = [
       "Приоритетная поддержка 24/7",
     ],
     limits: [],
-    cta: { label: "Написать менеджеру", href: "https://t.me/ChinaBridgeLID_bot", external: true, pay: false },
+    cta: { label: "Написать менеджеру", href: "https://t.me/ChinaBridgeLID_bot?start=client_dashboard", external: true, pay: false },
     current: false,
     highlight: true,
     color: "green",
@@ -218,7 +218,7 @@ export default function PlansPage() {
                   <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700">
                     <p className="font-semibold mb-1">Ошибка платёжного шлюза:</p>
                     <p className="font-mono break-all">{payError}</p>
-                    <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+                    <a href="https://t.me/ChinaBridgeLID_bot?start=client_dashboard" target="_blank" rel="noopener noreferrer"
                       className="mt-2 block text-center py-1.5 bg-blue-500 text-white rounded-lg font-semibold">
                       Написать менеджеру — подключим вручную
                     </a>
@@ -287,7 +287,7 @@ export default function PlansPage() {
           </p>
         </div>
         <a
-          href="https://t.me/ChinaBridgeLID_bot"
+          href="https://t.me/ChinaBridgeLID_bot?start=client_dashboard"
           target="_blank"
           rel="noopener noreferrer"
           className="flex-shrink-0 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-xl transition-colors text-center"

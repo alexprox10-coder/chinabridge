@@ -50,7 +50,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </p>
           <div className="flex flex-wrap gap-3">
             <a
-              href="https://t.me/ChinaBridgeLID_bot"
+              href="https://t.me/ChinaBridgeLID_bot?start=client_dashboard"
               target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-green-700 font-semibold text-sm rounded-xl hover:bg-green-50 transition-colors shadow-sm"
             >
@@ -116,7 +116,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               Открыть калькулятор
             </Link>
             <a
-              href="https://t.me/ChinaBridgeLID_bot"
+              href="https://t.me/ChinaBridgeLID_bot?start=client_dashboard"
               target="_blank" rel="noopener noreferrer"
               className="text-[#229ED9] text-xs text-center hover:underline"
             >
@@ -231,7 +231,7 @@ function EmptyState() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=client_dashboard"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors shadow-sm shadow-green-200"

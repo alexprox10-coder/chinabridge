@@ -168,7 +168,7 @@ export default function ContractPage() {
             <p className="text-xs text-[#8899aa] mt-0.5">Вышлем скан с подписью и печатью в течение 1 рабочего дня</p>
           </div>
           <Link
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=landing"
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 inline-flex items-center gap-2 bg-[#00A86B] hover:bg-[#009060] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"

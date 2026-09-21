@@ -63,7 +63,7 @@ const schemaOrg = {
         "@type": "ContactPoint",
         contactType: "customer service",
         availableLanguage: ["Russian"],
-        url: "https://t.me/ChinaBridgeLID_bot",
+        url: "https://t.me/ChinaBridgeLID_bot?start=landing",
       },
     },
     {

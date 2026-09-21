@@ -36,7 +36,7 @@ export default async function OrdersPage() {
             Опишите товар выше или напишите менеджеру — мы найдём поставщика и рассчитаем стоимость.
           </p>
           <a
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=client_dashboard"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors shadow-sm shadow-green-200"

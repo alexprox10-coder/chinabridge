@@ -154,7 +154,7 @@ export default function FAQPage() {
         <div className="mt-12 text-center">
           <p className="text-[#8899aa] mb-4">Остались вопросы? Ответим в Telegram</p>
           <Link
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=landing"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#00A86B] hover:bg-[#009060] text-white font-semibold px-6 py-3 rounded-xl transition-colors"

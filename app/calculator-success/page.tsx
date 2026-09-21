@@ -201,7 +201,7 @@ export default function CalculatorSuccessPage() {
             <p className="text-[10px] text-[#5a7899] leading-relaxed">
               Не получили код? Убедитесь, что написали боту{" "}
               <a
-                href="https://t.me/ChinaBridgeLID_bot"
+                href="https://t.me/ChinaBridgeLID_bot?start=calc"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#00A86B] underline"
@@ -239,7 +239,7 @@ export default function CalculatorSuccessPage() {
             <h1 className="text-lg font-bold text-white mb-2">Что-то пошло не так</h1>
             <p className="text-sm text-[#8899aa] mb-4">Платёж мог быть отклонён или истёк. Обратитесь в поддержку.</p>
             <a
-              href="https://t.me/ChinaBridgeLID_bot"
+              href="https://t.me/ChinaBridgeLID_bot?start=calc"
               target="_blank"
               rel="noopener noreferrer"
               className="block py-2.5 bg-[#229ED9] text-white text-sm font-semibold rounded-xl text-center"

@@ -45,7 +45,7 @@ export default function KaspiChinaPage() {
           <h2 className="text-2xl font-bold text-white mb-2">Заявка принята!</h2>
           <p className="text-[#8899aa] text-sm mb-6">Менеджер свяжется за 15 минут</p>
           <a
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=seo_kz"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#229ED9] text-white font-bold px-6 py-3 rounded-xl text-sm"
@@ -167,7 +167,7 @@ export default function KaspiChinaPage() {
         </div>
 
         <a
-          href="https://t.me/ChinaBridgeLID_bot"
+          href="https://t.me/ChinaBridgeLID_bot?start=seo_kz"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full flex items-center justify-center gap-2 bg-[#229ED9]/12 border border-[#229ED9]/25 text-[#229ED9] font-semibold py-3.5 rounded-xl text-sm hover:bg-[#229ED9]/20 transition-colors"

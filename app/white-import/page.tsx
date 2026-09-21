@@ -21,7 +21,7 @@ export default function WhiteImportPage() {
           <div className="w-7 h-7 rounded-lg bg-[#00A86B] flex items-center justify-center text-white font-bold text-xs">CB</div>
           <span className="font-bold text-sm">China<span className="text-[#00A86B]">Bridge</span></span>
         </Link>
-        <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+        <a href="https://t.me/ChinaBridgeLID_bot?start=seo_white_import" target="_blank" rel="noopener noreferrer"
           onClick={() => analytics.telegramClick()}
           className="text-xs text-[#8899aa] hover:text-white transition-colors">
           Написать менеджеру →

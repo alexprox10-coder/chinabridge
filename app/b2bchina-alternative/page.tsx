@@ -185,7 +185,7 @@ export default function B2BchinaAlternativePage() {
                   {c.highlight && (
                     <div className="mt-4 flex gap-3 flex-wrap">
                       <a
-                        href="https://t.me/ChinaBridgeLID_bot"
+                        href="https://t.me/ChinaBridgeLID_bot?start=landing"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 bg-[#229ED9] text-white text-sm font-bold px-4 py-2.5 rounded-xl"
@@ -280,7 +280,7 @@ export default function B2BchinaAlternativePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <a
-                href="https://t.me/ChinaBridgeLID_bot"
+                href="https://t.me/ChinaBridgeLID_bot?start=landing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-[#229ED9] text-white font-bold px-6 py-3.5 rounded-xl text-sm"

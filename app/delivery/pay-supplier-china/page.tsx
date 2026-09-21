@@ -85,7 +85,7 @@ export default function PaySupplierChinaPage() {
         </p>
         <div className="flex flex-wrap gap-4">
           <Link
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=seo_pay_supplier"
             target="_blank"
             className="inline-flex items-center gap-2 bg-[#00A86B] hover:bg-[#009060] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
           >

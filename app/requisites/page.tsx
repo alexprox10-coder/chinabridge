@@ -153,7 +153,7 @@ export default function RequisitesPage() {
             <CardTitle icon="📬" title="Контакты" />
             <div className="space-y-4">
               <a
-                href="https://t.me/ChinaBridgeLID_bot"
+                href="https://t.me/ChinaBridgeLID_bot?start=landing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group"
@@ -244,7 +244,7 @@ export default function RequisitesPage() {
             </div>
             <div className="mt-5">
               <Link
-                href="https://t.me/ChinaBridgeLID_bot"
+                href="https://t.me/ChinaBridgeLID_bot?start=landing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-[#00A86B] hover:bg-[#009060] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
@@ -265,7 +265,7 @@ export default function RequisitesPage() {
             <p className="text-[#8899aa] text-xs mt-0.5">Подготовим и вышлем в течение 1 рабочего дня</p>
           </div>
           <Link
-            href="https://t.me/ChinaBridgeLID_bot"
+            href="https://t.me/ChinaBridgeLID_bot?start=landing"
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 inline-flex items-center gap-2 bg-[#00A86B] hover:bg-[#009060] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"

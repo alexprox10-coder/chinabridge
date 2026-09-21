@@ -32,7 +32,7 @@ export default async function DocumentsPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href="https://t.me/ChinaBridgeLID_bot"
+              href="https://t.me/ChinaBridgeLID_bot?start=client_dashboard"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"

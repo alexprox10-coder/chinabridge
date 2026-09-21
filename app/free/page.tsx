@@ -341,7 +341,7 @@ export default function FreePage() {
                 Рассчитать доставку
               </a>
               <a
-                href="https://t.me/ChinaBridgeLID_bot"
+                href="https://t.me/ChinaBridgeLID_bot?start=landing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="border border-white/20 hover:border-white/40 text-white font-medium px-8 py-3.5 rounded-xl transition-colors"

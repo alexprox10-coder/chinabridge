@@ -140,7 +140,7 @@ export default function SupplierWildberriesChinaPage() {
           {/* CTA mobile */}
           <div className="sm:hidden mb-8">
             <a
-              href="https://t.me/ChinaBridgeLID_bot"
+              href="https://t.me/ChinaBridgeLID_bot?start=seo_wb_supplier"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-4 bg-[#229ED9] text-white font-bold rounded-2xl text-sm"
@@ -243,7 +243,7 @@ export default function SupplierWildberriesChinaPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <a
-                href="https://t.me/ChinaBridgeLID_bot"
+                href="https://t.me/ChinaBridgeLID_bot?start=seo_wb_supplier"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-[#229ED9] text-white font-bold px-6 py-3.5 rounded-xl text-sm"
