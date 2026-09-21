@@ -721,10 +721,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (data === "menu_manager") {
-      const brief = buildBrief(firstName, username, chatId, session);
+      const newScore = Math.min(Math.max((session.lead_score ?? 0) + 25, 50), 100);
+      const intentScore = Math.max(session.intent_score ?? 0, 70);
+      await upsertSession(sql, chatId, { state: "manager_requested", lead_score: newScore, intent_score: intentScore });
+      const brief = buildBrief(firstName, username, chatId, { ...session, lead_score: newScore, intent_score: intentScore });
       await notifyManager(`🙋 <b>Клиент запросил менеджера</b>\n\n${brief}`);
-      const newScore = Math.min((session.lead_score ?? 0) + 15, 100);
-      await upsertSession(sql, chatId, { state: "manager_requested", lead_score: newScore });
       await sendMsg(chatId,
         `👤 Передал ваш запрос менеджеру. Он свяжется в течение 5–15 минут.\n\nПока ждёте — можете написать напрямую:`,
         { reply_markup: {
