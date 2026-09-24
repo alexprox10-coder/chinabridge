@@ -3,7 +3,7 @@ import { NicheLeadPage } from "@/components/niche/NicheLeadPage";
 
 export const metadata: Metadata = {
   title: "Инструменты и оборудование из Китая | ChinaBridge",
-  description: "Проверим завод лично, согласуем цену, доставим официально с сертификатами.",
+  description: "Инструменты и промышленное оборудование из Китая в Россию и Казахстан. Проверим завод лично, согласуем цену, доставим с сертификатами. Сборный груз от 50 кг.",
 
   alternates: { canonical: "https://chinabridge.pro/instrument" },
 };

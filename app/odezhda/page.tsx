@@ -3,7 +3,7 @@ import { NicheLeadPage } from "@/components/niche/NicheLeadPage";
 
 export const metadata: Metadata = {
   title: "Одежда и текстиль из Китая оптом | ChinaBridge",
-  description: "Найдём фабрику под ваш бренд или готовый товар. Сборный груз от 50 кг — не нужен полный контейнер.",
+  description: "Одежда и текстиль из Китая оптом в Россию и Казахстан. Найдём фабрику под ваш бренд, согласуем образцы. Сборный груз от 50 кг, поставки под WB, Ozon и Kaspi.",
 
   alternates: { canonical: "https://chinabridge.pro/odezhda" },
 };

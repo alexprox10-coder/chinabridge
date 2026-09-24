@@ -3,7 +3,7 @@ import { NicheLeadPage } from "@/components/niche/NicheLeadPage";
 
 export const metadata: Metadata = {
   title: "Любой товар из Китая оптом | ChinaBridge",
-  description: "Есть офис в Гуанчжоу и склад — везём всё. Найдём поставщика, проверим, привезём.",
+  description: "Оптовые поставки любых товаров из Китая в Россию и Казахстан. Офис в Гуанчжоу. Найдём поставщика на 1688 и Alibaba, проверим качество, доставим от 50 кг.",
 
   alternates: { canonical: "https://chinabridge.pro/optom" },
 };
