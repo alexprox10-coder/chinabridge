@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "AI Business Audit — ChinaBridge | Бесплатный анализ импорта",
   description:
     "Введите сайт вашей компании — AI за 60 секунд найдёт потенциал снижения себестоимости, прямые категории из Китая и SEO-возможности.",
+  alternates: { canonical: "https://chinabridge.pro/audit" },
 };
 
 export default function AuditPage() {
