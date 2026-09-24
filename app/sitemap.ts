@@ -72,6 +72,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: "https://chinabridge.pro/delivery/white-import-wb-ozon", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     { url: "https://chinabridge.pro/delivery/pay-supplier-china", lastModified: new Date(), changeFrequency: "monthly", priority: 0.95 },
     { url: "https://chinabridge.pro/delivery/cargo-china-moscow", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    { url: "https://chinabridge.pro/cargo-china-almaty", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    { url: "https://chinabridge.pro/cargo-china-astana", lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     ...articleUrls,
   ];
 }
