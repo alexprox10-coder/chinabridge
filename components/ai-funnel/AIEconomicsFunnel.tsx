@@ -476,7 +476,7 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
   const fmtC = (n: number) => isKZ ? fmtKzt(n) : fmt(n);
   const cnyRate = Number(ec.cny_rate ?? 0);
   const deliveryLabel = delivery?.pricingRule === '97kapro_estimate'
-    ? `${fmtC(ec.delivery_total_rub)} ${sym} (${isKZ ? '~$2.50/кг, 5-8 дн' : '~$3/кг авто'})`
+    ? `${fmtC(ec.delivery_total_rub)} ${sym} (${isKZ ? '~$2.50/кг, 18-22 дн' : '~$3/кг авто, 25-35 дн'})`
     : `${fmtC(ec.delivery_total_rub)} ${sym}`;
   const commPct = ec.gross_revenue_rub > 0
     ? Math.round((ec.marketplace_fee_rub / ec.gross_revenue_rub) * 100) : 0;

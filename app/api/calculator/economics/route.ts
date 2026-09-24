@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
   // §6 — fetch data source metadata for transparency
   const sql6 = neon(process.env.DATABASE_URL!);
   const ratesMeta = await sql6`
-    SELECT fact_key, valid_from, source_url FROM intel_facts
+    SELECT fact_key, updated_at::date::text AS valid_from, source_url FROM intel_facts
     WHERE fact_key IN ('CNY_RATE', 'USD_RATE', 'CUSTOMS_DUTY_DEFAULT')
     ORDER BY fact_key
   `.catch(() => [] as Array<{ fact_key: string; valid_from: string; source_url: string | null }>);
