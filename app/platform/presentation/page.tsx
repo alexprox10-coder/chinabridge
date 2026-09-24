@@ -3,6 +3,7 @@ import PrintButton from "./PrintButton";
 export const metadata = {
   title: "ChinaBridge Platform — Презентация для партнёров",
   description: "Готовая платформа управления импортом из Китая. White Label от 99 000 ₽/мес.",
+  alternates: { canonical: "https://chinabridge.pro/platform/presentation" },
 };
 
 const PROBLEMS = [

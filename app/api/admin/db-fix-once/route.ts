@@ -24,11 +24,14 @@ async function fixN8NDeliveryDays(): Promise<{ fixed: number; rows: unknown[] }>
     : Array.isArray(raw?.rows) ? raw.rows
     : [];
 
+  // Return sample rows for field inspection
+  const sampleRows = rows.slice(0, 3).map(r => ({ keys: Object.keys(r), sample: r }));
+
   const toFix = rows.filter((r) =>
-    String(r.carrier_name ?? '').toLowerCase().includes('almaty') &&
-    r.transport_type === 'truck' &&
-    Number(r.delivery_days_min) === 5 &&
-    Number(r.delivery_days_max) === 8,
+    (String(r.carrier_name ?? '').toLowerCase().includes('almaty') ||
+     String(r.carrier_name ?? '').toLowerCase().includes('алматы')) &&
+    (r.transport_type === 'truck' || r.transport_type === 'Truck') &&
+    (Number(r.delivery_days_min) === 5 || Number(r.delivery_days_max) === 8),
   );
 
   const fixed: unknown[] = [];
@@ -44,7 +47,7 @@ async function fixN8NDeliveryDays(): Promise<{ fixed: number; rows: unknown[] }>
     if (updateRes.ok) fixed.push({ id: rowId, carrier_name: row.carrier_name });
   }
 
-  return { fixed: fixed.length, rows: fixed };
+  return { fixed: fixed.length, rows: fixed, sample: sampleRows, total_rows: rows.length };
 }
 
 export async function POST(req: NextRequest) {
