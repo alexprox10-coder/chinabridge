@@ -4,11 +4,12 @@ import { neon } from '@neondatabase/serverless';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const ADMIN_SECRET = process.env.CALC_ADMIN_SECRET;
-
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get('x-admin-secret');
-  if (!ADMIN_SECRET || secret !== ADMIN_SECRET) {
+  const secret = req.headers.get('x-admin-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '');
+  const cronSecret = process.env.CRON_SECRET;
+  const internalKey = process.env.INTERNAL_API_KEY;
+
+  if (!secret || (secret !== cronSecret && secret !== internalKey)) {
     return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
   }
 
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
   results.kz_truck_fixed = kzFix.length;
   results.kz_rows = kzFix;
 
-  // Update intel_facts updated_at (so date display shows today)
+  // Update intel_facts updated_at so date display shows today
   const datesFix = await sql`
     UPDATE intel_facts
     SET updated_at = NOW()
