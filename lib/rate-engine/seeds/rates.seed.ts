@@ -16,7 +16,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
   };
 
   return [
-    // ── Yiwu/Guangzhou → Almaty (97Kapro, 5-8 days) — density-based ──
+    // ── Yiwu/Guangzhou → Almaty (97Kapro, 18-22 days) — density-based ──
     // Costs: 600+=$1.30, 400-600=$1.35, 300-400=$1.40, 250-300=$1.45,
     //        200-250=$1.50, 170-200=$1.60, 140-170=$1.70, 120-140=$1.80
     // ChinaBridge sells at: cost + ~65-80% markup
@@ -26,7 +26,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       route_id: String(routeMap['yiwu_almaty_truck'] ?? ''),
       min_weight: 0, max_weight: 50,
       price_value: 3.50,  // light/bulky (<120 kg/m³): cost ~$1.80-1.90 + markup
-      delivery_days_min: 5, delivery_days_max: 8,
+      delivery_days_min: 18, delivery_days_max: 22,
     },
     {
       ...truckBase,
@@ -34,7 +34,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       route_id: String(routeMap['yiwu_almaty_truck'] ?? ''),
       min_weight: 50, max_weight: 200,
       price_value: 3.00,  // medium density (120-170 kg/m³): cost ~$1.70-1.80 + markup
-      delivery_days_min: 5, delivery_days_max: 8,
+      delivery_days_min: 18, delivery_days_max: 22,
     },
     {
       ...truckBase,
@@ -42,7 +42,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       route_id: String(routeMap['yiwu_almaty_truck'] ?? ''),
       min_weight: 200, max_weight: 500,
       price_value: 2.50,  // typical marketplace goods (200-300 kg/m³): cost $1.45-1.50 + markup
-      delivery_days_min: 5, delivery_days_max: 8,
+      delivery_days_min: 18, delivery_days_max: 22,
     },
     {
       ...truckBase,
@@ -50,7 +50,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       route_id: String(routeMap['yiwu_almaty_truck'] ?? ''),
       min_weight: 500, max_weight: 0,
       price_value: 2.20,  // heavy/dense (400+ kg/m³): cost $1.30-1.40 + markup
-      delivery_days_min: 5, delivery_days_max: 8,
+      delivery_days_min: 18, delivery_days_max: 22,
     },
 
     // ── Guangzhou → Almaty (97Kapro) ─────────────────────────────
@@ -60,7 +60,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       route_id: String(routeMap['guangzhou_almaty_truck'] ?? ''),
       min_weight: 100, max_weight: 500,
       price_value: 2.60,
-      delivery_days_min: 5, delivery_days_max: 8,
+      delivery_days_min: 18, delivery_days_max: 22,
     },
     {
       ...truckBase,
@@ -68,7 +68,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       route_id: String(routeMap['guangzhou_almaty_truck'] ?? ''),
       min_weight: 500, max_weight: 0,
       price_value: 2.20,
-      delivery_days_min: 5, delivery_days_max: 8,
+      delivery_days_min: 18, delivery_days_max: 22,
     },
 
     // ── Shenzhen → Almaty (97Kapro) ──────────────────────────────
@@ -78,7 +78,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       route_id: String(routeMap['shenzhen_almaty_truck'] ?? ''),
       min_weight: 100, max_weight: 500,
       price_value: 2.70,
-      delivery_days_min: 5, delivery_days_max: 8,
+      delivery_days_min: 18, delivery_days_max: 22,
     },
     {
       ...truckBase,
@@ -86,7 +86,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
       route_id: String(routeMap['shenzhen_almaty_truck'] ?? ''),
       min_weight: 500, max_weight: 0,
       price_value: 2.30,
-      delivery_days_min: 5, delivery_days_max: 8,
+      delivery_days_min: 18, delivery_days_max: 22,
     },
 
     // ── Yiwu → Moscow (97Kapro express) — 3 tiers ────────────────

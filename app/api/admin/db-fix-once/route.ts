@@ -6,11 +6,11 @@ export const runtime = 'nodejs';
 
 const N8N_SHIPPING_RATES_TABLE = 'asS7Xa9QFnPpAzN5';
 
-async function fixN8NDeliveryDays(): Promise<{ fixed: number; rows: unknown[] }> {
+async function fixN8NDeliveryDays(): Promise<{ fixed: number; rows: unknown[]; no_key?: boolean; total_rows?: number; sample?: unknown }> {
   const n8nBase = process.env.N8N_BASE_URL ?? 'https://n8n.arendadom24.ru';
   const n8nKey = process.env.N8N_API_KEY ?? '';
 
-  if (!n8nKey) return { fixed: 0, rows: [] };
+  if (!n8nKey) return { fixed: 0, rows: [], no_key: true };
 
   const listRes = await fetch(`${n8nBase}/api/v1/data-tables/${N8N_SHIPPING_RATES_TABLE}/rows?limit=250`, {
     headers: { 'X-N8N-API-KEY': n8nKey },
@@ -81,6 +81,9 @@ export async function POST(req: NextRequest) {
     const n8nResult = await fixN8NDeliveryDays();
     results.n8n_delivery_fixed = n8nResult.fixed;
     results.n8n_rows = n8nResult.rows;
+    results.n8n_no_key = n8nResult.no_key ?? false;
+    results.n8n_total_rows = n8nResult.total_rows;
+    results.n8n_sample = n8nResult.sample;
   } catch (err) {
     results.n8n_error = err instanceof Error ? err.message : String(err);
   }
