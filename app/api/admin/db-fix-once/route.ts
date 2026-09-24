@@ -22,26 +22,13 @@ export async function POST(req: NextRequest) {
     const sql = neon(dbUrl);
     const results: Record<string, unknown> = {};
 
-    // Check table exists
+    // List tables in public schema for diagnostics
     const tables = await sql`
       SELECT table_name FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_name IN ('shipping_rates', 'intel_facts')
+      WHERE table_schema = 'public'
+      ORDER BY table_name
     `;
-    results.tables_found = tables.map((t: Record<string, unknown>) => t.table_name);
-
-    // Fix KZ truck routes: 5-8 days → 18-22 days
-    const kzFix = await sql`
-      UPDATE shipping_rates
-      SET delivery_days_min = 18,
-          delivery_days_max = 22
-      WHERE carrier_name ILIKE '%Almaty%'
-        AND transport_type = 'truck'
-        AND delivery_days_min = 5
-        AND delivery_days_max = 8
-      RETURNING id, carrier_name, delivery_days_min, delivery_days_max
-    `;
-    results.kz_truck_fixed = kzFix.length;
-    results.kz_rows = kzFix;
+    results.tables = tables.map((t: Record<string, unknown>) => t.table_name);
 
     // Update intel_facts updated_at so date display shows today
     const datesFix = await sql`
@@ -51,6 +38,7 @@ export async function POST(req: NextRequest) {
       RETURNING fact_key, updated_at
     `;
     results.intel_dates_updated = datesFix.length;
+    results.intel_rows = datesFix;
 
     return NextResponse.json({ ok: true, results });
   } catch (err: unknown) {
