@@ -24,8 +24,8 @@ async function fixN8NDeliveryDays(): Promise<{ fixed: number; rows: unknown[]; n
     : Array.isArray(raw?.rows) ? raw.rows
     : [];
 
-  // Return sample rows for field inspection
-  const sampleRows = rows.slice(0, 3).map(r => ({ keys: Object.keys(r), sample: r }));
+  // Return all rows for inspection
+  const sampleRows = rows.map(r => ({ carrier: r.carrier_name, type: r.transport_type, days_min: r.delivery_days_min, days_max: r.delivery_days_max, id: r.id }));
 
   const toFix = rows.filter((r) =>
     (String(r.carrier_name ?? '').toLowerCase().includes('almaty') ||
