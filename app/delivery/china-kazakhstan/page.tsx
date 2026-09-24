@@ -81,9 +81,9 @@ export default function KazakhstanDeliveryPage() {
         <h2 className="text-2xl font-bold mb-6">Маршруты в Казахстан</h2>
         <div className="grid md:grid-cols-3 gap-5">
           {[
-            { name: "Авто Алматы (экспресс)", time: "5–8 дней", price: "от $2.50/кг", note: "97Kapro прямой маршрут, мин. 30 кг" },
-            { name: "Авто Астана", time: "8–12 дней", price: "от $3.00/кг", note: "Алматы → Астана, сборный груз" },
-            { name: "Авиа стандарт", time: "3–5 дней", price: "от $23/кг", note: "Алматы, Астана, Шымкент, от 1 кг" },
+            { name: "Авто Алматы (сборный)", time: "18–22 дня", price: "от $2.50/кг", note: "97Kapro прямой маршрут, мин. 30 кг" },
+            { name: "Авто Астана", time: "20–25 дней", price: "от $3.00/кг", note: "Алматы → Астана, сборный груз" },
+            { name: "Авиа стандарт", time: "5–8 дней", price: "от $23/кг", note: "Алматы, Астана, Шымкент, от 1 кг" },
             { name: "Авиа экспресс", time: "1–2 дня", price: "от $33/кг", note: "Срочные отправки, от 1 кг" },
           ].map((r) => (
             <div key={r.name} className="bg-[#0f2644]/60 border border-[#243a5e] rounded-2xl p-5">
