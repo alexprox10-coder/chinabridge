@@ -6,7 +6,7 @@ import { CTASection } from "@/components/seo/CTASection";
 
 export const metadata: Metadata = {
   title: "Доставка из Китая в Казахстан — ChinaBridge",
-  description: "Доставка грузов из Китая в Казахстан: Алматы, Астана, Шымкент. Авто от 30 кг, срок 18–22 дня. Авиа от 1 кг, от 5 дней. Рассчитайте стоимость.",
+  description: "Доставка грузов из Китая в Казахстан: Алматы, Астана, Шымкент. Авто от 100 кг, срок 18–22 дня. Авиа от 1 кг, от 5 дней. Рассчитайте стоимость.",
   keywords: "доставка из Китая в Казахстан, грузоперевозки Китай Казахстан, доставка Алматы из Китая, доставка Астана Китай",
   alternates: { canonical: "https://chinabridge.pro/delivery/china-kazakhstan" },
   openGraph: {

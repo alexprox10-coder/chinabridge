@@ -284,7 +284,7 @@ export default function Hero() {
             <div className="fade-up flex gap-8 pt-6 border-t border-[#243a5e]">
               {[
                 { v: "2019", l: "год основания" },
-                { v: "от 30 кг", l: "мин. партия KZ" },
+                { v: "от 100 кг", l: "мин. партия" },
                 { v: "РФ + KZ", l: "направления" },
               ].map(s => (
                 <div key={s.l}>

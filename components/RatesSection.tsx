@@ -17,8 +17,8 @@ const ROUTES = [
     flag: "🇷🇺",
     href: "/delivery/china-moscow",
     modes: [
-      { icon: "🚗", label: "Авто через КЗ",      price: "от $3.00/кг",  days: "25–35 дней", note: "Москва, СПб, регионы" },
-      { icon: "🚗", label: "Хэйхэ — Благовещенск", price: "уточняется",   days: "18–28 дней", note: "сборные партии от 100 кг · ТПТ", href: "/delivery/kitai-heihe-blagoveshchensk" },
+      { icon: "🚗", label: "Авто через КЗ",      price: "от $3.00/кг",  days: "18–28 дней", note: "Москва, СПб, регионы" },
+      { icon: "🚗", label: "Хэйхэ — Благовещенск", price: "уточняется",   days: "3 дня",      note: "сборные партии от 100 кг · ТПТ", href: "/delivery/kitai-heihe-blagoveshchensk" },
       { icon: "✈️", label: "Авиа стандарт",     price: "от $23/кг",    days: "5–8 дней",   note: "Шереметьево, Домодедово" },
       { icon: "⚡", label: "Авиа экспресс",     price: "от $33/кг",    days: "3 дня",      note: "от 1 кг, срочно" },
     ],

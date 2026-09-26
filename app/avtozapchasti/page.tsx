@@ -3,7 +3,7 @@ import { NicheLeadPage } from "@/components/niche/NicheLeadPage";
 
 export const metadata: Metadata = {
   title: "Автозапчасти из Китая под заказ | ChinaBridge",
-  description: "Доставка автозапчастей из Китая в Россию и Казахстан. Оригинал и аналоги напрямую с завода. Белый ввоз, полные сертификаты. КЗ от 30 кг, Россия от 100 кг, подбор по VIN.",
+  description: "Доставка автозапчастей из Китая в Россию и Казахстан. Оригинал и аналоги напрямую с завода. Белый ввоз, полные сертификаты. от 100 кг, подбор по VIN.",
 
   alternates: { canonical: "https://chinabridge.pro/avtozapchasti" },
 };

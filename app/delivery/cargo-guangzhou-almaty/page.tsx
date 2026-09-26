@@ -6,12 +6,12 @@ import { CTASection } from "@/components/seo/CTASection";
 
 export const metadata: Metadata = {
   title: "Карго Гуанчжоу — Алматы: от $2.50/кг за 18–22 дня | ChinaBridge",
-  description: "Доставка товаров из Гуанчжоу в Алматы авто от $2.50/кг, срок 18–22 дня. Сборные грузы от 30 кг. Серая схема до €200 без пошлин. Рассчитать онлайн.",
+  description: "Доставка товаров из Гуанчжоу в Алматы авто от $2.50/кг, срок 18–22 дня. Сборные грузы от 100 кг. Серая схема до €200 без пошлин. Рассчитать онлайн.",
   keywords: "карго Гуанчжоу Алматы, доставка из Китая в Казахстан, карго Китай Алматы, грузоперевозки Гуанчжоу Алматы, доставка из Китая Казахстан",
   alternates: { canonical: "https://chinabridge.pro/delivery/cargo-guangzhou-almaty" },
   openGraph: {
     title: "Карго Гуанчжоу → Алматы от $2.50/кг | ChinaBridge",
-    description: "Авто 18–22 дня от $2.50/кг, авиа 5–8 дней от $23/кг. Сборные грузы от 30 кг. Офис в Гуанчжоу.",
+    description: "Авто 18–22 дня от $2.50/кг, авиа 5–8 дней от $23/кг. Сборные грузы от 100 кг. Офис в Гуанчжоу.",
     url: "https://chinabridge.pro/delivery/cargo-guangzhou-almaty",
     type: "website",
   },
@@ -36,7 +36,7 @@ const schema = {
 const FAQ = [
   {
     question: "Сколько стоит карго из Гуанчжоу в Алматы?",
-    answer: "Авто сборный груз: $2.50/кг при весе от 30 кг. Авиа: от $23/кг. Итого на 100 кг авто — около $250, авиа — около $2,300. Точную цену считайте в калькуляторе на сайте.",
+    answer: "Авто сборный груз: $2.50/кг при весе от 100 кг. Авиа: от $23/кг. Итого на 100 кг авто — около $250, авиа — около $2,300. Точную цену считайте в калькуляторе на сайте.",
   },
   {
     question: "Сколько идёт груз из Гуанчжоу до Алматы?",
@@ -75,7 +75,7 @@ export default function CargoGuangzhouAlmatyPage() {
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-4 py-12">
         <div className="inline-flex items-center gap-2 bg-[#00A86B]/10 border border-[#00A86B]/30 rounded-full px-4 py-1.5 text-[#00A86B] text-sm mb-6">
-          🇨🇳 Гуанчжоу → 🇰🇿 Алматы · от 30 кг
+          🇨🇳 Гуанчжоу → 🇰🇿 Алматы · от 100 кг
         </div>
         <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">
           Карго Гуанчжоу — Алматы
@@ -116,7 +116,7 @@ export default function CargoGuangzhouAlmatyPage() {
               title: "Авто (сборный груз)",
               price: "$2.50/кг",
               time: "18–22 дня",
-              min: "от 30 кг",
+              min: "от 100 кг",
               details: ["Прямой маршрут через КЗ", "Консолидация на складе в Гуанчжоу", "Доставка до адреса в Алматы", "Страхование груза включено"],
             },
             {
