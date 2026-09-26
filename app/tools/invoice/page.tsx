@@ -1,6 +1,65 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+
+const FREE_LIMIT = 3;
+const STORAGE_KEY = "cb_invoice_uses";
+
+function getUsageCount(): number {
+  try { return parseInt(localStorage.getItem(STORAGE_KEY) ?? "0", 10) || 0; } catch { return 0; }
+}
+function incrementUsage(): number {
+  try {
+    const n = getUsageCount() + 1;
+    localStorage.setItem(STORAGE_KEY, String(n));
+    return n;
+  } catch { return FREE_LIMIT + 1; }
+}
+
+function PaywallModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "24px" }}>
+      <div style={{ background: "#0f2644", border: "1px solid #243a5e", borderRadius: "20px", maxWidth: "480px", width: "100%", padding: "40px", textAlign: "center" }}>
+        <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔒</div>
+        <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b", marginBottom: "12px" }}>Лимит исчерпан</div>
+        <h2 style={{ fontSize: "24px", fontWeight: 800, marginBottom: "12px" }}>
+          3 бесплатных распознавания использованы
+        </h2>
+        <p style={{ color: "#94a3b8", fontSize: "15px", lineHeight: 1.7, marginBottom: "28px" }}>
+          Переходи на PRO — безлимитное распознавание инвойсов, история загрузок и приоритетная поддержка.
+        </p>
+
+        <div style={{ background: "#0B1F3A", border: "1px solid #243a5e", borderRadius: "14px", padding: "24px", marginBottom: "24px" }}>
+          <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "6px" }}>PRO — инструменты ChinaBridge</div>
+          <div style={{ fontSize: "42px", fontWeight: 800, color: "#00A86B", marginBottom: "4px" }}>990 ₽</div>
+          <div style={{ color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>в месяц · отменить можно в любой момент</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "0", textAlign: "left" }}>
+            {[
+              "Безлимитное распознавание инвойсов",
+              "История и архив загруженных документов",
+              "Расчёт по нескольким поставщикам сразу",
+              "Приоритетная поддержка менеджера",
+            ].map(f => (
+              <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start", fontSize: "14px", color: "#cbd5e1" }}>
+                <span style={{ color: "#00A86B", flexShrink: 0 }}>✓</span> {f}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <a href="https://t.me/chinabridge_cargo?text=Хочу PRO-доступ к инструментам ChinaBridge (990₽/мес)"
+          target="_blank" rel="noopener noreferrer"
+          style={{ display: "block", background: "#00A86B", color: "#fff", borderRadius: "12px", padding: "16px", textAlign: "center", textDecoration: "none", fontWeight: 700, fontSize: "16px", marginBottom: "12px" }}>
+          Перейти на PRO — 990 ₽/мес
+        </a>
+        <button onClick={onClose}
+          style={{ background: "transparent", border: "none", color: "#475569", fontSize: "13px", cursor: "pointer", padding: "8px" }}>
+          Закрыть
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface InvoiceItem {
   description_zh: string;
@@ -63,8 +122,14 @@ export default function InvoicePage() {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [usesLeft, setUsesLeft] = useState<number>(FREE_LIMIT);
+  const [showPaywall, setShowPaywall] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setUsesLeft(Math.max(0, FREE_LIMIT - getUsageCount()));
+  }, []);
 
   const handleFile = useCallback((f: File) => {
     setFile(f); setResult(null); setError(null);
@@ -79,14 +144,19 @@ export default function InvoicePage() {
 
   const analyze = async () => {
     if (!file) return;
+    if (getUsageCount() >= FREE_LIMIT) { setShowPaywall(true); return; }
     setLoading(true); setError(null); setResult(null);
     try {
       const fd = new FormData();
       fd.append("file", file);
       const resp = await fetch("/api/tools/invoice", { method: "POST", body: fd });
       const data = await resp.json() as Result & { error?: string };
-      if (!resp.ok || data.error) setError(data.error ?? "Ошибка распознавания");
-      else setResult(data);
+      if (!resp.ok || data.error) { setError(data.error ?? "Ошибка распознавания"); }
+      else {
+        const newCount = incrementUsage();
+        setUsesLeft(Math.max(0, FREE_LIMIT - newCount));
+        setResult(data);
+      }
     } catch { setError("Нет связи с сервером. Попробуйте ещё раз."); }
     finally { setLoading(false); }
   };
@@ -100,6 +170,7 @@ export default function InvoicePage() {
 
   return (
     <main style={S.page}>
+      {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
 
       {/* ── Nav ── */}
       <div style={S.nav}>
@@ -207,9 +278,20 @@ export default function InvoicePage() {
             >
               {loading ? "Читаем иероглифы…" : "Распознать инвойс и рассчитать доставку →"}
             </button>
-            <p style={{ textAlign: "center", color: "#334155", fontSize: "11px", marginTop: "10px" }}>
-              Без регистрации · Файл не сохраняется на сервере
-            </p>
+
+            {usesLeft > 0 ? (
+              <p style={{ textAlign: "center", color: "#334155", fontSize: "11px", marginTop: "10px" }}>
+                Осталось бесплатно: <span style={{ color: "#64748b", fontWeight: 600 }}>{usesLeft} из {FREE_LIMIT}</span> · Файл не сохраняется
+              </p>
+            ) : (
+              <p style={{ textAlign: "center", fontSize: "12px", marginTop: "10px" }}>
+                <span style={{ color: "#f59e0b" }}>🔒 Лимит исчерпан — </span>
+                <a href="https://t.me/chinabridge_cargo?text=Хочу PRO-доступ к инструментам ChinaBridge (990₽/мес)"
+                  target="_blank" rel="noopener noreferrer" style={{ color: "#00A86B", textDecoration: "none", fontWeight: 600 }}>
+                  Перейти на PRO 990 ₽/мес
+                </a>
+              </p>
+            )}
           </div>
         </div>
       </div>
