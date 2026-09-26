@@ -22,6 +22,11 @@ export interface Lead {
   landing_page?: string;
   calculator_used?: boolean;
   country_destination?: string;
+  // Route context (§24 ТЗ)
+  route_id?: string;
+  partner_id?: string;
+  origin_city?: string;
+  transit_city?: string;
 }
 
 // What the client sends — id and created_at generated server-side

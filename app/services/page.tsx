@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 const SERVICE_LINKS = [
-  { icon: "🚚", title: "Доставка из Китая", description: "Сборные грузы от 50 кг, контейнеры, авиа. Официальная таможня.", href: "/services/china-delivery" },
+  { icon: "🚚", title: "Доставка из Китая", description: "Хэйхэ — Благовещенск от 100 кг, контейнеры, авиа. Официальная таможня.", href: "/services/china-delivery" },
   { icon: "🛒", title: "Выкуп с 1688", description: "Закупаем по оптовым ценам 1688.com. Проверка поставщика.", href: "/services/1688-buyout" },
   { icon: "🔍", title: "Поиск поставщиков", description: "Находим надёжных производителей. Переговоры, образцы.", href: "/services/supplier-search" },
   { icon: "📦", title: "Сборные грузы", description: "Объединяем несколько заказов в одну отправку.", href: "/services/cargo-consolidation" },

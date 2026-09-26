@@ -6,7 +6,7 @@ import { CTASection } from "@/components/seo/CTASection";
 
 export const metadata: Metadata = {
   title: "Доставка из Китая в Хабаровск — ChinaBridge",
-  description: "Доставка грузов из Китая в Хабаровск. Короткий маршрут через Дальний Восток. Сборные грузы от 50 кг. Срок 15–25 дней. Таможня включена.",
+  description: "Доставка грузов из Китая в Хабаровск. Короткий маршрут через Дальний Восток. Сборные коммерческие партии от 100 кг. Срок 15–25 дней. Таможня.",
   keywords: "доставка из Китая в Хабаровск, грузоперевозки Китай Хабаровск, сборный груз Хабаровск",
   alternates: { canonical: "https://chinabridge.pro/delivery/china-khabarovsk" },
   openGraph: {

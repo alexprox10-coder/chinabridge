@@ -104,6 +104,11 @@ async function ensureOwnerTenant(): Promise<void> {
     await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "vertical" text`.catch(() => null);
     await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "landing_page" text`.catch(() => null);
     await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "calculator_used" text`.catch(() => null);
+    // Route context columns (§24 ТЗ — Heihe/multi-route support)
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "route_id" text`.catch(() => null);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "partner_id" text`.catch(() => null);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "origin_city" text`.catch(() => null);
+    await sql`ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS "transit_city" text`.catch(() => null);
 
     await sql`
       INSERT INTO "tenants" (
@@ -178,6 +183,10 @@ function rowToLead(r: typeof crmLeads.$inferSelect): CRMLead {
     profit:             r.profit != null ? Number(r.profit) : undefined,
     margin_percent:     r.marginPercent != null ? Number(r.marginPercent) : undefined,
     pricing_rule:       r.pricingRule ?? undefined,
+    route_id:           r.routeId ?? undefined,
+    partner_id:         r.partnerId ?? undefined,
+    origin_city:        r.originCity ?? undefined,
+    transit_city:       r.transitCity ?? undefined,
   };
 }
 
@@ -273,6 +282,10 @@ export async function createLead(data: Omit<CRMLead, "id">, tenantIdOverride?: s
     profit:             data.profit != null ? String(data.profit) : null,
     marginPercent:      data.margin_percent != null ? String(data.margin_percent) : null,
     pricingRule:        data.pricing_rule ?? null,
+    routeId:            data.route_id ?? null,
+    partnerId:          data.partner_id ?? null,
+    originCity:         data.origin_city ?? null,
+    transitCity:        data.transit_city ?? null,
   }).onConflictDoNothing().returning();
   if (!row) {
     const existing = await db.select().from(crmLeads)

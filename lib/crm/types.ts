@@ -102,6 +102,11 @@ export interface CRMLead {
   profit?: number;
   margin_percent?: number;
   pricing_rule?: string;
+  // Route context (§24 ТЗ — multi-route support)
+  route_id?: string;
+  partner_id?: string;
+  origin_city?: string;
+  transit_city?: string;
 }
 
 export type LeadUpdate = Partial<Pick<CRMLead, "status" | "priority" | "manager" | "comment" | "estimated_value">>;

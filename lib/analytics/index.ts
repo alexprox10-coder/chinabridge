@@ -41,7 +41,7 @@ export const analytics = {
 
   // ── Калькулятор ───────────────────────────────────────────────────────────
   calculatorStart: () => { fire("calculator_start", "calculator_start", { category: "calculator" }); trackVkGoal("calculator_start"); },
-  calculatorComplete: (params?: { route?: string; cost?: number; margin?: number }) =>
+  calculatorComplete: (params?: { route?: string; cost?: number; margin?: number; destination_country?: string; route_id?: string; partner_id?: string }) =>
     fire("calculator_complete", "calculator_complete", { category: "calculator", ...params }),
   calculatorProductSearch: (productName: string) => {
     const cat = classifyProduct(productName);

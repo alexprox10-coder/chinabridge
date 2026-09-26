@@ -25,6 +25,9 @@ async function notifyManagerTelegram(lead: Lead): Promise<void> {
     lead.landing_page ? `📄 *Лендинг:* ${tg(lead.landing_page)}` : null,
     lead.calculator_used ? `🤖 *Калькулятор:* использован` : null,
     lead.country_destination ? `🌍 *Страна:* ${tg(lead.country_destination)}` : null,
+    lead.route_id   ? `🛤 *Маршрут:* ${tg(lead.route_id)}`   : null,
+    lead.partner_id ? `🤝 *Партнёр:* ${tg(lead.partner_id)}` : null,
+    lead.transit_city ? `🏙 *Транзит:* ${tg(lead.transit_city)}` : null,
     "",
     `🆔 \`${lead.id.slice(0, 8)}\``,
   ].filter(Boolean).join("\n");
@@ -105,6 +108,10 @@ function validate(body: unknown): { input: LeadInput; errors: Record<string, str
     landing_page:       typeof b.landing_page     === "string" ? b.landing_page.trim()     || undefined : undefined,
     calculator_used:    typeof b.calculator_used  === "boolean" ? b.calculator_used : undefined,
     country_destination: typeof b.country_destination === "string" ? b.country_destination.trim() || undefined : undefined,
+    route_id:   typeof b.route_id   === "string" ? b.route_id.trim()   || undefined : undefined,
+    partner_id: typeof b.partner_id === "string" ? b.partner_id.trim() || undefined : undefined,
+    origin_city: typeof b.origin_city === "string" ? b.origin_city.trim() || undefined : undefined,
+    transit_city: typeof b.transit_city === "string" ? b.transit_city.trim() || undefined : undefined,
   };
 
   return { input, errors: {} };
@@ -163,6 +170,10 @@ export async function POST(req: NextRequest) {
       volume:             lead.volume ?? "",
       country_destination: lead.country_destination ?? "",
       city_destination:   lead.to_city ?? "",
+      route_id:           lead.route_id ?? "",
+      partner_id:         lead.partner_id ?? "",
+      origin_city:        lead.origin_city ?? "",
+      transit_city:       lead.transit_city ?? "",
       delivery_type:      lead.service ?? "",
       service_type:       "",
       status:             "NEW",

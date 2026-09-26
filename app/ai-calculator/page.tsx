@@ -208,7 +208,7 @@ export default function AICalculatorPage() {
             <div className="text-center mb-4">
               <p className="text-xs font-semibold text-[#00A86B] uppercase tracking-widest mb-2">Сборный груз</p>
               <h2 className="text-xl font-bold text-white">Наш склад в Китае</h2>
-              <p className="text-sm text-[#8899aa] mt-1">Еженедельные рейсы в Россию и Казахстан от 50 кг</p>
+              <p className="text-sm text-[#8899aa] mt-1">Еженедельные рейсы в Россию и Казахстан</p>
             </div>
             <div className="rounded-2xl overflow-hidden border border-[#243a5e]" style={{aspectRatio: '16/9'}}>
               <iframe

@@ -125,6 +125,21 @@ export function CalculatorForm() {
       if (formData.product_name) analytics.calculatorProductSearch(formData.product_name);
     }, 0);
 
+    // Determine route context based on country selection
+    const isHeihe = formData.country_to === "Russia" && (
+      formData.city_to === "Благовещенск" || !formData.city_to
+    );
+    const routeId = formData.country_to === "Kazakhstan"
+      ? "KZ_AUTO_ALMATY"
+      : isHeihe
+        ? "RU_HEIHE_BLAGOVESHCHENSK"
+        : "RU_AUTO_TRUCK";
+    const partnerId = formData.country_to === "Kazakhstan"
+      ? "97kapro"
+      : isHeihe
+        ? "TPT"
+        : "97kapro";
+
     const body = {
       name: formData.name || "—",
       phone: formData.phone,
@@ -136,6 +151,9 @@ export function CalculatorForm() {
       country_to: formData.country_to,
       city_to: formData.city_to,
       service_type: "delivery_only",
+      route_id: routeId,
+      partner_id: partnerId,
+      transit_city: formData.country_to === "Russia" ? "Heihe" : undefined,
     };
 
     // Promise.race — 100% reliable cross-browser timeout, no AbortSignal dependency
@@ -159,6 +177,9 @@ export function CalculatorForm() {
           route: `China → ${formData.city_to || "—"}`,
           cost: data.delivery_cost,
           margin: data.margin_percent,
+          destination_country: formData.country_to,
+          route_id: routeId,
+          partner_id: partnerId,
         });
         trackVkGoal("lead");
       }

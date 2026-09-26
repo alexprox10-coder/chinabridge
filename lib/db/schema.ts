@@ -107,6 +107,11 @@ export const crmLeads = pgTable("crm_leads", {
   profit:             numeric("profit"),
   marginPercent:      numeric("margin_percent"),
   pricingRule:        text("pricing_rule"),
+  // Route context (§24 ТЗ — multi-route support)
+  routeId:            text("route_id"),
+  partnerId:          text("partner_id"),
+  originCity:         text("origin_city"),
+  transitCity:        text("transit_city"),
 }, (t) => [
   index("crm_leads_tenant_idx").on(t.tenantId),
   index("crm_leads_status_idx").on(t.status),

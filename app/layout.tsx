@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "ChinaBridge — поиск товаров и доставка из Китая",
-    description: "Представитель в Китае. Проверка фабрик. Сборные грузы от 50 кг.",
+    description: "Представитель в Китае. Проверка фабрик. Доставка в Россию и Казахстан.",
   },
   robots: {
     index: true,
