@@ -128,7 +128,7 @@ export default function InvoicePage() {
         {/* Hero */}
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
           <div style={{ display: "inline-block", background: "#0f2644", border: "1px solid #243a5e", borderRadius: "24px", padding: "6px 16px", fontSize: "13px", color: "#00A86B", marginBottom: "16px" }}>
-            🔬 Бесплатный инструмент · Beta
+            🔬 AI-инструмент · Beta
           </div>
           <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 700, lineHeight: 1.15, marginBottom: "16px" }}>
             От 微信-инвойса<br />
@@ -226,7 +226,7 @@ export default function InvoicePage() {
             </button>
 
             <p style={{ textAlign: "center", color: "#475569", fontSize: "12px", marginTop: "12px" }}>
-              Бесплатно · Без регистрации · Файл не сохраняется
+              Без регистрации · Файл не сохраняется на сервере
             </p>
           </div>
         ) : (
@@ -418,7 +418,7 @@ export default function InvoicePage() {
               "💱 CNY / USD / EUR",
               "📋 Позиции и артикулы",
               "🚚 Расчёт карго RU + KZ",
-              "🔒 Файл не сохраняется на сервере",
+              "🔒 Файл не сохраняется",
             ].map((f) => (
               <div
                 key={f}
