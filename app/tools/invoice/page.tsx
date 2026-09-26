@@ -17,45 +17,97 @@ function incrementUsage(): number {
 }
 
 function PaywallModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "24px" }}>
-      <div style={{ background: "#0f2644", border: "1px solid #243a5e", borderRadius: "20px", maxWidth: "480px", width: "100%", padding: "40px", textAlign: "center" }}>
-        <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔒</div>
-        <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#64748b", marginBottom: "12px" }}>Лимит исчерпан</div>
-        <h2 style={{ fontSize: "24px", fontWeight: 800, marginBottom: "12px" }}>
-          3 бесплатных распознавания использованы
-        </h2>
-        <p style={{ color: "#94a3b8", fontSize: "15px", lineHeight: 1.7, marginBottom: "28px" }}>
-          Переходи на PRO — безлимитное распознавание инвойсов, история загрузок и приоритетная поддержка.
-        </p>
+  const [tg, setTg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
-        <div style={{ background: "#0B1F3A", border: "1px solid #243a5e", borderRadius: "14px", padding: "24px", marginBottom: "24px" }}>
-          <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "6px" }}>PRO — инструменты ChinaBridge</div>
-          <div style={{ fontSize: "42px", fontWeight: 800, color: "#00A86B", marginBottom: "4px" }}>990 ₽</div>
-          <div style={{ color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>в месяц · отменить можно в любой момент</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "0", textAlign: "left" }}>
-            {[
-              "Безлимитное распознавание инвойсов",
-              "История и архив загруженных документов",
-              "Расчёт по нескольким поставщикам сразу",
-              "Приоритетная поддержка менеджера",
-            ].map(f => (
-              <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start", fontSize: "14px", color: "#cbd5e1" }}>
-                <span style={{ color: "#00A86B", flexShrink: 0 }}>✓</span> {f}
-              </div>
+  async function handlePay() {
+    setLoading(true); setErr("");
+    try {
+      const res = await fetch("/api/payments/calculator-subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegram: tg.trim().replace(/^@/, "") }),
+      });
+      const data = await res.json() as { ok: boolean; paymentLink?: string; operationId?: string };
+      if (data.ok && data.paymentLink) {
+        try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
+        window.location.href = data.paymentLink;
+      } else {
+        setErr("Не удалось создать платёж. Попробуйте ещё раз.");
+        setLoading(false);
+      }
+    } catch {
+      setErr("Ошибка сети. Попробуйте ещё раз.");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.80)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "24px", backdropFilter: "blur(4px)" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#060f1e", border: "1px solid #1e3a5f", borderRadius: "20px", maxWidth: "400px", width: "100%", overflow: "hidden" }}>
+
+        {/* Header */}
+        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid #1e3a5f", position: "relative" }}>
+          <button onClick={onClose} style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", color: "#5a7899", fontSize: "20px", cursor: "pointer", lineHeight: 1 }}>×</button>
+          <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
+            {[0,1,2].map(i => (
+              <div key={i} style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#00A86B" }} />
             ))}
           </div>
+          <div style={{ fontWeight: 700, fontSize: "17px", marginBottom: "6px" }}>ChinaBridge PRO — Инструменты</div>
+          <p style={{ color: "#8899aa", fontSize: "13px", lineHeight: 1.5 }}>
+            Вы использовали все 3 бесплатных распознавания. PRO — безлимитно, с историей и поддержкой.{" "}
+            <span style={{ color: "#fff", fontWeight: 700 }}>990 ₽/мес</span>
+          </p>
         </div>
 
-        <a href="https://t.me/chinabridge_cargo?text=Хочу PRO-доступ к инструментам ChinaBridge (990₽/мес)"
-          target="_blank" rel="noopener noreferrer"
-          style={{ display: "block", background: "#00A86B", color: "#fff", borderRadius: "12px", padding: "16px", textAlign: "center", textDecoration: "none", fontWeight: 700, fontSize: "16px", marginBottom: "12px" }}>
-          Перейти на PRO — 990 ₽/мес
-        </a>
-        <button onClick={onClose}
-          style={{ background: "transparent", border: "none", color: "#475569", fontSize: "13px", cursor: "pointer", padding: "8px" }}>
-          Закрыть
-        </button>
+        {/* Paths */}
+        <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+
+          {/* TG path */}
+          <a href="https://t.me/ChinaBridgeLID_bot?start=pro_invoice"
+            target="_blank" rel="noopener noreferrer"
+            style={{ display: "block", background: "rgba(0,168,107,0.1)", border: "1px solid rgba(0,168,107,0.4)", borderRadius: "14px", padding: "14px", textDecoration: "none" }}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <span style={{ fontSize: "22px" }}>🚢</span>
+              <div>
+                <div style={{ color: "#fff", fontWeight: 700, fontSize: "14px", marginBottom: "3px" }}>Нужна поставка из Китая?</div>
+                <div style={{ color: "#8899aa", fontSize: "12px", lineHeight: 1.5 }}>Менеджер рассчитает и организует — расчёт за 15 мин, без предоплаты</div>
+                <div style={{ color: "#00A86B", fontSize: "12px", fontWeight: 600, marginTop: "8px" }}>→ Написать менеджеру</div>
+              </div>
+            </div>
+          </a>
+
+          {/* Pay path */}
+          <div style={{ background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.35)", borderRadius: "14px", padding: "14px" }}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "12px" }}>
+              <span style={{ fontSize: "22px" }}>📊</span>
+              <div>
+                <div style={{ color: "#fff", fontWeight: 700, fontSize: "14px" }}>PRO — <span style={{ color: "#229ED9" }}>490 ₽</span> <span style={{ color: "#5a7899", textDecoration: "line-through", fontWeight: 400, fontSize: "13px" }}>990 ₽</span> <span style={{ color: "#8899aa", fontSize: "11px" }}>первый месяц</span></div>
+                <div style={{ color: "#8899aa", fontSize: "12px", marginTop: "2px" }}>Безлимит · История · Несколько поставщиков</div>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Telegram @username (необязательно)"
+              value={tg}
+              onChange={e => setTg(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", background: "#0b1a2e", border: "1px solid #243a5e", borderRadius: "10px", color: "#fff", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }}
+            />
+            {err && <p style={{ color: "#f87171", fontSize: "12px", marginBottom: "8px" }}>{err}</p>}
+            <button
+              onClick={handlePay}
+              disabled={loading}
+              style={{ width: "100%", background: loading ? "#1e3a5f" : "#229ED9", color: loading ? "#475569" : "#fff", border: "none", borderRadius: "10px", padding: "12px", fontSize: "14px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer" }}
+            >
+              {loading ? "Переходим к оплате…" : "Оплатить 490 ₽ →"}
+            </button>
+            <div style={{ textAlign: "center", marginTop: "8px" }}>
+              <a href="/client/login?from=/tools/invoice" style={{ color: "#5a7899", fontSize: "11px" }}>Войти в аккаунт</a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -279,19 +331,12 @@ export default function InvoicePage() {
               {loading ? "Читаем иероглифы…" : "Распознать инвойс и рассчитать доставку →"}
             </button>
 
-            {usesLeft > 0 ? (
-              <p style={{ textAlign: "center", color: "#334155", fontSize: "11px", marginTop: "10px" }}>
-                Осталось бесплатно: <span style={{ color: "#64748b", fontWeight: 600 }}>{usesLeft} из {FREE_LIMIT}</span> · Файл не сохраняется
-              </p>
-            ) : (
-              <p style={{ textAlign: "center", fontSize: "12px", marginTop: "10px" }}>
-                <span style={{ color: "#f59e0b" }}>🔒 Лимит исчерпан — </span>
-                <a href="https://t.me/chinabridge_cargo?text=Хочу PRO-доступ к инструментам ChinaBridge (990₽/мес)"
-                  target="_blank" rel="noopener noreferrer" style={{ color: "#00A86B", textDecoration: "none", fontWeight: 600 }}>
-                  Перейти на PRO 990 ₽/мес
-                </a>
-              </p>
-            )}
+            <p style={{ textAlign: "center", color: "#334155", fontSize: "11px", marginTop: "10px" }}>
+              {usesLeft > 0
+                ? <>Осталось бесплатно: <span style={{ color: "#64748b", fontWeight: 600 }}>{usesLeft} из {FREE_LIMIT}</span> · Файл не сохраняется</>
+                : <><span style={{ color: "#f59e0b" }}>🔒 Лимит исчерпан — </span><button onClick={() => setShowPaywall(true)} style={{ background: "none", border: "none", color: "#00A86B", fontWeight: 600, cursor: "pointer", fontSize: "11px", padding: 0 }}>Перейти на PRO</button></>
+              }
+            </p>
           </div>
         </div>
       </div>
