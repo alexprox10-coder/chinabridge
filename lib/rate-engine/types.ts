@@ -40,6 +40,17 @@ export interface Route {
   delivery_days_max?: number;
   status: ItemStatus;
   created_at?: string;
+  // §23 — Route economics & partner context
+  partner_id?: string;          // e.g. "TPT", "97kapro"
+  min_weight?: number;          // per-route minimum weight (kg)
+  transit_city?: string;        // e.g. "Heihe"
+  china_leg_usd?: number;       // internal cost/kg, China leg
+  border_leg_usd?: number;      // internal cost/kg, border crossing
+  customs_usd?: number;         // flat customs estimate per shipment
+  russia_leg_usd?: number;      // internal cost/kg, Russia leg
+  customer_price_per_kg?: number; // selling price per kg to client
+  margin_pct?: number;          // gross margin %
+  customs_model?: string;       // e.g. "partner_declarant", "client_declarant"
 }
 
 export interface AdditionalService {
