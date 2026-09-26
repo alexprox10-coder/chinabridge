@@ -71,6 +71,10 @@ export default function Header() {
               </Link>
             ))}
 
+            <Link href="/tools"
+              className="px-4 py-2 text-sm text-[#94a3b8] hover:text-white font-semibold transition-colors rounded-lg hover:bg-white/5">
+              🔬 Инструменты
+            </Link>
             <Link href="/ai-calculator"
               className="px-4 py-2 text-sm text-[#00A86B] hover:text-white font-semibold transition-colors rounded-lg hover:bg-white/5">
               🤖 AI-калькулятор
@@ -113,6 +117,10 @@ export default function Header() {
               </Link>
             ))}
             <div className="pt-2 mt-1 border-t border-[#243a5e]">
+              <Link href="/tools" onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#94a3b8] font-semibold hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                🔬 Инструменты
+              </Link>
               <Link href="/ai-calculator" onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#00A86B] font-semibold hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                 🤖 AI-калькулятор маржи
