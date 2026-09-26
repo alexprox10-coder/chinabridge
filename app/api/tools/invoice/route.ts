@@ -151,11 +151,9 @@ export async function POST(req: NextRequest) {
     if (!orResp.ok) {
       const errText = await orResp.text();
       console.error("OpenRouter error:", orResp.status, errText);
-      const msg = orResp.status === 402
-        ? "Недостаточно средств на OpenRouter. Пополни баланс."
-        : orResp.status === 429
+      const msg = orResp.status === 429
         ? "Слишком много запросов. Попробуй через минуту."
-        : `Ошибка распознавания (${orResp.status})`;
+        : "Ошибка распознавания. Попробуй ещё раз.";
       return NextResponse.json({ error: msg }, { status: 502 });
     }
 
