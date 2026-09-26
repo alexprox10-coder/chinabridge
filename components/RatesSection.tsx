@@ -17,10 +17,10 @@ const ROUTES = [
     flag: "🇷🇺",
     href: "/delivery/china-moscow",
     modes: [
-      { icon: "🚗", label: "Авто через КЗ",    price: "от $3.00/кг", days: "25–35 дней",  note: "Москва, СПб, регионы" },
-      { icon: "🚗", label: "Авто ДВ транзит",  price: "от $3/кг",    days: "35–45 дней",  note: "через Владивосток" },
-      { icon: "✈️", label: "Авиа стандарт",   price: "от $23/кг",   days: "5–8 дней",   note: "Шереметьево, Домодедово" },
-      { icon: "⚡", label: "Авиа экспресс",   price: "от $33/кг",   days: "3 дня",      note: "от 1 кг, срочно" },
+      { icon: "🚗", label: "Авто через КЗ",      price: "от $3.00/кг",  days: "25–35 дней", note: "Москва, СПб, регионы" },
+      { icon: "🚗", label: "Хэйхэ — Благовещенск", price: "уточняется",   days: "18–28 дней", note: "сборные партии от 100 кг · ТПТ", href: "/delivery/kitai-heihe-blagoveshchensk" },
+      { icon: "✈️", label: "Авиа стандарт",     price: "от $23/кг",    days: "5–8 дней",   note: "Шереметьево, Домодедово" },
+      { icon: "⚡", label: "Авиа экспресс",     price: "от $33/кг",    days: "3 дня",      note: "от 1 кг, срочно" },
     ],
   },
 ];
@@ -37,7 +37,7 @@ export default function RatesSection() {
             Стоимость и сроки доставки
           </h2>
           <p className="text-[#8899aa] text-sm mt-2">
-            Партнёр 97Kapro · тарифы действуют с сентября 2026 · мин. 30 кг авто
+            Партнёр 97Kapro (KZ/RU) · ТПТ (Хэйхэ — Благовещенск) · тарифы сентябрь 2026
           </p>
         </div>
 
@@ -65,24 +65,39 @@ export default function RatesSection() {
 
               {/* Modes table */}
               <div className="divide-y divide-[#243a5e]/60">
-                {route.modes.map((m) => (
-                  <div
-                    key={m.label}
-                    className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-base w-5 shrink-0">{m.icon}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white">{m.label}</p>
-                        <p className="text-xs text-[#8899aa] truncate">{m.note}</p>
+                {route.modes.map((m) => {
+                  const inner = (
+                    <>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-base w-5 shrink-0">{m.icon}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-white">{m.label}</p>
+                          <p className="text-xs text-[#8899aa] truncate">{m.note}</p>
+                        </div>
                       </div>
+                      <div className="text-right shrink-0 ml-4">
+                        <p className={`text-sm font-bold ${(m as {href?:string}).href ? "text-[#8899aa]" : "text-[#00A86B]"}`}>{m.price}</p>
+                        <p className="text-xs text-[#8899aa]">{m.days}</p>
+                      </div>
+                    </>
+                  );
+                  return (m as {href?:string}).href ? (
+                    <Link
+                      key={m.label}
+                      href={(m as {href:string}).href}
+                      className="flex items-center justify-between px-5 py-3 hover:bg-[#00A86B]/5 transition-colors group"
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div
+                      key={m.label}
+                      className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors"
+                    >
+                      {inner}
                     </div>
-                    <div className="text-right shrink-0 ml-4">
-                      <p className="text-sm font-bold text-[#00A86B]">{m.price}</p>
-                      <p className="text-xs text-[#8899aa]">{m.days}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

@@ -27,6 +27,8 @@ const SUBMIT_FALLBACK: CalculatorResult = {
   reason: "Заявка принята. Менеджер свяжется с вами для точного расчёта.",
 };
 
+const CITY_CHIPS_RU = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Благовещенск"];
+const CITY_CHIPS_KZ = ["Алматы", "Астана", "Шымкент", "Актобе"];
 const CITY_CHIPS = ["Москва", "Санкт-Петербург", "Новосибирск", "Алматы", "Астана"];
 
 const initialFormData: CalculatorFormData = {
@@ -447,6 +449,29 @@ export function CalculatorForm() {
             <label className="text-xs font-medium text-[#8899aa] block mb-2">
               Куда доставить?
             </label>
+            {/* Country selector */}
+            <div className="flex gap-2 mb-3">
+              {([
+                { value: "Russia", label: "🇷🇺 Россия" },
+                { value: "Kazakhstan", label: "🇰🇿 Казахстан" },
+              ] as const).map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => {
+                    set("country_to", c.value);
+                    set("city_to", "");
+                  }}
+                  className={`flex-1 text-xs px-3 py-2 rounded-xl border transition-colors font-medium ${
+                    formData.country_to === c.value
+                      ? "border-[#00A86B] bg-[#00A86B]/15 text-[#00A86B]"
+                      : "border-[#243a5e] text-[#8899aa] hover:border-[#00A86B]/50 hover:text-white"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
             <input
               type="text"
               value={formData.city_to}
@@ -456,7 +481,7 @@ export function CalculatorForm() {
               className={inp()}
             />
             <div className="flex flex-wrap gap-2 mt-2">
-              {CITY_CHIPS.map(city => (
+              {(formData.country_to === "Kazakhstan" ? CITY_CHIPS_KZ : CITY_CHIPS_RU).map(city => (
                 <button
                   key={city}
                   type="button"
