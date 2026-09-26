@@ -399,7 +399,7 @@ export default function InvoicePage() {
                     </div>
                   ))}
                   <div style={{ color: "#334155", fontSize: "11px", marginBottom: "14px" }}>* Ориентировочная цена. Точный расчёт с учётом объёма и типа груза — по запросу.</div>
-                  <a href={`https://t.me/chinabridge_cargo?text=Хочу доставить груз из Китая. Вес: ${result.weight_kg || "??"} кг, Поставщик: ${result.invoice.supplier_name_ru || result.invoice.supplier_name || "из инвойса"}`}
+                  <a href={`https://t.me/ChinaBridgeLID_bot?start=invoice_weight_${result.weight_kg || 0}_supplier_${encodeURIComponent(result.invoice.supplier_name_ru || result.invoice.supplier_name || "invoice")}`}
                     target="_blank" rel="noopener noreferrer"
                     style={{ display: "block", background: "#00A86B", color: "#fff", borderRadius: "10px", padding: "14px", textAlign: "center", textDecoration: "none", fontWeight: 700, fontSize: "15px", marginBottom: "10px" }}>
                     Запросить точный расчёт
