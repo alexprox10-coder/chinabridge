@@ -1,6 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+const hoverStyle = `
+  .tool-card { transition: border-color 0.2s; }
+  .tool-card:hover { border-color: #00A86B !important; }
+`;
+
 export const metadata: Metadata = {
   title: "Бесплатные инструменты для импорта из Китая | ChinaBridge",
   description: "AI-инструменты для импортёров: распознавание китайских инвойсов, расчёт стоимости доставки, анализ товарных позиций.",
@@ -29,6 +34,7 @@ const tools = [
 export default function ToolsPage() {
   return (
     <main style={{ background: "#0B1F3A", minHeight: "100vh", color: "#fff", fontFamily: "system-ui, sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: hoverStyle }} />
       <div style={{ borderBottom: "1px solid #243a5e", padding: "16px 24px" }}>
         <a href="/" style={{ color: "#00A86B", fontSize: "14px", textDecoration: "none" }}>← ChinaBridge</a>
       </div>
@@ -50,17 +56,14 @@ export default function ToolsPage() {
               href={tool.href}
               style={{ textDecoration: "none", color: "inherit" }}
             >
-              <div style={{
+              <div className="tool-card" style={{
                 background: "#0f2644",
                 border: "1px solid #243a5e",
                 borderRadius: "16px",
                 padding: "28px",
                 cursor: "pointer",
-                transition: "border-color 0.2s",
                 height: "100%",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#00A86B")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#243a5e")}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                   <span style={{ fontSize: "36px" }}>{tool.emoji}</span>
