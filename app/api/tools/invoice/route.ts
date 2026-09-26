@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
+const OR_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
 
 const EXTRACT_PROMPT = `You are a Chinese commercial invoice parser. Analyze this invoice image and extract all data.
 
@@ -130,7 +131,7 @@ export async function POST(req: NextRequest) {
         "X-Title": "ChinaBridge Invoice OCR",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-sonnet-4-5",
+        model: OR_MODEL,
         messages: [
           {
             role: "user",
@@ -149,8 +150,13 @@ export async function POST(req: NextRequest) {
 
     if (!orResp.ok) {
       const errText = await orResp.text();
-      console.error("OpenRouter error:", errText);
-      return NextResponse.json({ error: "Ошибка AI-распознавания" }, { status: 502 });
+      console.error("OpenRouter error:", orResp.status, errText);
+      const msg = orResp.status === 402
+        ? "Недостаточно средств на OpenRouter. Пополни баланс."
+        : orResp.status === 429
+        ? "Слишком много запросов. Попробуй через минуту."
+        : `Ошибка распознавания (${orResp.status})`;
+      return NextResponse.json({ error: msg }, { status: 502 });
     }
 
     const orData = await orResp.json() as {
