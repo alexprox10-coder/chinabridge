@@ -89,12 +89,16 @@ interface CustomsBreakdown {
   duty: number; vat: number; broker: number; fees: number; total: number;
 }
 
-function estimateCustoms(goodsUsd: number, shippingUsd: number, dest: "ru" | "kz"): CustomsBreakdown {
+function estimateCustoms(goodsUsd: number, shippingUsd: number, dest: "ru" | "kz", routeId?: string): CustomsBreakdown {
   const cif = goodsUsd + shippingUsd;
   const duty = Math.round(cif * 0.10);
+  // РФ: НДС 20%, КЗ: НДС 12%
   const vat  = Math.round((cif + duty) * (dest === "ru" ? 0.20 : 0.12));
-  const broker = dest === "ru" ? 220 : 160;
-  const fees   = dest === "ru" ? 95  : 50;
+  // Хэйхэ: упрощённая таможня, без стандартного брокера
+  const isHeihe = routeId === "heihe_ru";
+  const broker = isHeihe ? 0 : (dest === "ru" ? 220 : 160);
+  // Таможенный сбор РФ: ~3000₽ для товаров до $200K + доп. сборы ≈ $75
+  const fees   = dest === "ru" ? 75 : 50;
   return { duty, vat, broker, fees, total: duty + vat + broker + fees };
 }
 
@@ -105,10 +109,10 @@ const ROUTES = [
     label: "Хэйхэ → Россия",
     flag: "🇷🇺",
     rate_usd_per_kg: 2.2,
-    days_min: 12,
-    days_max: 18,
+    days_min: 7,
+    days_max: 8,
     min_kg: 50,
-    note: "Хэйхэ — Благовещенск, подходит для малых партий",
+    note: "Гуанчжоу→Хэйхэ 4-5 дн. + Хэйхэ→Благовещенск 3 дн. Малые партии от 50 кг",
     highlight: true,
     destination: "ru",
   },
@@ -120,7 +124,7 @@ const ROUTES = [
     days_min: 18,
     days_max: 28,
     min_kg: 100,
-    note: "Москва, СПб, регионы",
+    note: "Москва, СПб, регионы. Благовещенск→Москва 18-28 дн.",
     highlight: false,
     destination: "ru",
   },
@@ -285,7 +289,7 @@ export async function POST(req: NextRequest) {
 
     const landed_costs = quotes.map((q) => {
       const dest    = (q.destination ?? "ru") as "ru" | "kz";
-      const customs = estimateCustoms(goodsUsd, q.cost_usd, dest);
+      const customs = estimateCustoms(goodsUsd, q.cost_usd, dest, q.id);
       const totalUsd = goodsUsd + q.cost_usd + customs.total;
       const perUnitUsd = totalUsd / pieces;
       return {
