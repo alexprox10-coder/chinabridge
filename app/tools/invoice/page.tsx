@@ -16,6 +16,28 @@ function incrementUsage(): number {
   } catch { return FREE_LIMIT + 1; }
 }
 
+// ── Copy helper ──────────────────────────────────────────────────────────────
+function CopyBtn({ text, small }: { text: string; small?: boolean }) {
+  const [done, setDone] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(text); }
+    catch { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+    setDone(true); setTimeout(() => setDone(false), 1800);
+  };
+  return (
+    <button onClick={copy} title="Копировать" style={{
+      background: done ? "rgba(0,168,107,0.15)" : "rgba(255,255,255,0.05)",
+      border: `1px solid ${done ? "#00A86B55" : "#243a5e"}`,
+      borderRadius: "6px", padding: small ? "2px 7px" : "4px 10px",
+      color: done ? "#00A86B" : "#64748b", fontSize: small ? "10px" : "11px",
+      cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s",
+    }}>
+      {done ? "✓" : "📋"}
+    </button>
+  );
+}
+
+// ── Paywall modal ────────────────────────────────────────────────────────────
 function PaywallModal({ onClose }: { onClose: () => void }) {
   const [tg, setTg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +49,7 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
       const res = await fetch("/api/payments/calculator-subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telegram: tg.trim().replace(/^@/, "") }),
+        body: JSON.stringify({ telegram: tg.trim().replace(/^@/, ""), from: "invoice" }),
       });
       const data = await res.json() as { ok: boolean; paymentLink?: string; operationId?: string };
       if (data.ok && data.paymentLink) {
@@ -47,13 +69,10 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.80)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "24px", backdropFilter: "blur(4px)" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#060f1e", border: "1px solid #1e3a5f", borderRadius: "20px", maxWidth: "400px", width: "100%", overflow: "hidden" }}>
 
-        {/* Header */}
         <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid #1e3a5f", position: "relative" }}>
           <button onClick={onClose} style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", color: "#5a7899", fontSize: "20px", cursor: "pointer", lineHeight: 1 }}>×</button>
           <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-            {[0,1,2].map(i => (
-              <div key={i} style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#00A86B" }} />
-            ))}
+            {[0,1,2].map(i => <div key={i} style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#00A86B" }} />)}
           </div>
           <div style={{ fontWeight: 700, fontSize: "17px", marginBottom: "6px" }}>ChinaBridge PRO — Инструменты</div>
           <p style={{ color: "#8899aa", fontSize: "13px", lineHeight: 1.5 }}>
@@ -62,10 +81,8 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
           </p>
         </div>
 
-        {/* Paths */}
         <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
 
-          {/* TG path */}
           <a href="https://t.me/ChinaBridgeLID_bot?start=pro_invoice"
             target="_blank" rel="noopener noreferrer"
             style={{ display: "block", background: "rgba(0,168,107,0.1)", border: "1px solid rgba(0,168,107,0.4)", borderRadius: "14px", padding: "14px", textDecoration: "none" }}>
@@ -79,18 +96,17 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
             </div>
           </a>
 
-          {/* Pay path */}
           <div style={{ background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.35)", borderRadius: "14px", padding: "14px" }}>
             <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "12px" }}>
               <span style={{ fontSize: "22px" }}>📊</span>
               <div>
                 <div style={{ color: "#fff", fontWeight: 700, fontSize: "14px" }}>PRO — <span style={{ color: "#229ED9" }}>490 ₽</span> <span style={{ color: "#5a7899", textDecoration: "line-through", fontWeight: 400, fontSize: "13px" }}>990 ₽</span> <span style={{ color: "#8899aa", fontSize: "11px" }}>первый месяц</span></div>
-                <div style={{ color: "#8899aa", fontSize: "12px", marginTop: "2px" }}>Безлимит · История · Несколько поставщиков</div>
+                <div style={{ color: "#8899aa", fontSize: "12px", marginTop: "2px" }}>Безлимит · Копирование · Скачивание данных</div>
               </div>
             </div>
             <input
               type="text"
-              placeholder="Telegram @username (необязательно)"
+              placeholder="Telegram @username (для кода активации)"
               value={tg}
               onChange={e => setTg(e.target.value)}
               style={{ width: "100%", padding: "10px 12px", background: "#0b1a2e", border: "1px solid #243a5e", borderRadius: "10px", color: "#fff", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }}
@@ -113,6 +129,7 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ── Types ────────────────────────────────────────────────────────────────────
 interface InvoiceItem {
   description_zh: string;
   description_ru: string;
@@ -159,6 +176,7 @@ interface Result {
   weight_kg: number;
 }
 
+// ── Styles ───────────────────────────────────────────────────────────────────
 const S = {
   page: { background: "#0B1F3A", minHeight: "100vh", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif" } as React.CSSProperties,
   nav: { borderBottom: "1px solid #243a5e", padding: "14px 32px", display: "flex", alignItems: "center", gap: "12px" } as React.CSSProperties,
@@ -167,6 +185,79 @@ const S = {
   card: { background: "#0f2644", border: "1px solid #243a5e", borderRadius: "14px", padding: "24px" } as React.CSSProperties,
 };
 
+// ── Download helpers ─────────────────────────────────────────────────────────
+function downloadJSON(result: Result) {
+  const blob = new Blob([JSON.stringify({ invoice: result.invoice, quotes: result.quotes }, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `invoice-${result.invoice.invoice_number || "export"}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadCSV(result: Result) {
+  const inv = result.invoice;
+  const cur = inv.currency || "USD";
+  const header = ["#", "Товар (RU)", "中文", "Код HS", "Кол-во", "Ед.", `Цена (${cur})`, `Сумма (${cur})`, "Вес кг"];
+  const rows = (inv.items || []).map((item, i) => [
+    i + 1,
+    item.description_ru || "",
+    item.description_zh || "",
+    item.hs_code_hint || "",
+    item.quantity,
+    item.unit,
+    item.unit_price,
+    item.total_price,
+    item.weight_kg,
+  ]);
+  const summary = [
+    [],
+    ["Поставщик", inv.supplier_name_ru || inv.supplier_name || ""],
+    ["Инвойс №", inv.invoice_number || ""],
+    ["Дата", inv.invoice_date || ""],
+    ["Итого", inv.total_value, cur],
+    ["Вес брутто кг", inv.total_weight_kg || result.weight_kg || ""],
+    ["Инкотермс", inv.incoterms || ""],
+    ["Город отправки", inv.origin_city || ""],
+    [],
+    ["Маршрут", "Стоимость USD", "Срок (дней)", "Тариф USD/кг"],
+    ...result.quotes.map(q => [q.flag + " " + q.label, q.cost_usd, `${q.days_min}–${q.days_max}`, q.rate_usd_per_kg]),
+  ];
+  const escCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csvRows = [header, ...rows, ...summary].map(r => r.map(escCell).join(","));
+  const csv = "﻿" + csvRows.join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `invoice-${inv.invoice_number || "export"}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function buildCopyText(result: Result): string {
+  const inv = result.invoice;
+  const cur = inv.currency || "USD";
+  const lines: string[] = [
+    `📄 Инвойс ${inv.invoice_number || "—"} от ${inv.invoice_date || "—"}`,
+    `Поставщик: ${inv.supplier_name_ru || inv.supplier_name || "—"}`,
+    `Сумма: ${cur} ${inv.total_value || "—"}`,
+    `Вес: ${inv.total_weight_kg || result.weight_kg || "—"} кг`,
+    `Инкотермс: ${inv.incoterms || "—"} · Отправка: ${inv.origin_city || "Китай"}`,
+    "",
+    "Позиции:",
+    ...(inv.items || []).map((item, i) =>
+      `  ${i + 1}. ${item.description_ru || item.description_zh || "—"} — ${item.quantity} ${item.unit} × ${cur} ${item.unit_price} = ${cur} ${item.total_price}`
+    ),
+    "",
+    "Доставка:",
+    ...result.quotes.map(q => `  ${q.flag} ${q.label}: $${q.cost_usd} (${q.days_min}–${q.days_max} дн.)`),
+  ];
+  return lines.join("\n");
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
 export default function InvoicePage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -176,11 +267,32 @@ export default function InvoicePage() {
   const [dragging, setDragging] = useState(false);
   const [usesLeft, setUsesLeft] = useState<number>(FREE_LIMIT);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [proUntil, setProUntil] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setUsesLeft(Math.max(0, FREE_LIMIT - getUsageCount()));
+
+    // Check PRO status via server (reads httpOnly cookie cb_anon_paid_until)
+    fetch("/api/calc/check-paid")
+      .then(r => r.json())
+      .then((d: { isPaid?: boolean; paidUntil?: string }) => {
+        if (d.isPaid) { setIsPro(true); setProUntil(d.paidUntil ?? null); }
+      })
+      .catch(() => null);
+
+    // Show success toast after redirect from invoice-success
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("pay") === "success") {
+      setSuccessToast(true);
+      setIsPro(true);
+      setTimeout(() => setSuccessToast(false), 6000);
+      // Clean URL
+      window.history.replaceState({}, "", "/tools/invoice");
+    }
   }, []);
 
   const handleFile = useCallback((f: File) => {
@@ -196,7 +308,7 @@ export default function InvoicePage() {
 
   const analyze = async () => {
     if (!file) return;
-    if (getUsageCount() >= FREE_LIMIT) { setShowPaywall(true); return; }
+    if (!isPro && getUsageCount() >= FREE_LIMIT) { setShowPaywall(true); return; }
     setLoading(true); setError(null); setResult(null);
     try {
       const fd = new FormData();
@@ -205,8 +317,10 @@ export default function InvoicePage() {
       const data = await resp.json() as Result & { error?: string };
       if (!resp.ok || data.error) { setError(data.error ?? "Ошибка распознавания"); }
       else {
-        const newCount = incrementUsage();
-        setUsesLeft(Math.max(0, FREE_LIMIT - newCount));
+        if (!isPro) {
+          const newCount = incrementUsage();
+          setUsesLeft(Math.max(0, FREE_LIMIT - newCount));
+        }
         setResult(data);
       }
     } catch { setError("Нет связи с сервером. Попробуйте ещё раз."); }
@@ -220,9 +334,18 @@ export default function InvoicePage() {
 
   const scrollToUpload = () => uploadRef.current?.scrollIntoView({ behavior: "smooth" });
 
+  const proExpiry = proUntil ? new Date(proUntil).toLocaleDateString("ru-RU") : null;
+
   return (
     <main style={S.page}>
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
+
+      {/* Success toast */}
+      {successToast && (
+        <div style={{ position: "fixed", top: "20px", left: "50%", transform: "translateX(-50%)", background: "#00A86B", color: "#fff", borderRadius: "12px", padding: "12px 24px", fontWeight: 700, fontSize: "15px", zIndex: 2000, boxShadow: "0 8px 32px rgba(0,168,107,0.4)", animation: "slideDown 0.3s ease" }}>
+          🎉 PRO активирован! Безлимитные распознавания включены.
+        </div>
+      )}
 
       {/* ── Nav ── */}
       <div style={S.nav}>
@@ -231,6 +354,11 @@ export default function InvoicePage() {
         <a href="/tools" style={{ color: "#94a3b8", fontSize: "14px", textDecoration: "none" }}>Инструменты</a>
         <span style={{ color: "#243a5e" }}>|</span>
         <span style={{ fontSize: "14px" }}>Распознавание инвойса</span>
+        {isPro && (
+          <span style={{ marginLeft: "auto", background: "rgba(0,168,107,0.15)", border: "1px solid #00A86B44", borderRadius: "20px", padding: "3px 12px", fontSize: "12px", color: "#00A86B", fontWeight: 600 }}>
+            ✓ PRO{proExpiry ? ` · до ${proExpiry}` : ""}
+          </span>
+        )}
       </div>
 
       {/* ── Hero ── */}
@@ -264,7 +392,12 @@ export default function InvoicePage() {
           </div>
 
           {/* Hero upload card */}
-          <div style={{ background: "#0f2644", border: "1px solid #243a5e", borderRadius: "20px", padding: "28px" }}>
+          <div style={{ background: "#0f2644", border: `1px solid ${isPro ? "#00A86B44" : "#243a5e"}`, borderRadius: "20px", padding: "28px" }}>
+            {isPro && (
+              <div style={{ background: "rgba(0,168,107,0.12)", borderRadius: "10px", padding: "8px 14px", fontSize: "12px", color: "#00A86B", fontWeight: 600, marginBottom: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
+                ✓ PRO — безлимитные распознавания{proExpiry ? ` до ${proExpiry}` : ""}
+              </div>
+            )}
             <div style={{ fontWeight: 700, fontSize: "16px", marginBottom: "4px" }}>Загрузить инвойс</div>
             <div style={{ color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>Фото из WeChat, скан, скриншот</div>
 
@@ -332,9 +465,11 @@ export default function InvoicePage() {
             </button>
 
             <p style={{ textAlign: "center", color: "#334155", fontSize: "11px", marginTop: "10px" }}>
-              {usesLeft > 0
-                ? <>Осталось бесплатно: <span style={{ color: "#64748b", fontWeight: 600 }}>{usesLeft} из {FREE_LIMIT}</span> · Файл не сохраняется</>
-                : <><span style={{ color: "#f59e0b" }}>🔒 Лимит исчерпан — </span><button onClick={() => setShowPaywall(true)} style={{ background: "none", border: "none", color: "#00A86B", fontWeight: 600, cursor: "pointer", fontSize: "11px", padding: 0 }}>Перейти на PRO</button></>
+              {isPro
+                ? <span style={{ color: "#00A86B66" }}>PRO · безлимитно · файл не сохраняется</span>
+                : usesLeft > 0
+                  ? <>Осталось бесплатно: <span style={{ color: "#64748b", fontWeight: 600 }}>{usesLeft} из {FREE_LIMIT}</span> · Файл не сохраняется</>
+                  : <><span style={{ color: "#f59e0b" }}>🔒 Лимит исчерпан — </span><button onClick={() => setShowPaywall(true)} style={{ background: "none", border: "none", color: "#00A86B", fontWeight: 600, cursor: "pointer", fontSize: "11px", padding: 0 }}>Перейти на PRO</button></>
               }
             </p>
           </div>
@@ -344,32 +479,65 @@ export default function InvoicePage() {
       {/* ── Result ── */}
       {result && (
         <div style={{ ...S.section, padding: "48px 24px" }}>
+
+          {/* Action bar */}
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
+            <span style={{ color: "#64748b", fontSize: "13px", marginRight: "4px" }}>Экспорт:</span>
+            <button
+              onClick={() => downloadCSV(result)}
+              style={{ display: "flex", alignItems: "center", gap: "6px", background: "#0f2644", border: "1px solid #243a5e", borderRadius: "8px", padding: "7px 14px", color: "#94a3b8", fontSize: "13px", cursor: "pointer", fontWeight: 500 }}
+            >
+              📊 Скачать CSV
+            </button>
+            <button
+              onClick={() => downloadJSON(result)}
+              style={{ display: "flex", alignItems: "center", gap: "6px", background: "#0f2644", border: "1px solid #243a5e", borderRadius: "8px", padding: "7px 14px", color: "#94a3b8", fontSize: "13px", cursor: "pointer", fontWeight: 500 }}
+            >
+              { } Скачать JSON
+            </button>
+            <CopyBtn text={buildCopyText(result)} />
+            <span style={{ color: "#334155", fontSize: "12px", marginLeft: "4px" }}>Скопировать всё</span>
+            <button onClick={reset} style={{ marginLeft: "auto", background: "transparent", color: "#64748b", border: "1px solid #1e3a5f", borderRadius: "8px", padding: "7px 14px", fontSize: "13px", cursor: "pointer" }}>
+              ← Новый инвойс
+            </button>
+          </div>
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "24px", alignItems: "start" }}>
             <div>
+              {/* Summary card */}
               <div style={{ ...S.card, marginBottom: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
                   <div>
                     <div style={{ ...S.label }}>Поставщик</div>
-                    <div style={{ fontWeight: 700, fontSize: "18px" }}>{result.invoice.supplier_name_ru || result.invoice.supplier_name || "—"}</div>
+                    <div style={{ fontWeight: 700, fontSize: "18px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      {result.invoice.supplier_name_ru || result.invoice.supplier_name || "—"}
+                      <CopyBtn text={result.invoice.supplier_name_ru || result.invoice.supplier_name || ""} small />
+                    </div>
                     {result.invoice.supplier_name && result.invoice.supplier_name !== result.invoice.supplier_name_ru && (
-                      <div style={{ color: "#94a3b8", fontSize: "13px" }}>{result.invoice.supplier_name}</div>
+                      <div style={{ color: "#94a3b8", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
+                        {result.invoice.supplier_name}
+                        <CopyBtn text={result.invoice.supplier_name} small />
+                      </div>
                     )}
                   </div>
                   <div style={{ background: "#00A86B22", border: "1px solid #00A86B44", borderRadius: "8px", padding: "6px 14px", color: "#00A86B", fontSize: "13px", fontWeight: 600 }}>✓ Распознано</div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "16px" }}>
                   {[
-                    { label: "Инвойс №", value: result.invoice.invoice_number || "—" },
-                    { label: "Дата", value: result.invoice.invoice_date || "—" },
-                    { label: "Сумма", value: fmt(result.invoice.total_value, result.invoice.currency) },
-                    { label: "Вес (брутто)", value: result.weight_kg ? `${result.weight_kg} кг` : "—" },
-                    { label: "Кол-во мест", value: result.invoice.total_pieces ? `${result.invoice.total_pieces}` : "—" },
-                    { label: "Инкотермс", value: result.invoice.incoterms || "—" },
-                    { label: "Город отправки", value: result.invoice.origin_city || "Китай" },
-                  ].map(({ label, value }) => (
+                    { label: "Инвойс №", value: result.invoice.invoice_number || "—", copy: result.invoice.invoice_number },
+                    { label: "Дата", value: result.invoice.invoice_date || "—", copy: result.invoice.invoice_date },
+                    { label: "Сумма", value: fmt(result.invoice.total_value, result.invoice.currency), copy: `${result.invoice.currency} ${result.invoice.total_value}` },
+                    { label: "Вес (брутто)", value: result.weight_kg ? `${result.weight_kg} кг` : "—", copy: result.weight_kg ? `${result.weight_kg} кг` : "" },
+                    { label: "Кол-во мест", value: result.invoice.total_pieces ? `${result.invoice.total_pieces}` : "—", copy: String(result.invoice.total_pieces || "") },
+                    { label: "Инкотермс", value: result.invoice.incoterms || "—", copy: result.invoice.incoterms || "" },
+                    { label: "Город отправки", value: result.invoice.origin_city || "Китай", copy: result.invoice.origin_city || "" },
+                  ].map(({ label, value, copy }) => (
                     <div key={label}>
-                      <div style={{ color: "#64748b", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "2px" }}>{label}</div>
-                      <div style={{ fontWeight: 600, fontSize: "14px" }}>{value}</div>
+                      <div style={{ color: "#64748b", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>{label}</div>
+                      <div style={{ fontWeight: 600, fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+                        {value}
+                        {copy && <CopyBtn text={copy} small />}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -380,17 +548,26 @@ export default function InvoicePage() {
                 )}
               </div>
 
+              {/* Items table */}
               {result.invoice.items?.length > 0 && (
                 <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
-                  <div style={{ padding: "16px 20px", borderBottom: "1px solid #243a5e", display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ padding: "14px 20px", borderBottom: "1px solid #243a5e", display: "flex", alignItems: "center", gap: "10px" }}>
                     <span style={{ fontWeight: 600 }}>Позиции инвойса</span>
                     <span style={{ color: "#64748b", fontSize: "13px" }}>{result.invoice.items.length} поз.</span>
+                    <div style={{ marginLeft: "auto" }}>
+                      <CopyBtn
+                        text={result.invoice.items.map((item, i) =>
+                          `${i+1}. ${item.description_ru || item.description_zh} — ${item.quantity} ${item.unit} × ${result.invoice.currency} ${item.unit_price} = ${result.invoice.currency} ${item.total_price}`
+                        ).join("\n")}
+                        small
+                      />
+                    </div>
                   </div>
                   <div style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                       <thead>
                         <tr style={{ background: "#0B1F3A" }}>
-                          {["Товар (RU)", "中文", "Кол-во", "Цена", "Сумма", "Вес"].map(h => (
+                          {["Товар (RU)", "中文", "Кол-во", "Цена", "Сумма", "Вес", ""].map(h => (
                             <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 500, whiteSpace: "nowrap" }}>{h}</th>
                           ))}
                         </tr>
@@ -404,6 +581,12 @@ export default function InvoicePage() {
                             <td style={{ padding: "10px 14px", whiteSpace: "nowrap" }}>{item.unit_price ? `${result.invoice.currency} ${item.unit_price}` : "—"}</td>
                             <td style={{ padding: "10px 14px", fontWeight: 600, whiteSpace: "nowrap" }}>{item.total_price ? `${result.invoice.currency} ${item.total_price}` : "—"}</td>
                             <td style={{ padding: "10px 14px", color: "#94a3b8" }}>{item.weight_kg ? `${item.weight_kg} кг` : "—"}</td>
+                            <td style={{ padding: "10px 8px" }}>
+                              <CopyBtn
+                                text={`${item.description_ru || item.description_zh} — ${item.quantity} ${item.unit} × ${result.invoice.currency} ${item.unit_price} = ${result.invoice.currency} ${item.total_price}`}
+                                small
+                              />
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -413,6 +596,7 @@ export default function InvoicePage() {
               )}
             </div>
 
+            {/* Quotes sidebar */}
             <div style={{ position: "sticky", top: "24px" }}>
               <div style={{ ...S.card, border: "1px solid #00A86B44", padding: 0, overflow: "hidden" }}>
                 <div style={{ background: "linear-gradient(135deg,#00A86B22,#0f2644)", padding: "20px", borderBottom: "1px solid #243a5e" }}>
@@ -428,7 +612,10 @@ export default function InvoicePage() {
                           <div style={{ color: "#64748b", fontSize: "12px" }}>{q.note}</div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                          <div style={{ fontWeight: 700, fontSize: "20px", color: "#00A86B" }}>${q.cost_usd.toLocaleString()}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <div style={{ fontWeight: 700, fontSize: "20px", color: "#00A86B" }}>${q.cost_usd.toLocaleString()}</div>
+                            <CopyBtn text={`${q.flag} ${q.label}: $${q.cost_usd} (≈ ${Math.round(q.cost_usd * 90).toLocaleString()} ₽)`} small />
+                          </div>
                           <div style={{ color: "#64748b", fontSize: "11px" }}>≈ {Math.round(q.cost_usd * 90).toLocaleString()} ₽</div>
                         </div>
                       </div>
@@ -449,6 +636,28 @@ export default function InvoicePage() {
                     style={{ display: "block", background: "#00A86B", color: "#fff", borderRadius: "10px", padding: "14px", textAlign: "center", textDecoration: "none", fontWeight: 700, fontSize: "15px", marginBottom: "10px" }}>
                     Запросить точный расчёт
                   </a>
+
+                  {/* Download buttons in sidebar too */}
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                    <button onClick={() => downloadCSV(result)} style={{ flex: 1, background: "#0B1F3A", border: "1px solid #243a5e", borderRadius: "8px", padding: "9px", color: "#94a3b8", fontSize: "12px", cursor: "pointer", fontWeight: 500 }}>
+                      📊 CSV
+                    </button>
+                    <button onClick={() => downloadJSON(result)} style={{ flex: 1, background: "#0B1F3A", border: "1px solid #243a5e", borderRadius: "8px", padding: "9px", color: "#94a3b8", fontSize: "12px", cursor: "pointer", fontWeight: 500 }}>
+                      { } JSON
+                    </button>
+                    <div style={{ flex: 1, display: "flex" }}>
+                      <button
+                        onClick={async () => {
+                          try { await navigator.clipboard.writeText(buildCopyText(result)); }
+                          catch { /* ignore */ }
+                        }}
+                        style={{ flex: 1, background: "#0B1F3A", border: "1px solid #243a5e", borderRadius: "8px", padding: "9px", color: "#94a3b8", fontSize: "12px", cursor: "pointer", fontWeight: 500 }}
+                      >
+                        📋 Копировать
+                      </button>
+                    </div>
+                  </div>
+
                   <button onClick={reset}
                     style={{ width: "100%", background: "transparent", color: "#94a3b8", border: "1px solid #243a5e", borderRadius: "10px", padding: "10px", fontSize: "13px", cursor: "pointer" }}>
                     ← Загрузить другой инвойс
@@ -469,18 +678,9 @@ export default function InvoicePage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px" }}>
             {[
-              {
-                n: "01", title: "WeChat вместо нормального документа",
-                body: "Поставщик шлёт инвойс картинкой в чат, пакинг — фото с телефона, спецификацию — в нестандартном Excel с иероглифами. Менеджер перепечатывает вручную.",
-              },
-              {
-                n: "02", title: "Не знаешь сколько стоит доставка",
-                body: "Вес в инвойсе есть, но чтобы узнать цену карго — нужно звонить менеджеру, ждать ответа, считать вручную. Сделка тормозит на самом простом шаге.",
-              },
-              {
-                n: "03", title: "Рост заказов = рост хаоса",
-                body: "Каждая новая поставка — это +1 час ручной работы. Количество поставщиков растёт, инвойсы копятся, ошибки в данных тиражируются.",
-              },
+              { n: "01", title: "WeChat вместо нормального документа", body: "Поставщик шлёт инвойс картинкой в чат, пакинг — фото с телефона, спецификацию — в нестандартном Excel с иероглифами. Менеджер перепечатывает вручную." },
+              { n: "02", title: "Не знаешь сколько стоит доставка", body: "Вес в инвойсе есть, но чтобы узнать цену карго — нужно звонить менеджеру, ждать ответа, считать вручную. Сделка тормозит на самом простом шаге." },
+              { n: "03", title: "Рост заказов = рост хаоса", body: "Каждая новая поставка — это +1 час ручной работы. Количество поставщиков растёт, инвойсы копятся, ошибки в данных тиражируются." },
             ].map((p) => (
               <div key={p.n} style={S.card}>
                 <div style={{ color: "#00A86B", fontWeight: 700, fontSize: "13px", fontFamily: "monospace", marginBottom: "12px" }}>{p.n}</div>
@@ -501,29 +701,15 @@ export default function InvoicePage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px" }}>
             {[
-              {
-                n: "Шаг 01", title: "Загружаешь фото инвойса",
-                body: "Фото из WeChat, скриншот, скан — на китайском, английском или смешанный. Читаем иероглифы (简·繁), печати, рукописные пометки.",
-                result: "Данные без переводчика и без ручного ввода",
-              },
-              {
-                n: "Шаг 02", title: "Извлекаем позиции и вес",
-                body: "Позиции товара с переводом на русский, количество, цена, общая сумма, брутто-вес, артикулы, инкотермс — всё из одного документа.",
-                result: "Структура сделки за 30 секунд",
-              },
-              {
-                n: "Шаг 03", title: "Считаем стоимость доставки",
-                body: "По фактическому весу из инвойса автоматически считаем карго до Москвы, Алматы или Астаны — авто и авиа — с реальными тарифами ChinaBridge.",
-                result: "Цена доставки без звонка менеджеру",
-              },
+              { n: "Шаг 01", title: "Загружаешь фото инвойса", body: "Фото из WeChat, скриншот, скан — на китайском, английском или смешанный. Читаем иероглифы (简·繁), печати, рукописные пометки.", result: "Данные без переводчика и без ручного ввода" },
+              { n: "Шаг 02", title: "Извлекаем позиции и вес", body: "Позиции товара с переводом на русский, количество, цена, общая сумма, брутто-вес, артикулы, инкотермс — всё из одного документа.", result: "Структура сделки за 30 секунд" },
+              { n: "Шаг 03", title: "Считаем стоимость доставки", body: "По фактическому весу из инвойса автоматически считаем карго до Москвы, Алматы или Астаны — авто и авиа — с реальными тарифами ChinaBridge.", result: "Цена доставки без звонка менеджеру" },
             ].map((step) => (
               <div key={step.n} style={S.card}>
                 <div style={{ color: "#00A86B", fontWeight: 700, fontSize: "12px", fontFamily: "monospace", marginBottom: "12px" }}>{step.n}</div>
                 <div style={{ fontWeight: 700, fontSize: "15px", marginBottom: "10px" }}>{step.title}</div>
                 <p style={{ color: "#94a3b8", fontSize: "14px", lineHeight: 1.6, marginBottom: "14px" }}>{step.body}</p>
-                <div style={{ background: "#0B1F3A", borderRadius: "8px", padding: "8px 12px", fontSize: "12px", color: "#00A86B" }}>
-                  ИТОГ · {step.result}
-                </div>
+                <div style={{ background: "#0B1F3A", borderRadius: "8px", padding: "8px 12px", fontSize: "12px", color: "#00A86B" }}>ИТОГ · {step.result}</div>
               </div>
             ))}
           </div>
@@ -555,7 +741,7 @@ export default function InvoicePage() {
               ))}
             </div>
             <div style={S.card}>
-              <div style={{ fontWeight: 700, fontSize: "16px", marginBottom: "20px" }}>🚚 Расчёт доставки</div>
+              <div style={{ fontWeight: 700, fontSize: "16px", marginBottom: "20px" }}>🚚 Расчёт доставки + экспорт</div>
               {[
                 { flag: "🇷🇺", route: "Авто → Россия", rate: "$3.00/кг", days: "18–28 дней", min: "от 100 кг" },
                 { flag: "🇰🇿", route: "Авто → Казахстан", rate: "$2.50/кг", days: "5–8 дней", min: "от 100 кг" },
@@ -569,9 +755,13 @@ export default function InvoicePage() {
                   <div style={{ color: "#00A86B", fontWeight: 700, fontSize: "18px" }}>{r.rate}</div>
                 </div>
               ))}
-              <div style={{ marginTop: "16px", background: "#0B1F3A", borderRadius: "10px", padding: "14px" }}>
-                <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "4px" }}>📞 Точный расчёт</div>
-                <div style={{ color: "#64748b", fontSize: "13px" }}>С учётом объёма, типа товара и актуального маршрута — менеджер перезвонит в течение 15 минут</div>
+              <div style={{ marginTop: "8px", background: "#0B1F3A", border: "1px solid #243a5e", borderRadius: "10px", padding: "12px 14px", display: "flex", gap: "10px" }}>
+                <span style={{ fontSize: "13px" }}>📊 CSV</span>
+                <span style={{ color: "#243a5e" }}>·</span>
+                <span style={{ fontSize: "13px" }}>{ } JSON</span>
+                <span style={{ color: "#243a5e" }}>·</span>
+                <span style={{ fontSize: "13px" }}>📋 Копирование</span>
+                <span style={{ color: "#64748b", fontSize: "12px", marginLeft: "auto" }}>PRO</span>
               </div>
             </div>
           </div>
@@ -601,6 +791,7 @@ export default function InvoicePage() {
                     ["Узнать стоимость доставки", "Звоню менеджеру, жду ответа", "Цена по трём маршрутам — автоматически"],
                     ["Перевести название товара", "Google Translate, потом правлю", "Перевод ZH→RU встроен в распознавание"],
                     ["Посчитать вес для карго", "Считаю вручную по каждой позиции", "Вес извлекается из инвойса автоматически"],
+                    ["Передать данные коллеге", "Копирую из документа построчно", "Скачать CSV или скопировать одной кнопкой"],
                   ].map(([s, before, after], i) => (
                     <tr key={i} style={{ borderTop: "1px solid #1e3a5f" }}>
                       <td style={{ padding: "14px 20px", fontWeight: 500 }}>{s}</td>
@@ -635,6 +826,12 @@ export default function InvoicePage() {
         </div>
       )}
 
+      <style>{`
+        @keyframes slideDown {
+          from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+          to   { transform: translateX(-50%) translateY(0);     opacity: 1; }
+        }
+      `}</style>
     </main>
   );
 }

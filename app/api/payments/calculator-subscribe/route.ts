@@ -47,15 +47,19 @@ export async function POST(req: NextRequest) {
   const payerIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
   let telegram = "";
+  let from = "calculator";
   try {
     const body = await req.json();
     telegram = (body?.telegram ?? "").trim().replace(/^@/, "");
+    from = (body?.from ?? "calculator").trim();
   } catch { /* no body — anonymous payment */ }
 
   const priceRub = await getPriceForClient(clientToken);
   const isRenewal = priceRub === PRICE_REGULAR;
 
-  const redirectUrl = `${origin}/calculator-success`;
+  const redirectUrl = from === "invoice"
+    ? `${origin}/invoice-success`
+    : `${origin}/calculator-success`;
   const failUrl = isLoggedIn
     ? `${origin}/client/plans?pay=cancel`
     : `${origin}/ai-calculator?pay=cancel`;
