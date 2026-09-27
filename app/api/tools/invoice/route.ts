@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
+import { getOrCreateSessionId, setSessionCookie, getIp } from "@/lib/credits/session";
+import { reserve, refund } from "@/lib/credits/db";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -155,61 +157,54 @@ const ROUTES = [
 ];
 
 export async function POST(req: NextRequest) {
+  // ── Session + credit check ────────────────────────────────────────────────
+  const { session_id, isNew } = getOrCreateSessionId(req);
+  const ip = getIp(req);
+  let reserveResult: Awaited<ReturnType<typeof reserve>> | null = null;
+
   try {
-    // ── PRO check (server-side, httpOnly cookie) ──────────────────────────────
-    const paidUntil = req.cookies.get("cb_anon_paid_until")?.value;
-    const isPro = !!(paidUntil && new Date(paidUntil) > new Date());
-
-    if (!isPro && process.env.DATABASE_URL) {
-      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-      try {
-        const sql = neon(process.env.DATABASE_URL);
-        await sql.unsafe(CREATE_USES_TABLE);
-
-        const rows = await sql`
-          SELECT use_count FROM invoice_anon_uses WHERE ip = ${ip}
-        ` as Array<{ use_count: number }>;
-
-        const count = rows[0]?.use_count ?? 0;
-        if (count >= FREE_LIMIT) {
-          return NextResponse.json(
-            { error: "limit", message: "Использованы все 3 бесплатных распознавания. Оформите PRO для безлимитного доступа." },
-            { status: 402 }
-          );
-        }
-
-        // Increment before processing (prevents race-condition double-use)
-        await sql`
-          INSERT INTO invoice_anon_uses (ip, use_count, last_used_at)
-          VALUES (${ip}, 1, NOW())
-          ON CONFLICT (ip) DO UPDATE
-            SET use_count   = invoice_anon_uses.use_count + 1,
-                last_used_at = NOW()
-        `;
-      } catch (dbErr) {
-        console.error("[invoice] usage-check DB error:", dbErr);
-        // Don't block on DB error — fail open (allow request through)
-      }
-    }
-
-    // ── Parse request ─────────────────────────────────────────────────────────
+    // ── Parse + validate file first (before spending a credit) ───────────────
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "Файл не загружен" }, { status: 400 });
+      const res = NextResponse.json({ error: "Файл не загружен" }, { status: 400 });
+      if (isNew) setSessionCookie(res, session_id);
+      return res;
     }
 
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"];
     if (!allowedTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic)$/i)) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { error: "Поддерживаются JPG, PNG, WEBP, HEIC. PDF — в разработке." },
         { status: 400 }
       );
+      if (isNew) setSessionCookie(res, session_id);
+      return res;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "Файл слишком большой (макс 10MB)" }, { status: 400 });
+      const res = NextResponse.json({ error: "Файл слишком большой (макс 10MB)" }, { status: 400 });
+      if (isNew) setSessionCookie(res, session_id);
+      return res;
+    }
+
+    // ── Reserve credit AFTER file is valid ───────────────────────────────────
+    if (process.env.DATABASE_URL) {
+      try {
+        reserveResult = await reserve(session_id, ip, "invoice");
+        if (!reserveResult.ok) {
+          const res = NextResponse.json(
+            { error: "limit", message: "Использованы все 3 бесплатных расчёта. Купите кредиты для продолжения." },
+            { status: 402 }
+          );
+          if (isNew) setSessionCookie(res, session_id);
+          return res;
+        }
+      } catch (dbErr) {
+        console.error("[invoice] credit-check DB error:", dbErr);
+        // Fail open — let request through if DB is unavailable
+      }
     }
 
     const bytes = await file.arrayBuffer();
@@ -305,9 +300,15 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ invoice, quotes, weight_kg: weightKg, landed_costs, usd_rub: USD_RUB });
+    const res = NextResponse.json({ invoice, quotes, weight_kg: weightKg, landed_costs, usd_rub: USD_RUB });
+    if (isNew) setSessionCookie(res, session_id);
+    return res;
   } catch (err) {
     console.error("Invoice OCR error:", err);
+    // Refund credit if calculation failed after reservation
+    if (reserveResult?.ok) {
+      await refund(session_id, reserveResult.calculation_id, reserveResult.used_free).catch(() => null);
+    }
     return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
   }
 }

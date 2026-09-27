@@ -7,9 +7,9 @@ import { DynamicFunnel, DynamicLeftPanel, DynamicRightPanel } from "./DynamicCom
 const CANONICAL = "https://chinabridge.pro/ai-calculator";
 
 export const metadata: Metadata = {
-  title: "Калькулятор маржи Wildberries и Ozon — юнит-экономика из Китая | ChinaBridge",
+  title: "Проверка товара перед закупкой — AI анализ юнит-экономики | ChinaBridge",
   description:
-    "Бесплатный AI-калькулятор: вставьте ссылку с 1688 или Alibaba → получите расчёт маржи, ROI, таможни и прибыли на WB, Ozon, Kaspi за 15 секунд. Реальные тарифы 2026.",
+    "AI-калькулятор проверки товара: вставьте ссылку с 1688 или Alibaba → получите расчёт маржи, ROI, таможни и прибыли на WB, Ozon, Kaspi за 15 секунд. 3 бесплатных расчёта.",
   keywords: [
     "калькулятор маржи wildberries",
     "калькулятор маржи ozon",
@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: CANONICAL },
   openGraph: {
-    title: "Калькулятор маржи WB и Ozon — расчёт за 15 секунд | ChinaBridge",
+    title: "Проверка товара перед закупкой — AI анализ за 15 секунд | ChinaBridge",
     description:
-      "Вставьте ссылку на товар с 1688 → AI рассчитает маржу, ROI, таможню и прибыль на Wildberries, Ozon, Kaspi. Бесплатно, без регистрации.",
+      "Вставьте ссылку на товар с 1688 → AI проверит маржу, ROI, таможню и прибыль на WB, Ozon, Kaspi. 3 бесплатных расчёта, без регистрации.",
     type:    "website",
     url:     CANONICAL,
     locale:  "ru_RU",

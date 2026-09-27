@@ -721,6 +721,12 @@ function HistoryPanel({ items, onClose }: { items: HistoryItem[]; onClose: () =>
 
 // ── Paywall Modal ─────────────────────────────────────────────────────────────
 
+const CALC_PACKAGES = [
+  { id: "pack_1",  price: 490,  credits: 1,  label: "1 расчёт",    hint: "" },
+  { id: "pack_5",  price: 1490, credits: 5,  label: "5 расчётов",   hint: "выгоднее на 40%" },
+  { id: "pack_20", price: 3990, credits: 20, label: "20 расчётов",  hint: "максимум" },
+] as const;
+
 function PaywallBlock({
   ec,
   usedCount,
@@ -733,75 +739,34 @@ function PaywallBlock({
   onClose: () => void;
 }) {
   const isGreen = ec?.verdict === "green";
+  const [selected,    setSelected]    = useState<string>("pack_1");
+  const [payLoading,  setPayLoading]  = useState(false);
+  const [payError,    setPayError]    = useState("");
 
-  const [payLoading,    setPayLoading]    = useState(false);
-  const [showTrustStep, setShowTrustStep] = useState(false);
-  const [paymentLink,   setPaymentLink]   = useState<string | null>(null);
-  const [linkError,     setLinkError]     = useState(false);
-  // Anonymous checkout state
-  const [anonTg,      setAnonTg]      = useState("");
-  const [anonLoading, setAnonLoading] = useState(false);
-  const [anonError,   setAnonError]   = useState("");
-  // Detect logged-in state from cookie
-  const isLoggedIn = typeof document !== "undefined"
-    ? document.cookie.split(";").some(c => c.trim().startsWith("cb_client="))
-    : false;
-
-  // Pre-fetch payment link on mount (only for logged-in users)
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    let cancelled = false;
-    setPayLoading(true);
-    fetch("/api/payments/calculator-subscribe", { method: "POST" })
-      .then(r => r.json())
-      .then(data => {
-        if (cancelled) return;
-        if (data.ok && data.paymentLink) {
-          try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
-          setPaymentLink(data.paymentLink);
-        } else {
-          setLinkError(true);
-        }
-      })
-      .catch(() => { if (!cancelled) setLinkError(true); })
-      .finally(() => { if (!cancelled) setPayLoading(false); });
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleAnonPay() {
-    setAnonLoading(true);
-    setAnonError("");
+  async function handlePay() {
+    setPayLoading(true); setPayError("");
     try {
-      const res = await fetch("/api/payments/calculator-subscribe", {
+      const res = await fetch("/api/payments/calc-credits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telegram: anonTg.trim().replace(/^@/, "") }),
+        body: JSON.stringify({ packageId: selected }),
       });
       const data = await res.json();
       if (data.ok && data.paymentLink) {
-        try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
-        analytics.checkoutStarted?.({ amount: 490 });
+        const pkg = CALC_PACKAGES.find(p => p.id === selected);
+        analytics.checkoutStarted?.({ amount: pkg?.price ?? 490 });
         window.location.href = data.paymentLink;
       } else {
-        setAnonError("Не удалось создать платёж. Попробуйте ещё раз.");
-        setAnonLoading(false);
+        setPayError("Не удалось создать платёж. Попробуйте ещё раз.");
+        setPayLoading(false);
       }
     } catch {
-      setAnonError("Ошибка сети. Попробуйте ещё раз.");
-      setAnonLoading(false);
+      setPayError("Ошибка сети. Попробуйте ещё раз.");
+      setPayLoading(false);
     }
   }
 
-  function handleProCtaClick(e: React.MouseEvent) {
-    e.preventDefault();
-    analytics.paywallProClicked?.();
-    setShowTrustStep(true);
-  }
-
-  function handlePaymentClick() {
-    analytics.checkoutStarted?.({ amount: 490 });
-  }
+  const pkg = CALC_PACKAGES.find(p => p.id === selected) ?? CALC_PACKAGES[0];
 
   return (
     <div
@@ -824,29 +789,24 @@ function PaywallBlock({
             ))}
           </div>
           <h2 className="text-lg font-bold text-white leading-tight">
-            ChinaBridge Pro — AI Unit Economics
+            Кредиты исчерпаны
           </h2>
           <p className="text-xs text-[#8899aa] mt-1 leading-relaxed">
-            Вы уже проверили {usedCount} {usedCount === 1 ? "товар" : usedCount < 5 ? "товара" : "товаров"}. Продолжайте анализировать товары и сохраняйте результаты в Pro. <span className="text-white font-semibold">1 990 ₽/мес</span>
+            Использованы все {totalLimit} бесплатных расчёта. Выберите пакет — кредиты работают в обоих калькуляторах.
           </p>
-          <div className="mt-2 flex items-center gap-1.5">
-            <span className="text-[10px] text-[#00A86B]">●</span>
-            <p className="text-[10px] text-[#5a7899]">224 предпринимателя использовали калькулятор на этой неделе</p>
-          </div>
           {ec && (
             <div className="mt-2 flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
               <span className="text-xl">{ec.verdict_emoji}</span>
               <div>
                 <p className="text-xs font-semibold text-white">{ec.verdict_label}</p>
                 <p className="text-[10px] text-[#8899aa]">
-                  Маржа {Number(ec.margin_pct ?? 0).toFixed(1)}% · ROI {Number(ec.roi_pct ?? 0).toFixed(0)}% · {Math.round((ec.net_profit_rub ?? 0) / (ec.quantity || 1)).toLocaleString("ru-RU")} ₽/шт
+                  Маржа {Number(ec.margin_pct ?? 0).toFixed(1)}% · ROI {Number(ec.roi_pct ?? 0).toFixed(0)}%
                 </p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Two paths */}
         <div className="p-4 flex flex-col gap-3">
           {/* Import path — emphasized when green verdict */}
           <a
@@ -854,149 +814,49 @@ function PaywallBlock({
             target="_blank"
             onClick={() => { analytics.paywallTgClicked?.(); analytics.telegramClick(); }}
             rel="noopener noreferrer"
-            className={`block rounded-xl border p-4 transition-all hover:scale-[1.02] ${
+            className={`block rounded-xl border p-3 transition-all hover:scale-[1.02] ${
               isGreen
-                ? "bg-[#00A86B]/15 border-[#00A86B]/50 hover:border-[#00A86B]/80 hover:bg-[#00A86B]/20"
+                ? "bg-[#00A86B]/15 border-[#00A86B]/50 hover:border-[#00A86B]/80"
                 : "bg-white/5 border-[#243a5e] hover:border-[#00A86B]/40"
             }`}
           >
-            <div className="flex items-start gap-3">
-              <span className="text-2xl leading-none mt-0.5">🚢</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-bold text-white">Нужно привезти товар?</p>
-                  {isGreen && (
-                    <span className="text-[10px] bg-[#00A86B] text-white rounded-full px-2 py-0.5 font-semibold">
-                      Рекомендуем
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-[#8899aa] mt-0.5 leading-relaxed">
-                  Менеджер рассчитает поставку, найдёт поставщика и организует доставку под ключ
-                </p>
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-[#8899aa]">
-                  <span>✓ Расчёт за 15 мин</span>
-                  <span>✓ Карго из Китая</span>
-                  <span>✓ Без предоплаты</span>
-                </div>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🚢</span>
+              <div>
+                <p className="text-sm font-bold text-white">Нужна поставка из Китая?</p>
+                <p className="text-xs text-[#8899aa]">Расчёт за 15 мин · Без предоплаты</p>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-[#00A86B] font-semibold">→ Рассчитать поставку</span>
-              <p className="text-[10px] text-[#5a7899]">нажмите Start в боте</p>
-            </div>
+            <p className="text-xs text-[#00A86B] font-semibold mt-2">→ Написать менеджеру</p>
           </a>
 
-          {/* PRO path */}
-          <div className={`rounded-xl border p-4 ${
-            !isGreen
-              ? "bg-[#229ED9]/10 border-[#229ED9]/40 hover:border-[#229ED9]/70"
-              : "bg-white/5 border-[#243a5e] hover:border-[#229ED9]/40"
-          } transition-all`}>
-            <div className="flex items-start gap-3 mb-3">
-              <span className="text-2xl leading-none mt-0.5">📊</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <p className="text-sm font-bold text-white">PRO</p>
-                    <span className="text-base font-black text-[#229ED9]">490 ₽</span>
-                    <span className="text-xs text-[#5a7899] line-through">1 990 ₽</span>
-                    <span className="text-[10px] text-[#8899aa]">/мес первый месяц</span>
-                  </div>
-                  {!isGreen && (
-                    <span className="text-[10px] bg-[#229ED9] text-white rounded-full px-2 py-0.5 font-semibold">
-                      Рекомендуем
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-[#8899aa] mt-0.5">Рабочее место для анализа товаров — история, целевая цена, сценарии</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-[#8899aa] mb-3">
-              <span>✓ 100 AI-анализов/мес</span>
-              <span>✓ История расчётов</span>
-              <span>✓ Сохранённые товары</span>
-              <span>✓ Целевая цена закупки</span>
-              <span>✓ Сценарии экономики</span>
-              <span>✓ WB, Ozon, Kaspi</span>
-            </div>
-
-            {/* Anon: direct checkout — no registration required */}
-            {!isLoggedIn ? (
-              <div className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  placeholder="Telegram @username (необязательно)"
-                  value={anonTg}
-                  onChange={e => setAnonTg(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-[#0b1a2e] border border-[#243a5e] focus:border-[#229ED9]/60 rounded-xl text-white text-sm outline-none placeholder:text-[#4a6080]"
-                />
-                <p className="text-[10px] text-[#5a7899] leading-relaxed">
-                  Укажите Telegram — получите код активации. Без него PRO активируется автоматически.
-                </p>
-                {anonError && <p className="text-xs text-red-400">{anonError}</p>}
-                <button
-                  onClick={handleAnonPay}
-                  disabled={anonLoading}
-                  className="w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
-                >
-                  {anonLoading ? "Переходим к оплате..." : "Оплатить 490 ₽ →"}
-                </button>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-px bg-[#1e3a5f]" />
-                  <span className="text-[10px] text-[#5a7899]">или</span>
-                  <div className="flex-1 h-px bg-[#1e3a5f]" />
-                </div>
-                <a
-                  href="/client/login?from=/ai-calculator"
-                  className="text-xs text-[#8899aa] hover:text-white text-center underline"
-                >
-                  Войти в личный кабинет
-                </a>
-              </div>
-            ) : showTrustStep ? (
-              /* Logged-in: trust step before redirect */
-              <div className="flex flex-col gap-2">
-                <div className="rounded-xl bg-[#0b1a2e] border border-[#243a5e] px-3 py-2.5 text-xs text-[#8899aa] leading-relaxed">
-                  Вы перейдёте на страницу оплаты.{" "}
-                  <span className="text-white">После оплаты PRO активируется автоматически</span>{" "}
-                  в вашем личном кабинете.
-                </div>
-                {linkError ? (
-                  <p className="text-xs text-red-400 text-center">Ошибка загрузки. Обновите страницу.</p>
-                ) : payLoading || !paymentLink ? (
-                  <div className="py-2.5 bg-[#229ED9]/50 rounded-xl text-white text-sm font-semibold text-center">
-                    Загружаем ссылку...
-                  </div>
-                ) : (
-                  <a
-                    href={paymentLink}
-                    onClick={handlePaymentClick}
-                    className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] text-white text-sm font-semibold rounded-xl text-center transition-colors"
-                  >
-                    Перейти к оплате →
-                  </a>
-                )}
-                <button onClick={() => setShowTrustStep(false)} className="text-xs text-[#5a7899] hover:text-white text-center">
-                  Назад
-                </button>
-              </div>
-            ) : (
-              /* Logged-in: CTA */
-              <>
-                <button
-                  onClick={handleProCtaClick}
-                  disabled={payLoading || !!linkError}
-                  className="block w-full py-2.5 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl text-center transition-colors"
-                >
-                  {payLoading ? "Подготавливаем оплату..." : linkError ? "Ошибка — обновите страницу" : "Подключить Pro — 490 ₽/мес"}
-                </button>
-                <p className="mt-2 text-[10px] text-[#5a7899] text-center leading-relaxed">
-                  Безопасная оплата через платёжный сервис. PRO активируется в личном кабинете.
-                </p>
-              </>
-            )}
+          {/* Credit packages */}
+          <div className="flex flex-col gap-2">
+            {CALC_PACKAGES.map(p => (
+              <button key={p.id} onClick={() => setSelected(p.id)} className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-left transition-all ${
+                selected === p.id
+                  ? "bg-[#229ED9]/15 border-[#229ED9]"
+                  : "bg-white/3 border-[#243a5e] hover:border-[#243a5e]/80"
+              }`}>
+                <span className="text-sm text-white font-medium">{p.label} {p.hint ? <span className="text-[11px] text-[#64748b]">— {p.hint}</span> : null}</span>
+                <span className={`text-sm font-bold ${selected === p.id ? "text-[#229ED9]" : "text-[#8899aa]"}`}>{p.price} ₽</span>
+              </button>
+            ))}
           </div>
+
+          {selected === "pack_1" && (
+            <p className="text-[11px] text-[#64748b] px-1">💡 490 ₽ будут зачтены в стоимость доставки при оформлении заявки</p>
+          )}
+
+          {payError && <p className="text-xs text-red-400">{payError}</p>}
+
+          <button
+            onClick={handlePay}
+            disabled={payLoading}
+            className="w-full py-3 bg-[#229ED9] hover:bg-[#1a8bc4] disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors"
+          >
+            {payLoading ? "Переходим к оплате..." : `Оплатить ${pkg.price} ₽ →`}
+          </button>
 
           <button
             onClick={onClose}
@@ -1243,8 +1103,9 @@ export default function AIEconomicsFunnel() {
     // Server-side paid check — works on any device, even if localStorage is empty
     fetch('/api/calc/check-paid')
       .then(r => r.json())
-      .then((d: { isPaid?: boolean; paidUntil?: string }) => {
-        if (d.isPaid) {
+      .then((d: { isPaid?: boolean; paidUntil?: string; has_access?: boolean; balance?: number; free_left?: number }) => {
+        const hasAccess = d.isPaid || d.has_access;
+        if (hasAccess) {
           setIsPaidPro(true);
           setIsRegistered(true);
           if (d.paidUntil) {

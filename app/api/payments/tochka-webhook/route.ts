@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
+import { addCredits } from "@/lib/credits/db";
+import { CREDIT_PACKAGES, type PackageId } from "@/lib/credits/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +23,52 @@ export async function POST(req: Request) {
 
     const sql          = neon(process.env.DATABASE_URL!);
     const notifyToken  = PARSER_BOT_TOKEN || LID_BOT_TOKEN;
+
+    // ── 0. Кредитные пакеты для калькуляторов ───────────────────────────────
+    const creditPending = await sql`
+      UPDATE calc_credit_pending
+      SET status = 'paid'
+      WHERE operation_id = ${operationId}
+        AND status = 'pending'
+      RETURNING session_id, package_id, credits
+    `.catch(() => [] as unknown[]);
+
+    const creditRow = (creditPending as Array<Record<string, unknown>>)[0];
+    if (creditRow) {
+      const session_id = String(creditRow.session_id);
+      const package_id = String(creditRow.package_id) as PackageId;
+      const credits    = Number(creditRow.credits);
+
+      try {
+        await addCredits(session_id, credits, operationId, package_id);
+      } catch (err) {
+        console.error("[tochka-webhook] addCredits error:", err);
+        // Don't block — credits table may not exist yet, will be created on next balance check
+      }
+
+      // Уведомление менеджеру о покупке кредитов
+      if (notifyToken && MANAGER_CHAT_ID) {
+        const pkg = CREDIT_PACKAGES[package_id];
+        await fetch(`https://api.telegram.org/bot${notifyToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: MANAGER_CHAT_ID,
+            text: [
+              `🟢 <b>Куплены кредиты калькулятора</b>`,
+              ``,
+              `📦 Пакет: ${pkg?.label ?? package_id}`,
+              `💳 Кредитов: ${credits}`,
+              `💰 Сумма: ${pkg?.price ?? "?"} ₽`,
+              `🆔 <code>${operationId}</code>`,
+            ].join("\n"),
+            parse_mode: "HTML",
+          }),
+        }).catch(() => null);
+      }
+
+      return NextResponse.json({ ok: true });
+    }
 
     // ── 1. Попытка: tripwire_orders (490₽) ──────────────────────────────────
     const tripwireRows = await sql`

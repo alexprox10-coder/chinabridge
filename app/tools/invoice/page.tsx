@@ -3,18 +3,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
 const FREE_LIMIT = 3;
-const STORAGE_KEY = "cb_invoice_uses";
-
-function getUsageCount(): number {
-  try { return parseInt(localStorage.getItem(STORAGE_KEY) ?? "0", 10) || 0; } catch { return 0; }
-}
-function incrementUsage(): number {
-  try {
-    const n = getUsageCount() + 1;
-    localStorage.setItem(STORAGE_KEY, String(n));
-    return n;
-  } catch { return FREE_LIMIT + 1; }
-}
 
 // ── Copy helper ──────────────────────────────────────────────────────────────
 function CopyBtn({ text, small }: { text: string; small?: boolean }) {
@@ -37,23 +25,28 @@ function CopyBtn({ text, small }: { text: string; small?: boolean }) {
   );
 }
 
-// ── Paywall modal ────────────────────────────────────────────────────────────
+// ── Credit packages paywall modal ────────────────────────────────────────────
+const PACKAGES = [
+  { id: "pack_1",  price: 490,  credits: 1,  label: "1 расчёт",   hint: "" },
+  { id: "pack_5",  price: 1490, credits: 5,  label: "5 расчётов",  hint: "выгоднее на 40%" },
+  { id: "pack_20", price: 3990, credits: 20, label: "20 расчётов", hint: "максимальная выгода" },
+] as const;
+
 function PaywallModal({ onClose }: { onClose: () => void }) {
-  const [tg, setTg] = useState("");
+  const [selected, setSelected] = useState<string>("pack_1");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
   async function handlePay() {
     setLoading(true); setErr("");
     try {
-      const res = await fetch("/api/payments/calculator-subscribe", {
+      const res = await fetch("/api/payments/calc-credits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telegram: tg.trim().replace(/^@/, ""), from: "invoice" }),
+        body: JSON.stringify({ packageId: selected }),
       });
-      const data = await res.json() as { ok: boolean; paymentLink?: string; operationId?: string };
+      const data = await res.json() as { ok: boolean; paymentLink?: string };
       if (data.ok && data.paymentLink) {
-        try { localStorage.setItem("cb_pending_op_id", data.operationId ?? ""); } catch { /* ignore */ }
         window.location.href = data.paymentLink;
       } else {
         setErr("Не удалось создать платёж. Попробуйте ещё раз.");
@@ -65,64 +58,59 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
     }
   }
 
+  const pkg = PACKAGES.find(p => p.id === selected) ?? PACKAGES[0];
+
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.80)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "24px", backdropFilter: "blur(4px)" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#060f1e", border: "1px solid #1e3a5f", borderRadius: "20px", maxWidth: "400px", width: "100%", overflow: "hidden" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "24px", backdropFilter: "blur(4px)" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#060f1e", border: "1px solid #1e3a5f", borderRadius: "20px", maxWidth: "420px", width: "100%", overflow: "hidden" }}>
 
         <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid #1e3a5f", position: "relative" }}>
-          <button onClick={onClose} style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", color: "#5a7899", fontSize: "20px", cursor: "pointer", lineHeight: 1 }}>×</button>
-          <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-            {[0,1,2].map(i => <div key={i} style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#00A86B" }} />)}
-          </div>
-          <div style={{ fontWeight: 700, fontSize: "17px", marginBottom: "6px" }}>ChinaBridge PRO — Инструменты</div>
-          <p style={{ color: "#8899aa", fontSize: "13px", lineHeight: 1.5 }}>
-            Вы использовали все 3 бесплатных распознавания. PRO — безлимитно, с историей и поддержкой.{" "}
-            <span style={{ color: "#fff", fontWeight: 700 }}>990 ₽/мес</span>
+          <button onClick={onClose} style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", color: "#5a7899", fontSize: "20px", cursor: "pointer" }}>×</button>
+          <div style={{ fontWeight: 700, fontSize: "18px", marginBottom: "6px" }}>Кредиты исчерпаны</div>
+          <p style={{ color: "#8899aa", fontSize: "13px", lineHeight: 1.5, margin: 0 }}>
+            Использованы все 3 бесплатных расчёта. Выберите пакет для продолжения — кредиты действуют в обоих калькуляторах.
           </p>
         </div>
 
-        <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
 
-          <a href="https://t.me/ChinaBridgeLID_bot?start=pro_invoice"
-            target="_blank" rel="noopener noreferrer"
-            style={{ display: "block", background: "rgba(0,168,107,0.1)", border: "1px solid rgba(0,168,107,0.4)", borderRadius: "14px", padding: "14px", textDecoration: "none" }}>
-            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-              <span style={{ fontSize: "22px" }}>🚢</span>
+          {/* Package selector */}
+          {PACKAGES.map(p => (
+            <button key={p.id} onClick={() => setSelected(p.id)} style={{
+              background: selected === p.id ? "rgba(34,158,217,0.15)" : "rgba(255,255,255,0.03)",
+              border: `1px solid ${selected === p.id ? "#229ED9" : "#243a5e"}`,
+              borderRadius: "12px", padding: "12px 16px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left",
+            }}>
               <div>
-                <div style={{ color: "#fff", fontWeight: 700, fontSize: "14px", marginBottom: "3px" }}>Нужна поставка из Китая?</div>
-                <div style={{ color: "#8899aa", fontSize: "12px", lineHeight: 1.5 }}>Менеджер рассчитает и организует — расчёт за 15 мин, без предоплаты</div>
-                <div style={{ color: "#00A86B", fontSize: "12px", fontWeight: 600, marginTop: "8px" }}>→ Написать менеджеру</div>
+                <span style={{ color: "#fff", fontWeight: 700, fontSize: "14px" }}>{p.label}</span>
+                {p.hint && <span style={{ color: "#64748b", fontSize: "11px", marginLeft: "8px" }}>— {p.hint}</span>}
               </div>
-            </div>
-          </a>
-
-          <div style={{ background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.35)", borderRadius: "14px", padding: "14px" }}>
-            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "12px" }}>
-              <span style={{ fontSize: "22px" }}>📊</span>
-              <div>
-                <div style={{ color: "#fff", fontWeight: 700, fontSize: "14px" }}>PRO — <span style={{ color: "#229ED9" }}>490 ₽</span> <span style={{ color: "#5a7899", textDecoration: "line-through", fontWeight: 400, fontSize: "13px" }}>990 ₽</span> <span style={{ color: "#8899aa", fontSize: "11px" }}>первый месяц</span></div>
-                <div style={{ color: "#8899aa", fontSize: "12px", marginTop: "2px" }}>Безлимит · Копирование · Скачивание данных</div>
-              </div>
-            </div>
-            <input
-              type="text"
-              placeholder="Telegram @username (для кода активации)"
-              value={tg}
-              onChange={e => setTg(e.target.value)}
-              style={{ width: "100%", padding: "10px 12px", background: "#0b1a2e", border: "1px solid #243a5e", borderRadius: "10px", color: "#fff", fontSize: "13px", outline: "none", marginBottom: "8px", boxSizing: "border-box" }}
-            />
-            {err && <p style={{ color: "#f87171", fontSize: "12px", marginBottom: "8px" }}>{err}</p>}
-            <button
-              onClick={handlePay}
-              disabled={loading}
-              style={{ width: "100%", background: loading ? "#1e3a5f" : "#229ED9", color: loading ? "#475569" : "#fff", border: "none", borderRadius: "10px", padding: "12px", fontSize: "14px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer" }}
-            >
-              {loading ? "Переходим к оплате…" : "Оплатить 490 ₽ →"}
+              <span style={{ color: selected === p.id ? "#229ED9" : "#8899aa", fontWeight: 700, fontSize: "15px" }}>{p.price} ₽</span>
             </button>
-            <div style={{ textAlign: "center", marginTop: "8px" }}>
-              <a href="/client/login?from=/tools/invoice" style={{ color: "#5a7899", fontSize: "11px" }}>Войти в аккаунт</a>
+          ))}
+
+          {/* 490₽ logistics credit note */}
+          {selected === "pack_1" && (
+            <div style={{ background: "rgba(0,168,107,0.08)", border: "1px solid rgba(0,168,107,0.25)", borderRadius: "10px", padding: "10px 14px", fontSize: "12px", color: "#8899aa" }}>
+              💡 490 ₽ за этот расчёт будут зачтены в стоимость доставки при оформлении заявки
             </div>
-          </div>
+          )}
+
+          {err && <p style={{ color: "#f87171", fontSize: "12px", margin: 0 }}>{err}</p>}
+
+          <button onClick={handlePay} disabled={loading} style={{
+            width: "100%", background: loading ? "#1e3a5f" : "#229ED9",
+            color: loading ? "#475569" : "#fff", border: "none", borderRadius: "10px",
+            padding: "13px", fontSize: "14px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
+          }}>
+            {loading ? "Переходим к оплате…" : `Оплатить ${pkg.price} ₽ →`}
+          </button>
+
+          <a href="https://t.me/ChinaBridgeLID_bot?start=pro_invoice" target="_blank" rel="noopener noreferrer"
+            style={{ display: "block", textAlign: "center", color: "#00A86B", fontSize: "13px", textDecoration: "none", padding: "4px 0" }}>
+            Нужна поставка из Китая? → Написать менеджеру
+          </a>
         </div>
       </div>
     </div>
@@ -452,23 +440,24 @@ export default function InvoicePage() {
   const uploadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setUsesLeft(Math.max(0, FREE_LIMIT - getUsageCount()));
-
-    // Check PRO status via server (reads httpOnly cookie cb_anon_paid_until)
+    // Load credit balance from server
     fetch("/api/calc/check-paid")
       .then(r => r.json())
-      .then((d: { isPaid?: boolean; paidUntil?: string }) => {
-        if (d.isPaid) { setIsPro(true); setProUntil(d.paidUntil ?? null); }
+      .then((d: { isPaid?: boolean; paidUntil?: string; free_left?: number; balance?: number; has_access?: boolean }) => {
+        if (d.paidUntil) { setIsPro(true); setProUntil(d.paidUntil); }
+        if (d.has_access !== undefined) setIsPro(!!d.has_access);
+        const fl = d.free_left ?? FREE_LIMIT;
+        const bal = d.balance ?? 0;
+        setUsesLeft(fl + bal);
       })
       .catch(() => null);
 
-    // Show success toast after redirect from invoice-success
+    // Show success toast after redirect from payment
     const params = new URLSearchParams(window.location.search);
     if (params.get("pay") === "success") {
       setSuccessToast(true);
       setIsPro(true);
       setTimeout(() => setSuccessToast(false), 6000);
-      // Clean URL
       window.history.replaceState({}, "", "/tools/invoice");
     }
   }, []);
@@ -486,7 +475,6 @@ export default function InvoicePage() {
 
   const analyze = async () => {
     if (!file) return;
-    if (!isPro && getUsageCount() >= FREE_LIMIT) { setShowPaywall(true); return; }
     setLoading(true); setError(null); setResult(null);
     try {
       const fd = new FormData();
@@ -494,18 +482,15 @@ export default function InvoicePage() {
       const resp = await fetch("/api/tools/invoice", { method: "POST", body: fd });
       const data = await resp.json() as Result & { error?: string };
 
-      // 402 = server-side limit reached (bypassed client check or incognito)
       if (resp.status === 402) {
         setShowPaywall(true);
+        setUsesLeft(0);
         return;
       }
 
       if (!resp.ok || data.error) { setError(data.error ?? "Ошибка распознавания"); }
       else {
-        if (!isPro) {
-          const newCount = incrementUsage();
-          setUsesLeft(Math.max(0, FREE_LIMIT - newCount));
-        }
+        setUsesLeft(prev => Math.max(0, prev - 1));
         setResult(data);
       }
     } catch { setError("Нет связи с сервером. Попробуйте ещё раз."); }

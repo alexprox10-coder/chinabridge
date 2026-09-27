@@ -6,6 +6,9 @@ export const runtime = "nodejs";
 const ALLOWED_EVENTS = new Set([
   "calc_view", "calc_done", "paywall_shown", "pro_click",
   "checkout_started", "payment_success", "pro_activated", "paywall_closed",
+  // Credit system events
+  "credit_spent", "credit_added", "credit_reserved", "credit_refunded",
+  "package_selected", "package_checkout_started", "credits_depleted",
 ]);
 
 export async function POST(req: NextRequest) {
