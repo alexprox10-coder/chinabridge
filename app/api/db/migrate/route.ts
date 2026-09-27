@@ -334,6 +334,94 @@ export async function POST(req: NextRequest) {
     results.push(`ERR outbound_leads: ${err instanceof Error ? err.message : String(err)}`);
   }
 
+  // ── Credit system tables ────────────────────────────────────────────────────
+  try {
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS calculator_sessions (
+        session_id TEXT PRIMARY KEY,
+        ip         TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_seen  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    results.push("OK: calculator_sessions");
+  } catch (err: unknown) {
+    results.push(`ERR calculator_sessions: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS calculator_credits (
+        session_id TEXT PRIMARY KEY REFERENCES calculator_sessions(session_id),
+        balance    INT NOT NULL DEFAULT 0,
+        free_used  INT NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    results.push("OK: calculator_credits");
+  } catch (err: unknown) {
+    results.push(`ERR calculator_credits: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS credit_transactions (
+        id             BIGSERIAL PRIMARY KEY,
+        session_id     TEXT NOT NULL,
+        type           TEXT NOT NULL,
+        amount         INT  NOT NULL,
+        calculation_id TEXT,
+        operation_id   TEXT,
+        package_id     TEXT,
+        calc_source    TEXT,
+        created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    results.push("OK: credit_transactions");
+  } catch (err: unknown) {
+    results.push(`ERR credit_transactions: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    await sql.unsafe(
+      `CREATE UNIQUE INDEX IF NOT EXISTS credit_tx_calc_id_idx
+         ON credit_transactions (calculation_id)
+         WHERE calculation_id IS NOT NULL AND type = 'spend'`
+    );
+    results.push("OK: credit_tx_calc_id_idx");
+  } catch (err: unknown) {
+    results.push(`ERR credit_tx_calc_id_idx: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    await sql.unsafe(
+      `CREATE UNIQUE INDEX IF NOT EXISTS credit_tx_op_id_idx
+         ON credit_transactions (operation_id)
+         WHERE operation_id IS NOT NULL AND type = 'purchase'`
+    );
+    results.push("OK: credit_tx_op_id_idx");
+  } catch (err: unknown) {
+    results.push(`ERR credit_tx_op_id_idx: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  try {
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS calc_credit_pending (
+        operation_id TEXT PRIMARY KEY,
+        session_id   TEXT NOT NULL,
+        package_id   TEXT NOT NULL,
+        credits      INT  NOT NULL,
+        amount_rub   INT  NOT NULL,
+        status       TEXT NOT NULL DEFAULT 'pending',
+        created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    results.push("OK: calc_credit_pending");
+  } catch (err: unknown) {
+    results.push(`ERR calc_credit_pending: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
   const errors = results.filter((r) => r.startsWith("ERR"));
   return NextResponse.json({
     success: errors.length === 0,
