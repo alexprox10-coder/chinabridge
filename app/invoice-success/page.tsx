@@ -31,7 +31,11 @@ export default function InvoiceSuccessPage() {
 
   function poll(op: string) {
     pollCount.current += 1;
-    if (pollCount.current > 30) { activateCookieDirect(op); return; }
+    if (pollCount.current > 30) {
+      // Webhook didn't fire in 90s — show support screen, don't auto-claim
+      setPhase("no_code");
+      return;
+    }
 
     fetch(`/api/calc/payment-status?op=${encodeURIComponent(op)}`)
       .then(r => r.json())

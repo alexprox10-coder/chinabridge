@@ -315,6 +315,13 @@ export default function InvoicePage() {
       fd.append("file", file);
       const resp = await fetch("/api/tools/invoice", { method: "POST", body: fd });
       const data = await resp.json() as Result & { error?: string };
+
+      // 402 = server-side limit reached (bypassed client check or incognito)
+      if (resp.status === 402) {
+        setShowPaywall(true);
+        return;
+      }
+
       if (!resp.ok || data.error) { setError(data.error ?? "Ошибка распознавания"); }
       else {
         if (!isPro) {

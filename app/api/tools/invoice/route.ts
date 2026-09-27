@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { neon } from "@neondatabase/serverless";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
 const OR_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
+const FREE_LIMIT = 3;
+
+const CREATE_USES_TABLE = `
+  CREATE TABLE IF NOT EXISTS invoice_anon_uses (
+    ip TEXT PRIMARY KEY,
+    use_count INT NOT NULL DEFAULT 0,
+    first_used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_used_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
 
 const EXTRACT_PROMPT = `You are a Chinese commercial invoice parser. Analyze this invoice image and extract all data.
 
@@ -99,6 +110,43 @@ const ROUTES = [
 
 export async function POST(req: NextRequest) {
   try {
+    // ── PRO check (server-side, httpOnly cookie) ──────────────────────────────
+    const paidUntil = req.cookies.get("cb_anon_paid_until")?.value;
+    const isPro = !!(paidUntil && new Date(paidUntil) > new Date());
+
+    if (!isPro && process.env.DATABASE_URL) {
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+      try {
+        const sql = neon(process.env.DATABASE_URL);
+        await sql.unsafe(CREATE_USES_TABLE);
+
+        const rows = await sql`
+          SELECT use_count FROM invoice_anon_uses WHERE ip = ${ip}
+        ` as Array<{ use_count: number }>;
+
+        const count = rows[0]?.use_count ?? 0;
+        if (count >= FREE_LIMIT) {
+          return NextResponse.json(
+            { error: "limit", message: "Использованы все 3 бесплатных распознавания. Оформите PRO для безлимитного доступа." },
+            { status: 402 }
+          );
+        }
+
+        // Increment before processing (prevents race-condition double-use)
+        await sql`
+          INSERT INTO invoice_anon_uses (ip, use_count, last_used_at)
+          VALUES (${ip}, 1, NOW())
+          ON CONFLICT (ip) DO UPDATE
+            SET use_count   = invoice_anon_uses.use_count + 1,
+                last_used_at = NOW()
+        `;
+      } catch (dbErr) {
+        console.error("[invoice] usage-check DB error:", dbErr);
+        // Don't block on DB error — fail open (allow request through)
+      }
+    }
+
+    // ── Parse request ─────────────────────────────────────────────────────────
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
