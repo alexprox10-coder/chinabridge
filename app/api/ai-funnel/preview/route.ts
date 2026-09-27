@@ -2,19 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { calculateUnitEconomics } from '@/lib/economics/calculator';
 import { getMarketplace }         from '@/lib/economics/marketplaces';
 import { neon }                   from '@neondatabase/serverless';
+import { getOrCreateSessionId, setSessionCookie, getIp } from '@/lib/credits/session';
+import { reserve, refund } from '@/lib/credits/db';
 
 export const runtime     = 'nodejs';
 export const maxDuration = 20;
 
-const ANON_LIMIT  = 5;
-const REG_LIMIT   = 10;
 const CLIENT_COOKIE = 'cb_client';
-
-function getIp(req: NextRequest) {
-  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    ?? req.headers.get('x-real-ip')
-    ?? 'unknown';
-}
 
 async function getClientIdFromCookie(req: NextRequest): Promise<string | null> {
   try {
@@ -37,36 +31,6 @@ async function hasActiveSubscription(clientId: string): Promise<boolean> {
       LIMIT 1`;
     return rows.length > 0;
   } catch { return false; }
-}
-
-async function checkRateLimit(ip: string, isReg: boolean): Promise<{ allowed: boolean; remaining: number }> {
-  const limit = isReg ? REG_LIMIT : ANON_LIMIT;
-  // unknown IP: allow one attempt only (no DB tracking possible) — prevents header-stripping bypass
-  if (ip === 'unknown') return { allowed: true, remaining: 0 };
-  try {
-    const sql = neon(process.env.DATABASE_URL!);
-    // 'lifetime' key: 5 free calcs total (not per-day) — consistent with UI paywall messaging
-    const date = 'lifetime';
-    const key  = `aif:${ip}`;
-    await sql`
-      CREATE TABLE IF NOT EXISTS calc_anon_requests (
-        ip text NOT NULL, date text NOT NULL, count integer DEFAULT 1 NOT NULL,
-        PRIMARY KEY (ip, date)
-      )`;
-
-    // Atomic increment-then-check: prevents TOCTOU race condition (§15).
-    // INSERT increments count in one DB roundtrip; RETURNING gives the new value.
-    // Over-limit requests still increment but are immediately rejected — harmless.
-    const result = await sql`
-      INSERT INTO calc_anon_requests (ip, date, count) VALUES (${key}, ${date}, 1)
-      ON CONFLICT (ip, date) DO UPDATE SET count = calc_anon_requests.count + 1
-      RETURNING count
-    ` as Array<{ count: number }>;
-
-    const newCount = Number(result[0]?.count ?? 1);
-    if (newCount > limit) return { allowed: false, remaining: 0 };
-    return { allowed: true, remaining: limit - newCount };
-  } catch { return { allowed: true, remaining: limit }; }
 }
 
 async function runCalc(body: Record<string, unknown>) {
@@ -110,32 +74,59 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'prices_required' }, { status: 400 });
   }
 
-  // Check paid ЛК subscription — bypass rate limit entirely
-  const clientId = await getClientIdFromCookie(req);
-  if (clientId && await hasActiveSubscription(clientId)) {
-    const calc = await runCalc(body);
-    return NextResponse.json({ ok: true, preview: true, subscribed: true, rate_limit_remaining: 999, ...calc });
-  }
-
-  // Check anonymous paid cookie (set by /api/calc/activate-anon after Tochka payment)
+  // Legacy PRO cookie (backward compat with existing subscribers)
   const anonPaidUntil = req.cookies.get("cb_anon_paid_until")?.value;
   if (anonPaidUntil && new Date(anonPaidUntil) > new Date()) {
     const calc = await runCalc(body);
     return NextResponse.json({ ok: true, preview: true, subscribed: true, rate_limit_remaining: 999, ...calc });
   }
 
-  // Anonymous / registered (gave TG) — IP rate limit with tier
-  const ip       = getIp(req);
-  const isReg    = req.cookies.get('cb_registered')?.value === '1';
-  const { allowed, remaining } = await checkRateLimit(ip, isReg);
-  if (!allowed) {
-    const limit = isReg ? REG_LIMIT : ANON_LIMIT;
-    return NextResponse.json(
-      { ok: false, error: 'rate_limit', message: `Лимит ${limit} предварительных расчётов использован` },
-      { status: 429 },
-    );
+  // Logged-in subscription (ЛК)
+  const clientId = await getClientIdFromCookie(req);
+  if (clientId && await hasActiveSubscription(clientId)) {
+    const calc = await runCalc(body);
+    return NextResponse.json({ ok: true, preview: true, subscribed: true, rate_limit_remaining: 999, ...calc });
   }
 
-  const calc = await runCalc(body);
-  return NextResponse.json({ ok: true, preview: true, rate_limit_remaining: remaining, ...calc });
+  // ── Credit system ─────────────────────────────────────────────────────────
+  const { session_id, isNew } = getOrCreateSessionId(req);
+  const ip = getIp(req);
+
+  let reserveResult: Awaited<ReturnType<typeof reserve>> | null = null;
+
+  if (process.env.DATABASE_URL) {
+    try {
+      reserveResult = await reserve(session_id, ip, 'ai_calc');
+      if (!reserveResult.ok) {
+        const res = NextResponse.json(
+          { ok: false, error: 'rate_limit', message: 'Использованы все 3 бесплатных расчёта. Купите кредиты для продолжения.' },
+          { status: 429 },
+        );
+        if (isNew) setSessionCookie(res, session_id);
+        return res;
+      }
+    } catch (dbErr) {
+      console.error('[ai-funnel/preview] credit-check DB error:', dbErr);
+      // Fail open — allow request through if DB unavailable
+    }
+  }
+
+  try {
+    const calc = await runCalc(body);
+    const res = NextResponse.json({
+      ok: true,
+      preview: true,
+      rate_limit_remaining: reserveResult ? 0 : 999,
+      ...calc,
+    });
+    if (isNew) setSessionCookie(res, session_id);
+    return res;
+  } catch (err) {
+    // Refund credit if calculation failed
+    if (reserveResult?.ok) {
+      await refund(session_id, reserveResult.calculation_id, reserveResult.used_free).catch(() => null);
+    }
+    console.error('[ai-funnel/preview]', err);
+    return NextResponse.json({ ok: false, error: 'calc_error' }, { status: 500 });
+  }
 }

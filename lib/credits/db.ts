@@ -15,7 +15,7 @@ function db() {
   return neon(url);
 }
 
-async function ensureTables(sql: ReturnType<typeof neon>): Promise<void> {
+async function ensureTables(sql: ReturnType<typeof db>): Promise<void> {
   await sql.unsafe(CREATE_SESSIONS_TABLE);
   await sql.unsafe(CREATE_CREDITS_TABLE);
   await sql.unsafe(CREATE_TRANSACTIONS_TABLE);
