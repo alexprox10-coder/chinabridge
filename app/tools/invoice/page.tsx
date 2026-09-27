@@ -168,12 +168,32 @@ interface Quote {
   cost_usd: number;
   billable_kg: number;
   below_min: boolean;
+  highlight?: boolean;
+  destination?: string;
+}
+
+interface CustomsBreakdown {
+  duty: number; vat: number; broker: number; fees: number; total: number;
+}
+
+interface LandedCost {
+  route_id: string;
+  goods_usd: number;
+  shipping_usd: number;
+  customs_usd: number;
+  customs_breakdown: CustomsBreakdown;
+  total_usd: number;
+  per_unit_usd: number;
+  per_unit_rub: number;
+  pieces: number;
 }
 
 interface Result {
   invoice: Invoice;
   quotes: Quote[];
   weight_kg: number;
+  landed_costs?: LandedCost[];
+  usd_rub?: number;
 }
 
 // ── Styles ───────────────────────────────────────────────────────────────────
@@ -253,8 +273,166 @@ function buildCopyText(result: Result): string {
     "",
     "Доставка:",
     ...result.quotes.map(q => `  ${q.flag} ${q.label}: $${q.cost_usd} (${q.days_min}–${q.days_max} дн.)`),
+    ...(result.landed_costs ? [
+      "",
+      "Себестоимость (Landed Cost):",
+      ...result.landed_costs.map(lc => {
+        const q = result.quotes.find(q => q.id === lc.route_id);
+        return `  ${q?.flag ?? ""} ${q?.label ?? lc.route_id}: ${lc.per_unit_rub.toLocaleString()} ₽/шт · $${lc.per_unit_usd} (${lc.pieces} шт, ИТОГО $${lc.total_usd})`;
+      }),
+    ] : []),
   ];
   return lines.join("\n");
+}
+
+// ── Landed Cost Section ──────────────────────────────────────────────────────
+function LandedCostSection({ result }: { result: Result }) {
+  const [activeRoute, setActiveRoute] = useState(result.quotes[0]?.id ?? "");
+  const [sellPrice, setSellPrice] = useState("");
+
+  const lc = result.landed_costs?.find(l => l.route_id === activeRoute);
+  const q  = result.quotes.find(q => q.id === activeRoute);
+  const usdRub = result.usd_rub ?? 90;
+
+  if (!lc || !q) return null;
+
+  const sellPriceNum = parseFloat(sellPrice) || 0;
+  const margin = sellPriceNum > 0 ? ((sellPriceNum - lc.per_unit_rub) / sellPriceNum * 100) : null;
+  const profit = sellPriceNum > 0 ? ((sellPriceNum - lc.per_unit_rub) * lc.pieces) : null;
+
+  const rows = [
+    { label: "Стоимость товара", usd: lc.goods_usd, rub: Math.round(lc.goods_usd * usdRub), note: result.invoice.currency !== "USD" ? `${result.invoice.currency} ${result.invoice.total_value}` : "" },
+    { label: "Логистика", usd: lc.shipping_usd, rub: Math.round(lc.shipping_usd * usdRub), note: `${q.days_min}–${q.days_max} дн.` },
+    { label: "Таможня (оценка)", usd: lc.customs_usd, rub: Math.round(lc.customs_usd * usdRub), note: "пошлина + НДС + брокер" },
+  ];
+
+  const tgLink = `https://t.me/ChinaBridgeLID_bot?start=calc_${lc.route_id}_${lc.total_usd}_${encodeURIComponent(result.invoice.supplier_name_ru || result.invoice.supplier_name || "invoice")}`;
+
+  return (
+    <div style={{ ...S.card, border: "1px solid #00A86B44", marginTop: "24px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: "18px", marginBottom: "4px" }}>Landed Cost — полная себестоимость поставки</div>
+          <div style={{ color: "#64748b", fontSize: "13px" }}>Товар + логистика + таможня = реальная цена на складе</div>
+        </div>
+        <div style={{ background: "rgba(0,168,107,0.1)", border: "1px solid #00A86B44", borderRadius: "10px", padding: "10px 18px", textAlign: "center" }}>
+          <div style={{ color: "#64748b", fontSize: "11px", marginBottom: "2px" }}>СЕБЕСТОИМОСТЬ / шт</div>
+          <div style={{ fontSize: "26px", fontWeight: 800, color: "#00A86B" }}>{lc.per_unit_rub.toLocaleString()} ₽</div>
+          <div style={{ color: "#475569", fontSize: "11px" }}>${lc.per_unit_usd} · {lc.pieces} шт.</div>
+        </div>
+      </div>
+
+      {/* Route tabs */}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
+        {result.quotes.map(route => (
+          <button
+            key={route.id}
+            onClick={() => setActiveRoute(route.id)}
+            style={{
+              padding: "7px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer",
+              background: activeRoute === route.id ? "#00A86B" : "#0B1F3A",
+              color: activeRoute === route.id ? "#fff" : "#64748b",
+              border: `1px solid ${activeRoute === route.id ? "#00A86B" : "#243a5e"}`,
+            }}
+          >
+            {route.flag} {route.label}
+            {route.highlight && activeRoute !== route.id && (
+              <span style={{ marginLeft: "6px", background: "#00A86B22", color: "#00A86B", borderRadius: "4px", padding: "1px 5px", fontSize: "10px" }}>NEW</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Breakdown table */}
+      <div style={{ background: "#0B1F3A", borderRadius: "10px", overflow: "hidden", marginBottom: "20px" }}>
+        {rows.map((row, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: i < rows.length - 1 ? "1px solid #1e3a5f" : "none" }}>
+            <div>
+              <div style={{ fontSize: "14px", fontWeight: 500 }}>{row.label}</div>
+              {row.note && <div style={{ fontSize: "11px", color: "#475569", marginTop: "2px" }}>{row.note}</div>}
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontWeight: 600, fontSize: "14px" }}>{row.rub.toLocaleString()} ₽</div>
+              <div style={{ color: "#475569", fontSize: "11px" }}>${row.usd}</div>
+            </div>
+          </div>
+        ))}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "#0f2644", borderTop: "2px solid #243a5e" }}>
+          <div style={{ fontWeight: 700, fontSize: "15px" }}>ИТОГО на складе РФ/КЗ</div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontWeight: 800, fontSize: "18px", color: "#fff" }}>{Math.round(lc.total_usd * usdRub).toLocaleString()} ₽</div>
+            <div style={{ color: "#64748b", fontSize: "12px" }}>${lc.total_usd} · при курсе {usdRub} ₽/USD</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Customs detail */}
+      <details style={{ marginBottom: "20px" }}>
+        <summary style={{ cursor: "pointer", color: "#64748b", fontSize: "12px", marginBottom: "8px" }}>▸ Детализация таможни</summary>
+        <div style={{ background: "#0B1F3A", borderRadius: "8px", padding: "12px 16px", fontSize: "12px" }}>
+          {[
+            ["Таможенная пошлина (10% от CIF)", `$${lc.customs_breakdown.duty}`],
+            [q.destination === "ru" ? "НДС 20%" : "НДС 12%", `$${lc.customs_breakdown.vat}`],
+            ["Таможенный брокер", `$${lc.customs_breakdown.broker}`],
+            ["Таможенные сборы", `$${lc.customs_breakdown.fees}`],
+          ].map(([k, v]) => (
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid #1e3a5f" }}>
+              <span style={{ color: "#64748b" }}>{k}</span>
+              <span>{v}</span>
+            </div>
+          ))}
+          <div style={{ color: "#475569", fontSize: "11px", marginTop: "8px" }}>* Оценочный расчёт. Фактическая ставка пошлины зависит от HS-кода. За точным расчётом обратитесь к брокеру.</div>
+        </div>
+      </details>
+
+      {/* Margin calculator */}
+      <div style={{ background: "#060f1e", border: "1px solid #1e3a5f", borderRadius: "10px", padding: "16px" }}>
+        <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "12px" }}>Калькулятор маржи</div>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 180px" }}>
+            <div style={{ color: "#64748b", fontSize: "11px", marginBottom: "4px" }}>Планируемая цена продажи (₽/шт)</div>
+            <input
+              type="number"
+              placeholder="например 1 290"
+              value={sellPrice}
+              onChange={e => setSellPrice(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", background: "#0B1F3A", border: "1px solid #243a5e", borderRadius: "8px", color: "#fff", fontSize: "15px", outline: "none", boxSizing: "border-box" }}
+            />
+          </div>
+          <div style={{ flex: "1 1 120px", background: "#0B1F3A", borderRadius: "8px", padding: "10px 14px" }}>
+            <div style={{ color: "#64748b", fontSize: "11px", marginBottom: "2px" }}>Себестоимость</div>
+            <div style={{ fontWeight: 700 }}>{lc.per_unit_rub.toLocaleString()} ₽</div>
+          </div>
+          {margin !== null && (
+            <>
+              <div style={{ flex: "1 1 120px", background: margin >= 25 ? "rgba(0,168,107,0.1)" : margin >= 10 ? "rgba(251,191,36,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${margin >= 25 ? "#00A86B44" : margin >= 10 ? "rgba(251,191,36,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: "8px", padding: "10px 14px" }}>
+                <div style={{ color: "#64748b", fontSize: "11px", marginBottom: "2px" }}>Маржа</div>
+                <div style={{ fontWeight: 800, fontSize: "18px", color: margin >= 25 ? "#00A86B" : margin >= 10 ? "#fbbf24" : "#ef4444" }}>{margin.toFixed(1)}%</div>
+              </div>
+              <div style={{ flex: "1 1 140px", background: "#0B1F3A", borderRadius: "8px", padding: "10px 14px" }}>
+                <div style={{ color: "#64748b", fontSize: "11px", marginBottom: "2px" }}>Прибыль с партии</div>
+                <div style={{ fontWeight: 700, color: profit! >= 0 ? "#00A86B" : "#ef4444" }}>{Math.round(profit!).toLocaleString()} ₽</div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ display: "flex", gap: "10px", marginTop: "16px", flexWrap: "wrap" }}>
+        <a
+          href={tgLink}
+          target="_blank" rel="noopener noreferrer"
+          style={{ flex: "1 1 200px", display: "block", background: "#00A86B", color: "#fff", borderRadius: "10px", padding: "14px 20px", textAlign: "center", textDecoration: "none", fontWeight: 700, fontSize: "14px" }}
+        >
+          🚢 Заказать доставку у ChinaBridge
+        </a>
+        <div style={{ flex: "0 0 auto", background: "rgba(0,168,107,0.08)", border: "1px solid #00A86B33", borderRadius: "10px", padding: "10px 14px", fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center" }}>
+          Если оформляете доставку у нас — <span style={{ color: "#00A86B", fontWeight: 600, marginLeft: "4px" }}>Import Passport бесплатно</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Main component ───────────────────────────────────────────────────────────
@@ -377,18 +555,18 @@ export default function InvoicePage() {
               Для импортёров, работающих с Китаем
             </div>
             <h1 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 800, lineHeight: 1.1, marginBottom: "20px" }}>
-              От 微信-инвойса<br />
-              до стоимости карго —<br />
-              <span style={{ color: "#00A86B" }}>за 30 секунд</span>
+              Загрузи инвойс —<br />
+              узнай реальную<br />
+              <span style={{ color: "#00A86B" }}>себестоимость поставки</span>
             </h1>
             <p style={{ color: "#94a3b8", fontSize: "17px", lineHeight: 1.7, maxWidth: "520px", marginBottom: "32px" }}>
-              Поставщик прислал инвойс картинкой в WeChat — загружаешь фото, мы читаем иероглифы, разбираем позиции и сразу считаем стоимость доставки до России или Казахстана. Без переводчика. Без звонка менеджеру.
+              Товар + доставка + таможня = цена единицы на твоём складе. Загружаешь фото инвойса из WeChat — через 30 секунд видишь сколько реально стоит эта поставка и стоит ли её везти.
             </p>
             <div style={{ display: "flex", gap: "32px" }}>
               {[
-                { v: "95%+", l: "Точность на 中文 документах" },
-                { v: "30 сек", l: "До готового расчёта" },
-                { v: "ZH·RU·KZ", l: "Языки из коробки" },
+                { v: "₽/шт", l: "Себестоимость единицы" },
+                { v: "4 маршрута", l: "Хэйхэ, авто, авиа, КЗ" },
+                { v: "+ маржа", l: "Введи цену — увидишь прибыль" },
               ].map(({ v, l }) => (
                 <div key={l}>
                   <div style={{ fontSize: "22px", fontWeight: 800, color: "#00A86B" }}>{v}</div>
@@ -468,7 +646,7 @@ export default function InvoicePage() {
                 fontSize: "15px", fontWeight: 700, cursor: !file || loading ? "not-allowed" : "pointer", transition: "all 0.2s",
               }}
             >
-              {loading ? "Читаем иероглифы…" : "Распознать инвойс и рассчитать доставку →"}
+              {loading ? "Считаем себестоимость…" : "Распознать и рассчитать Landed Cost →"}
             </button>
 
             <p style={{ textAlign: "center", color: "#334155", fontSize: "11px", marginTop: "10px" }}>
@@ -601,6 +779,10 @@ export default function InvoicePage() {
                   </div>
                 </div>
               )}
+              {/* Landed Cost */}
+              {result.landed_costs && result.landed_costs.length > 0 && (
+                <LandedCostSection result={result} />
+              )}
             </div>
 
             {/* Quotes sidebar */}
@@ -710,7 +892,7 @@ export default function InvoicePage() {
             {[
               { n: "Шаг 01", title: "Загружаешь фото инвойса", body: "Фото из WeChat, скриншот, скан — на китайском, английском или смешанный. Читаем иероглифы (简·繁), печати, рукописные пометки.", result: "Данные без переводчика и без ручного ввода" },
               { n: "Шаг 02", title: "Извлекаем позиции и вес", body: "Позиции товара с переводом на русский, количество, цена, общая сумма, брутто-вес, артикулы, инкотермс — всё из одного документа.", result: "Структура сделки за 30 секунд" },
-              { n: "Шаг 03", title: "Считаем стоимость доставки", body: "По фактическому весу из инвойса автоматически считаем карго до Москвы, Алматы или Астаны — авто и авиа — с реальными тарифами ChinaBridge.", result: "Цена доставки без звонка менеджеру" },
+              { n: "Шаг 03", title: "Считаем полную себестоимость", body: "Товар + логистика (4 маршрута, включая Хэйхэ) + таможня (пошлина + НДС + брокер) = реальная цена единицы на складе. Вводишь цену продажи — видишь маржу.", result: "Решение: везти или не везти этот товар" },
             ].map((step) => (
               <div key={step.n} style={S.card}>
                 <div style={{ color: "#00A86B", fontWeight: 700, fontSize: "12px", fontFamily: "monospace", marginBottom: "12px" }}>{step.n}</div>

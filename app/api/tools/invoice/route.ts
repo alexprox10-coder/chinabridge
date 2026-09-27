@@ -74,8 +74,44 @@ interface ExtractedInvoice {
   notes: string;
 }
 
-// Static rates matching chinabridge.pro tariffs
+const USD_RUB = 90;
+const CNY_USD = 7.2;
+const EUR_USD = 1.08;
+
+function toUsd(value: number, currency: string): number {
+  const c = (currency ?? "").toUpperCase().replace(/[¥₽]/g, "");
+  if (c === "CNY" || c === "RMB") return value / CNY_USD;
+  if (c === "EUR") return value * EUR_USD;
+  return value; // USD or unknown
+}
+
+interface CustomsBreakdown {
+  duty: number; vat: number; broker: number; fees: number; total: number;
+}
+
+function estimateCustoms(goodsUsd: number, shippingUsd: number, dest: "ru" | "kz"): CustomsBreakdown {
+  const cif = goodsUsd + shippingUsd;
+  const duty = Math.round(cif * 0.10);
+  const vat  = Math.round((cif + duty) * (dest === "ru" ? 0.20 : 0.12));
+  const broker = dest === "ru" ? 220 : 160;
+  const fees   = dest === "ru" ? 95  : 50;
+  return { duty, vat, broker, fees, total: duty + vat + broker + fees };
+}
+
+// ChinaBridge freight routes (updated Sep 2026)
 const ROUTES = [
+  {
+    id: "heihe_ru",
+    label: "Хэйхэ → Россия",
+    flag: "🇷🇺",
+    rate_usd_per_kg: 2.2,
+    days_min: 12,
+    days_max: 18,
+    min_kg: 50,
+    note: "Хэйхэ — Благовещенск, подходит для малых партий",
+    highlight: true,
+    destination: "ru",
+  },
   {
     id: "auto_ru",
     label: "Авто → Россия",
@@ -85,6 +121,8 @@ const ROUTES = [
     days_max: 28,
     min_kg: 100,
     note: "Москва, СПб, регионы",
+    highlight: false,
+    destination: "ru",
   },
   {
     id: "auto_kz",
@@ -95,6 +133,8 @@ const ROUTES = [
     days_max: 8,
     min_kg: 100,
     note: "Алматы, Астана, Шымкент",
+    highlight: false,
+    destination: "kz",
   },
   {
     id: "air_ru",
@@ -104,7 +144,9 @@ const ROUTES = [
     days_min: 3,
     days_max: 7,
     min_kg: 1,
-    note: "Любой вес, срочная доставка",
+    note: "Срочная доставка, любой вес",
+    highlight: false,
+    destination: "ru",
   },
 ];
 
@@ -237,7 +279,29 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ invoice, quotes, weight_kg: weightKg });
+    // ── Landed cost calculation ───────────────────────────────────────────────
+    const goodsUsd = toUsd(invoice.total_value ?? 0, invoice.currency ?? "USD");
+    const pieces   = invoice.total_pieces || 1;
+
+    const landed_costs = quotes.map((q) => {
+      const dest    = (q.destination ?? "ru") as "ru" | "kz";
+      const customs = estimateCustoms(goodsUsd, q.cost_usd, dest);
+      const totalUsd = goodsUsd + q.cost_usd + customs.total;
+      const perUnitUsd = totalUsd / pieces;
+      return {
+        route_id:         q.id,
+        goods_usd:        Math.round(goodsUsd),
+        shipping_usd:     q.cost_usd,
+        customs_usd:      customs.total,
+        customs_breakdown: customs,
+        total_usd:        Math.round(totalUsd),
+        per_unit_usd:     Math.round(perUnitUsd * 100) / 100,
+        per_unit_rub:     Math.round(perUnitUsd * USD_RUB),
+        pieces,
+      };
+    });
+
+    return NextResponse.json({ invoice, quotes, weight_kg: weightKg, landed_costs, usd_rub: USD_RUB });
   } catch (err) {
     console.error("Invoice OCR error:", err);
     return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
