@@ -1,7 +1,7 @@
 # Graph Report - chinabridge  (2026-09-27)
 
 ## Corpus Check
-- 851 files · ~1,097,191 words
+- 851 files · ~1,097,142 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e9220dc2`
+- Built from commit: `ef00587a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1452,11 +1452,11 @@ Nodes (3): FAQ, metadata, schema
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `AdminNav()` connect `AdminNav.tsx` to `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `lib/finance/types.ts`, `deal-intelligence/index.ts`, `ContentPageClient.tsx`, `reports/page.tsx`, `HhLeadsClient.tsx`, `finance/settings/page.tsx`, `LeadDetail.tsx`, `multitenant/types.ts`, `rate-engine/types.ts`, `CeoDashboard.tsx`, `market-intelligence/db.ts`, `intelligence/page.tsx`, `VkAdsDashboard.tsx`, `chat/page.tsx`, `sales/data.ts`, `campaigns/page.tsx`, `client-portal/types.ts`, `VkIntentClient.tsx`, `MarketingPageClient.tsx`, `context.ts`, `ai-company/page.tsx`, `TgMonitorClient.tsx`, `intake/page.tsx`, `proposals/types.ts`, `registrations/page.tsx`, `pricing/page.tsx`, `admin/calculations/page.tsx`, `ai-cto/db.ts`, `SalesDashboardClient.tsx`, `outreach-leads/page.tsx`, `SeoClustersClient.tsx`, `crm/client.ts`, `WbSellersClient.tsx`, `RadarClient.tsx`, `tenders/page.tsx`, `CreateWizard.tsx`, `SalesCompaniesClient.tsx`, `AiSalesAgentClient.tsx`?**
-  _High betweenness centrality (0.106) - this node is a cross-community bridge._
-- **Why does `createLead()` connect `createLead` to `crm/client.ts`, `partner-portal/api.ts`, `finance/api.ts`, `calculator.ts`, `market-intelligence/types.ts`, `vk-ads/sync/route.ts`, `admin/leads/route.ts`, `api/leads/route.ts`, `ImportLead`, `economics/route.ts`, `tender-intelligence/route.ts`, `memory.ts`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+  _High betweenness centrality (0.128) - this node is a cross-community bridge._
 - **Why does `isAuthorized()` connect `isAuthorized` to `FinanceDashboard.tsx`, `content/data.ts`, `analytics/data.ts`, `OperationsDashboard.tsx`, `strategy/data.ts`, `MarketingDashboard.tsx`, `reports/page.tsx`, `client-portal/api.ts`, `ceo/report/route.ts`, `finance/settings/page.tsx`, `vk-ads/sync/route.ts`, `payments/create/route.ts`, `sales/data.ts`, `product-finder/route.ts`, `check/route.ts`, `getLeads`, `expenses/[id]/route.ts`, `vk-ads/campaigns/route.ts`, `SalesDashboard.tsx`, `ai-company/page.tsx`, `partners/db.ts`, `finance/api.ts`, `setup/route.ts`, `notifications/route.ts`, `payments/[id]/route.ts`, `admin/leads/route.ts`, `supplier-finder/route.ts`?**
-  _High betweenness centrality (0.050) - this node is a cross-community bridge._
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
+- **Why does `createLead()` connect `createLead` to `crm/client.ts`, `partner-portal/api.ts`, `finance/api.ts`, `calculator.ts`, `market-intelligence/types.ts`, `vk-ads/sync/route.ts`, `admin/leads/route.ts`, `api/leads/route.ts`, `ImportLead`, `economics/route.ts`, `tender-intelligence/route.ts`, `memory.ts`?**
+  _High betweenness centrality (0.045) - this node is a cross-community bridge._
 - **What connects `runtime`, `maxDuration`, `InvoiceItem` to the rest of the system?**
   _1626 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `content/db.ts` be split into smaller, more focused modules?**

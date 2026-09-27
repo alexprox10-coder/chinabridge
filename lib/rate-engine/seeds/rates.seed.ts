@@ -16,7 +16,7 @@ export function getSeedRates(routeMap: Record<string, number>): SeedRate[] {
   };
 
   return [
-    // ── Yiwu/Guangzhou → Almaty (97Kapro, 18-22 days) — density-based ──
+    // ── Yiwu/Guangzhou → Almaty (97Kapro, 8-12 days) — density-based ──
     // Costs: 600+=$1.30, 400-600=$1.35, 300-400=$1.40, 250-300=$1.45,
     //        200-250=$1.50, 170-200=$1.60, 140-170=$1.70, 120-140=$1.80
     // ChinaBridge sells at: cost + ~65-80% markup

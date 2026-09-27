@@ -12,7 +12,7 @@ for (const line of envContent.split('\n')) {
 const sql = postgres(process.env.DATABASE_URL_UNPOOLED, { ssl: 'require', max: 1 });
 
 try {
-  // 1. Fix KZ truck routes: 5-8 days → 18-22 days
+  // 1. Fix KZ truck routes: 5-8 days → 8-12 days
   const kzFix = await sql`
     UPDATE shipping_rates
     SET delivery_days_min = 18,

@@ -6,12 +6,12 @@ import { CTASection } from "@/components/seo/CTASection";
 
 export const metadata: Metadata = {
   title: "Доставка из Китая в Казахстан — ChinaBridge",
-  description: "Доставка грузов из Китая в Казахстан: Алматы, Астана, Шымкент. Авто от 100 кг, срок 18–22 дня. Авиа от 1 кг, от 5 дней. Рассчитайте стоимость.",
+  description: "Доставка грузов из Китая в Казахстан: Алматы, Астана, Шымкент. Авто от 100 кг, срок 8–12 дня. Авиа от 1 кг, от 5 дней. Рассчитайте стоимость.",
   keywords: "доставка из Китая в Казахстан, грузоперевозки Китай Казахстан, доставка Алматы из Китая, доставка Астана Китай",
   alternates: { canonical: "https://chinabridge.pro/delivery/china-kazakhstan" },
   openGraph: {
     title: "Доставка из Китая в Казахстан — ChinaBridge",
-    description: "Доставка в Алматы, Астану, Шымкент. Авто 18–22 дня, авиа от 5 дней. Прямой маршрут через Хоргос.",
+    description: "Доставка в Алматы, Астану, Шымкент. Авто 8–12 дня, авиа от 5 дней. Прямой маршрут через Хоргос.",
     url: "https://chinabridge.pro/delivery/china-kazakhstan",
     type: "website",
   },
@@ -81,7 +81,7 @@ export default function KazakhstanDeliveryPage() {
         <h2 className="text-2xl font-bold mb-6">Маршруты в Казахстан</h2>
         <div className="grid md:grid-cols-3 gap-5">
           {[
-            { name: "Авто Алматы (сборный)", time: "18–22 дня", price: "от $2.50/кг", note: "97Kapro прямой маршрут, мин. 30 кг" },
+            { name: "Авто Алматы (сборный)", time: "8–12 дня", price: "от $2.50/кг", note: "97Kapro прямой маршрут, мин. 30 кг" },
             { name: "Авто Астана", time: "20–25 дней", price: "от $3.00/кг", note: "Алматы → Астана, сборный груз" },
             { name: "Авиа стандарт", time: "5–8 дней", price: "от $23/кг", note: "Алматы, Астана, Шымкент, от 1 кг" },
             { name: "Авиа экспресс", time: "1–2 дня", price: "от $33/кг", note: "Срочные отправки, от 1 кг" },

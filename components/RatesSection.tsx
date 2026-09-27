@@ -6,7 +6,7 @@ const ROUTES = [
     flag: "🇰🇿",
     href: "/delivery/china-kazakhstan",
     modes: [
-      { icon: "🚗", label: "Авто (сборный)",   price: "от $2.50/кг", days: "18–22 дней",  note: "Алматы, Астана, Шымкент" },
+      { icon: "🚗", label: "Авто (сборный)",   price: "от $2.50/кг", days: "8–12 дней",  note: "Алматы, Астана, Шымкент" },
       { icon: "🚂", label: "Ж/Д",              price: "от $3.50/кг", days: "12–15 дней",  note: "Алматы, крупный груз" },
       { icon: "✈️", label: "Авиа стандарт",   price: "от $23/кг",   days: "5–8 дней",   note: "от 1 кг" },
       { icon: "⚡", label: "Авиа экспресс",   price: "от $33/кг",   days: "1–2 дня",    note: "срочно, от 1 кг" },

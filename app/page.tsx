@@ -175,7 +175,7 @@ export default function Home() {
                 <div>
                   <h3 className="text-lg font-bold text-white">Доставка из Китая в Казахстан</h3>
                   <p className="text-sm text-[#8899aa]">
-                    Алматы, Астана, Шымкент — авто 18–22 дня, авиа 5–8 дней. Kaspi, WB KZ, Ozon KZ.
+                    Алматы, Астана, Шымкент — авто 8–12 дня, авиа 5–8 дней. Kaspi, WB KZ, Ozon KZ.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {["Авто $2.50/кг", "Авиа $23/кг", "Kaspi.kz", "Представитель в Китае"].map(t => (

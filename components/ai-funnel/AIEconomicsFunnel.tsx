@@ -476,7 +476,7 @@ function PnlTable({ ec, delivery, mpLabel, tariffDate, commissionNote, isKZ }: {
   const fmtC = (n: number) => isKZ ? fmtKzt(n) : fmt(n);
   const cnyRate = Number(ec.cny_rate ?? 0);
   const deliveryLabel = delivery?.pricingRule === '97kapro_estimate'
-    ? `${fmtC(ec.delivery_total_rub)} ${sym} (${isKZ ? '~$2.50/кг, 18-22 дн' : '~$3/кг авто, 25-35 дн'})`
+    ? `${fmtC(ec.delivery_total_rub)} ${sym} (${isKZ ? '~$2.50/кг, 8-12 дн' : '~$3/кг авто, 25-35 дн'})`
     : `${fmtC(ec.delivery_total_rub)} ${sym}`;
   const commPct = ec.gross_revenue_rub > 0
     ? Math.round((ec.marketplace_fee_rub / ec.gross_revenue_rub) * 100) : 0;
@@ -2144,7 +2144,7 @@ export default function AIEconomicsFunnel() {
               <span className="text-white font-semibold">🇰🇿 Казахстан</span>
               <span className="text-white font-semibold">🇷🇺 Россия</span>
               <div className="flex justify-between"><span className="text-[#8899aa]">🚗 Авто</span><span className="text-[#00A86B] font-bold">$2.50/кг · 5–8 дн</span></div>
-              <div className="flex justify-between"><span className="text-[#8899aa]">🚗 Авто</span><span className="text-[#00A86B] font-bold">$3.00/кг · 18–22 дн</span></div>
+              <div className="flex justify-between"><span className="text-[#8899aa]">🚗 Авто</span><span className="text-[#00A86B] font-bold">$3.00/кг · 8–12 дн</span></div>
               <div className="flex justify-between"><span className="text-[#8899aa]">✈️ Авиа</span><span className="text-[#00A86B] font-bold">$23/кг · 3–5 дн</span></div>
               <div className="flex justify-between"><span className="text-[#8899aa]">✈️ Авиа</span><span className="text-[#00A86B] font-bold">$23/кг · 5–8 дн</span></div>
             </div>
@@ -2530,7 +2530,7 @@ export default function AIEconomicsFunnel() {
                   </div>
                   <div className="bg-[#0a1a30] rounded-lg px-3 py-2">
                     <p className="text-[#8899aa]">🇷🇺 Россия</p>
-                    <p className="text-[#00A86B] font-bold">$3.00/кг · 18–22 дн</p>
+                    <p className="text-[#00A86B] font-bold">$3.00/кг · 8–12 дн</p>
                   </div>
                 </div>
                 {si.formal_import === "yes" && (
@@ -2814,7 +2814,7 @@ export default function AIEconomicsFunnel() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#8899aa]">🚗 Авто</span>
-                <span className="text-[#00A86B] font-bold">$3.00/кг · 18–22 дн</span>
+                <span className="text-[#00A86B] font-bold">$3.00/кг · 8–12 дн</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#8899aa]">✈️ Авиа</span>

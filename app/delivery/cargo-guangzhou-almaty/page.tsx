@@ -5,13 +5,13 @@ import { FAQSection } from "@/components/seo/FAQSection";
 import { CTASection } from "@/components/seo/CTASection";
 
 export const metadata: Metadata = {
-  title: "Карго Гуанчжоу — Алматы: от $2.50/кг за 18–22 дня | ChinaBridge",
-  description: "Доставка товаров из Гуанчжоу в Алматы авто от $2.50/кг, срок 18–22 дня. Сборные грузы от 100 кг. Серая схема до €200 без пошлин. Рассчитать онлайн.",
+  title: "Карго Гуанчжоу — Алматы: от $2.50/кг за 8–12 дня | ChinaBridge",
+  description: "Доставка товаров из Гуанчжоу в Алматы авто от $2.50/кг, срок 8–12 дня. Сборные грузы от 100 кг. Серая схема до €200 без пошлин. Рассчитать онлайн.",
   keywords: "карго Гуанчжоу Алматы, доставка из Китая в Казахстан, карго Китай Алматы, грузоперевозки Гуанчжоу Алматы, доставка из Китая Казахстан",
   alternates: { canonical: "https://chinabridge.pro/delivery/cargo-guangzhou-almaty" },
   openGraph: {
     title: "Карго Гуанчжоу → Алматы от $2.50/кг | ChinaBridge",
-    description: "Авто 18–22 дня от $2.50/кг, авиа 5–8 дней от $23/кг. Сборные грузы от 100 кг. Офис в Гуанчжоу.",
+    description: "Авто 8–12 дня от $2.50/кг, авиа 5–8 дней от $23/кг. Сборные грузы от 100 кг. Офис в Гуанчжоу.",
     url: "https://chinabridge.pro/delivery/cargo-guangzhou-almaty",
     type: "website",
   },
@@ -22,7 +22,7 @@ const schema = {
   "@type": "Service",
   name: "Карго из Гуанчжоу в Алматы",
   provider: { "@type": "Organization", name: "ChinaBridge", url: "https://chinabridge.pro" },
-  description: "Доставка грузов из Гуанчжоу в Алматы. Авто 18–22 дня от $2.50/кг, авиа 5–8 дней от $23/кг.",
+  description: "Доставка грузов из Гуанчжоу в Алматы. Авто 8–12 дня от $2.50/кг, авиа 5–8 дней от $23/кг.",
   areaServed: { "@type": "City", name: "Алматы" },
   serviceType: "Грузоперевозки",
   offers: {
@@ -40,7 +40,7 @@ const FAQ = [
   },
   {
     question: "Сколько идёт груз из Гуанчжоу до Алматы?",
-    answer: "Авто сборный груз: 18–22 дня. Авиа: 5–8 дней. Срок считается от даты отправки с нашего склада в Гуанчжоу, не от закупки у поставщика.",
+    answer: "Авто сборный груз: 8–12 дня. Авиа: 5–8 дней. Срок считается от даты отправки с нашего склада в Гуанчжоу, не от закупки у поставщика.",
   },
   {
     question: "Нужна ли таможня при доставке в Казахстан?",
@@ -82,7 +82,7 @@ export default function CargoGuangzhouAlmatyPage() {
         </h1>
         <p className="text-[#8899aa] text-lg max-w-2xl mb-6">
           Быстрее и дешевле всех на рынке. Офис в Гуанчжоу, прямой маршрут через КЗ.
-          Авто 18–22 дня от <strong className="text-white">$2.50/кг</strong>.
+          Авто 8–12 дня от <strong className="text-white">$2.50/кг</strong>.
         </p>
         <div className="flex flex-wrap gap-3 mb-8">
           {["✅ Серая схема до €200 без пошлин", "✅ Выкуп с 1688 и Alibaba", "✅ Инспекция товара", "✅ Доставка до двери"].map((f) => (
@@ -115,7 +115,7 @@ export default function CargoGuangzhouAlmatyPage() {
               icon: "🚛",
               title: "Авто (сборный груз)",
               price: "$2.50/кг",
-              time: "18–22 дня",
+              time: "8–12 дня",
               min: "от 100 кг",
               details: ["Прямой маршрут через КЗ", "Консолидация на складе в Гуанчжоу", "Доставка до адреса в Алматы", "Страхование груза включено"],
             },
