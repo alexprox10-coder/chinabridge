@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
         AND tablename IN ('calculator_sessions','calculator_credits','credit_transactions','calc_credit_pending')
       ORDER BY tablename
     `;
-    results.push(`VERIFY: found ${rows.length}/4 credit tables: ${rows.map((r: { tablename: string }) => r.tablename).join(", ")}`);
+    results.push(`VERIFY: found ${rows.length}/4 credit tables: ${rows.map((r) => (r as { tablename: string }).tablename).join(", ")}`);
   } catch (err: unknown) {
     results.push(`VERIFY ERR: ${err instanceof Error ? err.message : String(err)}`);
   }
