@@ -1,11 +1,5 @@
 import { neon } from "@neondatabase/serverless";
 import { randomUUID } from "crypto";
-import {
-  CREATE_SESSIONS_TABLE,
-  CREATE_CREDITS_TABLE,
-  CREATE_TRANSACTIONS_TABLE,
-  CREATE_TRANSACTION_INDEXES,
-} from "./migrations";
 import type { CreditBalance, ReserveResult, CalcSource, PackageId } from "./types";
 import { FREE_CALCULATIONS } from "./types";
 
@@ -15,17 +9,9 @@ function db() {
   return neon(url);
 }
 
-async function ensureTables(sql: ReturnType<typeof db>): Promise<void> {
-  await sql.unsafe(CREATE_SESSIONS_TABLE);
-  await sql.unsafe(CREATE_CREDITS_TABLE);
-  await sql.unsafe(CREATE_TRANSACTIONS_TABLE);
-  await sql.unsafe(CREATE_TRANSACTION_INDEXES);
-}
-
 // Upsert session row and return credit balance.
 export async function getBalance(session_id: string, ip: string): Promise<CreditBalance> {
   const sql = db();
-  await ensureTables(sql);
 
   // Upsert session
   await sql`
@@ -65,7 +51,6 @@ export async function reserve(
   calc_source: CalcSource,
 ): Promise<ReserveResult> {
   const sql = db();
-  await ensureTables(sql);
 
   const bal = await getBalance(session_id, ip);
   if (!bal.has_access) {
@@ -151,7 +136,6 @@ export async function addCredits(
   package_id: PackageId,
 ): Promise<{ ok: boolean; already_processed: boolean }> {
   const sql = db();
-  await ensureTables(sql);
 
   // Idempotency check
   const existing = await sql`

@@ -1,23 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
+// Auth: same secret as /api/db/migrate (x-migrate-secret header == CRON_SECRET)
+// OR admin secret (x-admin-secret == CALC_ADMIN_SECRET)
+function checkAuth(req: NextRequest): boolean {
+  const cronSecret = process.env.CRON_SECRET;
+  const adminSecret = process.env.CALC_ADMIN_SECRET;
+  const migHeader = req.headers.get("x-migrate-secret");
+  const adminHeader = req.headers.get("x-admin-secret");
+  if (cronSecret && migHeader === cronSecret) return true;
+  if (adminSecret && adminHeader === adminSecret) return true;
+  return false;
+}
+
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-admin-secret");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!checkAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.DATABASE_URL) {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
     return NextResponse.json({ error: "DATABASE_URL not set" }, { status: 503 });
   }
 
-  const sql = neon(process.env.DATABASE_URL);
+  // Use postgres package (TCP wire protocol) for reliable DDL execution.
+  // @neondatabase/serverless HTTP driver silently drops DDL through the pooler.
+  const sql = postgres(dbUrl, { max: 1, connect_timeout: 15, ssl: "require" });
   const results: string[] = [];
 
-  const ddl = [
+  const ddl: [string, string][] = [
     [
       "calculator_sessions",
       `CREATE TABLE IF NOT EXISTS calculator_sessions (
@@ -74,7 +88,7 @@ export async function POST(req: NextRequest) {
         created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )`,
     ],
-  ] as const;
+  ];
 
   for (const [name, stmt] of ddl) {
     try {
@@ -94,10 +108,12 @@ export async function POST(req: NextRequest) {
         AND tablename IN ('calculator_sessions','calculator_credits','credit_transactions','calc_credit_pending')
       ORDER BY tablename
     `;
-    results.push(`VERIFY: found ${rows.length}/4 credit tables: ${rows.map((r) => (r as { tablename: string }).tablename).join(", ")}`);
+    results.push(`VERIFY: ${rows.length}/4 tables found: ${rows.map((r) => r.tablename).join(", ")}`);
   } catch (err: unknown) {
     results.push(`VERIFY ERR: ${err instanceof Error ? err.message : String(err)}`);
   }
+
+  await sql.end();
 
   const errors = results.filter((r) => r.startsWith("ERR"));
   return NextResponse.json({ success: errors.length === 0, results });
