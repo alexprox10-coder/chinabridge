@@ -146,7 +146,7 @@ export default function DocsPage() {
           <p style={{ fontSize: 15, color: "#8899aa", marginBottom: 28, maxWidth: 480, margin: "0 auto 28px" }}>
             Менеджер поможет выбрать тариф, ответит на вопросы по интеграции и документам
           </p>
-          <Link href="https://t.me/chinabridgeline" target="_blank" rel="noopener noreferrer" style={{
+          <Link href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer" style={{
             display: "inline-block",
             background: "#229ED9",
             color: "#fff",
