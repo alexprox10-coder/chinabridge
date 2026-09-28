@@ -19,25 +19,32 @@ const CREATE_USES_TABLE = `
   )
 `;
 
-const EXTRACT_PROMPT = `You are a Chinese commercial invoice parser. Analyze this invoice image and extract all data.
+const EXTRACT_PROMPT = `You are an expert customs document analyst specializing in China → EAEU (Russia/Kazakhstan) trade. Analyze this invoice image carefully.
+
+IMPORTANT: Read ALL numbers from the document very carefully. Check each line item's quantity, unit price, and total price individually.
 
 Return ONLY valid JSON (no markdown, no explanation):
 {
   "supplier_name": "company name in original language",
-  "supplier_name_ru": "company name translated to Russian if needed",
-  "invoice_number": "invoice/contract number",
+  "supplier_name_ru": "company name translated to Russian",
+  "invoice_number": "invoice number exactly as written",
   "invoice_date": "YYYY-MM-DD or null",
-  "currency": "USD/CNY/EUR/RMB",
+  "currency": "USD/CNY/EUR",
   "total_value": 0.0,
   "total_weight_kg": 0.0,
   "total_pieces": 0,
-  "incoterms": "FOB/EXW/CIF or null",
-  "origin_city": "city in China where goods are from",
+  "incoterms": "Look for FOB/EXW/CIF/DAP/DDP in the document and extract it. Common locations: near port name, in payment terms, in header. Return exactly FOB/EXW/CIF/DAP/DDP or null.",
+  "origin_city": "city in China where goods originate",
   "items": [
     {
-      "description_zh": "original Chinese description",
+      "description_zh": "original Chinese/English description from document",
       "description_ru": "Russian translation",
-      "hs_code_hint": "HS code if shown or null",
+      "tn_ved_eaeu": "EAEU ТН ВЭД code (10 digits) — classify based on description, materials, function. Use your knowledge of EAEU customs tariff. Examples: TWS earphones=8518109500, USB charger=8504401900, smartwatch=8517620090, power bank=8507600000, cable=8544422900",
+      "tn_ved_confidence": "high/medium/low — high if clear electronics category, medium if ambiguous, low if unknown",
+      "tn_ved_reason": "1-2 sentences why this code was chosen",
+      "tn_ved_alternatives": ["alternative code if ambiguous, or empty array"],
+      "certification_required": true,
+      "certification_types": ["EAC", "GOST", "TR TS 004/2011 etc — list applicable for EAEU"],
       "quantity": 0,
       "unit": "pcs/kg/box",
       "unit_price": 0.0,
@@ -45,15 +52,20 @@ Return ONLY valid JSON (no markdown, no explanation):
       "weight_kg": 0.0
     }
   ],
-  "notes": "any important notes or discrepancies found"
+  "notes": "any discrepancies, missing data, or important observations for the customs broker"
 }
 
-If a field is not visible in the document, use null. Translate all Chinese text to Russian in the _ru fields.`;
+Classify ТН ВЭД ЕАЭС for EVERY item. Never return null for tn_ved_eaeu — always provide your best classification. If a field is not visible in the document, use null. Translate Chinese text to Russian in _ru fields.`;
 
 interface InvoiceItem {
   description_zh: string;
   description_ru: string;
-  hs_code_hint: string | null;
+  tn_ved_eaeu: string | null;
+  tn_ved_confidence: "high" | "medium" | "low" | null;
+  tn_ved_reason: string | null;
+  tn_ved_alternatives: string[];
+  certification_required: boolean;
+  certification_types: string[];
   quantity: number;
   unit: string;
   unit_price: number;
