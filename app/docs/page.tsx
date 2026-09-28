@@ -16,9 +16,9 @@ const FEATURES = [
 
 const PLANS = [
   { name: "Бесплатно", price: "0 ₽", limit: "3 документа", badge: "", href: "/docs/upload", cta: "Попробовать" },
-  { name: "Старт", price: "2 990 ₽/мес", limit: "20 документов", badge: "", href: "https://t.me/chinabridgeline", cta: "Подключить" },
-  { name: "Про", price: "7 990 ₽/мес", limit: "100 документов + API", badge: "Популярный", href: "https://t.me/chinabridgeline", cta: "Подключить" },
-  { name: "Брокер", price: "19 990 ₽/мес", limit: "Безлимит + white-label", badge: "", href: "https://t.me/chinabridgeline", cta: "Обсудить" },
+  { name: "Старт", price: "2 990 ₽/мес", limit: "20 документов", badge: "", href: "https://t.me/chinabridge_support24_bot", cta: "Подключить" },
+  { name: "Про", price: "7 990 ₽/мес", limit: "100 документов + API", badge: "Популярный", href: "https://t.me/chinabridge_support24_bot", cta: "Подключить" },
+  { name: "Брокер", price: "19 990 ₽/мес", limit: "Безлимит + white-label", badge: "", href: "https://t.me/chinabridge_support24_bot", cta: "Обсудить" },
 ];
 
 export default function DocsPage() {
