@@ -24,6 +24,10 @@ const PLANS = [
 export default function DocsPage() {
   return (
     <main style={{ fontFamily: "system-ui, sans-serif", background: "#050d1a", color: "#fff", minHeight: "100vh" }}>
+      <style>{`
+        .plan-card { transition: border-color 0.2s, transform 0.15s; }
+        .plan-card:hover { border-color: #229ED9 !important; transform: translateY(-2px); }
+      `}</style>
 
       {/* HERO */}
       <section style={{ maxWidth: 900, margin: "0 auto", padding: "72px 24px 48px", textAlign: "center" }}>
@@ -96,19 +100,15 @@ export default function DocsPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
           {PLANS.map((p) => (
             <Link key={p.name} href={p.href} target={p.href.startsWith("http") ? "_blank" : undefined} rel={p.href.startsWith("http") ? "noopener noreferrer" : undefined} style={{ textDecoration: "none", color: "inherit" }}>
-              <div style={{
+              <div className="plan-card" style={{
                 background: p.badge ? "rgba(34,158,217,0.12)" : "rgba(255,255,255,0.04)",
                 border: `1px solid ${p.badge ? "rgba(34,158,217,0.6)" : "#1e3a5f"}`,
                 borderRadius: 16,
                 padding: "24px 20px",
                 position: "relative",
                 cursor: "pointer",
-                transition: "border-color 0.2s, transform 0.15s",
                 height: "100%",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#229ED9"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = p.badge ? "rgba(34,158,217,0.6)" : "#1e3a5f"; (e.currentTarget as HTMLDivElement).style.transform = "none"; }}
-              >
+              }}>
                 {p.badge && (
                   <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#229ED9", color: "#fff", borderRadius: 20, padding: "3px 14px", fontSize: 12, fontWeight: 700 }}>
                     {p.badge}
