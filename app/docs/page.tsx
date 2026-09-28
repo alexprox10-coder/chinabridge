@@ -138,6 +138,29 @@ export default function DocsPage() {
         </div>
       </section>
 
+      {/* CONTACT */}
+      <section style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px 80px" }}>
+        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid #1e3a5f", borderRadius: 20, padding: "40px 32px", textAlign: "center" }}>
+          <div style={{ fontSize: 36, marginBottom: 16 }}>💬</div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 10 }}>Остались вопросы?</h2>
+          <p style={{ fontSize: 15, color: "#8899aa", marginBottom: 28, maxWidth: 480, margin: "0 auto 28px" }}>
+            Менеджер поможет выбрать тариф, ответит на вопросы по интеграции и документам
+          </p>
+          <Link href="https://t.me/chinabridgeline" target="_blank" rel="noopener noreferrer" style={{
+            display: "inline-block",
+            background: "#229ED9",
+            color: "#fff",
+            padding: "14px 32px",
+            borderRadius: 14,
+            fontWeight: 700,
+            fontSize: 15,
+            textDecoration: "none",
+          }}>
+            Написать менеджеру →
+          </Link>
+        </div>
+      </section>
+
     </main>
   );
 }
