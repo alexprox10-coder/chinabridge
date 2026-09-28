@@ -15,10 +15,10 @@ const FEATURES = [
 ];
 
 const PLANS = [
-  { name: "Бесплатно", price: "0 ₽", limit: "3 документа", badge: "" },
-  { name: "Старт", price: "2 990 ₽/мес", limit: "20 документов", badge: "" },
-  { name: "Про", price: "7 990 ₽/мес", limit: "100 документов + API", badge: "Популярный" },
-  { name: "Брокер", price: "19 990 ₽/мес", limit: "Безлимит + white-label", badge: "" },
+  { name: "Бесплатно", price: "0 ₽", limit: "3 документа", badge: "", href: "/docs/upload", cta: "Попробовать" },
+  { name: "Старт", price: "2 990 ₽/мес", limit: "20 документов", badge: "", href: "https://t.me/chinabridgeline", cta: "Подключить" },
+  { name: "Про", price: "7 990 ₽/мес", limit: "100 документов + API", badge: "Популярный", href: "https://t.me/chinabridgeline", cta: "Подключить" },
+  { name: "Брокер", price: "19 990 ₽/мес", limit: "Безлимит + white-label", badge: "", href: "https://t.me/chinabridgeline", cta: "Обсудить" },
 ];
 
 export default function DocsPage() {
@@ -95,22 +95,31 @@ export default function DocsPage() {
         <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 32, textAlign: "center" }}>Тарифы</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
           {PLANS.map((p) => (
-            <div key={p.name} style={{
-              background: p.badge ? "rgba(34,158,217,0.12)" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${p.badge ? "rgba(34,158,217,0.6)" : "#1e3a5f"}`,
-              borderRadius: 16,
-              padding: "24px 20px",
-              position: "relative",
-            }}>
-              {p.badge && (
-                <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#229ED9", color: "#fff", borderRadius: 20, padding: "3px 14px", fontSize: 12, fontWeight: 700 }}>
-                  {p.badge}
-                </div>
-              )}
-              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{p.name}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#229ED9", marginBottom: 8 }}>{p.price}</div>
-              <div style={{ fontSize: 13, color: "#8899aa" }}>{p.limit}</div>
-            </div>
+            <Link key={p.name} href={p.href} target={p.href.startsWith("http") ? "_blank" : undefined} rel={p.href.startsWith("http") ? "noopener noreferrer" : undefined} style={{ textDecoration: "none", color: "inherit" }}>
+              <div style={{
+                background: p.badge ? "rgba(34,158,217,0.12)" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${p.badge ? "rgba(34,158,217,0.6)" : "#1e3a5f"}`,
+                borderRadius: 16,
+                padding: "24px 20px",
+                position: "relative",
+                cursor: "pointer",
+                transition: "border-color 0.2s, transform 0.15s",
+                height: "100%",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#229ED9"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = p.badge ? "rgba(34,158,217,0.6)" : "#1e3a5f"; (e.currentTarget as HTMLDivElement).style.transform = "none"; }}
+              >
+                {p.badge && (
+                  <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#229ED9", color: "#fff", borderRadius: 20, padding: "3px 14px", fontSize: 12, fontWeight: 700 }}>
+                    {p.badge}
+                  </div>
+                )}
+                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{p.name}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#229ED9", marginBottom: 8 }}>{p.price}</div>
+                <div style={{ fontSize: 13, color: "#8899aa", marginBottom: 16 }}>{p.limit}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#229ED9" }}>{p.cta} →</div>
+              </div>
+            </Link>
           ))}
         </div>
         <div style={{ textAlign: "center", marginTop: 32 }}>
