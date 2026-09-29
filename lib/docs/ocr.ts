@@ -149,7 +149,24 @@ export async function extractDocumentData(
     ]);
   }
 
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("OCR вернул не-JSON ответ");
-  return JSON.parse(match[0]) as ExtractedData;
+  // Try to extract JSON from the response (handles markdown code blocks)
+  const cleaned = raw
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+
+  // Find the outermost JSON object
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    console.error("[OCR] raw response:", raw.slice(0, 500));
+    throw new Error(`OCR вернул не-JSON ответ: ${raw.slice(0, 200)}`);
+  }
+
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1)) as ExtractedData;
+  } catch (e) {
+    console.error("[OCR] JSON parse error:", e, "raw:", raw.slice(0, 500));
+    throw new Error(`OCR: ошибка парсинга JSON — ${raw.slice(0, 150)}`);
+  }
 }
