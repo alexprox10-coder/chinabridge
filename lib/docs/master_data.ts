@@ -2,7 +2,8 @@ import { neon } from "@neondatabase/serverless";
 
 const db = () => neon(process.env.DATABASE_URL!);
 
-async function ensureTables(sql: ReturnType<typeof neon>) {
+async function ensureTables() {
+  const sql = neon(process.env.DATABASE_URL!);
   await sql`
     CREATE TABLE IF NOT EXISTS docs_master_suppliers (
       id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -44,7 +45,7 @@ export async function upsertSupplier(
 ): Promise<string> {
   if (!process.env.DATABASE_URL || !userKey) return "";
   const sql = db();
-  await ensureTables(sql).catch(() => null);
+  await ensureTables().catch(() => null);
 
   const rows = await sql`
     SELECT id, total_docs FROM docs_master_suppliers
@@ -133,7 +134,7 @@ export async function getMasterDataHints(
 ): Promise<{ supplier?: Record<string, unknown>; known_products: Array<Record<string, unknown>>; suggestion: string }> {
   if (!process.env.DATABASE_URL || !userKey || !supplierNameCn) return { known_products: [], suggestion: "" };
   const sql = db();
-  await ensureTables(sql).catch(() => null);
+  await ensureTables().catch(() => null);
 
   const suppliers = await sql`
     SELECT id, name_cn, name_en, total_docs FROM docs_master_suppliers
@@ -161,7 +162,7 @@ export async function getMasterDataHints(
 export async function getClientSuppliers(userKey: string) {
   if (!process.env.DATABASE_URL || !userKey) return [];
   const sql = db();
-  await ensureTables(sql).catch(() => null);
+  await ensureTables().catch(() => null);
 
   const suppliers = await sql`
     SELECT id, name_cn, name_en, address, total_docs, last_seen FROM docs_master_suppliers
