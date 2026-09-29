@@ -250,7 +250,7 @@ export default function DocsResultPage() {
           <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>Нужна доставка из Китая?</div>
           <div style={{ fontSize: 13, color: "#8899aa", marginBottom: 16 }}>Расчёт стоимости за 15 минут · Без предоплаты</div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="https://t.me/chinabridge_manager" target="_blank" rel="noopener noreferrer" style={{ background: "#229ED9", color: "#fff", padding: "10px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
+            <a href="https://t.me/chinabridge_pay_bot" target="_blank" rel="noopener noreferrer" style={{ background: "#229ED9", color: "#fff", padding: "10px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
               → Написать менеджеру
             </a>
             <a href={`/api/docs/export/${id}`} download style={{ background: "rgba(255,255,255,0.08)", color: "#fff", padding: "10px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
