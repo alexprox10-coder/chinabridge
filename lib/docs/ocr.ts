@@ -1,6 +1,7 @@
-// ChinaBridge Docs — OCR module (Anthropic Claude Vision — supports images + PDF natively)
-const ANTHROPIC_KEY = () => process.env.ANTHROPIC_API_KEY ?? "";
-const MODEL = "claude-opus-4-5";
+// ChinaBridge Docs — OCR via OpenRouter (Claude for PDFs, Gemini for images)
+const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
+const IMAGE_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
+const PDF_MODEL = "anthropic/claude-opus-4-5";
 
 const OCR_PROMPT = `Ты эксперт по таможенным документам Китай → ЕАЭС.
 
@@ -83,46 +84,41 @@ export async function extractDocumentData(
   fileBase64: string,
   mimeType: string
 ): Promise<ExtractedData> {
-  const isPdf = mimeType === "application/pdf" || mimeType === "pdf";
+  const isPdf = mimeType === "application/pdf";
 
-  // Build content block: document for PDF, image for everything else
-  const fileBlock = isPdf
+  // PDF: use Claude via OpenRouter with document content type
+  // Image: use Gemini via OpenRouter with image_url
+  const contentBlock = isPdf
     ? {
-        type: "document" as const,
+        type: "document",
         source: {
-          type: "base64" as const,
-          media_type: "application/pdf" as const,
+          type: "base64",
+          media_type: "application/pdf",
           data: fileBase64,
         },
       }
     : {
-        type: "image" as const,
-        source: {
-          type: "base64" as const,
-          media_type: (mimeType.startsWith("image/") ? mimeType : "image/jpeg") as
-            | "image/jpeg"
-            | "image/png"
-            | "image/gif"
-            | "image/webp",
-          data: fileBase64,
+        type: "image_url",
+        image_url: {
+          url: `data:${mimeType.startsWith("image/") ? mimeType : "image/jpeg"};base64,${fileBase64}`,
         },
       };
 
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+  const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
-      "x-api-key": ANTHROPIC_KEY(),
-      "anthropic-version": "2023-06-01",
-      "anthropic-beta": "pdfs-2024-09-25",
+      Authorization: `Bearer ${OR_KEY()}`,
       "Content-Type": "application/json",
+      "HTTP-Referer": "https://chinabridge.pro",
+      "X-Title": "ChinaBridge Docs OCR",
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: isPdf ? PDF_MODEL : IMAGE_MODEL,
       max_tokens: 4000,
       messages: [
         {
           role: "user",
-          content: [fileBlock, { type: "text", text: OCR_PROMPT }],
+          content: [contentBlock, { type: "text", text: OCR_PROMPT }],
         },
       ],
     }),
@@ -134,9 +130,9 @@ export async function extractDocumentData(
   }
 
   const data = (await resp.json()) as {
-    content: Array<{ type: string; text: string }>;
+    choices: Array<{ message: { content: string } }>;
   };
-  const raw = data.content?.find((b) => b.type === "text")?.text ?? "";
+  const raw = data.choices?.[0]?.message?.content ?? "";
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("OCR вернул не-JSON ответ");
   return JSON.parse(match[0]) as ExtractedData;
