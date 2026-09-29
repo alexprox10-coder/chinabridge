@@ -12,8 +12,39 @@ const STEPS = [
   "Формируем пакет документов...",
 ];
 
+const DOCS_PLANS = [
+  { planId: "docs_starter", name: "Старт",  price: "2 990 ₽", docs: "10 документов",   color: "#229ED9" },
+  { planId: "docs_pro",     name: "Про",    price: "7 990 ₽", docs: "50 документов",   color: "#00A86B" },
+  { planId: "docs_broker",  name: "Брокер", price: "19 990 ₽", docs: "1000 документов", color: "#f59e0b" },
+] as const;
+
 // ── Paywall modal ─────────────────────────────────────────────────────────────
 function DocsPaywallModal({ onClose }: { onClose: () => void }) {
+  const [paying, setPaying] = useState<string | null>(null);
+  const [payError, setPayError] = useState("");
+
+  const handlePay = async (planId: string) => {
+    setPaying(planId);
+    setPayError("");
+    try {
+      const res = await fetch("/api/payments/docs-subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+      const data = await res.json() as { ok?: boolean; paymentLink?: string; error?: string };
+      if (data.ok && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        setPayError(data.error || "Ошибка создания платежа");
+        setPaying(null);
+      }
+    } catch (e) {
+      setPayError(String(e));
+      setPaying(null);
+    }
+  };
+
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24, backdropFilter: "blur(4px)" }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#060f1e", border: "1px solid #1e3a5f", borderRadius: 20, maxWidth: 420, width: "100%", overflow: "hidden" }}>
@@ -23,37 +54,37 @@ function DocsPaywallModal({ onClose }: { onClose: () => void }) {
           <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
           <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>Бесплатные анализы исчерпаны</div>
           <p style={{ color: "#8899aa", fontSize: 13, lineHeight: 1.5, margin: 0 }}>
-            Вы использовали {FREE_LIMIT} бесплатных анализа. Оформите подписку ChinaBridge Docs для неограниченного использования.
+            Вы использовали {FREE_LIMIT} бесплатных анализа. Пополните пакет ChinaBridge Docs для продолжения.
           </p>
         </div>
 
         <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
 
-          {/* Plans */}
-          {[
-            { name: "Старт", price: "2 990 ₽/мес", desc: "до 10 документов", color: "#229ED9" },
-            { name: "Про", price: "7 990 ₽/мес", desc: "до 50 документов", color: "#00A86B" },
-            { name: "Брокер", price: "19 990 ₽/мес", desc: "безлимит + API", color: "#f59e0b" },
-          ].map(p => (
-            <a key={p.name} href="https://t.me/chinabridge_pay_bot" target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", background: "rgba(255,255,255,0.03)", border: `1px solid ${p.color}33`, borderRadius: 12, padding: "12px 16px", textDecoration: "none", cursor: "pointer" }}>
+          {DOCS_PLANS.map(p => (
+            <button key={p.planId}
+              onClick={() => handlePay(p.planId)}
+              disabled={paying !== null}
+              style={{ display: "block", width: "100%", background: paying === p.planId ? `${p.color}22` : "rgba(255,255,255,0.03)", border: `1px solid ${p.color}${paying === p.planId ? "88" : "33"}`, borderRadius: 12, padding: "12px 16px", textDecoration: "none", cursor: paying !== null ? "not-allowed" : "pointer", textAlign: "left" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>{p.name}</span>
-                  <span style={{ color: "#64748b", fontSize: 11, marginLeft: 8 }}>— {p.desc}</span>
+                  <span style={{ color: "#64748b", fontSize: 11, marginLeft: 8 }}>— {p.docs}</span>
                 </div>
-                <span style={{ color: p.color, fontWeight: 700, fontSize: 14 }}>{p.price}</span>
+                <span style={{ color: p.color, fontWeight: 700, fontSize: 14 }}>
+                  {paying === p.planId ? "⏳ Создаём..." : `Оплатить ${p.price} →`}
+                </span>
               </div>
-            </a>
+            </button>
           ))}
 
-          <a href="https://t.me/chinabridge_pay_bot" target="_blank" rel="noopener noreferrer"
-            style={{ display: "block", textAlign: "center", background: "#229ED9", color: "#fff", fontWeight: 700, fontSize: 14, padding: 13, borderRadius: 10, textDecoration: "none", marginTop: 4 }}>
-            Оформить подписку в Telegram →
-          </a>
+          {payError && (
+            <div style={{ fontSize: 12, color: "#f88", padding: "4px 8px", background: "rgba(200,0,0,0.1)", borderRadius: 6 }}>
+              ❌ {payError}
+            </div>
+          )}
 
           <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
-            style={{ display: "block", textAlign: "center", color: "#00A86B", fontSize: 13, textDecoration: "none", padding: "4px 0" }}>
+            style={{ display: "block", textAlign: "center", color: "#5a7899", fontSize: 13, textDecoration: "none", padding: "4px 0" }}>
             Есть вопросы? Написать менеджеру
           </a>
         </div>

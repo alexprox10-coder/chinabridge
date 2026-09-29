@@ -70,7 +70,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    // ── 1. Попытка: tripwire_orders (490₽) ──────────────────────────────────
+    // ── 1. Docs subscriptions ───────────────────────────────────────────────
+    const docsRows = await sql`
+      UPDATE docs_subscriptions
+      SET status = 'active'
+      WHERE operation_id = ${operationId}
+        AND status = 'pending'
+      RETURNING session_id, plan, docs_total, amount_rub
+    `.catch(() => [] as unknown[]);
+
+    const docsRow = (docsRows as Array<Record<string, unknown>>)[0];
+    if (docsRow) {
+      const plan      = String(docsRow.plan);
+      const docsTotal = Number(docsRow.docs_total);
+      const amountRub = Number(docsRow.amount_rub);
+
+      if (notifyToken && MANAGER_CHAT_ID) {
+        await fetch(`https://api.telegram.org/bot${notifyToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: MANAGER_CHAT_ID,
+            text: [
+              `📄 <b>Оплата ChinaBridge Docs</b>`,
+              ``,
+              `📦 Тариф: ${plan}`,
+              `📋 Документов: ${docsTotal}`,
+              `💰 Сумма: ${amountRub} ₽`,
+              `🆔 <code>${operationId}</code>`,
+            ].join("\n"),
+            parse_mode: "HTML",
+          }),
+        }).catch(() => null);
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    // ── 2. Попытка: tripwire_orders (490₽) ──────────────────────────────────
     const tripwireRows = await sql`
       UPDATE tripwire_orders
       SET status  = 'paid',

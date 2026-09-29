@@ -13,10 +13,28 @@ export const maxDuration = 120;
 const DOCS_FREE_LIMIT = 3;
 const DOCS_SESSION_COOKIE = "cb_docs_session";
 
-async function checkDocsAccess(sessionId: string): Promise<{ allowed: boolean; free_left: number }> {
+async function checkDocsAccess(sessionId: string): Promise<{ allowed: boolean; free_left: number; plan?: string }> {
   if (!process.env.DATABASE_URL) return { allowed: true, free_left: DOCS_FREE_LIMIT };
   const sql = neon(process.env.DATABASE_URL);
   try {
+    // Check paid subscription first
+    const subRows = await sql`
+      SELECT plan, docs_total, docs_used FROM docs_subscriptions
+      WHERE session_id = ${sessionId} AND status = 'active' AND docs_used < docs_total
+      ORDER BY created_at DESC LIMIT 1
+    `.catch(() => [] as unknown[]) as Array<{ plan: string; docs_total: number; docs_used: number }>;
+
+    const sub = subRows[0];
+    if (sub) {
+      await sql`
+        UPDATE docs_subscriptions SET docs_used = docs_used + 1
+        WHERE session_id = ${sessionId} AND status = 'active' AND docs_used < docs_total
+          AND plan = ${sub.plan}
+      `.catch(() => null);
+      return { allowed: true, free_left: sub.docs_total - sub.docs_used - 1, plan: sub.plan };
+    }
+
+    // Fall back to free tier
     await sql`
       CREATE TABLE IF NOT EXISTS docs_free_usage (
         session_id text PRIMARY KEY,
