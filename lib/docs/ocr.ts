@@ -1,7 +1,8 @@
 // ChinaBridge Docs — OCR module
 // PDF: extract text via pdf-parse → send as text to Gemini (no vision needed)
 // Images: send as image_url to Gemini Vision
-import pdfParse from "pdf-parse";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
 
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
 const OR_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
@@ -119,7 +120,7 @@ export async function extractDocumentData(
   if (mimeType === "application/pdf") {
     // Extract text from PDF — no vision API needed
     const pdfBuffer = Buffer.from(fileBase64, "base64");
-    const parsed = await pdfParse(pdfBuffer);
+    const parsed = await (pdfParse as (buf: Buffer) => Promise<{ text: string }>)(pdfBuffer);
     const pdfText = parsed.text?.trim();
 
     if (!pdfText || pdfText.length < 20) {
