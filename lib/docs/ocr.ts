@@ -55,7 +55,13 @@ const OCR_PROMPT = `Ты эксперт по таможенным докумен
   "total_weight_net": 0.0,
   "total_weight_gross": 0.0,
   "confidence": 0.95,
-  "issues": []
+  "issues": [],
+  "field_sources": {
+    "supplier_name": { "value": "", "source": "invoice", "page": 1, "confidence": 0.95, "note": "из шапки документа" },
+    "total_amount":  { "value": "", "source": "invoice", "page": 1, "confidence": 0.98, "note": "итоговая строка" },
+    "doc_number":    { "value": "", "source": "invoice", "page": 1, "confidence": 0.99, "note": "" },
+    "doc_date":      { "value": "", "source": "invoice", "page": 1, "confidence": 0.99, "note": "" }
+  }
 }`;
 
 export interface ExtractedData {
@@ -83,6 +89,7 @@ export interface ExtractedData {
   total_weight_gross: number;
   confidence: number;
   issues: string[];
+  field_sources?: Record<string, { value: string; source: string; page?: number; confidence?: number; note?: string }>;
 }
 
 async function callOpenRouter(messages: object[]): Promise<string> {

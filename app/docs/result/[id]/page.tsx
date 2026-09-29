@@ -2,6 +2,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
+interface AuditRecord {
+  field_name: string;
+  field_value: string;
+  source_document: string;
+  page_number: number;
+  confidence: number;
+  note: string;
+}
+
 interface ResultData {
   doc_id: string;
   status: string;
@@ -73,6 +82,8 @@ export default function DocsResultPage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<ResultData | null>(null);
   const [error, setError] = useState("");
+  const [audit, setAudit] = useState<AuditRecord[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
 
   useEffect(() => {
     fetch(`/api/docs/result/${id}`)
@@ -82,6 +93,11 @@ export default function DocsResultPage() {
         else setData(d as ResultData);
       })
       .catch((e) => setError(String(e)));
+
+    fetch(`/api/docs/audit-trail?id=${id}`)
+      .then((r) => r.json())
+      .then((d: { records?: AuditRecord[] }) => { if (d.records) setAudit(d.records); })
+      .catch(() => null);
   }, [id]);
 
   if (error) return (
@@ -118,13 +134,22 @@ export default function DocsResultPage() {
             <h1 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 4px" }}>Результат анализа</h1>
             <div style={{ fontSize: 13, color: "#8899aa" }}>{data.filename} · {extracted.doc_date || "—"}</div>
           </div>
-          <a
-            href={`/api/docs/export/${id}`}
-            download
-            style={{ background: "#229ED9", color: "#fff", padding: "10px 24px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}
-          >
-            📥 Скачать PDF пакет
-          </a>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <a
+              href={`/api/docs/export/${id}`}
+              download
+              style={{ background: "#229ED9", color: "#fff", padding: "10px 20px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}
+            >
+              📥 PDF пакет
+            </a>
+            <a
+              href={`/api/docs/export-alta?id=${id}`}
+              download
+              style={{ background: "#1e3a5f", color: "#fff", padding: "10px 20px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none", border: "1px solid #2a5080" }}
+            >
+              🗂 XML для Альта-ГТД
+            </a>
+          </div>
         </div>
 
         {/* Risk badge */}
@@ -240,6 +265,52 @@ export default function DocsResultPage() {
             {validation.broker_notes && (
               <div style={{ marginTop: 12, padding: "10px", background: "rgba(255,255,255,0.04)", borderRadius: 8, fontSize: 13, color: "#8899aa" }}>
                 <span style={{ fontWeight: 700, color: "#fff" }}>Брокеру: </span>{validation.broker_notes}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Alta hint */}
+        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #1e3a5f", borderRadius: 12, padding: "14px 18px", marginBottom: 16, fontSize: 13, color: "#5a7899" }}>
+          <span style={{ color: "#fff", fontWeight: 700 }}>🗂 XML для Альта-ГТД</span> — скачайте и откройте в программе:{" "}
+          <span style={{ color: "#8899aa" }}>Файл → Импорт → Выбрать XML файл. Все данные будут заполнены автоматически.</span>
+        </div>
+
+        {/* Audit trail */}
+        {audit.length > 0 && (
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #1e3a5f", borderRadius: 14, padding: "16px 20px", marginBottom: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>🔍 Источники данных (аудит-трейл)</div>
+              <button onClick={() => setShowAudit(v => !v)} style={{ background: "none", border: "1px solid #1e3a5f", borderRadius: 8, color: "#8899aa", padding: "4px 12px", cursor: "pointer", fontSize: 12 }}>
+                {showAudit ? "Скрыть" : "Показать"}
+              </button>
+            </div>
+            {showAudit && (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ color: "#5a7899", textAlign: "left" }}>
+                      <th style={{ padding: "4px 8px", borderBottom: "1px solid #1e3a5f" }}>Поле</th>
+                      <th style={{ padding: "4px 8px", borderBottom: "1px solid #1e3a5f" }}>Значение</th>
+                      <th style={{ padding: "4px 8px", borderBottom: "1px solid #1e3a5f" }}>Источник</th>
+                      <th style={{ padding: "4px 8px", borderBottom: "1px solid #1e3a5f" }}>Уверенность</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {audit.map((r, i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid #0f1f33" }}>
+                        <td style={{ padding: "5px 8px", color: "#8899aa" }}>{r.field_name}</td>
+                        <td style={{ padding: "5px 8px", color: "#fff" }}>{r.field_value}</td>
+                        <td style={{ padding: "5px 8px", color: "#5a7899" }}>{r.source_document}{r.page_number > 1 ? `, стр.${r.page_number}` : ""}</td>
+                        <td style={{ padding: "5px 8px" }}>
+                          <span style={{ color: (r.confidence ?? 0) > 0.9 ? "#00A86B" : "#e08020", fontWeight: 700 }}>
+                            {Math.round((r.confidence ?? 0) * 100)}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

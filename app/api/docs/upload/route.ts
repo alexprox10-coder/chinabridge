@@ -6,6 +6,8 @@ import { calculateDuties } from "@/lib/docs/duty_calculator";
 import { validateDocument } from "@/lib/docs/validator";
 import { generateDocumentPackage } from "@/lib/docs/pdf_generator";
 import { getOrCreateSessionId, setSessionCookie } from "@/lib/credits/session";
+import { upsertSupplier, upsertProduct } from "@/lib/docs/master_data";
+import { saveAuditTrail } from "@/lib/docs/audit_trail";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -146,6 +148,35 @@ export async function POST(req: NextRequest) {
         `;
         await db`UPDATE docs_uploads SET status = 'completed' WHERE id = ${docId}`;
       } catch { /* ok */ }
+    }
+
+    // Step 6: Мастер-данные + аудит-трейл (fire after DB write, non-fatal)
+    const userKey = telegram || sessionId;
+    if (userKey) {
+      try {
+        const supplierId = await upsertSupplier(userKey, {
+          name_cn: extracted.supplier?.name_cn || "",
+          name_en: extracted.supplier?.name_en || "",
+          address: extracted.supplier?.address || "",
+        });
+        await Promise.all(
+          extracted.items.map((item, i) =>
+            upsertProduct(userKey, supplierId, {
+              name_cn: item.name_cn,
+              name_ru: item.name_ru,
+              hs_code: hsCodes[i]?.hs_code_clean,
+              unit: item.unit,
+              price_cny: item.unit_price,
+              duty_rate: hsCodes[i]?.duty_rate_percent,
+            })
+          )
+        );
+        if (extracted.field_sources) {
+          await saveAuditTrail(docId, extracted.field_sources);
+        }
+      } catch (mdErr) {
+        console.warn("[docs/upload] master_data/audit non-fatal error:", mdErr);
+      }
     }
 
     // Notify manager (fire-and-forget but awaited per Vercel best practice)
