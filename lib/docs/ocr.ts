@@ -1,7 +1,10 @@
-// ChinaBridge Docs — OCR via OpenRouter (Claude for PDFs, Gemini for images)
+// ChinaBridge Docs — OCR module
+// PDF: extract text via pdf-parse → send as text to Gemini (no vision needed)
+// Images: send as image_url to Gemini Vision
+import pdfParse from "pdf-parse";
+
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
-const IMAGE_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
-const PDF_MODEL = "anthropic/claude-opus-4-5";
+const OR_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
 
 const OCR_PROMPT = `Ты эксперт по таможенным документам Китай → ЕАЭС.
 
@@ -80,30 +83,7 @@ export interface ExtractedData {
   issues: string[];
 }
 
-export async function extractDocumentData(
-  fileBase64: string,
-  mimeType: string
-): Promise<ExtractedData> {
-  const isPdf = mimeType === "application/pdf";
-
-  // PDF: use Claude via OpenRouter with document content type
-  // Image: use Gemini via OpenRouter with image_url
-  const contentBlock = isPdf
-    ? {
-        type: "document",
-        source: {
-          type: "base64",
-          media_type: "application/pdf",
-          data: fileBase64,
-        },
-      }
-    : {
-        type: "image_url",
-        image_url: {
-          url: `data:${mimeType.startsWith("image/") ? mimeType : "image/jpeg"};base64,${fileBase64}`,
-        },
-      };
-
+async function callOpenRouter(messages: object[]): Promise<string> {
   const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -113,14 +93,9 @@ export async function extractDocumentData(
       "X-Title": "ChinaBridge Docs OCR",
     },
     body: JSON.stringify({
-      model: isPdf ? PDF_MODEL : IMAGE_MODEL,
+      model: OR_MODEL,
       max_tokens: 4000,
-      messages: [
-        {
-          role: "user",
-          content: [contentBlock, { type: "text", text: OCR_PROMPT }],
-        },
-      ],
+      messages,
     }),
   });
 
@@ -132,7 +107,48 @@ export async function extractDocumentData(
   const data = (await resp.json()) as {
     choices: Array<{ message: { content: string } }>;
   };
-  const raw = data.choices?.[0]?.message?.content ?? "";
+  return data.choices?.[0]?.message?.content ?? "";
+}
+
+export async function extractDocumentData(
+  fileBase64: string,
+  mimeType: string
+): Promise<ExtractedData> {
+  let raw: string;
+
+  if (mimeType === "application/pdf") {
+    // Extract text from PDF — no vision API needed
+    const pdfBuffer = Buffer.from(fileBase64, "base64");
+    const parsed = await pdfParse(pdfBuffer);
+    const pdfText = parsed.text?.trim();
+
+    if (!pdfText || pdfText.length < 20) {
+      throw new Error("PDF не содержит текста. Попробуйте загрузить как JPG или PNG.");
+    }
+
+    raw = await callOpenRouter([
+      {
+        role: "user",
+        content: `${OCR_PROMPT}\n\nТекст документа:\n\`\`\`\n${pdfText.slice(0, 8000)}\n\`\`\``,
+      },
+    ]);
+  } else {
+    // Image: use Gemini Vision via OpenRouter
+    const imageMime = mimeType.startsWith("image/") ? mimeType : "image/jpeg";
+    raw = await callOpenRouter([
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: `data:${imageMime};base64,${fileBase64}` },
+          },
+          { type: "text", text: OCR_PROMPT },
+        ],
+      },
+    ]);
+  }
+
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("OCR вернул не-JSON ответ");
   return JSON.parse(match[0]) as ExtractedData;
