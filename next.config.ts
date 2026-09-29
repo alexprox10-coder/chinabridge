@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   // which does NOT export fontkit.open() → silent Helvetica fallback → garbled Cyrillic.
   // With serverExternalPackages, Node.js resolves fontkit via the "node" export condition
   // → dist/module.mjs → fontkit.open() works correctly.
-  serverExternalPackages: ['@react-pdf/renderer', '@react-pdf/font', 'fontkit', 'pdf-parse', 'pdfmake'],
+  serverExternalPackages: ['@react-pdf/renderer', '@react-pdf/font', 'fontkit', 'pdf-parse', 'pdfmake', 'jsonrepair'],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [],

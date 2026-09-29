@@ -3,6 +3,8 @@
 // Images: send as image_url to Gemini Vision
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { jsonrepair } = require("jsonrepair") as { jsonrepair: (s: string) => string };
 
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
 const OR_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
@@ -154,7 +156,7 @@ export async function extractDocumentData(
     ]);
   }
 
-  // Try to extract JSON from the response (handles markdown code blocks)
+  // Strip markdown code fences if present
   const cleaned = raw
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/g, "")
@@ -168,10 +170,19 @@ export async function extractDocumentData(
     throw new Error(`OCR вернул не-JSON ответ: ${raw.slice(0, 200)}`);
   }
 
+  const jsonSlice = cleaned.slice(start, end + 1);
+
+  // First try parsing as-is; if it fails, repair with jsonrepair
   try {
-    return JSON.parse(cleaned.slice(start, end + 1)) as ExtractedData;
-  } catch (e) {
-    console.error("[OCR] JSON parse error:", e, "raw:", raw.slice(0, 500));
-    throw new Error(`OCR: ошибка парсинга JSON — ${raw.slice(0, 150)}`);
+    return JSON.parse(jsonSlice) as ExtractedData;
+  } catch {
+    try {
+      const repaired = jsonrepair(jsonSlice);
+      console.log("[OCR] JSON repaired successfully");
+      return JSON.parse(repaired) as ExtractedData;
+    } catch (e2) {
+      console.error("[OCR] JSON repair also failed:", e2, "raw:", raw.slice(0, 500));
+      throw new Error(`OCR: ошибка парсинга JSON — ${raw.slice(0, 150)}`);
+    }
   }
 }
