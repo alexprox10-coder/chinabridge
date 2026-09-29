@@ -8,7 +8,8 @@ export interface FieldSource {
   note?: string;
 }
 
-async function ensureTable(sql: ReturnType<typeof neon>) {
+async function ensureTable() {
+  const sql = neon(process.env.DATABASE_URL!);
   await sql`
     CREATE TABLE IF NOT EXISTS docs_audit_trail (
       id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -31,8 +32,8 @@ export async function saveAuditTrail(
   fieldSources: Record<string, FieldSource>
 ): Promise<void> {
   if (!process.env.DATABASE_URL || !uploadId || !fieldSources) return;
+  await ensureTable().catch(() => null);
   const sql = neon(process.env.DATABASE_URL);
-  await ensureTable(sql).catch(() => null);
 
   const entries = Object.entries(fieldSources);
   if (!entries.length) return;
