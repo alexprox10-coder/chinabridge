@@ -63,9 +63,14 @@ export async function POST(req: NextRequest) {
       marketplace || undefined
     );
 
-    // Step 5: PDF
-    const pdfBuffer = await generateDocumentPackage(extracted, hsCodes, duties, validation, dest);
-    const pdfBase64 = pdfBuffer.toString("base64");
+    // Step 5: PDF (optional — if pdfkit fails on Vercel, proceed without PDF)
+    let pdfBase64 = "";
+    try {
+      const pdfBuffer = await generateDocumentPackage(extracted, hsCodes, duties, validation, dest);
+      pdfBase64 = pdfBuffer.toString("base64");
+    } catch (pdfErr) {
+      console.error("[docs/upload] PDF generation failed (non-fatal):", pdfErr);
+    }
 
     const summary = {
       total_items: extracted.items.length,
@@ -74,6 +79,7 @@ export async function POST(req: NextRequest) {
       total_landed_cost_rub: duties.reduce((s, d) => s + d.landed_cost_rub, 0),
       risk_level: validation.risk_level,
       is_ready: validation.is_valid,
+      pdf_ready: pdfBase64.length > 0,
     };
 
     const result = { extracted, hs_codes: hsCodes, duties, validation, summary };
@@ -82,7 +88,7 @@ export async function POST(req: NextRequest) {
       try {
         await db`
           INSERT INTO docs_results (upload_id, result_data, pdf_base64, status)
-          VALUES (${docId}, ${JSON.stringify(result)}, ${pdfBase64}, 'completed')
+          VALUES (${docId}, ${JSON.stringify(result)}, ${pdfBase64 || null}, 'completed')
         `;
         await db`UPDATE docs_uploads SET status = 'completed' WHERE id = ${docId}`;
       } catch { /* ok */ }
