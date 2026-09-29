@@ -96,6 +96,28 @@ interface WbSeller {
 const EMPTY_LEAD: Lead = { company: "", contact_name: "", email: "", phone: "", niche: "", source: "google_dork" };
 const EMPTY_WB: WbSeller = { company: "", category: "", score: 50, phone: "", email: "" };
 
+// ── ChinaBridge Docs Outreach (МСП реестр + DaData) ─────────────────────────
+interface DocsContact {
+  id: string;
+  company_name: string;
+  inn: string;
+  okvad_name: string | null;
+  region: string | null;
+  email: string | null;
+  has_china_keywords: boolean;
+  status: string;
+  created_at: string;
+}
+interface DocsReply {
+  id: string;
+  reply_text: string;
+  sentiment: string;
+  action: string;
+  summary: string;
+  created_at: string;
+  company_name: string | null;
+}
+
 export default function OutreachLeadsPage() {
   const [form, setForm] = useState<Lead>(EMPTY_LEAD);
   const [saving, setSaving] = useState(false);
@@ -287,6 +309,59 @@ export default function OutreachLeadsPage() {
     setTimeout(() => setCopiedDork(null), 1500);
   }
 
+  // ── Docs Outreach state ────────────────────────────────────────────────
+  const [docsOpen, setDocsOpen] = useState(true);
+  const [docsStats, setDocsStats] = useState<Record<string, number>>({});
+  const [docsContacts, setDocsContacts] = useState<DocsContact[]>([]);
+  const [docsReplies, setDocsReplies] = useState<DocsReply[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docsEnriching, setDocsEnriching] = useState(false);
+  const [docsEnrichResult, setDocsEnrichResult] = useState("");
+  const [docsCopied, setDocsCopied] = useState(false);
+
+  async function loadDocsData() {
+    setDocsLoading(true);
+    try {
+      const res = await fetch("/api/admin/outreach-docs");
+      const data = await res.json();
+      setDocsStats(data.stats ?? {});
+      setDocsContacts(data.contacts ?? []);
+      setDocsReplies(data.replies ?? []);
+    } catch {}
+    setDocsLoading(false);
+  }
+
+  useEffect(() => { loadDocsData(); }, []);
+
+  async function runDocsEnrich() {
+    setDocsEnriching(true);
+    setDocsEnrichResult("");
+    try {
+      const res = await fetch("/api/admin/outreach-docs/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 30 }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setDocsEnrichResult(`✓ Обработано ${data.processed}, найдено email: ${data.found}`);
+        loadDocsData();
+      } else {
+        setDocsEnrichResult(`✗ ${data.error ?? "ошибка"}`);
+      }
+    } catch (e) {
+      setDocsEnrichResult(`✗ ${String(e)}`);
+    }
+    setDocsEnriching(false);
+  }
+
+  const MSP_COMMAND = "node scripts/outreach/parse-msp-registry.mjs --limit=1500";
+  async function copyMspCommand() {
+    await navigator.clipboard.writeText(MSP_COMMAND);
+    setDocsCopied(true);
+    setTimeout(() => setDocsCopied(false), 1500);
+  }
+
   return (
     <div className="min-h-screen bg-slate-950">
       <AdminNav />
@@ -306,6 +381,172 @@ export default function OutreachLeadsPage() {
           >
             📊 Google Sheet
           </a>
+        </div>
+
+        {/* ── ChinaBridge Docs Outreach (МСП реестр + DaData) ── */}
+        <div className="bg-slate-900 border border-sky-900/50 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setDocsOpen(o => !o)}
+            className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-800/40 transition"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🗂️</span>
+              <div className="text-left">
+                <h2 className="text-white font-semibold">ChinaBridge Docs — Холодный аутрич</h2>
+                <p className="text-slate-500 text-xs mt-0.5">Реестр МСП (ОКВЭД 46) + DaData обогащение → черновики писем в Telegram</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {docsStats.new !== undefined && (
+                <span className="text-xs px-2 py-1 rounded-full bg-sky-900/50 text-sky-400 font-medium">
+                  {Object.values(docsStats).reduce((a, b) => a + b, 0)} контактов
+                </span>
+              )}
+              <span className="text-slate-500 text-sm">{docsOpen ? "▲" : "▼"}</span>
+            </div>
+          </button>
+
+          {docsOpen && (
+            <div className="border-t border-slate-800 p-5 space-y-5">
+              {/* Stats badges */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: "new", label: "Новые", color: "bg-slate-700 text-slate-300" },
+                  { key: "enriched", label: "Обогащены (есть email)", color: "bg-sky-900/50 text-sky-400" },
+                  { key: "draft_ready", label: "Черновик отправлен", color: "bg-amber-900/50 text-amber-400" },
+                  { key: "sent", label: "Отправлено", color: "bg-emerald-900/50 text-emerald-400" },
+                ].map(s => (
+                  <span key={s.key} className={`text-xs px-3 py-1.5 rounded-full font-medium ${s.color}`}>
+                    {s.label}: {docsStats[s.key] ?? 0}
+                  </span>
+                ))}
+                <button
+                  onClick={loadDocsData}
+                  disabled={docsLoading}
+                  className="text-xs px-3 py-1.5 rounded-full border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition"
+                >
+                  {docsLoading ? "⏳..." : "↻ Обновить"}
+                </button>
+              </div>
+
+              {/* Step 1: MSP parsing (manual, runs locally) */}
+              <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">📥</span>
+                  <span className="text-white font-medium text-sm">Шаг 1 — Загрузить компании из реестра МСП</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">запускать локально</span>
+                </div>
+                <p className="text-slate-500 text-xs mb-3">
+                  Скачивает открытые данные ФНС (~2 ГБ, весь реестр МСП), фильтрует ОКВЭД 46.x (оптовая торговля)
+                  и компании с &quot;китайскими&quot; словами в названии. Требует прямого доступа к Neon — запускается на твоём компьютере, не из админки.
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs text-slate-300 bg-slate-900 px-3 py-2 rounded-lg font-mono overflow-x-auto whitespace-nowrap">
+                    {MSP_COMMAND}
+                  </code>
+                  <button
+                    onClick={copyMspCommand}
+                    className="shrink-0 px-3 py-2 rounded-lg text-xs border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white transition"
+                  >
+                    {docsCopied ? "✓" : "Копировать"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step 2: DaData enrichment (can run from admin) */}
+              <div className="bg-slate-800/60 border border-sky-900/40 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">✨</span>
+                  <span className="text-white font-medium text-sm">Шаг 2 — Обогатить email через DaData</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400">ШАГ 2</span>
+                </div>
+                <p className="text-slate-500 text-xs mb-3">
+                  Ищет email/телефон по ИНН через DaData API (до 30 компаний за раз, приоритет — с китайскими ключевыми словами).
+                </p>
+                <button
+                  onClick={runDocsEnrich}
+                  disabled={docsEnriching || !docsStats.new}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition border bg-sky-900/20 border-sky-800 text-sky-400 hover:bg-sky-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {docsEnriching ? "⏳ Обогащаю..." : `▶ Обогатить 30 контактов (${docsStats.new ?? 0} в очереди)`}
+                </button>
+                {docsEnrichResult && (
+                  <p className={`text-xs mt-2 ${docsEnrichResult.startsWith("✗") ? "text-red-400" : "text-emerald-400"}`}>{docsEnrichResult}</p>
+                )}
+              </div>
+
+              {/* Step 3 info */}
+              <div className="bg-blue-950/30 border border-blue-900/50 rounded-xl p-4 text-xs text-blue-300 space-y-1">
+                <p className="font-medium text-blue-200">Дальше — автоматически:</p>
+                <p>3. Каждый день в 10:00 МСК n8n берёт 20 обогащённых контактов и генерирует письмо (GPT-4o-mini)</p>
+                <p>4. Черновик приходит тебе в Telegram — копируешь и отправляешь вручную</p>
+                <p>5. Ответ клиента — перешли его текстом тому же боту → AI классифицирует и сохранит, при интересе пришлёт 🔥 уведомление</p>
+                <div className="flex gap-3 mt-2">
+                  <a href="https://n8n.arendadom24.ru/workflow/1gXmOr3w1BT9wlxz" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">→ Workflow: Generate & Draft</a>
+                  <a href="https://n8n.arendadom24.ru/workflow/vB6ImvcO6PvSvo0T" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">→ Workflow: Reply Handler</a>
+                </div>
+              </div>
+
+              {/* Contacts table */}
+              {docsContacts.length > 0 && (
+                <div className="overflow-x-auto rounded-lg border border-slate-800">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-800/60 text-slate-400 text-left">
+                        <th className="px-3 py-2 font-medium text-xs">Компания</th>
+                        <th className="px-3 py-2 font-medium text-xs">ОКВЭД</th>
+                        <th className="px-3 py-2 font-medium text-xs">Регион</th>
+                        <th className="px-3 py-2 font-medium text-xs">Email</th>
+                        <th className="px-3 py-2 font-medium text-xs">🇨🇳</th>
+                        <th className="px-3 py-2 font-medium text-xs">Статус</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {docsContacts.slice(0, 15).map(c => (
+                        <tr key={c.id} className="border-t border-slate-800/60 hover:bg-slate-800/30 transition">
+                          <td className="px-3 py-2 text-white text-xs max-w-[200px] truncate">{c.company_name}</td>
+                          <td className="px-3 py-2 text-slate-400 text-xs max-w-[140px] truncate">{c.okvad_name || "—"}</td>
+                          <td className="px-3 py-2 text-slate-400 text-xs">{c.region || "—"}</td>
+                          <td className="px-3 py-2 text-blue-400 text-xs">{c.email || "—"}</td>
+                          <td className="px-3 py-2 text-xs">{c.has_china_keywords ? "✓" : ""}</td>
+                          <td className="px-3 py-2 text-xs">
+                            <span className={`px-1.5 py-0.5 rounded text-xs ${
+                              c.status === "enriched" ? "bg-sky-900/50 text-sky-400" :
+                              c.status === "draft_ready" ? "bg-amber-900/50 text-amber-400" :
+                              c.status === "sent" ? "bg-emerald-900/50 text-emerald-400" :
+                              "bg-slate-700 text-slate-400"
+                            }`}>{c.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Replies */}
+              {docsReplies.length > 0 && (
+                <div>
+                  <p className="text-slate-500 text-xs mb-2">Последние ответы клиентов:</p>
+                  <div className="space-y-2">
+                    {docsReplies.slice(0, 5).map(r => (
+                      <div key={r.id} className="bg-slate-800/50 rounded-lg px-3 py-2 flex items-start gap-3">
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                          r.action === "interested" ? "bg-emerald-900/50 text-emerald-400" :
+                          r.action === "unsubscribe" ? "bg-red-900/50 text-red-400" :
+                          "bg-slate-700 text-slate-400"
+                        }`}>{r.action}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs">{r.company_name || "—"}</p>
+                          <p className="text-slate-400 text-xs">{r.summary}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Apify Google Maps Lead Generator ── */}
