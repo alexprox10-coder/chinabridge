@@ -3,37 +3,7 @@
 // Images: send as image_url to Gemini Vision
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
-
-// Simple JSON repair for common LLM issues (no ESM deps needed)
-function repairJson(s: string): string {
-  // 1. Remove trailing commas before } or ]
-  let r = s.replace(/,(\s*[\]}])/g, "$1");
-  // 2. Escape bare newlines inside strings (walk char-by-char)
-  const chars: string[] = [];
-  let inStr = false, esc = false;
-  for (const ch of r) {
-    if (esc) { chars.push(ch); esc = false; continue; }
-    if (ch === "\\" && inStr) { esc = true; chars.push(ch); continue; }
-    if (ch === '"') { inStr = !inStr; chars.push(ch); continue; }
-    // Unescaped newline inside a string — escape it
-    if (inStr && (ch === "\n" || ch === "\r")) { chars.push("\\n"); continue; }
-    chars.push(ch);
-  }
-  r = chars.join("");
-  // 3. Close unclosed brackets/braces (truncated JSON)
-  const stack: string[] = [];
-  inStr = false; esc = false;
-  for (const ch of r) {
-    if (esc) { esc = false; continue; }
-    if (ch === "\\" && inStr) { esc = true; continue; }
-    if (ch === '"') { inStr = !inStr; continue; }
-    if (inStr) continue;
-    if (ch === "{") stack.push("}");
-    else if (ch === "[") stack.push("]");
-    else if ((ch === "}" || ch === "]") && stack.length) stack.pop();
-  }
-  return r + stack.reverse().join("");
-}
+import { repairJson } from "./json_repair";
 
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
 const OR_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";

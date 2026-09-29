@@ -1,5 +1,6 @@
 // ChinaBridge Docs — ТН ВЭД ЕАЭС classifier (OpenRouter)
 import type { ExtractedData } from "./ocr";
+import { safeParseJson } from "./json_repair";
 
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
 const OR_MODEL = "google/gemini-2.5-flash";
@@ -70,12 +71,23 @@ export async function classifyHSCode(
     }),
   });
 
-  if (!resp.ok) throw new Error(`Classifier API error: ${resp.status}`);
+  const fallback: HSClassification = {
+    hs_code: "0000 00 000 0", hs_code_clean: "0000000000",
+    description_ru: "Не удалось классифицировать", confidence: 0,
+    alternatives: [], duty_rate_percent: 10, vat_rate_percent: 20,
+    excise: false, notes: "Классификация недоступна — проверьте вручную",
+    requires_certificate: false, certificate_type: "",
+  };
+
+  if (!resp.ok) {
+    console.error(`[HS] Classifier API error: ${resp.status}`);
+    return fallback;
+  }
   const data = (await resp.json()) as {
     choices: Array<{ message: { content: string } }>;
   };
   const raw = data.choices?.[0]?.message?.content ?? "";
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("Classifier вернул не-JSON");
-  return JSON.parse(match[0]) as HSClassification;
+  const result = safeParseJson<HSClassification>(raw, fallback);
+  if (!result.hs_code_clean) console.warn("[HS] Classifier returned fallback for item:", item.name_ru);
+  return result;
 }

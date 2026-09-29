@@ -1,4 +1,5 @@
 // ChinaBridge Docs — document validator (OpenRouter)
+import { safeParseJson } from "./json_repair";
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
 const OR_MODEL = "google/gemini-2.5-flash";
 
@@ -81,7 +82,10 @@ ${JSON.stringify(extractedData, null, 2)}
     choices: Array<{ message: { content: string } }>;
   };
   const raw = data.choices?.[0]?.message?.content ?? "";
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) return { is_valid: true, risk_level: "medium", errors: [], warnings: [], certificates_required: [], import_restrictions: [], marketplace_compliance: { compliant: true, issues: [] }, broker_notes: "" };
-  return JSON.parse(match[0]) as ValidationResult;
+  const defaultResult: ValidationResult = {
+    is_valid: true, risk_level: "medium", errors: [], warnings: [],
+    certificates_required: [], import_restrictions: [],
+    marketplace_compliance: { compliant: true, issues: [] }, broker_notes: "",
+  };
+  return safeParseJson<ValidationResult>(raw, defaultResult);
 }
