@@ -107,8 +107,12 @@ async function callOpenRouter(messages: object[]): Promise<string> {
 
   const data = (await resp.json()) as {
     choices: Array<{ message: { content: string } }>;
+    error?: { message: string };
   };
-  return data.choices?.[0]?.message?.content ?? "";
+  if (data.error) throw new Error(`OpenRouter error: ${data.error.message}`);
+  const content = data.choices?.[0]?.message?.content ?? "";
+  console.log("[OCR] model response (first 300):", content.slice(0, 300));
+  return content;
 }
 
 export async function extractDocumentData(
