@@ -203,6 +203,36 @@ export default function AICalculatorPage() {
             </div>
           </div>
 
+          {/* ── DOCS PROMO ─────────────────────────────────────────────────────────── */}
+          <div className="mt-10 rounded-2xl overflow-hidden border border-[#1e3a5f] bg-gradient-to-br from-[#060f1e] to-[#0a1628]">
+            <div className="flex items-stretch">
+              {/* Blue accent bar */}
+              <div className="w-1 bg-gradient-to-b from-[#229ED9] to-[#0066aa] shrink-0" />
+              <div className="flex-1 px-5 py-4">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#229ED9] mb-1">Следующий шаг</p>
+                    <p className="text-sm font-bold text-white mb-1">Товар выбран? Подготовьте таможенный пакет за 2 минуты</p>
+                    <p className="text-xs text-[#8899aa] leading-relaxed">
+                      Загрузите китайский инвойс — AI определит ТН ВЭД, рассчитает пошлины и сформирует XML для&nbsp;Альта-ГТД
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {["Читает иероглифы", "XML для Альта-ГТД", "3 документа бесплатно"].map(t => (
+                        <span key={t} className="text-[10px] bg-[#229ED9]/10 border border-[#229ED9]/25 text-[#229ED9] rounded-full px-2.5 py-0.5">{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <a
+                    href="/docs"
+                    className="shrink-0 self-center inline-flex items-center gap-1.5 px-4 py-2 bg-[#229ED9] hover:bg-[#1a8fc2] text-white font-semibold rounded-xl text-xs transition-all whitespace-nowrap"
+                  >
+                    🗂 ChinaBridge Docs →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* ── VIDEO DEMO ─────────────────────────────────────────────────────────── */}
           <div className="mt-14 max-w-2xl mx-auto">
             <div className="text-center mb-4">
