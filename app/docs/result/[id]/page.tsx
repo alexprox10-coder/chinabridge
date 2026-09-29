@@ -51,8 +51,9 @@ interface ResultData {
       risk_level: string;
       errors: Array<{ field: string; issue: string; recommendation: string }>;
       warnings: Array<{ field: string; issue: string; recommendation: string }>;
-      certificates_required: string[];
-      broker_notes: string;
+      certificates_required: Array<string | { product?: string; requirement?: string; note?: string }>;
+      import_restrictions: Array<string | { product?: string; restriction?: string; note?: string }>;
+      broker_notes?: string;
     };
     summary: {
       total_items: number;
@@ -216,9 +217,26 @@ export default function DocsResultPage() {
                 <div style={{ color: "#8899aa", marginTop: 4 }}>→ {w.recommendation}</div>
               </div>
             ))}
-            {validation.certificates_required.map((c, i) => (
-              <div key={i} style={{ marginBottom: 8, fontSize: 13, color: "#8899aa" }}>📋 {c}</div>
-            ))}
+            {validation.certificates_required.map((c, i) => {
+              if (typeof c === "string") return <div key={i} style={{ marginBottom: 8, fontSize: 13, color: "#8899aa" }}>📋 {c}</div>;
+              return (
+                <div key={i} style={{ marginBottom: 8, padding: "8px 12px", background: "rgba(255,200,0,0.05)", borderRadius: 8, fontSize: 13, color: "#8899aa" }}>
+                  📋 <span style={{ color: "#fff", fontWeight: 600 }}>{c.product}</span>
+                  {c.requirement && <div style={{ marginTop: 4 }}>{c.requirement}</div>}
+                  {c.note && <div style={{ marginTop: 4, fontSize: 12, color: "#5a7899" }}>{c.note}</div>}
+                </div>
+              );
+            })}
+            {validation.import_restrictions?.map((r, i) => {
+              const text = typeof r === "string" ? r : `${r.product}: ${r.restriction}`;
+              const note = typeof r === "object" ? r.note : "";
+              return (
+                <div key={i} style={{ marginBottom: 8, padding: "10px", background: "rgba(200,100,0,0.08)", borderRadius: 8, fontSize: 13 }}>
+                  <div style={{ color: "#e08020", fontWeight: 600 }}>🚫 {text}</div>
+                  {note && <div style={{ color: "#8899aa", marginTop: 4 }}>{note}</div>}
+                </div>
+              );
+            })}
             {validation.broker_notes && (
               <div style={{ marginTop: 12, padding: "10px", background: "rgba(255,255,255,0.04)", borderRadius: 8, fontSize: 13, color: "#8899aa" }}>
                 <span style={{ fontWeight: 700, color: "#fff" }}>Брокеру: </span>{validation.broker_notes}
