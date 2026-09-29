@@ -1,6 +1,6 @@
-// ChinaBridge Docs — OCR module (OpenRouter + Gemini Vision)
-const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
-const OR_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
+// ChinaBridge Docs — OCR module (Anthropic Claude Vision — supports images + PDF natively)
+const ANTHROPIC_KEY = () => process.env.ANTHROPIC_API_KEY ?? "";
+const MODEL = "claude-opus-4-5";
 
 const OCR_PROMPT = `Ты эксперт по таможенным документам Китай → ЕАЭС.
 
@@ -83,38 +83,60 @@ export async function extractDocumentData(
   fileBase64: string,
   mimeType: string
 ): Promise<ExtractedData> {
-  const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const isPdf = mimeType === "application/pdf" || mimeType === "pdf";
+
+  // Build content block: document for PDF, image for everything else
+  const fileBlock = isPdf
+    ? {
+        type: "document" as const,
+        source: {
+          type: "base64" as const,
+          media_type: "application/pdf" as const,
+          data: fileBase64,
+        },
+      }
+    : {
+        type: "image" as const,
+        source: {
+          type: "base64" as const,
+          media_type: (mimeType.startsWith("image/") ? mimeType : "image/jpeg") as
+            | "image/jpeg"
+            | "image/png"
+            | "image/gif"
+            | "image/webp",
+          data: fileBase64,
+        },
+      };
+
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${OR_KEY()}`,
+      "x-api-key": ANTHROPIC_KEY(),
+      "anthropic-version": "2023-06-01",
+      "anthropic-beta": "pdfs-2024-09-25",
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://chinabridge.pro",
-      "X-Title": "ChinaBridge Docs OCR",
     },
     body: JSON.stringify({
-      model: OR_MODEL,
+      model: MODEL,
       max_tokens: 4000,
       messages: [
         {
           role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: { url: `data:${mimeType};base64,${fileBase64}` },
-            },
-            { type: "text", text: OCR_PROMPT },
-          ],
+          content: [fileBlock, { type: "text", text: OCR_PROMPT }],
         },
       ],
     }),
   });
 
-  if (!resp.ok) throw new Error(`OCR API error: ${resp.status}`);
+  if (!resp.ok) {
+    const errText = await resp.text().catch(() => "");
+    throw new Error(`OCR API error: ${resp.status} — ${errText}`);
+  }
 
   const data = (await resp.json()) as {
-    choices: Array<{ message: { content: string } }>;
+    content: Array<{ type: string; text: string }>;
   };
-  const raw = data.choices?.[0]?.message?.content ?? "";
+  const raw = data.content?.find((b) => b.type === "text")?.text ?? "";
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("OCR вернул не-JSON ответ");
   return JSON.parse(match[0]) as ExtractedData;
