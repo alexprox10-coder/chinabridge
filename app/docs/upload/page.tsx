@@ -1,6 +1,8 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
+const FREE_LIMIT = 3;
 
 const STEPS = [
   "Читаем документ...",
@@ -9,6 +11,56 @@ const STEPS = [
   "Проверяем на ошибки...",
   "Формируем пакет документов...",
 ];
+
+// ── Paywall modal ─────────────────────────────────────────────────────────────
+function DocsPaywallModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24, backdropFilter: "blur(4px)" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#060f1e", border: "1px solid #1e3a5f", borderRadius: 20, maxWidth: 420, width: "100%", overflow: "hidden" }}>
+
+        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid #1e3a5f", position: "relative" }}>
+          <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "#5a7899", fontSize: 20, cursor: "pointer" }}>×</button>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
+          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>Бесплатные анализы исчерпаны</div>
+          <p style={{ color: "#8899aa", fontSize: 13, lineHeight: 1.5, margin: 0 }}>
+            Вы использовали {FREE_LIMIT} бесплатных анализа. Оформите подписку ChinaBridge Docs для неограниченного использования.
+          </p>
+        </div>
+
+        <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+
+          {/* Plans */}
+          {[
+            { name: "Старт", price: "2 990 ₽/мес", desc: "до 10 документов", color: "#229ED9" },
+            { name: "Про", price: "7 990 ₽/мес", desc: "до 50 документов", color: "#00A86B" },
+            { name: "Брокер", price: "19 990 ₽/мес", desc: "безлимит + API", color: "#f59e0b" },
+          ].map(p => (
+            <a key={p.name} href="https://t.me/chinabridge_pay_bot" target="_blank" rel="noopener noreferrer"
+              style={{ display: "block", background: "rgba(255,255,255,0.03)", border: `1px solid ${p.color}33`, borderRadius: 12, padding: "12px 16px", textDecoration: "none", cursor: "pointer" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>{p.name}</span>
+                  <span style={{ color: "#64748b", fontSize: 11, marginLeft: 8 }}>— {p.desc}</span>
+                </div>
+                <span style={{ color: p.color, fontWeight: 700, fontSize: 14 }}>{p.price}</span>
+              </div>
+            </a>
+          ))}
+
+          <a href="https://t.me/chinabridge_pay_bot" target="_blank" rel="noopener noreferrer"
+            style={{ display: "block", textAlign: "center", background: "#229ED9", color: "#fff", fontWeight: 700, fontSize: 14, padding: 13, borderRadius: 10, textDecoration: "none", marginTop: 4 }}>
+            Оформить подписку в Telegram →
+          </a>
+
+          <a href="https://t.me/ChinaBridgeLID_bot" target="_blank" rel="noopener noreferrer"
+            style={{ display: "block", textAlign: "center", color: "#00A86B", fontSize: 13, textDecoration: "none", padding: "4px 0" }}>
+            Есть вопросы? Написать менеджеру
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function DocsUploadPage() {
   const router = useRouter();
@@ -21,6 +73,18 @@ export default function DocsUploadPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
+  const [freeLeft, setFreeLeft] = useState<number>(FREE_LIMIT);
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  // Fetch current usage from server on mount
+  useEffect(() => {
+    fetch("/api/docs/check-access")
+      .then(r => r.json())
+      .then((d: { free_left?: number }) => {
+        if (typeof d.free_left === "number") setFreeLeft(d.free_left);
+      })
+      .catch(() => null);
+  }, []);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -31,6 +95,13 @@ export default function DocsUploadPage() {
 
   const handleSubmit = async () => {
     if (!file) return;
+
+    // Client-side guard: show paywall if already at limit
+    if (freeLeft <= 0) {
+      setShowPaywall(true);
+      return;
+    }
+
     setLoading(true);
     setError("");
     setStep(0);
@@ -45,9 +116,18 @@ export default function DocsUploadPage() {
 
     try {
       const res = await fetch("/api/docs/upload", { method: "POST", body: fd });
-      const data = await res.json() as { success?: boolean; doc_id?: string; error?: string };
+      const data = await res.json() as { success?: boolean; doc_id?: string; error?: string; free_left?: number };
       clearInterval(interval);
+
+      if (res.status === 402) {
+        setFreeLeft(0);
+        setShowPaywall(true);
+        setLoading(false);
+        return;
+      }
+
       if (data.success && data.doc_id) {
+        if (typeof data.free_left === "number") setFreeLeft(data.free_left);
         router.push(`/docs/result/${data.doc_id}`);
       } else {
         setError(data.error || "Ошибка обработки. Попробуйте ещё раз.");
@@ -62,6 +142,8 @@ export default function DocsUploadPage() {
 
   return (
     <main style={{ fontFamily: "system-ui, sans-serif", background: "#050d1a", color: "#fff", minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "48px 16px" }}>
+      {showPaywall && <DocsPaywallModal onClose={() => setShowPaywall(false)} />}
+
       <div style={{ width: "100%", maxWidth: 520 }}>
 
         {/* Back */}
@@ -71,6 +153,17 @@ export default function DocsUploadPage() {
         <p style={{ fontSize: 14, color: "#8899aa", marginBottom: 32 }}>
           Фото инвойса, скрин WeChat, PDF — AI прочитает и подготовит таможенный пакет
         </p>
+
+        {/* Free counter */}
+        {freeLeft > 0 ? (
+          <div style={{ background: "rgba(34,158,217,0.08)", border: "1px solid rgba(34,158,217,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 13, color: "#8899aa" }}>
+            Бесплатно осталось: <span style={{ color: "#229ED9", fontWeight: 700 }}>{freeLeft} из {FREE_LIMIT}</span> · Результаты не сохраняются
+          </div>
+        ) : (
+          <div onClick={() => setShowPaywall(true)} style={{ background: "rgba(200,0,0,0.1)", border: "1px solid rgba(200,0,0,0.3)", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 13, color: "#f87171", cursor: "pointer" }}>
+            🔒 Бесплатные анализы исчерпаны — <span style={{ textDecoration: "underline" }}>оформить подписку</span>
+          </div>
+        )}
 
         {/* Drop zone */}
         <div
@@ -181,17 +274,19 @@ export default function DocsUploadPage() {
           onClick={handleSubmit}
           disabled={!file || loading}
           style={{
-            width: "100%", padding: "16px", background: !file || loading ? "#1e3a5f" : "#229ED9",
+            width: "100%", padding: "16px", background: !file || loading ? "#1e3a5f" : freeLeft <= 0 ? "#f59e0b" : "#229ED9",
             color: !file || loading ? "#5a7899" : "#fff",
             border: "none", borderRadius: 14, fontWeight: 700, fontSize: 16,
             cursor: !file || loading ? "not-allowed" : "pointer",
           }}
         >
-          {loading ? "Обрабатываем документ..." : "🔍 Проанализировать документ"}
+          {loading ? "Обрабатываем документ..." : freeLeft <= 0 ? "🔒 Оформить подписку" : "🔍 Проанализировать документ"}
         </button>
 
         <p style={{ textAlign: "center", fontSize: 12, color: "#5a7899", marginTop: 12 }}>
-          3 документа бесплатно · Среднее время обработки ~60 секунд
+          {freeLeft > 0
+            ? `${freeLeft} из ${FREE_LIMIT} бесплатных анализов · ~60 секунд обработки`
+            : "Подписка от 2 990 ₽/мес · Без ограничений"}
         </p>
 
       </div>

@@ -5,11 +5,47 @@ import { classifyHSCode } from "@/lib/docs/hs_classifier";
 import { calculateDuties } from "@/lib/docs/duty_calculator";
 import { validateDocument } from "@/lib/docs/validator";
 import { generateDocumentPackage } from "@/lib/docs/pdf_generator";
+import { getOrCreateSessionId, setSessionCookie } from "@/lib/credits/session";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
+const DOCS_FREE_LIMIT = 3;
+const DOCS_SESSION_COOKIE = "cb_docs_session";
+
+async function checkDocsAccess(sessionId: string): Promise<{ allowed: boolean; free_left: number }> {
+  if (!process.env.DATABASE_URL) return { allowed: true, free_left: DOCS_FREE_LIMIT };
+  const sql = neon(process.env.DATABASE_URL);
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS docs_free_usage (
+        session_id text PRIMARY KEY,
+        used       integer DEFAULT 0 NOT NULL,
+        created_at timestamptz DEFAULT NOW()
+      )
+    `;
+    const rows = await sql`SELECT used FROM docs_free_usage WHERE session_id = ${sessionId}` as Array<{ used: number }>;
+    const used = rows[0]?.used ?? 0;
+    if (used >= DOCS_FREE_LIMIT) return { allowed: false, free_left: 0 };
+    await sql`
+      INSERT INTO docs_free_usage (session_id, used) VALUES (${sessionId}, 1)
+      ON CONFLICT (session_id) DO UPDATE SET used = docs_free_usage.used + 1
+    `;
+    return { allowed: true, free_left: DOCS_FREE_LIMIT - used - 1 };
+  } catch {
+    return { allowed: true, free_left: DOCS_FREE_LIMIT };
+  }
+}
+
 export async function POST(req: NextRequest) {
+  // ── Credit check ──────────────────────────────────────────────────────────
+  const existingSession = req.cookies.get(DOCS_SESSION_COOKIE)?.value;
+  const sessionId = existingSession ?? crypto.randomUUID();
+  const { allowed, free_left } = await checkDocsAccess(sessionId);
+  if (!allowed) {
+    return NextResponse.json({ error: "limit_reached", free_left: 0 }, { status: 402 });
+  }
+
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
   const dest = (formData.get("country") as "RU" | "KZ") || "RU";
@@ -18,8 +54,8 @@ export async function POST(req: NextRequest) {
 
   if (!file) return NextResponse.json({ error: "Файл не загружен" }, { status: 400 });
 
-  const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"];
-  if (!allowed.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic|pdf)$/i))
+  const allowed2 = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"];
+  if (!allowed2.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic|pdf)$/i))
     return NextResponse.json({ error: "Поддерживаются JPG, PNG, WEBP, HEIC, PDF" }, { status: 400 });
 
   if (file.size > 20 * 1024 * 1024)
@@ -112,7 +148,11 @@ export async function POST(req: NextRequest) {
       }).catch(() => null);
     }
 
-    return NextResponse.json({ success: true, doc_id: docId, result: summary });
+    const resp = NextResponse.json({ success: true, doc_id: docId, result: summary, free_left });
+    if (!existingSession) {
+      resp.cookies.set(DOCS_SESSION_COOKIE, sessionId, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 365, path: "/" });
+    }
+    return resp;
   } catch (err) {
     console.error("[docs/upload] error:", err);
     if (db) {
