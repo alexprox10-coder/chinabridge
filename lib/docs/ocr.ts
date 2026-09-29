@@ -3,8 +3,37 @@
 // Images: send as image_url to Gemini Vision
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { jsonrepair } = require("jsonrepair") as { jsonrepair: (s: string) => string };
+
+// Simple JSON repair for common LLM issues (no ESM deps needed)
+function repairJson(s: string): string {
+  // 1. Remove trailing commas before } or ]
+  let r = s.replace(/,(\s*[\]}])/g, "$1");
+  // 2. Escape bare newlines inside strings (walk char-by-char)
+  const chars: string[] = [];
+  let inStr = false, esc = false;
+  for (const ch of r) {
+    if (esc) { chars.push(ch); esc = false; continue; }
+    if (ch === "\\" && inStr) { esc = true; chars.push(ch); continue; }
+    if (ch === '"') { inStr = !inStr; chars.push(ch); continue; }
+    // Unescaped newline inside a string — escape it
+    if (inStr && (ch === "\n" || ch === "\r")) { chars.push("\\n"); continue; }
+    chars.push(ch);
+  }
+  r = chars.join("");
+  // 3. Close unclosed brackets/braces (truncated JSON)
+  const stack: string[] = [];
+  inStr = false; esc = false;
+  for (const ch of r) {
+    if (esc) { esc = false; continue; }
+    if (ch === "\\" && inStr) { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === "{") stack.push("}");
+    else if (ch === "[") stack.push("]");
+    else if ((ch === "}" || ch === "]") && stack.length) stack.pop();
+  }
+  return r + stack.reverse().join("");
+}
 
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
 const OR_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash";
@@ -97,7 +126,7 @@ async function callOpenRouter(messages: object[]): Promise<string> {
     },
     body: JSON.stringify({
       model: OR_MODEL,
-      max_tokens: 4000,
+      max_tokens: 8000,
       messages,
     }),
   });
@@ -172,17 +201,19 @@ export async function extractDocumentData(
 
   const jsonSlice = cleaned.slice(start, end + 1);
 
-  // First try parsing as-is; if it fails, repair with jsonrepair
+  // Try parsing as-is, then with repair
   try {
     return JSON.parse(jsonSlice) as ExtractedData;
-  } catch {
+  } catch (e1) {
+    console.warn("[OCR] JSON parse failed, attempting repair:", String(e1).slice(0, 120));
     try {
-      const repaired = jsonrepair(jsonSlice);
+      const repaired = repairJson(jsonSlice);
+      const result = JSON.parse(repaired) as ExtractedData;
       console.log("[OCR] JSON repaired successfully");
-      return JSON.parse(repaired) as ExtractedData;
+      return result;
     } catch (e2) {
-      console.error("[OCR] JSON repair also failed:", e2, "raw:", raw.slice(0, 500));
-      throw new Error(`OCR: ошибка парсинга JSON — ${raw.slice(0, 150)}`);
+      console.error("[OCR] JSON repair also failed:", String(e2).slice(0, 120), "raw:", raw.slice(0, 300));
+      throw new Error(`OCR: ошибка парсинга JSON — ${String(e1).slice(0, 120)}`);
     }
   }
 }
