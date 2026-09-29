@@ -100,7 +100,89 @@ export async function POST(req: NextRequest) {
       WHERE operation_id = ${operationId}
     `;
 
-    // 4. If APPROVED — check billing plan payment and activate tenant
+    // 4. If APPROVED or PAID — handle all payment types
+    if (status === "APPROVED" || status === "PAID") {
+      // ── Docs subscriptions ──────────────────────────────────────────────────
+      const docsRows = await sql`
+        UPDATE docs_subscriptions
+        SET status = 'active'
+        WHERE operation_id = ${operationId}
+          AND status = 'pending'
+        RETURNING session_id, plan, docs_total, amount_rub
+      `.catch(() => [] as unknown[]) as Array<Record<string, unknown>>;
+
+      const docsRow = docsRows[0];
+      if (docsRow) {
+        const notifyToken = process.env.TELEGRAM_BOT_TOKEN ?? process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
+        const managerChatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
+        if (notifyToken && managerChatId) {
+          await fetch(`https://api.telegram.org/bot${notifyToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: managerChatId,
+              text: [
+                `📄 <b>Оплата ChinaBridge Docs</b>`,
+                ``,
+                `📦 Тариф: ${docsRow.plan}`,
+                `📋 Документов: ${docsRow.docs_total}`,
+                `💰 Сумма: ${docsRow.amount_rub} ₽`,
+                `🆔 <code>${operationId}</code>`,
+              ].join("\n"),
+              parse_mode: "HTML",
+            }),
+            signal: AbortSignal.timeout(5000),
+          }).catch(() => null);
+        }
+        return NextResponse.json({ ok: true, operationId, status });
+      }
+
+      // ── Calc credit packages ─────────────────────────────────────────────
+      const { addCredits } = await import("@/lib/credits/db");
+      const { CREDIT_PACKAGES } = await import("@/lib/credits/types");
+
+      const creditPending = await sql`
+        UPDATE calc_credit_pending
+        SET status = 'paid'
+        WHERE operation_id = ${operationId}
+          AND status = 'pending'
+        RETURNING session_id, package_id, credits
+      `.catch(() => [] as unknown[]) as Array<Record<string, unknown>>;
+
+      const creditRow = creditPending[0];
+      if (creditRow) {
+        try {
+          await addCredits(String(creditRow.session_id), Number(creditRow.credits), operationId, String(creditRow.package_id) as import("@/lib/credits/types").PackageId);
+        } catch (err) {
+          console.error("[tochka/webhook] addCredits error:", err);
+        }
+        const notifyToken = process.env.TELEGRAM_BOT_TOKEN ?? process.env.CHINABRIDGE_LID_BOT_TOKEN ?? "";
+        const managerChatId = process.env.TELEGRAM_MANAGER_CHAT_ID ?? "8979087725";
+        if (notifyToken && managerChatId) {
+          const pkg = CREDIT_PACKAGES[String(creditRow.package_id) as import("@/lib/credits/types").PackageId];
+          await fetch(`https://api.telegram.org/bot${notifyToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: managerChatId,
+              text: [
+                `🟢 <b>Куплены кредиты калькулятора</b>`,
+                ``,
+                `📦 Пакет: ${pkg?.label ?? creditRow.package_id}`,
+                `💳 Кредитов: ${creditRow.credits}`,
+                `💰 Сумма: ${pkg?.price ?? "?"} ₽`,
+                `🆔 <code>${operationId}</code>`,
+              ].join("\n"),
+              parse_mode: "HTML",
+            }),
+            signal: AbortSignal.timeout(5000),
+          }).catch(() => null);
+        }
+        return NextResponse.json({ ok: true, operationId, status });
+      }
+    }
+
+    // 4b. Legacy APPROVED-only flow for billing plan / calculator subscriptions
     if (status === "APPROVED") {
       const rows = await sql`
         SELECT tenant_id, plan, amount
