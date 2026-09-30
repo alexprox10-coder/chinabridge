@@ -15,12 +15,36 @@ const WELCOME = `Здравствуйте! Я ChinaBridge AI — ваш сотр
 Расскажите что хотите привезти, пришлите ссылку на товар с 1688/Alibaba, или загрузите фото инвойса — я посчитаю полную стоимость, сравню маршруты и подскажу оптимальный вариант.`;
 
 const CAPABILITIES = [
-  { icon: "🔎", text: "Проверить товар и поставщика" },
-  { icon: "💰", text: "Посчитать полную себестоимость" },
-  { icon: "🚚", text: "Сравнить маршруты доставки" },
-  { icon: "📋", text: "Определить ТН ВЭД и пошлины" },
-  { icon: "📊", text: "Рассчитать маржу и ROI" },
-  { icon: "💡", text: "Предложить оптимальный вариант" },
+  {
+    icon: "🔎",
+    text: "Проверить товар и поставщика",
+    prompt: "Проверь этого поставщика и товар: [вставьте ссылку на 1688/Alibaba]",
+  },
+  {
+    icon: "💰",
+    text: "Посчитать полную себестоимость",
+    prompt: "Хочу привезти 300 [товар] из Гуанчжоу, цена на заводе $5/шт. Посчитай полную себестоимость.",
+  },
+  {
+    icon: "🚚",
+    text: "Сравнить маршруты доставки",
+    prompt: "Сравни маршруты доставки из Гуанчжоу в Алматы для груза 200 кг",
+  },
+  {
+    icon: "📋",
+    text: "Определить ТН ВЭД и пошлины",
+    prompt: "Определи код ТН ВЭД и пошлины при ввозе в Казахстан для товара: [опишите товар]",
+  },
+  {
+    icon: "📊",
+    text: "Рассчитать маржу и ROI",
+    prompt: "Посчитай маржу и ROI, если продавать [товар] на Wildberries по 1500₽",
+  },
+  {
+    icon: "💡",
+    text: "Предложить оптимальный вариант",
+    prompt: "Подскажи оптимальный вариант поставки для партии [товар], 500 шт",
+  },
 ];
 
 function getAnonymousId(): string {
@@ -96,18 +120,20 @@ function ExampleDialogPreview({ onTry }: { onTry: () => void }) {
   );
 }
 
-function CapabilitiesGrid() {
+function CapabilitiesGrid({ onPick }: { onPick: (prompt: string) => void }) {
   return (
     <div className="max-w-2xl mx-auto px-4 pb-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         {CAPABILITIES.map((c) => (
-          <div
+          <button
             key={c.text}
-            className="bg-[#0d1b2a] border border-[#1a3a5c] rounded-xl px-3 py-3 flex flex-col items-center text-center gap-1.5"
+            type="button"
+            onClick={() => onPick(c.prompt)}
+            className="bg-[#0d1b2a] border border-[#1a3a5c] rounded-xl px-3 py-3 flex flex-col items-center text-center gap-1.5 hover:border-emerald-600/60 hover:bg-[#102030] active:scale-[0.97] transition cursor-pointer"
           >
             <span className="text-xl">{c.icon}</span>
             <span className="text-xs text-[#c3d2e3] leading-snug">{c.text}</span>
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -150,6 +176,7 @@ export default function ChinaBridgeAIPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const id = getAnonymousId();
@@ -187,6 +214,12 @@ export default function ChinaBridgeAIPage() {
 
   function scrollToChat() {
     chatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function pickCapabilityPrompt(prompt: string) {
+    setInput(prompt);
+    scrollToChat();
+    setTimeout(() => textareaRef.current?.focus(), 300);
   }
 
   async function sendToApi(payload: Record<string, unknown>) {
@@ -371,7 +404,7 @@ export default function ChinaBridgeAIPage() {
       {messages.length <= 1 && (
         <>
           <ExampleDialogPreview onTry={scrollToChat} />
-          <CapabilitiesGrid />
+          <CapabilitiesGrid onPick={pickCapabilityPrompt} />
         </>
       )}
 
@@ -482,6 +515,7 @@ export default function ChinaBridgeAIPage() {
             onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
           />
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
