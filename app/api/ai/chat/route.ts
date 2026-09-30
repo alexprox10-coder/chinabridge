@@ -21,8 +21,9 @@ const db = () => neon(process.env.DATABASE_URL!);
 // использует всё приложение. Не полагаемся на внешние credentials (n8n и т.п.),
 // которые могут указывать на другую БД несмотря на похожий хост.
 let tablesEnsured = false;
-async function ensureTables(sql: ReturnType<typeof neon>) {
+async function ensureTables() {
   if (tablesEnsured) return;
+  const sql = neon(process.env.DATABASE_URL!);
   await sql`CREATE TABLE IF NOT EXISTS ai_client_profiles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -146,8 +147,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "message required" }, { status: 400 });
     }
 
+    await ensureTables();
     const sql = db();
-    await ensureTables(sql);
     const sessionId = await ensureSession(body.session_id, userTelegram);
 
     // История диалога (последние 20 сообщений)
