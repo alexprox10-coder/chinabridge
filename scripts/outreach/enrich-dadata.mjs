@@ -1,9 +1,17 @@
-// Обогащает outreach_contacts email/телефоном через DaData API по ИНН.
-// Токен: зарегистрироваться на dadata.ru → личный кабинет → API-ключи (бесплатно, 10 000 запросов).
+// Обогащает контакты из JSON-файла (результат parse-msp-registry.mjs --out=...)
+// email/телефоном через DaData API по ИНН, и пишет итоговый JSON,
+// готовый к загрузке в Neon (через n8n Postgres node, если прямой доступ
+// к БД недоступен из текущего окружения).
 //
-// Запуск: DADATA_TOKEN=xxxxx node scripts/outreach/enrich-dadata.mjs [--limit=100]
+// Токен: личный кабинет dadata.ru → Настройки → API-ключи (бесплатно, 10 000 запросов/день).
+//
+// Запуск: DADATA_TOKEN=xxxxx node scripts/outreach/enrich-dadata.mjs --in=/tmp/msp-contacts.json --out=/tmp/msp-enriched.json [--limit=100]
+//
+// Если DATABASE_URL доступен напрямую (обычный локальный запуск, не песочница),
+// можно опустить --out и обогащение сразу запишется в outreach_contacts.
 
 import pg from 'pg';
+import fs from 'node:fs';
 const { Client } = pg;
 
 const DATABASE_URL =
@@ -34,16 +42,50 @@ async function findByInn(inn) {
   };
 }
 
-async function main() {
-  if (!DADATA_TOKEN) {
-    console.error("ОШИБКА: переменная окружения DADATA_TOKEN не задана.");
-    console.error("Получить токен: https://dadata.ru/api/ → регистрация → личный кабинет");
-    process.exit(1);
+async function enrichFromFile(inFile, outFile, limit) {
+  const contacts = JSON.parse(fs.readFileSync(inFile, "utf-8"));
+  // приоритет — компании с китайскими ключевыми словами в названии
+  contacts.sort((a, b) => (b.hasKeyword === true) - (a.hasKeyword === true));
+  const batch = contacts.slice(0, limit);
+
+  console.log(`Обрабатываю ${batch.length} компаний из ${inFile}`);
+  let found = 0;
+  const results = [];
+
+  for (const c of batch) {
+    try {
+      const result = await findByInn(c.inn);
+      const enriched = {
+        company_name: c.name,
+        inn: c.inn,
+        okvad: c.okved,
+        okvad_name: c.okvedName,
+        region: c.region,
+        has_china_keywords: !!c.hasKeyword,
+        china_keywords_found: c.found || [],
+        email: result?.email || null,
+        phone: result?.phone || null,
+        website: result?.website || null,
+        status: result?.email ? "enriched" : "new",
+      };
+      results.push(enriched);
+      if (result?.email) {
+        found++;
+        console.log(`✓ ${c.name}: ${result.email}`);
+      } else {
+        console.log(`✗ ${c.name}: email не найден`);
+      }
+    } catch (e) {
+      console.error(`Ошибка для ${c.name} (ИНН ${c.inn}):`, e.message);
+    }
+    await new Promise((r) => setTimeout(r, 150)); // лимит DaData: не более ~10 запросов/сек
   }
 
-  const limitArg = process.argv.find((a) => a.startsWith("--limit="));
-  const limit = limitArg ? parseInt(limitArg.split("=")[1], 10) : 100;
+  fs.writeFileSync(outFile, JSON.stringify(results, null, 2), "utf-8");
+  console.log(`\nНайдено email: ${found}/${batch.length}. Сохранено в ${outFile}`);
+}
 
+async function enrichFromDb(limit) {
   const client = new Client({ connectionString: DATABASE_URL });
   await client.connect();
   console.log("Подключено к Neon");
@@ -75,12 +117,29 @@ async function main() {
     } catch (e) {
       console.error(`Ошибка для ${c.company_name} (ИНН ${c.inn}):`, e.message);
     }
-    // DaData: не более 10 запросов/сек на бесплатном тарифе
     await new Promise((r) => setTimeout(r, 150));
   }
 
   console.log(`\nНайдено email: ${found}/${contacts.length}`);
   await client.end();
+}
+
+async function main() {
+  if (!DADATA_TOKEN) {
+    console.error("ОШИБКА: переменная окружения DADATA_TOKEN не задана.");
+    process.exit(1);
+  }
+
+  const limitArg = process.argv.find((a) => a.startsWith("--limit="));
+  const limit = limitArg ? parseInt(limitArg.split("=")[1], 10) : 100;
+  const inArg = process.argv.find((a) => a.startsWith("--in="));
+  const outArg = process.argv.find((a) => a.startsWith("--out="));
+
+  if (inArg) {
+    await enrichFromFile(inArg.split("=")[1], outArg ? outArg.split("=")[1] : "/tmp/msp-enriched.json", limit);
+  } else {
+    await enrichFromDb(limit);
+  }
 }
 
 main().catch((e) => {
