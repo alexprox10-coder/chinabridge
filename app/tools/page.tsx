@@ -14,6 +14,14 @@ export const metadata: Metadata = {
 
 const tools = [
   {
+    href: "/ai",
+    emoji: "🤖",
+    title: "ChinaBridge AI — Import Manager",
+    desc: "Опишите поставку словами или пришлите инвойс — AI сам проверит товар, посчитает маршруты, таможню, маржу и предложит оптимальный вариант в одном диалоге.",
+    tags: ["Диалог", "Полный расчёт", "Бесплатно"],
+    badge: "Новое",
+  },
+  {
     href: "/tools/invoice",
     emoji: "📄",
     title: "Распознавание инвойса",
