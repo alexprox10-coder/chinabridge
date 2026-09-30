@@ -1,9 +1,10 @@
 // FINANCE AI — себестоимость, маржа, ROI.
 // Переиспользует реальные комиссии маркетплейсов из lib/economics/marketplaces.ts
-// (WB 23%, Ozon 20%, Kaspi 12.6% — актуальные тарифы, не выдуманные).
+// (WB 23%, Ozon 20%, Kaspi 12.6% — актуальные тарифы, не выдуманные), и курсы валют
+// из lib/economics/rates.ts — того же единого источника (intel_facts / finance_settings,
+// обновляемого n8n), которым пользуется остальной сайт, чтобы не разойтись с калькулятором.
 import { getMarketplace, detectCommissionPct, calcMarketplaceLogisticsPerUnit } from "@/lib/economics/marketplaces";
-
-const CNY_RUB = 12.88; // TODO: подтягивать из finance_settings (обновляется n8n ежедневно)
+import { getExchangeRates } from "@/lib/economics/rates";
 
 export const financeToolDefinition = {
   type: "function" as const,
@@ -40,21 +41,19 @@ interface FinanceInput {
   product_name?: string;
 }
 
-const USD_RUB = 90;
-const CNY_RUB_RATE = CNY_RUB;
-
-function toRub(amount: number, currency?: string): number {
+function toRub(amount: number, currency: string | undefined, rates: { usd: number; cny: number }): number {
   switch (currency) {
-    case "USD": return amount * USD_RUB;
-    case "CNY": return amount * CNY_RUB_RATE;
+    case "USD": return amount * rates.usd;
+    case "CNY": return amount * rates.cny;
     case "RUB": return amount;
     default: return amount; // KZT не конвертируем здесь — редкий случай для logistics
   }
 }
 
 export async function runFinanceCalculation(input: FinanceInput) {
-  const factoryTotalRub = input.factory_price_cny_total * CNY_RUB_RATE;
-  const logisticsRub = toRub(input.logistics_cost_total || 0, input.logistics_currency);
+  const rates = await getExchangeRates();
+  const factoryTotalRub = input.factory_price_cny_total * rates.cny;
+  const logisticsRub = toRub(input.logistics_cost_total || 0, input.logistics_currency, rates);
 
   const landedCostTotal = factoryTotalRub + logisticsRub + input.customs_total_duties_rub;
   const landedCostPerUnit = landedCostTotal / input.quantity;

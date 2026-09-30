@@ -101,17 +101,21 @@ const TOOL_STATUS_LABELS: Record<string, string> = {
 
 type ToolCall = { id: string; type: string; function: { name: string; arguments: string } };
 
-async function checkUsageLimit(userTelegram: string): Promise<{ allowed: boolean; reason?: string }> {
-  if (!userTelegram) return { allowed: true }; // анонимный — считаем бесплатным (ограничим на фронте по браузеру позже)
+// "identity" — либо реальный telegram, либо анонимный browser-UUID (пока telegram не
+// введён). Обе формы хранятся в той же колонке user_telegram: лимит бесплатных
+// анализов считается по identity независимо от того, идентифицировался клиент или
+// ещё нет — иначе анонимный доступ был бы безлимитным.
+async function checkUsageLimit(identity: string): Promise<{ allowed: boolean; reason?: string }> {
+  if (!identity) return { allowed: true };
   const sql = db();
   const rows = (await sql`
-    SELECT COUNT(*)::int as cnt FROM ai_usage WHERE user_telegram = ${userTelegram} AND usage_type = 'free'
+    SELECT COUNT(*)::int as cnt FROM ai_usage WHERE user_telegram = ${identity} AND usage_type = 'free'
   `) as Array<{ cnt: number }>;
   const freeUsed = rows[0]?.cnt ?? 0;
   if (freeUsed < FREE_LIMIT) return { allowed: true };
 
   const business = (await sql`
-    SELECT id FROM ai_usage WHERE user_telegram = ${userTelegram} AND usage_type = 'business_plan'
+    SELECT id FROM ai_usage WHERE user_telegram = ${identity} AND usage_type = 'business_plan'
       AND created_at > NOW() - INTERVAL '30 days' LIMIT 1
   `) as Array<{ id: string }>;
   if (business.length) return { allowed: true };
@@ -122,29 +126,29 @@ async function checkUsageLimit(userTelegram: string): Promise<{ allowed: boolean
   };
 }
 
-async function recordUsage(userTelegram: string, usageType: "free" | "pay_per_use") {
-  if (!userTelegram) return;
+async function recordUsage(identity: string, usageType: "free" | "pay_per_use") {
+  if (!identity) return;
   const sql = db();
-  await sql`INSERT INTO ai_usage (user_telegram, usage_type, amount_charged) VALUES (${userTelegram}, ${usageType}, ${usageType === "pay_per_use" ? PAY_PER_USE_RUB : 0})`;
+  await sql`INSERT INTO ai_usage (user_telegram, usage_type, amount_charged) VALUES (${identity}, ${usageType}, ${usageType === "pay_per_use" ? PAY_PER_USE_RUB : 0})`;
 }
 
-async function wasFreeUsage(userTelegram: string): Promise<boolean> {
-  if (!userTelegram) return true;
+async function wasFreeUsage(identity: string): Promise<boolean> {
+  if (!identity) return true;
   const sql = db();
   const rows = (await sql`
-    SELECT COUNT(*)::int as cnt FROM ai_usage WHERE user_telegram = ${userTelegram} AND usage_type = 'free'
+    SELECT COUNT(*)::int as cnt FROM ai_usage WHERE user_telegram = ${identity} AND usage_type = 'free'
   `) as Array<{ cnt: number }>;
   return (rows[0]?.cnt ?? 0) < FREE_LIMIT;
 }
 
-async function ensureSession(sessionId: string | null | undefined, userTelegram: string): Promise<string> {
+async function ensureSession(sessionId: string | null | undefined, identity: string): Promise<string> {
   const sql = db();
   if (sessionId) {
     const rows = (await sql`SELECT id FROM ai_sessions WHERE id = ${sessionId}`) as Array<{ id: string }>;
     if (rows.length) return sessionId;
   }
   const created = (await sql`
-    INSERT INTO ai_sessions (user_telegram) VALUES (${userTelegram || null}) RETURNING id
+    INSERT INTO ai_sessions (user_telegram) VALUES (${identity || null}) RETURNING id
   `) as Array<{ id: string }>;
   return created[0].id;
 }
@@ -159,6 +163,8 @@ export async function POST(req: NextRequest) {
 
   const message: string = body.message ?? "";
   const userTelegram: string = body.user_telegram ?? "";
+  const anonymousId: string = body.anonymous_id ?? "";
+  const identity = userTelegram || anonymousId;
   const attachments: Array<{ type: string; mime_type?: string; base64?: string }> = body.attachments ?? [];
 
   if (!message.trim() && attachments.length === 0) {
@@ -174,7 +180,7 @@ export async function POST(req: NextRequest) {
       try {
         await ensureTables();
         const sql = db();
-        const sessionId = await ensureSession(body.session_id, userTelegram);
+        const sessionId = await ensureSession(body.session_id, identity);
 
         const history = (await sql`
           SELECT role, content FROM ai_messages
@@ -183,7 +189,7 @@ export async function POST(req: NextRequest) {
 
         await sql`INSERT INTO ai_messages (session_id, role, content, attachments) VALUES (${sessionId}, 'user', ${message}, ${JSON.stringify(attachments)})`;
 
-        const usage = await checkUsageLimit(userTelegram);
+        const usage = await checkUsageLimit(identity);
         // Блокируем сразу по результату проверки лимита, а не только когда модель
         // реально вызовет calculate_finance_scenarios — модель может посчитать
         // себестоимость/маржу "в уме" по данным из истории диалога, вообще не
@@ -195,7 +201,7 @@ export async function POST(req: NextRequest) {
           analyze_product_or_supplier: runProcurementAnalysis,
           calculate_logistics_options: runLogisticsCalculation,
           calculate_customs: runCustomsAnalysis,
-          get_or_update_client_profile: (input) => runProfileAction({ ...input, user_telegram: input.user_telegram || userTelegram }),
+          get_or_update_client_profile: (input) => runProfileAction({ ...input, user_telegram: input.user_telegram || identity }),
           calculate_finance_scenarios: async (input) => {
             if (!usage.allowed) {
               return { error: usage.reason, paywall: true };
@@ -239,7 +245,7 @@ export async function POST(req: NextRequest) {
         ];
 
         let finalText = "";
-        const toolCallsLog: Array<{ tool: string; input: unknown }> = [];
+        const toolCallsLog: Array<{ tool: string; input: unknown; output?: unknown }> = [];
 
         for (let round = 0; round < 6; round++) {
           const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -300,7 +306,7 @@ export async function POST(req: NextRequest) {
                 result = { error: String(e) };
               }
 
-              toolCallsLog.push({ tool: fn, input: args });
+              toolCallsLog.push({ tool: fn, input: args, output: result });
               apiMsgs.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
             }
           } else {
@@ -311,19 +317,37 @@ export async function POST(req: NextRequest) {
 
         if (!finalText) finalText = "Не удалось получить ответ. Попробуйте переформулировать запрос.";
 
-        await sql`INSERT INTO ai_messages (session_id, role, content, tool_calls) VALUES (${sessionId}, 'assistant', ${finalText}, ${JSON.stringify(toolCallsLog)})`;
+        const hasHandoffCta = /\[Передать поставку ChinaBridge[^\]]*\]/.test(finalText);
+        const cleanResponse = finalText.replace(/\[Передать поставку ChinaBridge[^\]]*\]/g, "").trim();
+
+        await sql`INSERT INTO ai_messages (session_id, role, content, tool_calls) VALUES (${sessionId}, 'assistant', ${cleanResponse}, ${JSON.stringify(toolCallsLog)})`;
 
         const didFullAnalysis = toolCallsLog.some((t) => t.tool === "calculate_finance_scenarios") && !usageBlocked;
         if (didFullAnalysis) {
-          const usageType = (await wasFreeUsage(userTelegram)) ? "free" : "pay_per_use";
-          await recordUsage(userTelegram, usageType);
+          const usageType = (await wasFreeUsage(identity)) ? "free" : "pay_per_use";
+          await recordUsage(identity, usageType);
+        }
+
+        let analysisId: string | null = null;
+        if (hasHandoffCta && didFullAnalysis) {
+          const variants = toolCallsLog
+            .filter((t) => t.tool === "calculate_finance_scenarios")
+            .map((t) => ({ input: t.input, output: t.output }));
+          const created = (await sql`
+            INSERT INTO ai_analyses (session_id, user_telegram, product_description, variants, reasoning, status)
+            VALUES (${sessionId}, ${identity || null}, ${message}, ${JSON.stringify(variants)}, ${cleanResponse}, 'draft')
+            RETURNING id
+          `) as Array<{ id: string }>;
+          analysisId = created[0]?.id ?? null;
         }
 
         send({
           session_id: sessionId,
-          response: finalText,
+          response: cleanResponse,
           tool_calls: toolCallsLog,
           paywall: usageBlocked ? { message: usage.reason, price_rub: PAY_PER_USE_RUB } : null,
+          show_handoff_cta: hasHandoffCta,
+          analysis_id: analysisId,
         });
         send({ done: true });
         controller.close();
