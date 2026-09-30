@@ -122,12 +122,6 @@ export default function AICalculatorPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
-      <a
-        href="/ai"
-        className="block bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white text-center py-2.5 px-4 text-sm font-medium transition"
-      >
-        🆕 Попробуйте ChinaBridge AI — опишите поставку словами, AI сам посчитает маршрут, таможню и маржу →
-      </a>
       <div className="relative min-h-screen bg-[#060f1e] pt-16 sm:pt-24 pb-24 sm:pb-24">
         {/* Background glow — absolute, not fixed, to avoid CLS */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -223,7 +217,7 @@ export default function AICalculatorPage() {
                       Загрузите китайский инвойс — AI определит ТН ВЭД, рассчитает пошлины и сформирует XML для&nbsp;Альта-ГТД
                     </p>
                     <div className="flex flex-wrap gap-2 mt-3">
-                      {["Читает иероглифы", "XML для Альта-ГТД", "3 документа бесплатно"].map(t => (
+                      {["Читает иероглифы", "XML для Альта-ГТД"].map(t => (
                         <span key={t} className="text-[10px] bg-[#229ED9]/10 border border-[#229ED9]/25 text-[#229ED9] rounded-full px-2.5 py-0.5">{t}</span>
                       ))}
                     </div>
