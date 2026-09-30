@@ -386,10 +386,10 @@ export default function ChinaBridgeAIPage() {
   return (
     <main className="min-h-screen bg-[#060f1e] flex flex-col">
       <a
-        href="/ai"
+        href="/ai-calculator"
         className="block bg-gradient-to-r from-sky-600 to-sky-500 text-white text-center py-2 px-4 text-xs font-medium"
       >
-        🆕 ChinaBridge AI — опишите поставку словами, AI сам посчитает маршрут, таможню и маржу
+        ← Вернуться в AI-калькулятор
       </a>
 
       <div className="border-b border-[#1a3a5c] px-4 py-3 flex items-center justify-between shrink-0 gap-3">
