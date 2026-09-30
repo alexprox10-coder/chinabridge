@@ -222,6 +222,19 @@ export default function ChinaBridgeAIPage() {
     setTimeout(() => textareaRef.current?.focus(), 300);
   }
 
+  function resetToStart() {
+    setMessages([{ role: "assistant", content: WELCOME }]);
+    setSessionId(null);
+    setPaywall(null);
+    setInput("");
+    try {
+      window.localStorage.removeItem("cb_ai_session_id");
+    } catch {
+      // ignore
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function sendToApi(payload: Record<string, unknown>) {
     setLoading(true);
     setPaywall(null);
@@ -379,13 +392,24 @@ export default function ChinaBridgeAIPage() {
         🆕 ChinaBridge AI — опишите поставку словами, AI сам посчитает маршрут, таможню и маржу
       </a>
 
-      <div className="border-b border-[#1a3a5c] px-4 py-3 flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-white font-bold">ChinaBridge AI</h1>
-          <p className="text-[#8899aa] text-xs mt-0.5 max-w-md">
-            Дайте ему ссылку на товар, инвойс или просто опишите задачу. AI сам рассчитает поставку, сравнит маршруты и
-            скажет, что делать дальше.
-          </p>
+      <div className="border-b border-[#1a3a5c] px-4 py-3 flex items-center justify-between shrink-0 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          {messages.length > 1 && (
+            <button
+              onClick={resetToStart}
+              title="Вернуться на начальный экран"
+              className="shrink-0 w-8 h-8 rounded-lg border border-[#243a5e] text-[#8899aa] hover:text-white hover:border-sky-500 transition flex items-center justify-center"
+            >
+              ←
+            </button>
+          )}
+          <div className="min-w-0">
+            <h1 className="text-white font-bold">ChinaBridge AI</h1>
+            <p className="text-[#8899aa] text-xs mt-0.5 max-w-md truncate sm:whitespace-normal">
+              Дайте ему ссылку на товар, инвойс или просто опишите задачу. AI сам рассчитает поставку, сравнит маршруты и
+              скажет, что делать дальше.
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {saved && <span className="text-xs text-emerald-400">✓ Сохранено</span>}
