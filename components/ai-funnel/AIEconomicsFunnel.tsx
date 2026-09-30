@@ -2700,9 +2700,7 @@ export default function AIEconomicsFunnel() {
               : "🚀 Рассчитать прибыль"}
           </button>
 
-          {isPaidPro ? (
-            <p className="text-center text-xs text-[#00A86B]">✓ PRO активен · безлимитные расчёты</p>
-          ) : isRegistered && calcCount < REG_LIMIT ? (
+          {isPaidPro ? null : isRegistered && calcCount < REG_LIMIT ? (
             <div className="flex items-center justify-center gap-2">
               {[0,1,2,3,4,5,6,7,8,9].map(i => (
                 <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i < calcCount ? 'bg-[#00A86B]' : 'bg-white/15'}`} />
