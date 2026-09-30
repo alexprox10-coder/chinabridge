@@ -569,7 +569,7 @@ export default function ChinaBridgeAIPage() {
           </button>
         </div>
         <p className="text-center text-[10px] text-[#5a7899] mt-2">
-          5 бесплатных анализов в день. {telegram ? "С сохранённой историей — 20 в день." : "Оставьте Telegram — станет 20 в день."}
+          5 бесплатных консультаций в день (общайтесь и уточняйте свободно в рамках одной). {telegram ? "С сохранённой историей — 20 в день." : "Оставьте Telegram — станет 20 в день."}
         </p>
       </div>
     </main>

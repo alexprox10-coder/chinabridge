@@ -85,8 +85,13 @@ async function ensureTables() {
     analysis_id UUID REFERENCES ai_analyses(id),
     usage_type TEXT,
     amount_charged INTEGER,
-    payment_id TEXT
+    payment_id TEXT,
+    session_id UUID
   )`;
+  // Лимит считается по количеству СЕССИЙ с полным анализом за день, а не по числу
+  // пересчётов — иначе уточнения внутри одного диалога ("а если 500 шт", "а если
+  // Ozon вместо Kaspi") съедают отдельные "анализы", хотя это один и тот же кейс.
+  await sql`ALTER TABLE ai_usage ADD COLUMN IF NOT EXISTS session_id UUID`.catch(() => null);
   tablesEnsured = true;
 }
 
@@ -112,12 +117,15 @@ type ToolCall = { id: string; type: string; function: { name: string; arguments:
 // (пока telegram не введён — см. getAnonymousId() на фронте). Обе формы хранятся в
 // той же колонке user_telegram: лимит считается по identity независимо от того,
 // идентифицировался клиент или ещё нет — иначе анонимный доступ был бы безлимитным.
-// Лимит ДНЕВНОЙ и сбрасывается каждый календарный день — это защита от расходов на
-// LLM при холодном/ботовом трафике, не монетизация. У тех, кто оставил Telegram,
-// лимит выше — мягкий стимул идентифицироваться, без денег.
+// Лимит считается по количеству СЕССИЙ с полным анализом за календарный день, а НЕ
+// по числу пересчётов: клиент естественно уточняет один и тот же кейс несколько раз
+// подряд ("а если 500 шт", "а если Ozon вместо Kaspi") — это один диалог, не пять
+// разных запросов, и должно оставаться бесплатным внутри уже "открытой" сессии.
+// Лимит — защита от расходов на LLM при холодном/ботовом трафике, не монетизация.
+// У тех, кто оставил Telegram, лимит сессий выше — мягкий стимул идентифицироваться.
 // usage_type='business_plan' оставлен как ручной рычаг для менеджера (снять лимит
 // клиенту вручную через INSERT), самостоятельной покупки такого статуса сейчас нет.
-async function checkUsageLimit(identity: string): Promise<{ allowed: boolean; reason?: string }> {
+async function checkUsageLimit(identity: string, sessionId: string): Promise<{ allowed: boolean; reason?: string }> {
   if (!identity) return { allowed: true };
   const sql = db();
 
@@ -127,28 +135,43 @@ async function checkUsageLimit(identity: string): Promise<{ allowed: boolean; re
   `) as Array<{ id: string }>;
   if (business.length) return { allowed: true };
 
+  // Эта сессия уже делала полный анализ сегодня — дальнейшие уточнения в ней бесплатны,
+  // слот дневного лимита под неё уже выделен.
+  const alreadyUsedThisSession = (await sql`
+    SELECT id FROM ai_usage
+    WHERE user_telegram = ${identity} AND usage_type = 'free' AND session_id = ${sessionId}
+    LIMIT 1
+  `) as Array<{ id: string }>;
+  if (alreadyUsedThisSession.length) return { allowed: true };
+
   const isAnon = identity.startsWith("anon-");
   const limit = isAnon ? ANON_DAILY_LIMIT : TELEGRAM_DAILY_LIMIT;
 
   const rows = (await sql`
-    SELECT COUNT(*)::int as cnt FROM ai_usage
+    SELECT COUNT(DISTINCT session_id)::int as cnt FROM ai_usage
     WHERE user_telegram = ${identity} AND usage_type = 'free' AND created_at::date = CURRENT_DATE
   `) as Array<{ cnt: number }>;
-  const freeUsedToday = rows[0]?.cnt ?? 0;
-  if (freeUsedToday < limit) return { allowed: true };
+  const sessionsUsedToday = rows[0]?.cnt ?? 0;
+  if (sessionsUsedToday < limit) return { allowed: true };
 
   return {
     allowed: false,
     reason:
-      `Дневной лимит бесплатных анализов исчерпан (${limit} в день). Лимит обновится завтра автоматически. ` +
+      `Дневной лимит бесплатных консультаций исчерпан (${limit} в день). Лимит обновится завтра автоматически. ` +
       `Нужно больше прямо сейчас — напишите менеджеру ${MANAGER_BOT}, он снимет лимит вручную за пару минут.`,
   };
 }
 
-async function recordUsage(identity: string) {
+async function recordUsage(identity: string, sessionId: string) {
   if (!identity) return;
   const sql = db();
-  await sql`INSERT INTO ai_usage (user_telegram, usage_type, amount_charged) VALUES (${identity}, 'free', 0)`;
+  // Один раз на сессию — дальнейшие пересчёты внутри неё уже не должны плодить
+  // новые "использования" (checkUsageLimit и так пускает их бесплатно).
+  const existing = (await sql`
+    SELECT id FROM ai_usage WHERE user_telegram = ${identity} AND usage_type = 'free' AND session_id = ${sessionId} LIMIT 1
+  `) as Array<{ id: string }>;
+  if (existing.length) return;
+  await sql`INSERT INTO ai_usage (user_telegram, usage_type, amount_charged, session_id) VALUES (${identity}, 'free', 0, ${sessionId})`;
 }
 
 async function isUnlimited(identity: string): Promise<boolean> {
@@ -209,7 +232,7 @@ export async function POST(req: NextRequest) {
 
         await sql`INSERT INTO ai_messages (session_id, role, content, attachments) VALUES (${sessionId}, 'user', ${message}, ${JSON.stringify(attachments)})`;
 
-        const usage = await checkUsageLimit(identity);
+        const usage = await checkUsageLimit(identity, sessionId);
         // Блокируем сразу по результату проверки лимита, а не только когда модель
         // реально вызовет calculate_finance_scenarios — модель может посчитать
         // себестоимость/маржу "в уме" по данным из истории диалога, вообще не
@@ -346,7 +369,7 @@ export async function POST(req: NextRequest) {
 
         const didFullAnalysis = toolCallsLog.some((t) => t.tool === "calculate_finance_scenarios") && !usageBlocked;
         if (didFullAnalysis && !(await isUnlimited(identity))) {
-          await recordUsage(identity);
+          await recordUsage(identity, sessionId);
         }
 
         let analysisId: string | null = null;
