@@ -17,9 +17,34 @@ export default function ChinaBridgeAIPage() {
   const [loading, setLoading] = useState(false);
   const [telegram, setTelegram] = useState("");
   const [gateOpen, setGateOpen] = useState(true);
+  const [restoring, setRestoring] = useState(false);
+  const [statusText, setStatusText] = useState("");
   const [paywall, setPaywall] = useState<{ message: string; price_rub: number } | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function startDialog() {
+    if (!telegram.trim()) {
+      setGateOpen(false);
+      return;
+    }
+    setRestoring(true);
+    try {
+      const res = await fetch(`/api/ai/session?user_telegram=${encodeURIComponent(telegram.trim())}`);
+      const data = await res.json();
+      if (data.session_id && data.messages?.length) {
+        setSessionId(data.session_id);
+        setMessages([
+          { role: "assistant", content: WELCOME },
+          ...data.messages.map((m: { role: string; content: string }) => ({ role: m.role as "user" | "assistant", content: m.content })),
+        ]);
+      }
+    } catch {
+      // не удалось восстановить — начинаем с чистого листа
+    }
+    setRestoring(false);
+    setGateOpen(false);
+  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,23 +53,64 @@ export default function ChinaBridgeAIPage() {
   async function sendToApi(payload: Record<string, unknown>) {
     setLoading(true);
     setPaywall(null);
+    setStatusText("");
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...payload, session_id: sessionId, user_telegram: telegram }),
       });
-      const data = await res.json();
-      if (data.error) {
-        setMessages((prev) => [...prev, { role: "assistant", content: `⚠️ ${data.error}` }]);
-      } else {
-        setSessionId(data.session_id);
-        setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
-        if (data.paywall) setPaywall(data.paywall);
+
+      if (!res.body) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let gotFinal = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data:")) continue;
+          const json = line.slice(5).trim();
+          if (!json) continue;
+          let evt: Record<string, unknown>;
+          try {
+            evt = JSON.parse(json);
+          } catch {
+            continue;
+          }
+
+          if (evt.status) {
+            setStatusText(String(evt.status));
+          } else if (evt.error) {
+            setMessages((prev) => [...prev, { role: "assistant", content: `⚠️ ${evt.error}` }]);
+          } else if (evt.response) {
+            gotFinal = true;
+            setSessionId(String(evt.session_id));
+            setMessages((prev) => [...prev, { role: "assistant", content: String(evt.response) }]);
+            if (evt.paywall) setPaywall(evt.paywall as { message: string; price_rub: number });
+          }
+        }
+      }
+
+      if (!gotFinal) {
+        setMessages((prev) => [...prev, { role: "assistant", content: "⚠️ Соединение прервалось. Попробуйте ещё раз." }]);
       }
     } catch (e) {
       setMessages((prev) => [...prev, { role: "assistant", content: `⚠️ Ошибка сети: ${String(e)}` }]);
     } finally {
+      setStatusText("");
       setLoading(false);
     }
   }
@@ -86,10 +152,11 @@ export default function ChinaBridgeAIPage() {
             className="w-full bg-[#0B1F3A] border border-[#243a5e] text-white text-sm rounded-xl px-4 py-3 mb-4 placeholder-[#5a7899] focus:outline-none focus:border-sky-500"
           />
           <button
-            onClick={() => setGateOpen(false)}
-            className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl px-6 py-3 transition"
+            onClick={startDialog}
+            disabled={restoring}
+            className="w-full bg-sky-600 hover:bg-sky-500 disabled:opacity-60 text-white font-semibold rounded-xl px-6 py-3 transition"
           >
-            Начать диалог →
+            {restoring ? "⏳ Загружаю историю..." : "Начать диалог →"}
           </button>
           <p className="text-xs text-[#5a7899] mt-4">3 бесплатных анализа. Затем 490₽ за полный анализ поставки.</p>
         </div>
@@ -122,10 +189,16 @@ export default function ChinaBridgeAIPage() {
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5a7899] animate-bounce [animation-delay:-0.3s]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5a7899] animate-bounce [animation-delay:-0.15s]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5a7899] animate-bounce" />
+            <div className="bg-[#0B1F3A] border border-[#243a5e] rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
+              {statusText ? (
+                <span className="text-xs text-[#8899aa]">{statusText}</span>
+              ) : (
+                <div className="flex gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#5a7899] animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#5a7899] animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#5a7899] animate-bounce" />
+                </div>
+              )}
             </div>
           </div>
         )}

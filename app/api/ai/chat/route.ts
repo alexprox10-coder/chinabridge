@@ -91,6 +91,14 @@ const ALL_TOOLS = [
   profileToolDefinition,
 ];
 
+const TOOL_STATUS_LABELS: Record<string, string> = {
+  analyze_product_or_supplier: "🔍 Анализирую товар...",
+  calculate_logistics_options: "🚚 Считаю маршруты доставки...",
+  calculate_customs: "🛃 Определяю ТН ВЭД и пошлины...",
+  calculate_finance_scenarios: "💰 Считаю себестоимость и маржу...",
+  get_or_update_client_profile: "📋 Проверяю профиль клиента...",
+};
+
 type ToolCall = { id: string; type: string; function: { name: string; arguments: string } };
 
 async function checkUsageLimit(userTelegram: string): Promise<{ allowed: boolean; reason?: string }> {
@@ -120,6 +128,15 @@ async function recordUsage(userTelegram: string, usageType: "free" | "pay_per_us
   await sql`INSERT INTO ai_usage (user_telegram, usage_type, amount_charged) VALUES (${userTelegram}, ${usageType}, ${usageType === "pay_per_use" ? PAY_PER_USE_RUB : 0})`;
 }
 
+async function wasFreeUsage(userTelegram: string): Promise<boolean> {
+  if (!userTelegram) return true;
+  const sql = db();
+  const rows = (await sql`
+    SELECT COUNT(*)::int as cnt FROM ai_usage WHERE user_telegram = ${userTelegram} AND usage_type = 'free'
+  `) as Array<{ cnt: number }>;
+  return (rows[0]?.cnt ?? 0) < FREE_LIMIT;
+}
+
 async function ensureSession(sessionId: string | null | undefined, userTelegram: string): Promise<string> {
   const sql = db();
   if (sessionId) {
@@ -133,155 +150,172 @@ async function ensureSession(sessionId: string | null | undefined, userTelegram:
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    if (!OR_KEY()) {
-      return NextResponse.json({ error: "OPENROUTER_API_KEY не настроен на сервере" }, { status: 500 });
-    }
-
-    const body = await req.json();
-    const message: string = body.message ?? "";
-    const userTelegram: string = body.user_telegram ?? "";
-    const attachments: Array<{ type: string; mime_type?: string; base64?: string }> = body.attachments ?? [];
-
-    if (!message.trim() && attachments.length === 0) {
-      return NextResponse.json({ error: "message required" }, { status: 400 });
-    }
-
-    await ensureTables();
-    const sql = db();
-    const sessionId = await ensureSession(body.session_id, userTelegram);
-
-    // История диалога (последние 20 сообщений)
-    const history = (await sql`
-      SELECT role, content FROM ai_messages
-      WHERE session_id = ${sessionId} ORDER BY created_at ASC LIMIT 20
-    `) as Array<{ role: string; content: string }>;
-
-    // Сохраняем сообщение пользователя
-    await sql`INSERT INTO ai_messages (session_id, role, content, attachments) VALUES (${sessionId}, 'user', ${message}, ${JSON.stringify(attachments)})`;
-
-    // Флаг: разрешён ли полный платный анализ в этом запросе
-    const usage = await checkUsageLimit(userTelegram);
-    let usageBlocked = false;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const TOOL_RUNNERS: Record<string, (input: any) => Promise<unknown>> = {
-      analyze_product_or_supplier: runProcurementAnalysis,
-      calculate_logistics_options: runLogisticsCalculation,
-      calculate_customs: runCustomsAnalysis,
-      get_or_update_client_profile: (input) => runProfileAction({ ...input, user_telegram: input.user_telegram || userTelegram }),
-      calculate_finance_scenarios: async (input) => {
-        if (!usage.allowed) {
-          usageBlocked = true;
-          return { error: usage.reason, paywall: true };
-        }
-        return runFinanceCalculation(input);
-      },
-    };
-
-    const userContent: Array<Record<string, unknown>> = [{ type: "text", text: message || "Посмотри документ" }];
-    for (const att of attachments) {
-      if (att.type === "image" && att.base64) {
-        userContent.push({ type: "image_url", image_url: { url: `data:${att.mime_type || "image/jpeg"};base64,${att.base64}` } });
-      }
-    }
-
-    const apiMsgs: Array<Record<string, unknown>> = [
-      { role: "system", content: ORCHESTRATOR_SYSTEM_PROMPT },
-      ...history.map((h) => ({ role: h.role, content: h.content })),
-      { role: "user", content: attachments.length ? userContent : message },
-    ];
-
-    let finalText = "";
-    const toolCallsLog: Array<{ tool: string; input: unknown }> = [];
-
-    for (let round = 0; round < 6; round++) {
-      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OR_KEY()}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://chinabridge.pro",
-          "X-Title": "ChinaBridge AI Import Manager",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: apiMsgs,
-          tools: ALL_TOOLS,
-          tool_choice: "auto",
-          max_tokens: 2000,
-        }),
-      });
-
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => "");
-        return NextResponse.json({ error: `OpenRouter error ${resp.status}: ${errText}` }, { status: 502 });
-      }
-
-      const data = (await resp.json()) as {
-        choices: Array<{ finish_reason: string; message: { role: string; content: string | null; tool_calls?: ToolCall[] } }>;
-      };
-      const choice = data.choices?.[0];
-      if (!choice) {
-        return NextResponse.json({ error: "Пустой ответ от AI" }, { status: 502 });
-      }
-
-      if (choice.finish_reason === "tool_calls" && choice.message.tool_calls?.length) {
-        apiMsgs.push(choice.message as unknown as Record<string, unknown>);
-
-        for (const tc of choice.message.tool_calls) {
-          const fn = tc.function.name;
-          let args: Record<string, unknown> = {};
-          try {
-            args = JSON.parse(tc.function.arguments);
-          } catch {
-            // невалидный JSON от модели — оставляем пустые аргументы
-          }
-
-          const runner = TOOL_RUNNERS[fn];
-          let result: unknown;
-          try {
-            result = runner ? await runner(args) : { error: `Unknown tool: ${fn}` };
-          } catch (e) {
-            result = { error: String(e) };
-          }
-
-          toolCallsLog.push({ tool: fn, input: args });
-          apiMsgs.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
-        }
-      } else {
-        finalText = choice.message.content ?? "";
-        break;
-      }
-    }
-
-    if (!finalText) finalText = "Не удалось получить ответ. Попробуйте переформулировать запрос.";
-
-    await sql`INSERT INTO ai_messages (session_id, role, content, tool_calls) VALUES (${sessionId}, 'assistant', ${finalText}, ${JSON.stringify(toolCallsLog)})`;
-
-    const didFullAnalysis = toolCallsLog.some((t) => t.tool === "calculate_finance_scenarios") && !usageBlocked;
-    if (didFullAnalysis) {
-      const usageType = (await checkUsageLimitWasFree(userTelegram)) ? "free" : "pay_per_use";
-      await recordUsage(userTelegram, usageType);
-    }
-
-    return NextResponse.json({
-      session_id: sessionId,
-      response: finalText,
-      tool_calls: toolCallsLog,
-      paywall: usageBlocked ? { message: usage.reason, price_rub: PAY_PER_USE_RUB } : null,
-    });
-  } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+  if (!OR_KEY()) {
+    return NextResponse.json({ error: "OPENROUTER_API_KEY не настроен на сервере" }, { status: 500 });
   }
-}
 
-// Хелпер: узнать, был ли этот анализ засчитан в бесплатный лимит (для корректной записи usage_type)
-async function checkUsageLimitWasFree(userTelegram: string): Promise<boolean> {
-  if (!userTelegram) return true;
-  const sql = db();
-  const rows = (await sql`
-    SELECT COUNT(*)::int as cnt FROM ai_usage WHERE user_telegram = ${userTelegram} AND usage_type = 'free'
-  `) as Array<{ cnt: number }>;
-  return (rows[0]?.cnt ?? 0) < FREE_LIMIT;
+  const body = await req.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
+
+  const message: string = body.message ?? "";
+  const userTelegram: string = body.user_telegram ?? "";
+  const attachments: Array<{ type: string; mime_type?: string; base64?: string }> = body.attachments ?? [];
+
+  if (!message.trim() && attachments.length === 0) {
+    return NextResponse.json({ error: "message required" }, { status: 400 });
+  }
+
+  const encoder = new TextEncoder();
+
+  const readable = new ReadableStream({
+    async start(controller) {
+      const send = (data: object) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+
+      try {
+        await ensureTables();
+        const sql = db();
+        const sessionId = await ensureSession(body.session_id, userTelegram);
+
+        const history = (await sql`
+          SELECT role, content FROM ai_messages
+          WHERE session_id = ${sessionId} ORDER BY created_at ASC LIMIT 20
+        `) as Array<{ role: string; content: string }>;
+
+        await sql`INSERT INTO ai_messages (session_id, role, content, attachments) VALUES (${sessionId}, 'user', ${message}, ${JSON.stringify(attachments)})`;
+
+        const usage = await checkUsageLimit(userTelegram);
+        let usageBlocked = false;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const TOOL_RUNNERS: Record<string, (input: any) => Promise<unknown>> = {
+          analyze_product_or_supplier: runProcurementAnalysis,
+          calculate_logistics_options: runLogisticsCalculation,
+          calculate_customs: runCustomsAnalysis,
+          get_or_update_client_profile: (input) => runProfileAction({ ...input, user_telegram: input.user_telegram || userTelegram }),
+          calculate_finance_scenarios: async (input) => {
+            if (!usage.allowed) {
+              usageBlocked = true;
+              return { error: usage.reason, paywall: true };
+            }
+            return runFinanceCalculation(input);
+          },
+        };
+
+        const userContent: Array<Record<string, unknown>> = [{ type: "text", text: message || "Посмотри документ" }];
+        for (const att of attachments) {
+          if (att.type === "image" && att.base64) {
+            userContent.push({ type: "image_url", image_url: { url: `data:${att.mime_type || "image/jpeg"};base64,${att.base64}` } });
+          }
+        }
+
+        const apiMsgs: Array<Record<string, unknown>> = [
+          { role: "system", content: ORCHESTRATOR_SYSTEM_PROMPT },
+          ...history.map((h) => ({ role: h.role, content: h.content })),
+          { role: "user", content: attachments.length ? userContent : message },
+        ];
+
+        let finalText = "";
+        const toolCallsLog: Array<{ tool: string; input: unknown }> = [];
+
+        for (let round = 0; round < 6; round++) {
+          const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${OR_KEY()}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://chinabridge.pro",
+              "X-Title": "ChinaBridge AI Import Manager",
+            },
+            body: JSON.stringify({
+              model: MODEL,
+              messages: apiMsgs,
+              tools: ALL_TOOLS,
+              tool_choice: "auto",
+              max_tokens: 2000,
+            }),
+          });
+
+          if (!resp.ok) {
+            const errText = await resp.text().catch(() => "");
+            send({ error: `OpenRouter error ${resp.status}: ${errText}` });
+            send({ done: true });
+            controller.close();
+            return;
+          }
+
+          const data = (await resp.json()) as {
+            choices: Array<{ finish_reason: string; message: { role: string; content: string | null; tool_calls?: ToolCall[] } }>;
+          };
+          const choice = data.choices?.[0];
+          if (!choice) {
+            send({ error: "Пустой ответ от AI" });
+            send({ done: true });
+            controller.close();
+            return;
+          }
+
+          if (choice.finish_reason === "tool_calls" && choice.message.tool_calls?.length) {
+            apiMsgs.push(choice.message as unknown as Record<string, unknown>);
+
+            for (const tc of choice.message.tool_calls) {
+              const fn = tc.function.name;
+              send({ status: TOOL_STATUS_LABELS[fn] ?? `⚙️ Вызываю ${fn}...` });
+
+              let args: Record<string, unknown> = {};
+              try {
+                args = JSON.parse(tc.function.arguments);
+              } catch {
+                // невалидный JSON от модели — оставляем пустые аргументы
+              }
+
+              const runner = TOOL_RUNNERS[fn];
+              let result: unknown;
+              try {
+                result = runner ? await runner(args) : { error: `Unknown tool: ${fn}` };
+              } catch (e) {
+                result = { error: String(e) };
+              }
+
+              toolCallsLog.push({ tool: fn, input: args });
+              apiMsgs.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(result) });
+            }
+          } else {
+            finalText = choice.message.content ?? "";
+            break;
+          }
+        }
+
+        if (!finalText) finalText = "Не удалось получить ответ. Попробуйте переформулировать запрос.";
+
+        await sql`INSERT INTO ai_messages (session_id, role, content, tool_calls) VALUES (${sessionId}, 'assistant', ${finalText}, ${JSON.stringify(toolCallsLog)})`;
+
+        const didFullAnalysis = toolCallsLog.some((t) => t.tool === "calculate_finance_scenarios") && !usageBlocked;
+        if (didFullAnalysis) {
+          const usageType = (await wasFreeUsage(userTelegram)) ? "free" : "pay_per_use";
+          await recordUsage(userTelegram, usageType);
+        }
+
+        send({
+          session_id: sessionId,
+          response: finalText,
+          tool_calls: toolCallsLog,
+          paywall: usageBlocked ? { message: usage.reason, price_rub: PAY_PER_USE_RUB } : null,
+        });
+        send({ done: true });
+        controller.close();
+      } catch (e) {
+        send({ error: String(e) });
+        send({ done: true });
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }

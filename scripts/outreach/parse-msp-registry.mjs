@@ -57,13 +57,46 @@ async function findLatestArchiveUrl() {
 // режим, без загрузки всего ZIP в память).
 async function downloadArchiveToDisk(url) {
   const dest = path.join(os.tmpdir(), "chinabridge-rsmp.zip");
-  console.log(`Скачиваю архив на диск: ${url}\n  → ${dest}`);
-  const res = await fetch(url);
-  if (!res.ok || !res.body) throw new Error(`Скачивание не удалось: HTTP ${res.status}`);
-  await pipeline(res.body, fs.createWriteStream(dest));
-  const { size } = fs.statSync(dest);
-  console.log(`Архив загружен: ${(size / 1024 / 1024).toFixed(1)} МБ`);
-  return dest;
+
+  // Докачка через Range, если частичный файл уже есть (сеть здесь нестабильна
+  // на файлах такого размера — соединение может оборваться, тогда продолжаем
+  // с того места, где остановились, вместо повторной загрузки с нуля).
+  for (let attempt = 1; attempt <= 8; attempt++) {
+    const existingSize = fs.existsSync(dest) ? fs.statSync(dest).size : 0;
+    const headRes = await fetch(url, { method: "HEAD" });
+    const totalSize = parseInt(headRes.headers.get("content-length") || "0", 10);
+
+    if (existingSize > 0 && existingSize >= totalSize) {
+      console.log(`Архив уже полностью загружен: ${(existingSize / 1024 / 1024).toFixed(1)} МБ`);
+      return dest;
+    }
+
+    console.log(
+      `[Попытка ${attempt}/8] Скачиваю ${existingSize > 0 ? "докачка с " + (existingSize / 1024 / 1024).toFixed(1) + " МБ" : "с начала"}, всего ${(totalSize / 1024 / 1024).toFixed(1)} МБ`
+    );
+
+    try {
+      const res = await fetch(url, {
+        headers: existingSize > 0 ? { Range: `bytes=${existingSize}-` } : {},
+      });
+      if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status}`);
+      if (!res.body) throw new Error("Пустое тело ответа");
+
+      const writeStream = fs.createWriteStream(dest, { flags: existingSize > 0 && res.status === 206 ? "a" : "w" });
+      await pipeline(res.body, writeStream);
+
+      const { size } = fs.statSync(dest);
+      if (size >= totalSize) {
+        console.log(`Архив загружен полностью: ${(size / 1024 / 1024).toFixed(1)} МБ`);
+        return dest;
+      }
+      console.log(`Загружено ${(size / 1024 / 1024).toFixed(1)} / ${(totalSize / 1024 / 1024).toFixed(1)} МБ, обрыв — пробую докачать`);
+    } catch (e) {
+      console.log(`Обрыв соединения (${e.message}), пробую докачать...`);
+    }
+  }
+
+  throw new Error("Не удалось скачать архив за 8 попыток докачки");
 }
 
 // Обрабатывает ZIP файл за файлом (без загрузки всего архива в память),
@@ -191,10 +224,21 @@ async function saveContacts(client, contacts) {
 async function main() {
   const limitArg = process.argv.find((a) => a.startsWith("--limit="));
   const limit = limitArg ? parseInt(limitArg.split("=")[1], 10) : 2000;
+  const outFileArg = process.argv.find((a) => a.startsWith("--out="));
+  const outFile = outFileArg ? outFileArg.split("=")[1] : null;
 
-  const client = new Client({ connectionString: DATABASE_URL });
-  await client.connect();
-  console.log("Подключено к Neon");
+  // Режим --out=file.json: не подключаться к Postgres напрямую, а собрать
+  // результаты в JSON-файл (используется когда прямой доступ к БД недоступен,
+  // например из песочницы без доступа к порту 5432 — тогда запись в Neon
+  // делается отдельно через n8n).
+  const allCollected = [];
+  const client = outFile ? null : new Client({ connectionString: DATABASE_URL });
+  if (client) {
+    await client.connect();
+    console.log("Подключено к Neon");
+  } else {
+    console.log(`Режим файла: результаты будут сохранены в ${outFile}`);
+  }
 
   const archiveUrl = await findLatestArchiveUrl();
   const zipPath = await downloadArchiveToDisk(archiveUrl);
@@ -209,10 +253,16 @@ async function main() {
       const parsed = await parseXmlEntry(buffer);
       const filtered = parsed.filter((c) => TARGET_OKVED_PREFIXES.some((p) => c.okved.startsWith(p)));
       if (filtered.length) {
-        const saved = await saveContacts(client, filtered.slice(0, limit - totalSaved));
-        totalSaved += saved;
+        const batch = filtered.slice(0, limit - totalSaved);
+        if (client) {
+          const saved = await saveContacts(client, batch);
+          totalSaved += saved;
+        } else {
+          allCollected.push(...batch);
+          totalSaved += batch.length;
+        }
         totalWithChina += filtered.filter((c) => hasChinaKeyword(c.name).hasKeyword).length;
-        console.log(`${name}: ОКВЭД-46 найдено = ${filtered.length}, сохранено = ${saved} (всего ${totalSaved}/${limit})`);
+        console.log(`${name}: ОКВЭД-46 найдено = ${filtered.length}, сохранено = ${totalSaved > limit - filtered.length ? batch.length : filtered.length} (всего ${totalSaved}/${limit})`);
       }
       return totalSaved < limit; // false останавливает обработку ZIP досрочно
     });
@@ -222,7 +272,14 @@ async function main() {
 
   console.log(`\nОбработано XML-файлов: ${filesSeen}`);
   console.log(`Итого: сохранено ${totalSaved} компаний, из них с китайскими ключевыми словами в названии: ${totalWithChina}`);
-  await client.end();
+
+  if (client) {
+    await client.end();
+  } else {
+    const withKeywords = allCollected.map((c) => ({ ...c, ...hasChinaKeyword(c.name) }));
+    fs.writeFileSync(outFile, JSON.stringify(withKeywords, null, 2), "utf-8");
+    console.log(`Сохранено в файл: ${outFile}`);
+  }
 }
 
 main().catch((e) => {

@@ -31,6 +31,13 @@ export default function DocsPage() {
         .plan-card:hover { border-color: #229ED9 !important; transform: translateY(-2px); }
       `}</style>
 
+      <a
+        href="/ai"
+        style={{ display: "block", background: "linear-gradient(90deg,#0369a1,#0284c7)", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 14, fontWeight: 500, textDecoration: "none" }}
+      >
+        🆕 Попробуйте ChinaBridge AI — один диалог вместо отдельных инструментов →
+      </a>
+
       {/* HERO */}
       <section style={{ maxWidth: 900, margin: "0 auto", padding: "72px 24px 48px", textAlign: "center" }}>
         <div style={{ display: "inline-block", background: "rgba(34,158,217,0.15)", border: "1px solid rgba(34,158,217,0.4)", borderRadius: 20, padding: "6px 16px", fontSize: 13, color: "#229ED9", marginBottom: 24 }}>

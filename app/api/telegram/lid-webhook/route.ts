@@ -182,6 +182,7 @@ function calcLeadScore(s: Partial<BotSession>): number {
 
 const MAIN_MENU_KB = {
   inline_keyboard: [
+    [{ text: "🤖 AI-менеджер (полный расчёт)", url: "https://chinabridge.pro/ai" }],
     [{ text: "🚚 Доставка из Китая",        callback_data: "menu_delivery" },
      { text: "🔎 Найти поставщика",          callback_data: "menu_supplier" }],
     [{ text: "💰 Проверить товар",           callback_data: "menu_product"  },
@@ -621,10 +622,10 @@ export async function POST(req: NextRequest) {
     if (data === "menu_product") {
       await upsertSession(sql, chatId, { state: "menu" });
       await sendMsg(chatId,
-        `💰 Для проверки товара и расчёта маржи используйте AI-калькулятор:`,
+        `💰 Опишите товар прямо здесь — ChinaBridge AI сам определит ТН ВЭД, посчитает пошлины, сравнит маршруты и маржу:`,
         { reply_markup: {
             inline_keyboard: [
-              [{ text: "📊 Открыть AI-калькулятор", url: "https://chinabridge.pro/ai-calculator" }],
+              [{ text: "🤖 Открыть ChinaBridge AI", url: "https://chinabridge.pro/ai" }],
               [{ text: "🚚 Или сразу рассчитать доставку", callback_data: "menu_delivery" }],
               [{ text: "🏠 Главное меню", callback_data: "menu_main" }],
             ],
@@ -702,10 +703,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (data === "flow_product_check") {
-      await sendMsg(chatId, `📊 Рассчитайте маржу и себестоимость в AI-калькуляторе:`,
+      await sendMsg(chatId, `📊 ChinaBridge AI посчитает маржу, себестоимость и таможню за один диалог:`,
         { reply_markup: {
             inline_keyboard: [
-              [{ text: "📊 AI-калькулятор", url: "https://chinabridge.pro/ai-calculator?country=" + (session.country ?? "KZ") }],
+              [{ text: "🤖 Открыть ChinaBridge AI", url: "https://chinabridge.pro/ai" }],
               [{ text: "🏠 Главное меню", callback_data: "menu_main" }],
             ],
           },
@@ -892,7 +893,7 @@ export async function POST(req: NextRequest) {
               inline_keyboard: [
                 [{ text: "🚀 Привезти этот товар из Китая", callback_data: "menu_delivery" }],
                 [{ text: "📋 Заказать аудит за 2 000 ₽", callback_data: `tripwire_${String(lead.id)}` }],
-                [{ text: "📊 Рассчитать другой товар", url: "https://chinabridge.pro/ai-calculator" }],
+                [{ text: "🤖 Рассчитать другой товар", url: "https://chinabridge.pro/ai" }],
               ],
             },
           });
