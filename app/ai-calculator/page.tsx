@@ -203,8 +203,38 @@ export default function AICalculatorPage() {
             </div>
           </div>
 
-          {/* ── DOCS PROMO ─────────────────────────────────────────────────────────── */}
+          {/* ── AI IMPORT MANAGER PROMO ────────────────────────────────────────────── */}
           <div className="mt-10 rounded-2xl overflow-hidden border border-[#1e3a5f] bg-gradient-to-br from-[#060f1e] to-[#0a1628]">
+            <div className="flex items-stretch">
+              {/* Green accent bar */}
+              <div className="w-1 bg-gradient-to-b from-[#00A86B] to-[#00704a] shrink-0" />
+              <div className="flex-1 px-5 py-4">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#00A86B] mb-1">Следующий шаг</p>
+                    <p className="text-sm font-bold text-white mb-1">Не только цифры — обсудите поставку с AI</p>
+                    <p className="text-xs text-[#8899aa] leading-relaxed">
+                      Опишите товар словами или пришлите инвойс — AI Import Manager сам проверит поставщика, посчитает маршруты, таможню и маржу в живом диалоге
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {["Диалог", "Полный расчёт"].map(t => (
+                        <span key={t} className="text-[10px] bg-[#00A86B]/10 border border-[#00A86B]/25 text-[#00A86B] rounded-full px-2.5 py-0.5">{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <a
+                    href="/ai"
+                    className="shrink-0 self-center inline-flex items-center gap-1.5 px-4 py-2 bg-[#00A86B] hover:bg-[#00915d] text-white font-semibold rounded-xl text-xs transition-all whitespace-nowrap"
+                  >
+                    🤖 ChinaBridge AI →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── DOCS PROMO ─────────────────────────────────────────────────────────── */}
+          <div className="mt-4 rounded-2xl overflow-hidden border border-[#1e3a5f] bg-gradient-to-br from-[#060f1e] to-[#0a1628]">
             <div className="flex items-stretch">
               {/* Blue accent bar */}
               <div className="w-1 bg-gradient-to-b from-[#229ED9] to-[#0066aa] shrink-0" />
