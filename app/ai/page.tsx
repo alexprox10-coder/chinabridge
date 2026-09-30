@@ -169,7 +169,7 @@ export default function ChinaBridgeAIPage() {
   const [telegram, setTelegram] = useState("");
   const [anonymousId, setAnonymousId] = useState("");
   const [statusText, setStatusText] = useState("");
-  const [paywall, setPaywall] = useState<{ message: string; price_rub: number } | null>(null);
+  const [paywall, setPaywall] = useState<{ message: string } | null>(null);
   const [telegramPrompt, setTelegramPrompt] = useState<{ mode: "save" | "handoff"; analysisId?: string | null } | null>(null);
   const [telegramPromptValue, setTelegramPromptValue] = useState("");
   const [saved, setSaved] = useState(false);
@@ -298,7 +298,7 @@ export default function ChinaBridgeAIPage() {
                 analysisId: (evt.analysis_id as string | null) ?? null,
               },
             ]);
-            if (evt.paywall) setPaywall(evt.paywall as { message: string; price_rub: number });
+            if (evt.paywall) setPaywall(evt.paywall as { message: string });
           }
         }
       }
@@ -477,8 +477,16 @@ export default function ChinaBridgeAIPage() {
           </div>
         )}
         {paywall && (
-          <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl px-4 py-3 text-sm text-amber-300">
-            💳 {paywall.message}
+          <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl px-4 py-3 text-sm text-amber-300 space-y-2.5">
+            <p>⏳ {paywall.message}</p>
+            <a
+              href="https://t.me/ChinaBridgeLID_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl px-4 py-2.5 text-sm transition"
+            >
+              Написать менеджеру →
+            </a>
           </div>
         )}
         <div ref={endRef} />
@@ -560,7 +568,9 @@ export default function ChinaBridgeAIPage() {
             →
           </button>
         </div>
-        <p className="text-center text-[10px] text-[#5a7899] mt-2">3 бесплатных анализа. Затем 490₽ за полный анализ поставки.</p>
+        <p className="text-center text-[10px] text-[#5a7899] mt-2">
+          5 бесплатных анализов в день. {telegram ? "С сохранённой историей — 20 в день." : "Оставьте Telegram — станет 20 в день."}
+        </p>
       </div>
     </main>
   );

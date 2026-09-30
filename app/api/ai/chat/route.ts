@@ -12,8 +12,15 @@ export const maxDuration = 120;
 
 const OR_KEY = () => process.env.OPENROUTER_API_KEY ?? "";
 const MODEL = process.env.AI_ORCHESTRATOR_MODEL ?? "anthropic/claude-sonnet-4-5";
-const FREE_LIMIT = 3;
-const PAY_PER_USE_RUB = 490;
+// Дневной (не пожизненный) лимит бесплатных полных анализов — чисто защита от
+// расходов на LLM при холодном/ботовом трафике, НЕ монетизация. Платный доступ
+// (490₽/1990₽) убран целиком — рынок уже показал 0 подписок на эту цену для
+// калькулятора, тот же ценник на AI Import Manager был бы тем же провалом.
+// Вместо оплаты: выше лимит тем, кто оставил Telegram, и прямой путь к менеджеру
+// при упоре в лимит — монетизация только через хэндофф-комиссию на реальной поставке.
+const ANON_DAILY_LIMIT = 5;
+const TELEGRAM_DAILY_LIMIT = 20;
+const MANAGER_BOT = "@ChinaBridgeLID_bot";
 
 const db = () => neon(process.env.DATABASE_URL!);
 
@@ -101,18 +108,18 @@ const TOOL_STATUS_LABELS: Record<string, string> = {
 
 type ToolCall = { id: string; type: string; function: { name: string; arguments: string } };
 
-// "identity" — либо реальный telegram, либо анонимный browser-UUID (пока telegram не
-// введён). Обе формы хранятся в той же колонке user_telegram: лимит бесплатных
-// анализов считается по identity независимо от того, идентифицировался клиент или
-// ещё нет — иначе анонимный доступ был бы безлимитным.
+// "identity" — либо реальный telegram, либо анонимный browser-UUID вида "anon-<uuid>"
+// (пока telegram не введён — см. getAnonymousId() на фронте). Обе формы хранятся в
+// той же колонке user_telegram: лимит считается по identity независимо от того,
+// идентифицировался клиент или ещё нет — иначе анонимный доступ был бы безлимитным.
+// Лимит ДНЕВНОЙ и сбрасывается каждый календарный день — это защита от расходов на
+// LLM при холодном/ботовом трафике, не монетизация. У тех, кто оставил Telegram,
+// лимит выше — мягкий стимул идентифицироваться, без денег.
+// usage_type='business_plan' оставлен как ручной рычаг для менеджера (снять лимит
+// клиенту вручную через INSERT), самостоятельной покупки такого статуса сейчас нет.
 async function checkUsageLimit(identity: string): Promise<{ allowed: boolean; reason?: string }> {
   if (!identity) return { allowed: true };
   const sql = db();
-  const rows = (await sql`
-    SELECT COUNT(*)::int as cnt FROM ai_usage WHERE user_telegram = ${identity} AND usage_type = 'free'
-  `) as Array<{ cnt: number }>;
-  const freeUsed = rows[0]?.cnt ?? 0;
-  if (freeUsed < FREE_LIMIT) return { allowed: true };
 
   const business = (await sql`
     SELECT id FROM ai_usage WHERE user_telegram = ${identity} AND usage_type = 'business_plan'
@@ -120,25 +127,38 @@ async function checkUsageLimit(identity: string): Promise<{ allowed: boolean; re
   `) as Array<{ id: string }>;
   if (business.length) return { allowed: true };
 
+  const isAnon = identity.startsWith("anon-");
+  const limit = isAnon ? ANON_DAILY_LIMIT : TELEGRAM_DAILY_LIMIT;
+
+  const rows = (await sql`
+    SELECT COUNT(*)::int as cnt FROM ai_usage
+    WHERE user_telegram = ${identity} AND usage_type = 'free' AND created_at::date = CURRENT_DATE
+  `) as Array<{ cnt: number }>;
+  const freeUsedToday = rows[0]?.cnt ?? 0;
+  if (freeUsedToday < limit) return { allowed: true };
+
   return {
     allowed: false,
-    reason: `Бесплатные анализы закончились (${FREE_LIMIT} использовано). Полный анализ поставки — ${PAY_PER_USE_RUB}₽. Напишите менеджеру @ChinaBridgeLID_bot для оплаты.`,
+    reason:
+      `Дневной лимит бесплатных анализов исчерпан (${limit} в день). Лимит обновится завтра автоматически. ` +
+      `Нужно больше прямо сейчас — напишите менеджеру ${MANAGER_BOT}, он снимет лимит вручную за пару минут.`,
   };
 }
 
-async function recordUsage(identity: string, usageType: "free" | "pay_per_use") {
+async function recordUsage(identity: string) {
   if (!identity) return;
   const sql = db();
-  await sql`INSERT INTO ai_usage (user_telegram, usage_type, amount_charged) VALUES (${identity}, ${usageType}, ${usageType === "pay_per_use" ? PAY_PER_USE_RUB : 0})`;
+  await sql`INSERT INTO ai_usage (user_telegram, usage_type, amount_charged) VALUES (${identity}, 'free', 0)`;
 }
 
-async function wasFreeUsage(identity: string): Promise<boolean> {
+async function isUnlimited(identity: string): Promise<boolean> {
   if (!identity) return true;
   const sql = db();
   const rows = (await sql`
-    SELECT COUNT(*)::int as cnt FROM ai_usage WHERE user_telegram = ${identity} AND usage_type = 'free'
-  `) as Array<{ cnt: number }>;
-  return (rows[0]?.cnt ?? 0) < FREE_LIMIT;
+    SELECT id FROM ai_usage WHERE user_telegram = ${identity} AND usage_type = 'business_plan'
+      AND created_at > NOW() - INTERVAL '30 days' LIMIT 1
+  `) as Array<{ id: string }>;
+  return rows.length > 0;
 }
 
 async function ensureSession(sessionId: string | null | undefined, identity: string): Promise<string> {
@@ -231,12 +251,14 @@ export async function POST(req: NextRequest) {
                 {
                   role: "system",
                   content:
-                    "У клиента закончились бесплатные полные анализы. Инструмент calculate_finance_scenarios " +
-                    "тебе недоступен. ЗАПРЕЩЕНО самостоятельно считать или озвучивать себестоимость, маржу, " +
-                    "прибыль, ROI в любой форме (в том числе приблизительно, экстраполяцией по предыдущим " +
-                    "сообщениям диалога). Если вопрос требует такого расчёта — вежливо сообщи, что бесплатный " +
-                    `лимит исчерпан и полный анализ стоит ${PAY_PER_USE_RUB}₽, предложи написать @ChinaBridgeLID_bot ` +
-                    "для оплаты. Маршруты доставки и таможенную классификацию (без себестоимости) считать можно.",
+                    "У клиента закончился дневной лимит бесплатных полных анализов. " +
+                    "Инструмент calculate_finance_scenarios тебе недоступен. ЗАПРЕЩЕНО самостоятельно считать или " +
+                    "озвучивать себестоимость, маржу, прибыль, ROI в любой форме (в том числе приблизительно, " +
+                    "экстраполяцией по предыдущим сообщениям диалога). Если вопрос требует такого расчёта — вежливо " +
+                    "сообщи, что дневной лимит исчерпан и обновится завтра автоматически, а если нужно прямо сейчас — " +
+                    `предложи написать менеджеру ${MANAGER_BOT}, он снимет лимит вручную. Никогда не упоминай ` +
+                    "платный доступ или подписку — их сейчас нет. Маршруты доставки и таможенную классификацию " +
+                    "(без себестоимости) считать можно.",
                 },
               ]
             : []),
@@ -323,9 +345,8 @@ export async function POST(req: NextRequest) {
         await sql`INSERT INTO ai_messages (session_id, role, content, tool_calls) VALUES (${sessionId}, 'assistant', ${cleanResponse}, ${JSON.stringify(toolCallsLog)})`;
 
         const didFullAnalysis = toolCallsLog.some((t) => t.tool === "calculate_finance_scenarios") && !usageBlocked;
-        if (didFullAnalysis) {
-          const usageType = (await wasFreeUsage(identity)) ? "free" : "pay_per_use";
-          await recordUsage(identity, usageType);
+        if (didFullAnalysis && !(await isUnlimited(identity))) {
+          await recordUsage(identity);
         }
 
         let analysisId: string | null = null;
@@ -345,7 +366,7 @@ export async function POST(req: NextRequest) {
           session_id: sessionId,
           response: cleanResponse,
           tool_calls: toolCallsLog,
-          paywall: usageBlocked ? { message: usage.reason, price_rub: PAY_PER_USE_RUB } : null,
+          paywall: usageBlocked ? { message: usage.reason } : null,
           show_handoff_cta: hasHandoffCta,
           analysis_id: analysisId,
         });
