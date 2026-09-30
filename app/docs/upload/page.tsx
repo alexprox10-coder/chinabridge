@@ -18,6 +18,21 @@ const DOCS_PLANS = [
   { planId: "docs_broker",  name: "Брокер", price: "19 990 ₽", docs: "1000 документов", color: "#f59e0b" },
 ] as const;
 
+// Создаёт платёж Точки за пакет документов и возвращает ссылку на оплату.
+// Общая логика для модалки пэйвола и для авто-оплаты по ?plan=&autopay=1
+// (переход с тарифов на /docs — раньше клик там просто вёл на /docs/upload
+// без старта оплаты).
+async function startDocsPayment(planId: string): Promise<string> {
+  const res = await fetch("/api/payments/docs-subscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ planId }),
+  });
+  const data = (await res.json()) as { ok?: boolean; paymentLink?: string; error?: string };
+  if (data.ok && data.paymentLink) return data.paymentLink;
+  throw new Error(data.error || "Ошибка создания платежа");
+}
+
 // ── Paywall modal ─────────────────────────────────────────────────────────────
 function DocsPaywallModal({ onClose }: { onClose: () => void }) {
   const [paying, setPaying] = useState<string | null>(null);
@@ -27,20 +42,9 @@ function DocsPaywallModal({ onClose }: { onClose: () => void }) {
     setPaying(planId);
     setPayError("");
     try {
-      const res = await fetch("/api/payments/docs-subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-      const data = await res.json() as { ok?: boolean; paymentLink?: string; error?: string };
-      if (data.ok && data.paymentLink) {
-        window.location.href = data.paymentLink;
-      } else {
-        setPayError(data.error || "Ошибка создания платежа");
-        setPaying(null);
-      }
+      window.location.href = await startDocsPayment(planId);
     } catch (e) {
-      setPayError(String(e));
+      setPayError(e instanceof Error ? e.message : String(e));
       setPaying(null);
     }
   };
@@ -106,6 +110,7 @@ export default function DocsUploadPage() {
   const [error, setError] = useState("");
   const [freeLeft, setFreeLeft] = useState<number>(FREE_LIMIT);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [autopayError, setAutopayError] = useState("");
 
   // Fetch current usage from server on mount
   useEffect(() => {
@@ -115,6 +120,18 @@ export default function DocsUploadPage() {
         if (typeof d.free_left === "number") setFreeLeft(d.free_left);
       })
       .catch(() => null);
+  }, []);
+
+  // Переход с тарифов на /docs (?plan=docs_pro&autopay=1) сразу открывает оплату —
+  // раньше карточка тарифа просто линковала на /docs/upload ничего не оплачивая.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const planId = params.get("plan");
+    if (params.get("autopay") === "1" && planId) {
+      startDocsPayment(planId)
+        .then((link) => { window.location.href = link; })
+        .catch((e) => setAutopayError(e instanceof Error ? e.message : String(e)));
+    }
   }, []);
 
   const onDrop = (e: React.DragEvent) => {
@@ -179,6 +196,12 @@ export default function DocsUploadPage() {
 
         {/* Back */}
         <a href="/docs" style={{ color: "#5a7899", fontSize: 13, textDecoration: "none", display: "block", marginBottom: 24 }}>← ChinaBridge Docs</a>
+
+        {autopayError && (
+          <div style={{ marginBottom: 20, padding: "12px 16px", background: "rgba(200,0,0,0.1)", border: "1px solid rgba(200,0,0,0.3)", borderRadius: 12, fontSize: 13, color: "#f88" }}>
+            ❌ Не удалось открыть оплату: {autopayError}. Выберите тариф ниже ещё раз.
+          </div>
+        )}
 
         <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Загрузить документ</h1>
         <p style={{ fontSize: 14, color: "#8899aa", marginBottom: 32 }}>

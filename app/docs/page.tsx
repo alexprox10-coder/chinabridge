@@ -18,9 +18,9 @@ const FEATURES = [
 
 const PLANS = [
   { name: "Бесплатно", price: "0 ₽", limit: "3 документа", badge: "", href: "/docs/upload", cta: "Попробовать" },
-  { name: "Старт", price: "2 990 ₽", limit: "10 документов", badge: "", href: "/docs/upload", cta: "Оплатить" },
-  { name: "Про", price: "7 990 ₽", limit: "50 документов + XML", badge: "Популярный", href: "/docs/upload", cta: "Оплатить" },
-  { name: "Брокер", price: "19 990 ₽", limit: "1000 документов + API", badge: "", href: "/docs/upload", cta: "Оплатить" },
+  { name: "Старт", price: "2 990 ₽", limit: "10 документов", badge: "", href: "/docs/upload?plan=docs_starter&autopay=1", cta: "Оплатить" },
+  { name: "Про", price: "7 990 ₽", limit: "50 документов + XML", badge: "Популярный", href: "/docs/upload?plan=docs_pro&autopay=1", cta: "Оплатить" },
+  { name: "Брокер", price: "19 990 ₽", limit: "1000 документов + API", badge: "", href: "/docs/upload?plan=docs_broker&autopay=1", cta: "Оплатить" },
 ];
 
 export default function DocsPage() {
@@ -36,6 +36,12 @@ export default function DocsPage() {
         style={{ display: "block", background: "linear-gradient(90deg,#0369a1,#0284c7)", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 14, fontWeight: 500, textDecoration: "none" }}
       >
         🆕 Попробуйте ChinaBridge AI — один диалог вместо отдельных инструментов →
+      </a>
+      <a
+        href="/ai-calculator"
+        style={{ display: "block", background: "#0a1628", color: "#8899aa", textAlign: "center", padding: "8px 16px", fontSize: 12, textDecoration: "none", borderBottom: "1px solid #1e3a5f" }}
+      >
+        ← Вернуться в AI-калькулятор
       </a>
 
       {/* HERO */}
