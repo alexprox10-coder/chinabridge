@@ -17,6 +17,71 @@ const PAY_PER_USE_RUB = 490;
 
 const db = () => neon(process.env.DATABASE_URL!);
 
+// Самосоздание таблиц через process.env.DATABASE_URL — то же соединение, что
+// использует всё приложение. Не полагаемся на внешние credentials (n8n и т.п.),
+// которые могут указывать на другую БД несмотря на похожий хост.
+let tablesEnsured = false;
+async function ensureTables(sql: ReturnType<typeof neon>) {
+  if (tablesEnsured) return;
+  await sql`CREATE TABLE IF NOT EXISTS ai_client_profiles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    user_telegram TEXT UNIQUE NOT NULL,
+    typical_categories TEXT[],
+    typical_route_from TEXT,
+    typical_route_to TEXT,
+    typical_destination_country TEXT,
+    target_margin_percent NUMERIC,
+    max_delivery_days INTEGER,
+    typical_batch_size TEXT,
+    preferred_marketplace TEXT,
+    total_analyses INTEGER DEFAULT 0,
+    total_orders INTEGER DEFAULT 0,
+    known_suppliers JSONB DEFAULT '[]',
+    notes TEXT
+  )`;
+  await sql`CREATE TABLE IF NOT EXISTS ai_sessions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    user_telegram TEXT,
+    status TEXT DEFAULT 'active',
+    intent TEXT,
+    title TEXT
+  )`;
+  await sql`CREATE TABLE IF NOT EXISTS ai_messages (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    session_id UUID REFERENCES ai_sessions(id) ON DELETE CASCADE,
+    role TEXT NOT NULL,
+    content TEXT,
+    tool_calls JSONB,
+    attachments JSONB
+  )`;
+  await sql`CREATE TABLE IF NOT EXISTS ai_analyses (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    session_id UUID REFERENCES ai_sessions(id),
+    user_telegram TEXT,
+    product_description TEXT,
+    variants JSONB,
+    recommended_variant TEXT,
+    reasoning TEXT,
+    status TEXT DEFAULT 'draft'
+  )`;
+  await sql`CREATE TABLE IF NOT EXISTS ai_usage (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    user_telegram TEXT NOT NULL,
+    analysis_id UUID REFERENCES ai_analyses(id),
+    usage_type TEXT,
+    amount_charged INTEGER,
+    payment_id TEXT
+  )`;
+  tablesEnsured = true;
+}
+
 const ALL_TOOLS = [
   procurementToolDefinition,
   logisticsToolDefinition,
@@ -82,6 +147,7 @@ export async function POST(req: NextRequest) {
     }
 
     const sql = db();
+    await ensureTables(sql);
     const sessionId = await ensureSession(body.session_id, userTelegram);
 
     // История диалога (последние 20 сообщений)
