@@ -184,7 +184,11 @@ export async function POST(req: NextRequest) {
         await sql`INSERT INTO ai_messages (session_id, role, content, attachments) VALUES (${sessionId}, 'user', ${message}, ${JSON.stringify(attachments)})`;
 
         const usage = await checkUsageLimit(userTelegram);
-        let usageBlocked = false;
+        // Блокируем сразу по результату проверки лимита, а не только когда модель
+        // реально вызовет calculate_finance_scenarios — модель может посчитать
+        // себестоимость/маржу "в уме" по данным из истории диалога, вообще не
+        // вызывая инструмент, и тогда gate внутри TOOL_RUNNERS никогда не сработает.
+        let usageBlocked = !usage.allowed;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const TOOL_RUNNERS: Record<string, (input: any) => Promise<unknown>> = {
@@ -194,12 +198,18 @@ export async function POST(req: NextRequest) {
           get_or_update_client_profile: (input) => runProfileAction({ ...input, user_telegram: input.user_telegram || userTelegram }),
           calculate_finance_scenarios: async (input) => {
             if (!usage.allowed) {
-              usageBlocked = true;
               return { error: usage.reason, paywall: true };
             }
             return runFinanceCalculation(input);
           },
         };
+
+        // Если лимит исчерпан — убираем сам инструмент из списка, чтобы модель не
+        // могла "притвориться", что считает, и жёстко запрещаем ей оценивать
+        // себестоимость/маржу/прибыль текстом без вызова инструмента.
+        const availableTools = usage.allowed
+          ? ALL_TOOLS
+          : ALL_TOOLS.filter((t) => t.function.name !== "calculate_finance_scenarios");
 
         const userContent: Array<Record<string, unknown>> = [{ type: "text", text: message || "Посмотри документ" }];
         for (const att of attachments) {
@@ -210,6 +220,20 @@ export async function POST(req: NextRequest) {
 
         const apiMsgs: Array<Record<string, unknown>> = [
           { role: "system", content: ORCHESTRATOR_SYSTEM_PROMPT },
+          ...(usageBlocked
+            ? [
+                {
+                  role: "system",
+                  content:
+                    "У клиента закончились бесплатные полные анализы. Инструмент calculate_finance_scenarios " +
+                    "тебе недоступен. ЗАПРЕЩЕНО самостоятельно считать или озвучивать себестоимость, маржу, " +
+                    "прибыль, ROI в любой форме (в том числе приблизительно, экстраполяцией по предыдущим " +
+                    "сообщениям диалога). Если вопрос требует такого расчёта — вежливо сообщи, что бесплатный " +
+                    `лимит исчерпан и полный анализ стоит ${PAY_PER_USE_RUB}₽, предложи написать @ChinaBridgeLID_bot ` +
+                    "для оплаты. Маршруты доставки и таможенную классификацию (без себестоимости) считать можно.",
+                },
+              ]
+            : []),
           ...history.map((h) => ({ role: h.role, content: h.content })),
           { role: "user", content: attachments.length ? userContent : message },
         ];
@@ -229,7 +253,7 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               model: MODEL,
               messages: apiMsgs,
-              tools: ALL_TOOLS,
+              tools: availableTools,
               tool_choice: "auto",
               max_tokens: 2000,
             }),
