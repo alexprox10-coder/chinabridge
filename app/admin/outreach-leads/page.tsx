@@ -104,9 +104,15 @@ interface DocsContact {
   okvad_name: string | null;
   region: string | null;
   email: string | null;
+  phone: string | null;
   has_china_keywords: boolean;
   status: string;
   created_at: string;
+  marketplace_source: string | null;
+  shop_name: string | null;
+  shop_url: string | null;
+  product_count: number | null;
+  product_category: string | null;
 }
 interface DocsReply {
   id: string;
@@ -362,6 +368,21 @@ export default function OutreachLeadsPage() {
     setTimeout(() => setDocsCopied(false), 1500);
   }
 
+  const WB_DISCOVERY_COMMAND = "node scripts/outreach/wb-discovery.mjs";
+  const WB_ENRICH_COMMAND = "DADATA_TOKEN=xxx node scripts/outreach/wb-enrich.mjs";
+  const [wbCmdCopied, setWbCmdCopied] = useState<"discovery" | "enrich" | null>(null);
+  async function copyWbCommand(which: "discovery" | "enrich") {
+    await navigator.clipboard.writeText(which === "discovery" ? WB_DISCOVERY_COMMAND : WB_ENRICH_COMMAND);
+    setWbCmdCopied(which);
+    setTimeout(() => setWbCmdCopied(null), 1500);
+  }
+
+  const [docsSourceFilter, setDocsSourceFilter] = useState<"all" | "msp_registry" | "wb_pilot">("all");
+  const filteredDocsContacts = docsContacts.filter((c) => {
+    const source = c.marketplace_source === "wb_pilot" ? "wb_pilot" : "msp_registry";
+    return docsSourceFilter === "all" || source === docsSourceFilter;
+  });
+
   return (
     <div className="min-h-screen bg-slate-950">
       <AdminNav />
@@ -453,6 +474,37 @@ export default function OutreachLeadsPage() {
                 </div>
               </div>
 
+              {/* Step 1b: WB marketplace seller discovery (manual, runs locally) */}
+              <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🛍️</span>
+                  <span className="text-white font-medium text-sm">Шаг 1b — Найти продавцов на Wildberries (пилот: автозапчасти)</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">запускать локально</span>
+                </div>
+                <p className="text-slate-500 text-xs mb-3">
+                  Публичный поисковый JSON WB (без авторизации, без Seller API) → топ-50 продавцов категории по числу товаров.
+                  Затем обогащение: ИНН со страницы магазина → DaData на контакты.
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs text-slate-300 bg-slate-900 px-3 py-2 rounded-lg font-mono overflow-x-auto whitespace-nowrap">
+                      {WB_DISCOVERY_COMMAND}
+                    </code>
+                    <button onClick={() => copyWbCommand("discovery")} className="shrink-0 px-3 py-2 rounded-lg text-xs border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white transition">
+                      {wbCmdCopied === "discovery" ? "✓" : "Копировать"}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs text-slate-300 bg-slate-900 px-3 py-2 rounded-lg font-mono overflow-x-auto whitespace-nowrap">
+                      {WB_ENRICH_COMMAND}
+                    </code>
+                    <button onClick={() => copyWbCommand("enrich")} className="shrink-0 px-3 py-2 rounded-lg text-xs border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white transition">
+                      {wbCmdCopied === "enrich" ? "✓" : "Копировать"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Step 2: DaData enrichment (can run from admin) */}
               <div className="bg-slate-800/60 border border-sky-900/40 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -489,38 +541,71 @@ export default function OutreachLeadsPage() {
 
               {/* Contacts table */}
               {docsContacts.length > 0 && (
-                <div className="overflow-x-auto rounded-lg border border-slate-800">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-slate-800/60 text-slate-400 text-left">
-                        <th className="px-3 py-2 font-medium text-xs">Компания</th>
-                        <th className="px-3 py-2 font-medium text-xs">ОКВЭД</th>
-                        <th className="px-3 py-2 font-medium text-xs">Регион</th>
-                        <th className="px-3 py-2 font-medium text-xs">Email</th>
-                        <th className="px-3 py-2 font-medium text-xs">🇨🇳</th>
-                        <th className="px-3 py-2 font-medium text-xs">Статус</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {docsContacts.slice(0, 15).map(c => (
-                        <tr key={c.id} className="border-t border-slate-800/60 hover:bg-slate-800/30 transition">
-                          <td className="px-3 py-2 text-white text-xs max-w-[200px] truncate">{c.company_name}</td>
-                          <td className="px-3 py-2 text-slate-400 text-xs max-w-[140px] truncate">{c.okvad_name || "—"}</td>
-                          <td className="px-3 py-2 text-slate-400 text-xs">{c.region || "—"}</td>
-                          <td className="px-3 py-2 text-blue-400 text-xs">{c.email || "—"}</td>
-                          <td className="px-3 py-2 text-xs">{c.has_china_keywords ? "✓" : ""}</td>
-                          <td className="px-3 py-2 text-xs">
-                            <span className={`px-1.5 py-0.5 rounded text-xs ${
-                              c.status === "enriched" ? "bg-sky-900/50 text-sky-400" :
-                              c.status === "draft_ready" ? "bg-amber-900/50 text-amber-400" :
-                              c.status === "sent" ? "bg-emerald-900/50 text-emerald-400" :
-                              "bg-slate-700 text-slate-400"
-                            }`}>{c.status}</span>
-                          </td>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    {([
+                      { key: "all", label: "Все" },
+                      { key: "msp_registry", label: "МСП-реестр" },
+                      { key: "wb_pilot", label: "🛍️ WB" },
+                    ] as const).map((f) => (
+                      <button
+                        key={f.key}
+                        onClick={() => setDocsSourceFilter(f.key)}
+                        className={`text-xs px-3 py-1.5 rounded-full font-medium border transition ${
+                          docsSourceFilter === f.key
+                            ? "bg-sky-900/50 border-sky-700 text-sky-400"
+                            : "border-slate-700 text-slate-500 hover:text-slate-300"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="overflow-x-auto rounded-lg border border-slate-800">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-800/60 text-slate-400 text-left">
+                          <th className="px-3 py-2 font-medium text-xs">Компания / Магазин</th>
+                          <th className="px-3 py-2 font-medium text-xs">ОКВЭД / Товаров</th>
+                          <th className="px-3 py-2 font-medium text-xs">Регион</th>
+                          <th className="px-3 py-2 font-medium text-xs">Email</th>
+                          <th className="px-3 py-2 font-medium text-xs">Телефон</th>
+                          <th className="px-3 py-2 font-medium text-xs">🇨🇳</th>
+                          <th className="px-3 py-2 font-medium text-xs">Статус</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {filteredDocsContacts.slice(0, 15).map(c => (
+                          <tr key={c.id} className="border-t border-slate-800/60 hover:bg-slate-800/30 transition">
+                            <td className="px-3 py-2 text-white text-xs max-w-[200px] truncate">
+                              {c.marketplace_source === "wb_pilot" && <span className="mr-1">🛍️</span>}
+                              {c.shop_url ? (
+                                <a href={c.shop_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                  {c.shop_name || c.company_name}
+                                </a>
+                              ) : (c.shop_name || c.company_name)}
+                            </td>
+                            <td className="px-3 py-2 text-slate-400 text-xs max-w-[140px] truncate">
+                              {c.marketplace_source === "wb_pilot" ? `${c.product_count ?? "—"} тов. (${c.product_category ?? "—"})` : (c.okvad_name || "—")}
+                            </td>
+                            <td className="px-3 py-2 text-slate-400 text-xs">{c.region || "—"}</td>
+                            <td className="px-3 py-2 text-blue-400 text-xs">{c.email || "—"}</td>
+                            <td className="px-3 py-2 text-blue-400 text-xs">{c.phone || "—"}</td>
+                            <td className="px-3 py-2 text-xs">{c.has_china_keywords ? "✓" : ""}</td>
+                            <td className="px-3 py-2 text-xs">
+                              <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                c.status === "enriched" ? "bg-sky-900/50 text-sky-400" :
+                                c.status === "draft_ready" ? "bg-amber-900/50 text-amber-400" :
+                                c.status === "sent" ? "bg-emerald-900/50 text-emerald-400" :
+                                c.status === "no_inn_found" ? "bg-red-900/30 text-red-400" :
+                                "bg-slate-700 text-slate-400"
+                              }`}>{c.status}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
 

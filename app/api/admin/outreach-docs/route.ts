@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
 
     const [stats, contacts, replies] = await Promise.all([
       sql`SELECT status, COUNT(*) as count FROM outreach_contacts GROUP BY status`,
-      sql`SELECT id, company_name, inn, okvad_name, region, email, has_china_keywords, status, created_at
+      sql`SELECT id, company_name, inn, okvad_name, region, email, phone, has_china_keywords, status, created_at,
+                 marketplace_source, shop_name, shop_url, product_count, product_category
           FROM outreach_contacts ORDER BY created_at DESC LIMIT 50`,
       sql`SELECT r.id, r.reply_text, r.sentiment, r.action, r.summary, r.created_at, c.company_name
           FROM outreach_replies r LEFT JOIN outreach_contacts c ON c.id = r.contact_id
