@@ -10,6 +10,28 @@ function isAuthorized(req: NextRequest) {
 
 const db = () => neon(process.env.DATABASE_URL!);
 
+// outreach_replies никогда не создавалась ни одним скриптом — запрос к ней
+// падал с "relation does not exist", весь Promise.all летел в catch, и вся
+// статистика показывала 500 вместо реальных данных. Самосоздаём, как и
+// остальные таблицы в проекте, вместо падения.
+let tablesEnsured = false;
+async function ensureTables() {
+  if (tablesEnsured) return;
+  const sql = neon(process.env.DATABASE_URL!);
+  await sql`
+    CREATE TABLE IF NOT EXISTS outreach_replies (
+      id SERIAL PRIMARY KEY,
+      contact_id INTEGER REFERENCES outreach_contacts(id) ON DELETE CASCADE,
+      reply_text TEXT,
+      sentiment TEXT,
+      action TEXT,
+      summary TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  tablesEnsured = true;
+}
+
 // GET — статистика + последние контакты/письма/ответы для дашборда
 export async function GET(req: NextRequest) {
   const debug = req.nextUrl.searchParams.get("debug") === "1";
@@ -21,6 +43,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const sql = db();
+    await ensureTables();
 
     const [stats, contacts, replies] = await Promise.all([
       sql`SELECT status, COUNT(*) as count FROM outreach_contacts GROUP BY status`,
