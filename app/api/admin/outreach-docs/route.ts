@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function isAuthorized(req: NextRequest) {
   return !!(req.cookies.get("cb_admin")?.value || req.cookies.get("cb_tenant_session")?.value);
