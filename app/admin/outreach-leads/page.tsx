@@ -369,17 +369,19 @@ export default function OutreachLeadsPage() {
   }
 
   const WB_DISCOVERY_COMMAND = "node scripts/outreach/wb-discovery.mjs";
-  const WB_ENRICH_COMMAND = "DADATA_TOKEN=xxx node scripts/outreach/wb-enrich.mjs";
-  const [wbCmdCopied, setWbCmdCopied] = useState<"discovery" | "enrich" | null>(null);
-  async function copyWbCommand(which: "discovery" | "enrich") {
-    await navigator.clipboard.writeText(which === "discovery" ? WB_DISCOVERY_COMMAND : WB_ENRICH_COMMAND);
+  const OZON_DISCOVERY_COMMAND = "node scripts/outreach/ozon-discovery.mjs";
+  const MARKETPLACE_ENRICH_COMMAND = "DADATA_TOKEN=xxx node scripts/outreach/marketplace-enrich.mjs";
+  const [wbCmdCopied, setWbCmdCopied] = useState<"wb" | "ozon" | "enrich" | null>(null);
+  async function copyWbCommand(which: "wb" | "ozon" | "enrich") {
+    const cmd = which === "wb" ? WB_DISCOVERY_COMMAND : which === "ozon" ? OZON_DISCOVERY_COMMAND : MARKETPLACE_ENRICH_COMMAND;
+    await navigator.clipboard.writeText(cmd);
     setWbCmdCopied(which);
     setTimeout(() => setWbCmdCopied(null), 1500);
   }
 
-  const [docsSourceFilter, setDocsSourceFilter] = useState<"all" | "msp_registry" | "wb_pilot">("all");
+  const [docsSourceFilter, setDocsSourceFilter] = useState<"all" | "msp_registry" | "wb_pilot" | "ozon_pilot">("all");
   const filteredDocsContacts = docsContacts.filter((c) => {
-    const source = c.marketplace_source === "wb_pilot" ? "wb_pilot" : "msp_registry";
+    const source = c.marketplace_source === "wb_pilot" ? "wb_pilot" : c.marketplace_source === "ozon_pilot" ? "ozon_pilot" : "msp_registry";
     return docsSourceFilter === "all" || source === docsSourceFilter;
   });
 
@@ -478,25 +480,34 @@ export default function OutreachLeadsPage() {
               <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">🛍️</span>
-                  <span className="text-white font-medium text-sm">Шаг 1b — Найти продавцов на Wildberries (пилот: автозапчасти)</span>
+                  <span className="text-white font-medium text-sm">Шаг 1b — Найти продавцов на WB + Ozon (пилот: автозапчасти)</span>
                   <span className="text-xs px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">запускать локально</span>
                 </div>
                 <p className="text-slate-500 text-xs mb-3">
-                  Публичный поисковый JSON WB (без авторизации, без Seller API) → топ-50 продавцов категории по числу товаров.
-                  Затем обогащение: ИНН со страницы магазина → DaData на контакты.
+                  Публичный поисковый JSON без авторизации (не Seller API) → топ-50 продавцов категории по числу товаров на каждой площадке.
+                  Затем единое обогащение: ИНН со страницы магазина → DaData на контакты.
+                  <span className="block mt-1 text-amber-500/80">⚠️ Ozon защищён антиботом (Qrator) — может не сработать с обычного HTTP-клиента, это ожидаемо.</span>
                 </p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <code className="flex-1 text-xs text-slate-300 bg-slate-900 px-3 py-2 rounded-lg font-mono overflow-x-auto whitespace-nowrap">
                       {WB_DISCOVERY_COMMAND}
                     </code>
-                    <button onClick={() => copyWbCommand("discovery")} className="shrink-0 px-3 py-2 rounded-lg text-xs border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white transition">
-                      {wbCmdCopied === "discovery" ? "✓" : "Копировать"}
+                    <button onClick={() => copyWbCommand("wb")} className="shrink-0 px-3 py-2 rounded-lg text-xs border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white transition">
+                      {wbCmdCopied === "wb" ? "✓" : "Копировать"}
                     </button>
                   </div>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 text-xs text-slate-300 bg-slate-900 px-3 py-2 rounded-lg font-mono overflow-x-auto whitespace-nowrap">
-                      {WB_ENRICH_COMMAND}
+                      {OZON_DISCOVERY_COMMAND}
+                    </code>
+                    <button onClick={() => copyWbCommand("ozon")} className="shrink-0 px-3 py-2 rounded-lg text-xs border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white transition">
+                      {wbCmdCopied === "ozon" ? "✓" : "Копировать"}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs text-slate-300 bg-slate-900 px-3 py-2 rounded-lg font-mono overflow-x-auto whitespace-nowrap">
+                      {MARKETPLACE_ENRICH_COMMAND}
                     </code>
                     <button onClick={() => copyWbCommand("enrich")} className="shrink-0 px-3 py-2 rounded-lg text-xs border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white transition">
                       {wbCmdCopied === "enrich" ? "✓" : "Копировать"}
@@ -547,6 +558,7 @@ export default function OutreachLeadsPage() {
                       { key: "all", label: "Все" },
                       { key: "msp_registry", label: "МСП-реестр" },
                       { key: "wb_pilot", label: "🛍️ WB" },
+                      { key: "ozon_pilot", label: "🟠 Ozon" },
                     ] as const).map((f) => (
                       <button
                         key={f.key}
@@ -579,6 +591,7 @@ export default function OutreachLeadsPage() {
                           <tr key={c.id} className="border-t border-slate-800/60 hover:bg-slate-800/30 transition">
                             <td className="px-3 py-2 text-white text-xs max-w-[200px] truncate">
                               {c.marketplace_source === "wb_pilot" && <span className="mr-1">🛍️</span>}
+                              {c.marketplace_source === "ozon_pilot" && <span className="mr-1">🟠</span>}
                               {c.shop_url ? (
                                 <a href={c.shop_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
                                   {c.shop_name || c.company_name}
@@ -586,7 +599,9 @@ export default function OutreachLeadsPage() {
                               ) : (c.shop_name || c.company_name)}
                             </td>
                             <td className="px-3 py-2 text-slate-400 text-xs max-w-[140px] truncate">
-                              {c.marketplace_source === "wb_pilot" ? `${c.product_count ?? "—"} тов. (${c.product_category ?? "—"})` : (c.okvad_name || "—")}
+                              {c.marketplace_source === "wb_pilot" || c.marketplace_source === "ozon_pilot"
+                                ? `${c.product_count ?? "—"} тов. (${c.product_category ?? "—"})`
+                                : (c.okvad_name || "—")}
                             </td>
                             <td className="px-3 py-2 text-slate-400 text-xs">{c.region || "—"}</td>
                             <td className="px-3 py-2 text-blue-400 text-xs">{c.email || "—"}</td>
