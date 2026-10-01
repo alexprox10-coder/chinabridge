@@ -22,6 +22,9 @@ interface Contact {
   region: string;
   hasKeyword?: boolean;
   found?: string[];
+  phone?: string | null;
+  email?: string | null;
+  source?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -38,13 +41,17 @@ export async function POST(req: NextRequest) {
 
   for (const c of body.contacts) {
     try {
+      const status = c.phone || c.email ? "enriched" : "new";
       await sql`
         INSERT INTO outreach_contacts
-          (company_name, inn, okvad, okvad_name, region, has_china_keywords, china_keywords_found, status, source)
-        VALUES (${c.name}, ${c.inn}, ${c.okved}, ${c.okvedName}, ${c.region}, ${!!c.hasKeyword}, ${c.found ?? []}, 'new', 'msp_registry')
+          (company_name, inn, okvad, okvad_name, region, has_china_keywords, china_keywords_found, status, source, phone, email)
+        VALUES (${c.name}, ${c.inn}, ${c.okved}, ${c.okvedName}, ${c.region}, ${!!c.hasKeyword}, ${c.found ?? []}, ${status}, ${c.source ?? "msp_registry"}, ${c.phone ?? null}, ${c.email ?? null})
         ON CONFLICT (inn) DO UPDATE SET
           okvad = EXCLUDED.okvad, okvad_name = EXCLUDED.okvad_name,
-          has_china_keywords = EXCLUDED.has_china_keywords, china_keywords_found = EXCLUDED.china_keywords_found
+          has_china_keywords = EXCLUDED.has_china_keywords, china_keywords_found = EXCLUDED.china_keywords_found,
+          phone = COALESCE(EXCLUDED.phone, outreach_contacts.phone),
+          email = COALESCE(EXCLUDED.email, outreach_contacts.email),
+          status = CASE WHEN EXCLUDED.phone IS NOT NULL OR EXCLUDED.email IS NOT NULL THEN 'enriched' ELSE outreach_contacts.status END
       `;
       saved++;
       if (c.hasKeyword) withKeywords++;
