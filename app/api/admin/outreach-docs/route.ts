@@ -21,7 +21,7 @@ async function ensureTables() {
   await sql`
     CREATE TABLE IF NOT EXISTS outreach_replies (
       id SERIAL PRIMARY KEY,
-      contact_id INTEGER REFERENCES outreach_contacts(id) ON DELETE CASCADE,
+      contact_id UUID REFERENCES outreach_contacts(id) ON DELETE CASCADE,
       reply_text TEXT,
       sentiment TEXT,
       action TEXT,
