@@ -351,6 +351,8 @@ export default function OutreachLeadsPage() {
   const [docsReplies, setDocsReplies] = useState<DocsReply[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
   const [docsEnriching, setDocsEnriching] = useState(false);
+  const [docsEnrichAll, setDocsEnrichAll] = useState(false);
+  const [docsEnrichProgress, setDocsEnrichProgress] = useState<{ processed: number; total: number; found: number } | null>(null);
   const [docsEnrichResult, setDocsEnrichResult] = useState("");
   const [docsCopied, setDocsCopied] = useState(false);
 
@@ -388,6 +390,38 @@ export default function OutreachLeadsPage() {
       setDocsEnrichResult(`✗ ${String(e)}`);
     }
     setDocsEnriching(false);
+  }
+
+  async function runDocsEnrichAll() {
+    const total = docsStats.new ?? 0;
+    if (!total) return;
+    setDocsEnrichAll(true);
+    setDocsEnrichProgress({ processed: 0, total, found: 0 });
+    setDocsEnrichResult("");
+    let totalProcessed = 0;
+    let totalFound = 0;
+    while (true) {
+      try {
+        const res = await fetch("/api/admin/outreach-docs/enrich", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ limit: 100 }),
+        });
+        const data = await res.json();
+        if (!data.ok || data.processed === 0) break;
+        totalProcessed += data.processed;
+        totalFound += data.found;
+        setDocsEnrichProgress({ processed: totalProcessed, total, found: totalFound });
+        if (data.processed < 100) break;
+        await new Promise(r => setTimeout(r, 2000));
+      } catch {
+        break;
+      }
+    }
+    setDocsEnrichAll(false);
+    setDocsEnrichProgress(null);
+    setDocsEnrichResult(`✓ Полный прогон завершён: обработано ${totalProcessed}, найдено email: ${totalFound}`);
+    loadDocsData();
   }
 
   const MSP_COMMAND = "node scripts/outreach/parse-msp-registry.mjs --limit=1500";
@@ -669,13 +703,24 @@ export default function OutreachLeadsPage() {
                 <p className="text-slate-500 text-xs mb-3">
                   Ищет email/телефон по ИНН через DaData API (до 30 компаний за раз, приоритет — с китайскими ключевыми словами).
                 </p>
-                <button
-                  onClick={runDocsEnrich}
-                  disabled={docsEnriching || !docsStats.new}
-                  className="px-4 py-2 rounded-lg text-sm font-medium transition border bg-sky-900/20 border-sky-800 text-sky-400 hover:bg-sky-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {docsEnriching ? "⏳ Обогащаю..." : `▶ Обогатить 30 контактов (${docsStats.new ?? 0} в очереди)`}
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={runDocsEnrich}
+                    disabled={docsEnriching || docsEnrichAll || !docsStats.new}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition border bg-sky-900/20 border-sky-800 text-sky-400 hover:bg-sky-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {docsEnriching ? "⏳ Обогащаю..." : `▶ Обогатить 30`}
+                  </button>
+                  <button
+                    onClick={runDocsEnrichAll}
+                    disabled={docsEnriching || docsEnrichAll || !docsStats.new}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition border bg-emerald-900/20 border-emerald-800 text-emerald-400 hover:bg-emerald-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {docsEnrichAll
+                      ? `⏳ ${docsEnrichProgress?.processed ?? 0} / ${docsEnrichProgress?.total ?? 0} (найдено: ${docsEnrichProgress?.found ?? 0})`
+                      : `▶▶ Обогатить все (${docsStats.new ?? 0})`}
+                  </button>
+                </div>
                 {docsEnrichResult && (
                   <p className={`text-xs mt-2 ${docsEnrichResult.startsWith("✗") ? "text-red-400" : "text-emerald-400"}`}>{docsEnrichResult}</p>
                 )}
