@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
           okvad_name = EXCLUDED.okvad_name,
           product_vertical = EXCLUDED.product_vertical,
           lead_score = EXCLUDED.lead_score,
-          is_internet_seller = EXCLUDED.is_internet_seller
+          is_internet_seller = EXCLUDED.is_internet_seller,
+          source = 'msp_registry',
+          status = EXCLUDED.status
       `;
       saved++;
     } catch {}

@@ -119,30 +119,44 @@ async function parseXmlEntry(xmlBuffer) {
   });
 }
 
-// Отправка батча через node https (не fetch) — используем http.request
+// Отправка батча через PowerShell (Node.js HTTP заблокирован firewall)
+// JSON и PS-скрипт пишем в temp-файлы, запускаем powershell -File (без cmd.exe)
 async function postBatch(contacts, clear = false) {
-  const { http, https } = await import('node:http').then(h => ({ http: h, https: null })).catch(() => null) ?? {};
-  // Используем child_process для вызова PowerShell Invoke-RestMethod
-  // т.к. Node.js fetch/https заблокированы firewall
-  const { execSync } = await import('node:child_process');
+  const { execFileSync } = await import('node:child_process');
+  const ts = Date.now();
+  const tmpFile = path.join(os.tmpdir(), `msp-batch-${ts}.json`);
+  const tmpPs1  = path.join(os.tmpdir(), `msp-post-${ts}.ps1`);
 
-  const body = JSON.stringify({ contacts, clear });
-  const url = `${API_BASE}/api/admin/sellers-base/import`;
+  try {
+    fs.writeFileSync(tmpFile, JSON.stringify({ contacts, clear }), "utf-8");
+    const url = `${API_BASE}/api/admin/sellers-base/import`;
 
-  const cmd = `powershell -NoProfile -Command "
-$body = '${body.replace(/'/g, "''").replace(/`/g, '``')}';
-$headers = @{'x-import-key'='${IMPORT_KEY}';'Content-Type'='application/json'};
+    const psScript = `$body = Get-Content -Path '${tmpFile}' -Raw -Encoding UTF8
+$headers = @{'x-import-key'='${IMPORT_KEY}'; 'Content-Type'='application/json'}
 try {
-  $r = Invoke-RestMethod -Uri '${url}' -Method POST -Body $body -Headers $headers -TimeoutSec 30;
+  $r = Invoke-RestMethod -Uri '${url}' -Method POST -Body $body -Headers $headers -TimeoutSec 60
   Write-Output ('OK:' + $r.saved)
 } catch {
   Write-Output ('ERR:' + $_.Exception.Message)
-}
-"`;
+}`;
+    fs.writeFileSync(tmpPs1, psScript, "utf-8");
 
-  const out = execSync(cmd, { encoding: "utf-8", stdio: ["pipe","pipe","pipe"] }).trim();
-  if (out.startsWith("OK:")) return { ok: true, saved: parseInt(out.slice(3), 10) };
-  throw new Error(out);
+    let out;
+    try {
+      out = execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-File', tmpPs1], {
+        encoding: "utf-8",
+        stdio: ["pipe","pipe","pipe"]
+      }).trim();
+    } catch (e) {
+      throw new Error(`PowerShell failed (exit ${e.status}): ${e.stderr || e.message}`);
+    }
+
+    if (out.startsWith("OK:")) return { ok: true, saved: parseInt(out.slice(3), 10) };
+    throw new Error(out || "PowerShell returned empty output");
+  } finally {
+    try { fs.unlinkSync(tmpFile); } catch {}
+    try { fs.unlinkSync(tmpPs1); } catch {}
+  }
 }
 
 async function main() {
