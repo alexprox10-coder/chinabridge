@@ -24,9 +24,23 @@ interface ContactRow {
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const sql = neon(process.env.DATABASE_URL!);
-  const cols = await sql`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'outreach_contacts' ORDER BY ordinal_position`;
-  const cnt = await sql`SELECT source, COUNT(*) as n FROM outreach_contacts GROUP BY source ORDER BY n DESC LIMIT 20`;
-  return NextResponse.json({ cols, cnt });
+  try {
+    const cnt = await sql`SELECT source, COUNT(*) as n FROM outreach_contacts GROUP BY source ORDER BY n DESC LIMIT 20`;
+    // Reproduce the same ALTER TABLE as sellers-base GET to see if it errors
+    let alterErr = null;
+    try {
+      await sql`ALTER TABLE outreach_contacts ADD COLUMN IF NOT EXISTS product_vertical TEXT, ADD COLUMN IF NOT EXISTS lead_score INTEGER DEFAULT 0, ADD COLUMN IF NOT EXISTS is_internet_seller BOOLEAN DEFAULT false`;
+    } catch(e: unknown) { alterErr = e instanceof Error ? e.message : String(e); }
+    // Try the main count query
+    let countErr = null; let countResult = null;
+    try {
+      const [r] = await sql`SELECT COUNT(*) AS total FROM outreach_contacts WHERE source = 'msp_registry'`;
+      countResult = r;
+    } catch(e: unknown) { countErr = e instanceof Error ? e.message : String(e); }
+    return NextResponse.json({ cnt, alterErr, countErr, countResult });
+  } catch(e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
