@@ -21,6 +21,14 @@ interface ContactRow {
   isInternet: boolean;
 }
 
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const sql = neon(process.env.DATABASE_URL!);
+  const cols = await sql`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'outreach_contacts' ORDER BY ordinal_position`;
+  const cnt = await sql`SELECT source, COUNT(*) as n FROM outreach_contacts GROUP BY source ORDER BY n DESC LIMIT 20`;
+  return NextResponse.json({ cols, cnt });
+}
+
 export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
