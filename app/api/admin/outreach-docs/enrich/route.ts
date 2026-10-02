@@ -55,11 +55,15 @@ export async function POST(req: NextRequest) {
     try {
       const result = await findByInn(c.inn, token);
       if (result?.email) {
-        await sql`UPDATE outreach_contacts SET email = ${result.email}, phone = ${result.phone}, website = ${result.website}, status = 'enriched' WHERE id = ${c.id}`;
+        await sql`UPDATE outreach_contacts SET email = ${result.email}, phone = ${result.phone}, status = 'enriched' WHERE id = ${c.id}`;
         found++;
+      } else {
+        // Всегда двигаем статус вперёд — иначе одни и те же контакты попадают в следующую пачку
+        await sql`UPDATE outreach_contacts SET status = 'no_contact', phone = ${result?.phone ?? null} WHERE id = ${c.id}`;
       }
       details.push({ company: c.company_name, email: result?.email || null });
     } catch {
+      await sql`UPDATE outreach_contacts SET status = 'no_contact' WHERE id = ${c.id}`.catch(() => null);
       details.push({ company: c.company_name, email: null });
     }
     await new Promise((r) => setTimeout(r, 120));
