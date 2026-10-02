@@ -315,6 +315,35 @@ export default function OutreachLeadsPage() {
     setTimeout(() => setCopiedDork(null), 1500);
   }
 
+  // ── AI Import Manager state ────────────────────────────────────────────
+  const [aiOpen, setAiOpen] = useState(true);
+  const [aiStats, setAiStats] = useState<{
+    today: number; week: number; total: number; handoffs: number;
+    anonToday: number; tgToday: number;
+  } | null>(null);
+  const [aiDaily, setAiDaily] = useState<Array<{ day: string; sessions: number }>>([]);
+  const [aiSessions, setAiSessions] = useState<Array<{
+    id: string; created_at: string; user_telegram: string;
+    title: string | null; status: string; msg_count: number; handoffs: number;
+  }>>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  async function loadAiStats() {
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/admin/ai-import-stats");
+      const data = await res.json();
+      if (data.ok) {
+        setAiStats(data.stats);
+        setAiDaily(data.daily ?? []);
+        setAiSessions(data.recentSessions ?? []);
+      }
+    } catch {}
+    setAiLoading(false);
+  }
+
+  useEffect(() => { loadAiStats(); }, []);
+
   // ── Docs Outreach state ────────────────────────────────────────────────
   const [docsOpen, setDocsOpen] = useState(true);
   const [docsStats, setDocsStats] = useState<Record<string, number>>({});
@@ -404,6 +433,120 @@ export default function OutreachLeadsPage() {
           >
             📊 Google Sheet
           </a>
+        </div>
+
+        {/* ── ChinaBridge AI Import Manager ── */}
+        <div className="bg-slate-900 border border-violet-900/50 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setAiOpen(o => !o)}
+            className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-800/40 transition"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🤖</span>
+              <div className="text-left">
+                <h2 className="text-white font-semibold">ChinaBridge AI Import Manager</h2>
+                <p className="text-slate-500 text-xs mt-0.5">Сессии, аналитика, хэндоффы → менеджеру</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {aiStats && (
+                <span className="text-xs px-2 py-1 rounded-full bg-violet-900/50 text-violet-400 font-medium">
+                  {aiStats.today} сегодня
+                </span>
+              )}
+              <a
+                href="/ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="text-xs px-2 py-1 rounded-full bg-slate-700/60 text-slate-400 hover:text-white transition"
+              >
+                → /ai
+              </a>
+              <span className="text-slate-500 text-sm">{aiOpen ? "▲" : "▼"}</span>
+            </div>
+          </button>
+
+          {aiOpen && (
+            <div className="border-t border-slate-800 p-5 space-y-5">
+              {/* Stat cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {[
+                  { label: "Сессий сегодня", value: aiStats?.today ?? "—", color: "text-violet-400" },
+                  { label: "За 7 дней", value: aiStats?.week ?? "—", color: "text-violet-300" },
+                  { label: "Всего сессий", value: aiStats?.total ?? "—", color: "text-slate-300" },
+                  { label: "Хэндоффов", value: aiStats?.handoffs ?? "—", color: "text-emerald-400" },
+                  { label: "Анонимных (сегодня)", value: aiStats?.anonToday ?? "—", color: "text-slate-400" },
+                  { label: "Telegram (сегодня)", value: aiStats?.tgToday ?? "—", color: "text-sky-400" },
+                ].map(s => (
+                  <div key={s.label} className="bg-slate-800/50 rounded-xl p-3 text-center">
+                    <div className={`text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</div>
+                    <div className="text-slate-500 text-xs mt-1 leading-tight">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Refresh + link */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  onClick={loadAiStats}
+                  disabled={aiLoading}
+                  className="text-xs px-3 py-1.5 rounded-full border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition"
+                >
+                  {aiLoading ? "⏳..." : "↻ Обновить"}
+                </button>
+                {aiDaily.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {aiDaily.map(d => (
+                      <span key={d.day} className="text-xs text-slate-500">
+                        {new Date(d.day).toLocaleDateString("ru-RU", { weekday: "short", day: "numeric" })}: <span className="text-violet-400 font-medium">{d.sessions}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Recent sessions */}
+              {aiSessions.length > 0 && (
+                <div className="overflow-x-auto rounded-lg border border-slate-800">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-800/60 text-slate-400 text-left">
+                        <th className="px-3 py-2 font-medium text-xs">Пользователь</th>
+                        <th className="px-3 py-2 font-medium text-xs">Тема</th>
+                        <th className="px-3 py-2 font-medium text-xs">Сообщений</th>
+                        <th className="px-3 py-2 font-medium text-xs">Хэндофф</th>
+                        <th className="px-3 py-2 font-medium text-xs">Дата</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {aiSessions.map(s => (
+                        <tr key={s.id} className="border-t border-slate-800/60 hover:bg-slate-800/30 transition">
+                          <td className="px-3 py-2 text-xs">
+                            {s.user_telegram?.startsWith("anon-") ? (
+                              <span className="text-slate-500">анонимный</span>
+                            ) : (
+                              <span className="text-sky-400">{s.user_telegram || "—"}</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-white text-xs max-w-[200px] truncate">{s.title || "—"}</td>
+                          <td className="px-3 py-2 text-slate-400 text-xs">{s.msg_count}</td>
+                          <td className="px-3 py-2 text-xs">
+                            {s.handoffs > 0 ? (
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400">✓ хэндофф</span>
+                            ) : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-slate-500 text-xs whitespace-nowrap">
+                            {new Date(s.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── ChinaBridge Docs Outreach (МСП реестр + DaData) ── */}
