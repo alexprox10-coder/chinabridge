@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
 
   const sql = neon(process.env.DATABASE_URL!);
-  const companies = companiesData as Record<string, string>[];
+  const companies = companiesData as unknown as Record<string, string | null>[];
 
   let inserted = 0, updated = 0, skipped = 0;
   const errors: string[] = [];
