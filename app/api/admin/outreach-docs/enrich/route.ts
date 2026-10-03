@@ -39,14 +39,23 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const limit = Math.min(Number(body.limit) || 30, 100);
+  const source: string | null = body.source || null;
 
   const sql = db();
-  const contacts = await sql`
-    SELECT id, company_name, inn FROM outreach_contacts
-    WHERE status = 'new' AND email IS NULL AND inn IS NOT NULL
-    ORDER BY has_china_keywords DESC, created_at ASC
-    LIMIT ${limit}
-  ` as Array<{ id: string; company_name: string; inn: string }>;
+  const contacts = (source
+    ? await sql`
+        SELECT id, company_name, inn FROM outreach_contacts
+        WHERE status = 'new' AND email IS NULL AND inn IS NOT NULL AND source = ${source}
+        ORDER BY lead_score DESC NULLS LAST, created_at ASC
+        LIMIT ${limit}
+      `
+    : await sql`
+        SELECT id, company_name, inn FROM outreach_contacts
+        WHERE status = 'new' AND email IS NULL AND inn IS NOT NULL
+        ORDER BY has_china_keywords DESC, created_at ASC
+        LIMIT ${limit}
+      `
+  ) as Array<{ id: string; company_name: string; inn: string }>;
 
   let found = 0;
   const details: Array<{ company: string; email: string | null }> = [];

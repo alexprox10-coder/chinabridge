@@ -83,7 +83,7 @@ export default function SellersBasePage() {
       const res = await fetch("/api/admin/outreach-docs/enrich", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit: 30 }),
+        body: JSON.stringify({ limit: 30, source: "msp_registry" }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -107,7 +107,7 @@ export default function SellersBasePage() {
         const res = await fetch("/api/admin/outreach-docs/enrich", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ limit: 100 }),
+          body: JSON.stringify({ limit: 100, source: "msp_registry" }),
         });
         const data = await res.json();
         if (!data.ok || data.processed === 0) break;
