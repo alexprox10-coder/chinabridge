@@ -45,6 +45,13 @@ export async function GET(req: NextRequest) {
       product_category: extra.product_category as string | null,
       supplier_found: extra.supplier_found as string | null,
       msp_category: extra.msp_category as string | null,
+      what_they_sell: extra.what_they_sell as string | null,
+      who_are_clients: extra.who_are_clients as string | null,
+      china_fit: extra.china_fit as string | null,
+      suggested_goods: extra.suggested_goods as string | null,
+      kp_message: extra.kp_message as string | null,
+      ai_priority: extra.ai_priority as string | null,
+      priority_reason: extra.priority_reason as string | null,
     };
   });
 
@@ -97,11 +104,33 @@ export async function POST(req: NextRequest) {
   const okvadFull = extra.okvad_full as string | null;
   const companyName = rows[0].company_name as string;
 
-  let productCategory = "неизвестно";
+  interface AnalysisResult {
+    product_category: string;
+    what_they_sell: string;
+    who_are_clients: string;
+    geography: string;
+    china_fit: string;
+    suggested_goods: string;
+    kp_message: string;
+    priority: "HIGH" | "MEDIUM" | "LOW";
+    priority_reason: string;
+  }
 
+  let analysis: AnalysisResult = {
+    product_category: "неизвестно",
+    what_they_sell: "",
+    who_are_clients: "",
+    geography: extra.region as string || "",
+    china_fit: "",
+    suggested_goods: "",
+    kp_message: "",
+    priority: "MEDIUM",
+    priority_reason: "",
+  };
+
+  let siteMarkdown = "";
   if (siteUrl) {
     try {
-      // Firecrawl scrape
       const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.FIRECRAWL_API_KEY}` },
@@ -110,40 +139,78 @@ export async function POST(req: NextRequest) {
       });
       if (fcRes.ok) {
         const fcData = await fcRes.json();
-        const markdown = fcData.data?.markdown ?? fcData.markdown ?? "";
-        // Claude analyze
-        const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": process.env.ANTHROPIC_API_KEY!,
-            "anthropic-version": "2023-06-01",
-          },
-          body: JSON.stringify({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens: 100,
-            messages: [{
-              role: "user",
-              content: `Компания: ${companyName}\nОКВЭД: ${okvadFull}\nСайт (первые 2000 символов):\n${markdown.slice(0,2000)}\n\nОпредели основную категорию товаров этой компании в 2-4 слова (например: "косметика и гигиена", "текстиль оптом", "строительные материалы"). Ответь ТОЛЬКО категорией, без пояснений.`
-            }],
-          }),
-          signal: AbortSignal.timeout(15000),
-        });
-        if (aiRes.ok) {
-          const aiData = await aiRes.json();
-          productCategory = aiData.content?.[0]?.text?.trim() ?? "неизвестно";
-        }
+        siteMarkdown = (fcData.data?.markdown ?? fcData.markdown ?? "").slice(0, 3000);
       }
-    } catch { /* use okvad as fallback */ }
+    } catch { /* no site data */ }
   }
 
-  // Fallback to ОКВЭД description
-  if (productCategory === "неизвестно" && okvadFull) {
-    const parts = okvadFull.replace(/^\d+\.?\d*\s*/, "").split(" ").slice(0, 4);
-    productCategory = parts.join(" ").toLowerCase();
+  try {
+    const revenue = extra.revenue ? `${Math.round(Number(extra.revenue) / 1_000_000)} млн ₽` : "неизвестна";
+    const employees = extra.employees ? `${extra.employees} чел` : "неизвестно";
+    const prompt = `Ты аналитик компании ChinaBridge — мы помогаем российским компаниям закупать товары в Китае (1688, Alibaba, Taobao) и доставлять их в Россию/Казахстан.
+
+Проанализируй компанию-лид:
+Название: ${companyName}
+ОКВЭД: ${okvadFull}
+Выручка: ${revenue}
+Сотрудников: ${employees}
+Регион: ${extra.region || "неизвестен"}
+Сайт (${siteUrl || "нет"}):
+${siteMarkdown || "(нет данных с сайта)"}
+
+Ответь СТРОГО в формате JSON (без markdown, без пояснений вне JSON):
+{
+  "product_category": "3-5 слов — категория товаров",
+  "what_they_sell": "1-2 предложения что именно продают/производят",
+  "who_are_clients": "кто их покупатели (B2B/B2C, отрасли, розница/опт)",
+  "china_fit": "почему им нужны товары из Китая — конкретно",
+  "suggested_goods": "3-5 конкретных категорий товаров из Китая которые им подойдут",
+  "kp_message": "готовое первое сообщение директору на WhatsApp/Telegram (2-3 предложения, без воды, конкретная польза)",
+  "priority": "HIGH или MEDIUM или LOW",
+  "priority_reason": "почему такой приоритет (выручка, ниша, очевидная потребность)"
+}`;
+
+    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY!,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 800,
+        messages: [{ role: "user", content: prompt }],
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (aiRes.ok) {
+      const aiData = await aiRes.json();
+      const raw = aiData.content?.[0]?.text?.trim() ?? "{}";
+      const parsed = JSON.parse(raw.replace(/^```json\n?/, "").replace(/\n?```$/, ""));
+      analysis = { ...analysis, ...parsed };
+    }
+  } catch {
+    // fallback: use ОКВЭД
+    if (okvadFull) {
+      const parts = okvadFull.replace(/^\d+\.?\d*\s*/, "").split(" ").slice(0, 4);
+      analysis.product_category = parts.join(" ").toLowerCase();
+    }
   }
 
-  extra.product_category = productCategory;
+  // Merge all analysis fields into extra
+  Object.assign(extra, {
+    product_category: analysis.product_category,
+    what_they_sell: analysis.what_they_sell,
+    who_are_clients: analysis.who_are_clients,
+    china_fit: analysis.china_fit,
+    suggested_goods: analysis.suggested_goods,
+    kp_message: analysis.kp_message,
+    ai_priority: analysis.priority,
+    priority_reason: analysis.priority_reason,
+    site_markdown_snippet: siteMarkdown.slice(0, 500),
+  });
 
   await sql`
     UPDATE outreach_contacts
@@ -152,5 +219,5 @@ export async function POST(req: NextRequest) {
     WHERE id = ${id} AND source = 'kontur_compass'
   `;
 
-  return NextResponse.json({ ok: true, product_category: productCategory });
+  return NextResponse.json({ ok: true, analysis });
 }

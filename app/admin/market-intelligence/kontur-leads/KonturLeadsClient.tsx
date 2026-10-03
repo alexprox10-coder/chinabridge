@@ -21,6 +21,14 @@ interface KLead {
   product_category: string | null;
   supplier_found: string | null;
   msp_category: string | null;
+  // AI analysis fields
+  what_they_sell: string | null;
+  who_are_clients: string | null;
+  china_fit: string | null;
+  suggested_goods: string | null;
+  kp_message: string | null;
+  ai_priority: string | null;
+  priority_reason: string | null;
 }
 
 const STAGES: { key: string; label: string; color: string; emoji: string }[] = [
@@ -55,12 +63,21 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
   const [open, setOpen] = useState(false);
   const revenue = fmtRevenue(lead.revenue);
 
+  const priorityColor = lead.ai_priority === "HIGH" ? "border-green-500 bg-green-950/20" :
+    lead.ai_priority === "LOW" ? "border-slate-700 bg-slate-900/20" : "border-slate-600 bg-slate-800";
+
+  const hasAnalysis = !!(lead.what_they_sell || lead.kp_message);
+
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 mb-2 cursor-pointer hover:border-slate-500 transition-colors">
+    <div className={`border rounded-lg p-3 mb-2 cursor-pointer hover:border-slate-400 transition-colors ${hasAnalysis ? priorityColor : "border-slate-700 bg-slate-800"}`}>
       <div onClick={() => setOpen(!open)}>
         <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-white text-xs font-semibold leading-tight line-clamp-2">{lead.company_name}</p>
-          <ScoreDot score={lead.lead_score} />
+          <p className="text-white text-xs font-semibold leading-tight">{lead.company_name}</p>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {lead.ai_priority === "HIGH" && <span className="text-[9px] text-green-400 bg-green-900/40 rounded px-1">🔥 HIGH</span>}
+            {lead.ai_priority === "LOW" && <span className="text-[9px] text-slate-500 bg-slate-700 rounded px-1">LOW</span>}
+            <ScoreDot score={lead.lead_score} />
+          </div>
         </div>
         <div className="flex flex-wrap gap-1 mb-1">
           {lead.region && <span className="text-[10px] text-slate-400 bg-slate-700 rounded px-1">{lead.region}</span>}
@@ -70,34 +87,76 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
         {lead.product_category && (
           <p className="text-[10px] text-violet-300 bg-violet-900/20 rounded px-1.5 py-0.5 mb-1 inline-block">{lead.product_category}</p>
         )}
+        {lead.what_they_sell && (
+          <p className="text-[10px] text-slate-300 leading-tight mb-1">{lead.what_they_sell}</p>
+        )}
         {lead.supplier_found && (
           <p className="text-[10px] text-amber-300 bg-amber-900/20 rounded px-1.5 py-0.5 mb-1 inline-block">🏭 {lead.supplier_found}</p>
         )}
       </div>
 
       {open && (
-        <div className="mt-2 pt-2 border-t border-slate-700 space-y-1.5">
-          {lead.director && <p className="text-[10px] text-slate-300">👤 {lead.director} ({lead.position || "руководитель"})</p>}
-          {lead.phone && <p className="text-[10px] text-cyan-400">📞 {lead.phone}</p>}
-          {lead.email && <p className="text-[10px] text-cyan-400 break-all">✉️ {lead.email}</p>}
-          {lead.site_url && (
-            <a href={lead.site_url} target="_blank" rel="noopener noreferrer"
-              className="text-[10px] text-blue-400 hover:underline block truncate">🌐 {lead.site_url}</a>
+        <div className="mt-2 pt-2 border-t border-slate-700 space-y-2">
+
+          {/* Contacts */}
+          <div className="space-y-0.5">
+            {lead.director && <p className="text-[10px] text-slate-300">👤 {lead.director} ({lead.position || "руководитель"})</p>}
+            {lead.phone && <p className="text-[10px] text-cyan-400">📞 {lead.phone}</p>}
+            {lead.email && <p className="text-[10px] text-cyan-400 break-all">✉️ {lead.email}</p>}
+            {lead.site_url && (
+              <a href={lead.site_url} target="_blank" rel="noopener noreferrer"
+                className="text-[10px] text-blue-400 hover:underline block truncate">🌐 {lead.site_url}</a>
+            )}
+            <p className="text-[10px] text-slate-600">ИНН: {lead.inn}</p>
+          </div>
+
+          {/* AI Analysis block */}
+          {hasAnalysis && (
+            <div className="space-y-1.5 pt-1 border-t border-slate-700/50">
+              <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold">AI Аналитика</p>
+
+              {lead.who_are_clients && (
+                <div>
+                  <p className="text-[9px] text-slate-500 uppercase">Клиенты</p>
+                  <p className="text-[10px] text-slate-300">{lead.who_are_clients}</p>
+                </div>
+              )}
+              {lead.china_fit && (
+                <div>
+                  <p className="text-[9px] text-slate-500 uppercase">Зачем им Китай</p>
+                  <p className="text-[10px] text-slate-300">{lead.china_fit}</p>
+                </div>
+              )}
+              {lead.suggested_goods && (
+                <div>
+                  <p className="text-[9px] text-slate-500 uppercase">Товары из Китая</p>
+                  <p className="text-[10px] text-amber-300">{lead.suggested_goods}</p>
+                </div>
+              )}
+              {lead.priority_reason && (
+                <div>
+                  <p className="text-[9px] text-slate-500 uppercase">Приоритет</p>
+                  <p className="text-[10px] text-slate-400">{lead.priority_reason}</p>
+                </div>
+              )}
+              {lead.kp_message && (
+                <div className="bg-blue-950/40 border border-blue-800/50 rounded p-2">
+                  <p className="text-[9px] text-blue-400 uppercase font-semibold mb-1">📨 Готовое КП (WhatsApp/TG)</p>
+                  <p className="text-[10px] text-blue-200 leading-relaxed">{lead.kp_message}</p>
+                </div>
+              )}
+            </div>
           )}
-          {lead.okvad_full && <p className="text-[10px] text-slate-500 leading-tight">{lead.okvad_full.slice(0, 80)}</p>}
-          <p className="text-[10px] text-slate-500">ИНН: {lead.inn}</p>
 
           {/* Action buttons */}
-          <div className="flex flex-wrap gap-1 pt-1">
-            {lead.status === "new" && !lead.product_category && (
-              <button
-                onClick={() => onAnalyze(lead.id)}
-                disabled={analyzing}
-                className="text-[10px] bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white rounded px-2 py-0.5"
-              >
-                {analyzing ? "..." : "🤖 AI Анализ"}
-              </button>
-            )}
+          <div className="flex flex-wrap gap-1 pt-1 border-t border-slate-700/50">
+            <button
+              onClick={() => onAnalyze(lead.id)}
+              disabled={analyzing}
+              className="text-[10px] bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white rounded px-2 py-0.5"
+            >
+              {analyzing ? "⏳" : hasAnalysis ? "🔄 Переанализ" : "🤖 AI Анализ"}
+            </button>
             {STAGES.filter(s => s.key !== lead.status && s.key !== "analyzing").map(s => (
               <button
                 key={s.key}
@@ -153,9 +212,21 @@ export default function KonturLeadsClient() {
         body: JSON.stringify({ id }),
       });
       const d = await r.json();
-      if (d.ok) {
+      if (d.ok && d.analysis) {
+        const a = d.analysis;
         setLeads(prev => prev.map(l =>
-          l.id === id ? { ...l, product_category: d.product_category, status: l.status === "new" ? "analyzing" : l.status } : l
+          l.id === id ? {
+            ...l,
+            product_category: a.product_category ?? l.product_category,
+            what_they_sell: a.what_they_sell ?? l.what_they_sell,
+            who_are_clients: a.who_are_clients ?? l.who_are_clients,
+            china_fit: a.china_fit ?? l.china_fit,
+            suggested_goods: a.suggested_goods ?? l.suggested_goods,
+            kp_message: a.kp_message ?? l.kp_message,
+            ai_priority: a.priority ?? l.ai_priority,
+            priority_reason: a.priority_reason ?? l.priority_reason,
+            status: l.status === "new" ? "analyzing" : l.status,
+          } : l
         ));
       }
     } finally { setAnalyzingId(null); }
