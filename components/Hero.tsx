@@ -101,7 +101,7 @@ export default function Hero() {
   const scrollTo = (href: string) => document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden pt-20" ref={ref}>
+    <section className="relative min-h-[85vh] flex items-center overflow-hidden pt-20" ref={ref}>
       {/* ── Фоновые слои Hero ── */}
       {/* Base gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#040d1a] via-[#0B1F3A] to-[#071628]"/>
@@ -211,12 +211,12 @@ export default function Hero() {
             </div>
 
             <h1 className="fade-up text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-4">
-              Есть товар в Китае?<br/>
-              <span className="text-gradient">Мы привезём его<br className="sm:hidden"/> в Россию или Казахстан.</span>
+              Импортируйте из Китая<br/>
+              <span className="text-gradient">без рисков — с представителем на месте.</span>
             </h1>
 
             <p className="fade-up text-base text-[#8899aa] leading-relaxed mb-6 max-w-lg">
-              Поставщик уже есть — менять его не нужно. Рассчитаем поставку, организуем забор, консолидацию и доставку с необходимыми документами.
+              Найдём поставщика, проверим фабрику, выкупим товар, оформим таможню и доставим до вашего склада. WB, Ozon, Kaspi — работаем с маркетплейсами.
             </p>
 
             {/* Главная форма */}
@@ -232,7 +232,7 @@ export default function Hero() {
                       window.open(`https://t.me/ChinaBridgeLID_bot?start=${encodeURIComponent(product || "start")}`, "_blank");
                     }
                   }}
-                  placeholder="Что хотите привезти из Китая?"
+                  placeholder="Опишите товар или задачу — рассчитаем за 15 мин"
                   className="flex-1 bg-[#0B1F3A] border border-[#243a5e] focus:border-[#00A86B]/60 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-[#556677] outline-none transition-colors"
                 />
                 <a

@@ -75,19 +75,19 @@ export default function RuForm() {
 
         {/* Headline */}
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">
-          Есть поставщик в Китае?<br />
+          Импорт из Китая<br />
           <span className="bg-gradient-to-r from-[#00A86B] to-[#00d48a] bg-clip-text text-transparent">
-            Рассчитаем поставку в Россию
+            с представителем на месте
           </span>
         </h1>
         <p className="text-[#8899aa] text-sm mb-5">
-          Менять поставщика не нужно. Рассчитаем закупку, логистику и экономику поставки для WB и Ozon.
+          Найдём поставщика, проверим фабрику, организуем доставку и таможню. WB, Ozon, Kaspi.
           Оставьте заявку — ответим за 15 минут.
         </p>
 
         {/* Trust chips */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {["🏭 Офис в Китае", "🇷🇺 Доставка в РФ", "📦 WB / Ozon", "⚡ Ответим за 15 мин"].map(t => (
+          {["🏭 Офис в Китае", "🇷🇺🇰🇿 РФ и Казахстан", "📦 WB / Ozon / Kaspi", "⚡ Ответим за 15 мин"].map(t => (
             <span key={t} className="text-xs bg-white/8 border border-white/10 text-white rounded-full px-3 py-1">{t}</span>
           ))}
         </div>
@@ -184,6 +184,7 @@ export default function RuForm() {
             {[
               { name: "Wildberries", color: "text-purple-400", emoji: "🟣" },
               { name: "Ozon", color: "text-blue-400", emoji: "🔵" },
+              { name: "Kaspi", color: "text-red-400", emoji: "🔴" },
             ].map(mp => (
               <div key={mp.name} className="flex-1 bg-white/5 rounded-xl p-3 text-center">
                 <div className="text-xl mb-1">{mp.emoji}</div>
