@@ -190,6 +190,29 @@ export default async function MarketIntelligencePage() {
               <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
             </Link>
 
+            {/* Kontur Leads Pipeline */}
+            <Link href="/admin/market-intelligence/kontur-leads"
+              className="bg-gradient-to-br from-violet-600/20 to-violet-800/10 border border-violet-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">🏢</span>
+                <h3 className="text-white font-bold text-base">Контур.Поиск — Воронка</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-4">50 компаний с маркетплейсов: воронка CRM + AI анализ категорий + поиск поставщиков</p>
+              <div className="space-y-1.5">
+                {[
+                  { label: "Компаний", value: "50 (Контур.Поиск)" },
+                  { label: "AI Анализ", value: "Firecrawl + Claude → категория" },
+                  { label: "Поставщики", value: "Accio / АнтонКит" },
+                ].map(s => (
+                  <div key={s.label} className="flex justify-between text-sm">
+                    <span className="text-slate-500">{s.label}</span>
+                    <span className="text-white font-medium text-xs">{s.value}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-right text-xs text-slate-500">Открыть →</p>
+            </Link>
+
             {/* Deal Intelligence */}
             <Link href="/admin/market-intelligence/deals"
               className="bg-gradient-to-br from-emerald-600/20 to-emerald-800/10 border border-emerald-600/30 rounded-2xl p-6 hover:scale-[1.01] transition-transform block">
