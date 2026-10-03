@@ -29,6 +29,8 @@ interface KLead {
   pain_points: string | null;
   ved_status: string | null;
   ved_details: string | null;
+  specific_skus: string | null;
+  price_range: string | null;
   suggested_goods: string | null;
   supplier_search_queries: string | null;
   estimated_order_volume: string | null;
@@ -183,6 +185,20 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
                 </div>
               )}
 
+              {lead.specific_skus && (
+                <div className="bg-amber-950/30 border border-amber-700/40 rounded px-2 py-1.5">
+                  <p className="text-[9px] text-amber-400 uppercase font-bold">📦 SKU + Цены (РФ vs Китай)</p>
+                  <p className="text-[10px] text-amber-200 whitespace-pre-wrap leading-4">{lead.specific_skus}</p>
+                </div>
+              )}
+
+              {lead.price_range && (
+                <div>
+                  <p className="text-[9px] text-slate-500 uppercase">💰 Ценовой диапазон</p>
+                  <p className="text-[10px] text-green-300">{lead.price_range}</p>
+                </div>
+              )}
+
               {lead.suggested_goods && (
                 <div>
                   <p className="text-[9px] text-slate-500 uppercase">Товары для закупки</p>
@@ -305,6 +321,8 @@ export default function KonturLeadsClient() {
             pain_points: a.pain_points ?? l.pain_points,
             ved_status: a.ved_status ?? l.ved_status,
             ved_details: a.ved_details ?? l.ved_details,
+            specific_skus: a.specific_skus ?? l.specific_skus,
+            price_range: a.price_range ?? l.price_range,
             suggested_goods: a.suggested_goods ?? l.suggested_goods,
             supplier_search_queries: a.supplier_search_queries ?? l.supplier_search_queries,
             estimated_order_volume: a.estimated_order_volume ?? l.estimated_order_volume,

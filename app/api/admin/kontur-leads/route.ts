@@ -20,11 +20,13 @@ interface AnalysisResult {
   pain_points: string;
   ved_status: string;
   ved_details: string;
+  specific_skus: string;
+  price_range: string;
   suggested_goods: string;
   supplier_search_queries: string;
   estimated_order_volume: string;
   stop_factors: string;
-  deal_score: "A" | "B" | "C";
+  deal_score: "A" | "B" | "C" | "D";
   deal_score_reason: string;
   kp_message: string;
   priority: "HIGH" | "MEDIUM" | "LOW";
@@ -73,6 +75,8 @@ export async function GET(req: NextRequest) {
       pain_points: extra.pain_points as string | null,
       ved_status: extra.ved_status as string | null,
       ved_details: extra.ved_details as string | null,
+      specific_skus: extra.specific_skus as string | null,
+      price_range: extra.price_range as string | null,
       suggested_goods: extra.suggested_goods as string | null,
       supplier_search_queries: extra.supplier_search_queries as string | null,
       estimated_order_volume: extra.estimated_order_volume as string | null,
@@ -141,6 +145,8 @@ async function analyzeCompany(
     pain_points: "",
     ved_status: "",
     ved_details: "",
+    specific_skus: "",
+    price_range: "",
     suggested_goods: "",
     supplier_search_queries: "",
     estimated_order_volume: "",
@@ -245,11 +251,15 @@ ${siteText ? `\n=== КОНТЕНТ САЙТА ===\n${siteText}\n=== КОНЕЦ =
 
   "china_fit": "Почему Китай решает их боль: конкретный товар → конкретная экономия или закрытие дефицита. НЕ 'цены ниже' — а ПОЧЕМУ именно для них",
 
-  "suggested_goods": "5-7 конкретных позиций для закупки через ChinaBridge: [артикул/категория на 1688] — например 'моторное масло 5W-30 SN/CF Great Wall, базовые масла группы II, присадки ZDDP'",
+  "specific_skus": "3-5 КОНКРЕТНЫХ SKU которые эта компания покупает/продаёт. Формат каждой позиции: [Название товара] | РФ розница ~X ₽/шт | РФ опт ~Y ₽/шт | Китай закупка ~Z ¥/шт | Мин. партия N шт. Пример: 'Маска медицинская 3-слойная IIR | РФ розница ~8 ₽/шт | РФ опт ~4 ₽/шт | Китай ~0.8 юань/шт | Мин. 10 000 шт'. Если точные цены неизвестны — оцени по рыночному контексту.",
 
-  "supplier_search_queries": "3-5 поисковых запросов на английском для поиска поставщика на 1688/Accio — чтобы сразу использовать для подбора: например 'motor oil 5W30 SN manufacturer', 'ZDDP additive package bulk'",
+  "price_range": "Ценовой диапазон по категории: средний чек клиента, маржа дистрибьютора, потенциальная экономия при прямом импорте. Пример: 'Розница 500-2000₽/ед, опт 200-800₽/ед, импорт из Китая 50-150₽/ед — экономия 60-75%'",
 
-  "estimated_order_volume": "Оценка объёма закупок: разовая партия (размер и частота) + годовой потенциал в $ или кг — на основе выручки и ниши",
+  "suggested_goods": "5-7 конкретных позиций для закупки через ChinaBridge с артикулом/категорией 1688. Пример: 'маска медицинская 3-слойная IIR (医用外科口罩), перчатки нитриловые S/M/L (丁腈手套), одноразовые шприцы 5мл (一次性注射器)'",
+
+  "supplier_search_queries": "5 поисковых запросов на английском для 1688/Accio — точные, как вводить в поиск. Пример: 'disposable medical mask IIR wholesale', 'nitrile gloves manufacturer 100pcs box', 'medical syringe 5ml CE ISO bulk'",
+
+  "estimated_order_volume": "Оценка объёма: разовая партия (шт/кг + ₽/$) + частота (раз в мес/кв) + годовой потенциал — на основе выручки компании и ниши",
 
   "stop_factors": "Стоп-факторы (честно): ГОСТ/сертификация (для каких позиций) / госконтракты (% выручки) / уже прямой импорт / не нужен товар — или 'НЕТ стоп-факторов'",
 
@@ -279,7 +289,7 @@ ${siteText ? `\n=== КОНТЕНТ САЙТА ===\n${siteText}\n=== КОНЕЦ =
       },
       body: JSON.stringify({
         model: orModel,
-        max_tokens: 1800,
+        max_tokens: 2400,
         temperature: 0.3,
         messages: [
           { role: "system", content: systemMsg },
@@ -345,6 +355,8 @@ export async function POST(req: NextRequest) {
     pain_points: analysis.pain_points,
     ved_status: analysis.ved_status,
     ved_details: analysis.ved_details,
+    specific_skus: analysis.specific_skus,
+    price_range: analysis.price_range,
     suggested_goods: analysis.suggested_goods,
     supplier_search_queries: analysis.supplier_search_queries,
     estimated_order_volume: analysis.estimated_order_volume,
@@ -427,6 +439,8 @@ export async function PUT(req: NextRequest) {
       pain_points: analysis.pain_points,
       ved_status: analysis.ved_status,
       ved_details: analysis.ved_details,
+      specific_skus: analysis.specific_skus,
+      price_range: analysis.price_range,
       suggested_goods: analysis.suggested_goods,
       supplier_search_queries: analysis.supplier_search_queries,
       estimated_order_volume: analysis.estimated_order_volume,
