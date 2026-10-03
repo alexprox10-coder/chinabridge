@@ -132,60 +132,78 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ ok: true, leads });
 }
 
-// POST — парсим HH.ru → DaData → сохраняем в Neon
+// POST — парсим HH.ru → DaData (параллельно) → сохраняем в Neon (~25s total)
 export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
 
   const sql = neon(process.env.DATABASE_URL!);
   const dadataToken = process.env.DADATA_TOKEN ?? "";
 
-  // Собираем уникальных работодателей по всем запросам
-  const seen = new Map<string, { vacCount: number; cat: string; vacName: string; city: string }>();
+  // Шаг 1: параллельно ищем по всем запросам (~4-8s)
+  const allItems = (await Promise.all(QUERIES.map(q => hhSearch(q.text).then(items => items.map(i => ({ ...i, _cat: q.cat })))))).flat();
 
-  for (const q of QUERIES) {
-    const items = await hhSearch(q.text);
-    for (const item of items) {
-      if (!item.employer?.id) continue;
-      const eid = item.employer.id;
-      if (seen.has(eid)) {
-        seen.get(eid)!.vacCount++;
-      } else {
-        seen.set(eid, { vacCount: 1, cat: q.cat, vacName: item.name, city: item.area?.name ?? "" });
-      }
+  // Дедупликация по employer.id, берём лучшую категорию и считаем вакансии
+  const seen = new Map<string, { name: string; alternateUrl: string; city: string; vacCount: number; cat: string; vacName: string }>();
+  for (const item of allItems) {
+    if (!item.employer?.id) continue;
+    const eid = item.employer.id;
+    if (seen.has(eid)) {
+      seen.get(eid)!.vacCount++;
+    } else {
+      seen.set(eid, {
+        name:         item.employer.name,
+        alternateUrl: item.employer.alternate_url ?? "",
+        city:         item.area?.name ?? "",
+        vacCount:     1,
+        cat:          (item as HHItem & { _cat: string })._cat,
+        vacName:      item.name,
+      });
     }
   }
 
-  // Ограничиваем — сортируем по числу вакансий (больше вакансий = приоритет)
-  const employers = [...seen.entries()]
-    .sort((a, b) => b[1].vacCount - a[1].vacCount)
-    .slice(0, 60);
+  // Топ-40 по числу вакансий
+  const candidates = [...seen.values()]
+    .sort((a, b) => b.vacCount - a.vacCount)
+    .slice(0, 40);
 
+  // Шаг 2: DaData параллельно пачками по 8 (~10-12s)
+  const BATCH = 8;
+  const enriched: Array<typeof candidates[0] & { inn?: string; fullName?: string; director?: string; address?: string }> = [];
+
+  for (let i = 0; i < candidates.length; i += BATCH) {
+    const batch = candidates.slice(i, i + BATCH);
+    const results = await Promise.all(
+      batch.map(c => dadataToken ? dadataByName(c.name, dadataToken) : Promise.resolve(null))
+    );
+    for (let j = 0; j < batch.length; j++) {
+      const d = results[j];
+      if (!d?.inn) continue; // без ИНН пропускаем
+      enriched.push({ ...batch[j], inn: d.inn, fullName: d.fullName, director: d.director, address: d.address });
+    }
+  }
+
+  // Шаг 3: сохраняем в Neon (~5s)
   let saved = 0;
-
-  for (const [eid, { vacCount, cat, vacName, city }] of employers) {
+  for (const c of enriched) {
     try {
-      const emp = await hhEmployer(eid);
-      if (!emp) continue;
-
-      // DaData — ищем по имени чтобы получить ИНН
-      const dadata = dadataToken ? await dadataByName(emp.name, dadataToken) : null;
-      if (!dadata?.inn) {
-        // Без ИНН не сохраняем — невозможно дедуплицировать
-        continue;
-      }
-
-      const score = calcScore(emp, vacCount, cat);
-      const region = emp.area?.name ?? city;
+      const score = Math.min(
+        20
+        + (c.alternateUrl ? 10 : 0)
+        + (c.vacCount >= 3 ? 20 : c.vacCount >= 2 ? 10 : 0)
+        + (c.cat === "wb" || c.cat === "ozon" ? 25 : 20)
+        + (c.address ? 10 : 0),
+        100
+      );
 
       const extra = JSON.stringify({
-        alternate_url: emp.alternate_url ?? null,
-        site_url:      emp.site_url ?? null,
-        vacancyName:   vacName,
-        vacancyCount:  vacCount,
-        fullName:      dadata.fullName ?? emp.name,
-        director:      dadata.director ?? null,
-        address:       dadata.address ?? null,
-        description:   emp.description ? emp.description.replace(/<[^>]+>/g, "").slice(0, 400) : null,
+        alternate_url: c.alternateUrl || null,
+        site_url:      null,
+        vacancyName:   c.vacName,
+        vacancyCount:  c.vacCount,
+        fullName:      c.fullName ?? c.name,
+        director:      c.director ?? null,
+        address:       c.address ?? null,
+        description:   null,
       });
 
       await sql`
@@ -194,30 +212,20 @@ export async function POST(req: NextRequest) {
            has_china_keywords, china_keywords_found,
            lead_score, is_internet_seller, status, source)
         VALUES (
-          ${emp.name},
-          ${dadata.inn},
-          ${cat},
-          ${extra},
-          ${region},
-          ${cat === "china" || cat === "import"},
-          ${cat === "china" || cat === "import" ? ["china","import"] : []},
-          ${score},
-          ${!!emp.site_url},
-          'new',
-          'hh_ru'
+          ${c.name}, ${c.inn!}, ${c.cat}, ${extra}, ${c.city},
+          ${c.cat === "china" || c.cat === "import"},
+          ${c.cat === "china" || c.cat === "import" ? ["china","import"] : []},
+          ${score}, false, 'new', 'hh_ru'
         )
         ON CONFLICT (inn) DO UPDATE SET
-          okvad        = EXCLUDED.okvad,
-          okvad_name   = EXCLUDED.okvad_name,
-          lead_score   = GREATEST(outreach_contacts.lead_score, EXCLUDED.lead_score),
-          source       = 'hh_ru',
-          is_internet_seller = EXCLUDED.is_internet_seller
+          okvad      = EXCLUDED.okvad,
+          okvad_name = EXCLUDED.okvad_name,
+          lead_score = GREATEST(outreach_contacts.lead_score, EXCLUDED.lead_score),
+          source     = 'hh_ru'
       `;
       saved++;
-    } catch { /* пропускаем ошибочные записи */ }
-
-    await new Promise(r => setTimeout(r, 150));
+    } catch { /* skip */ }
   }
 
-  return NextResponse.json({ ok: true, saved, total: employers.length });
+  return NextResponse.json({ ok: true, saved, total: candidates.length, enriched: enriched.length });
 }
