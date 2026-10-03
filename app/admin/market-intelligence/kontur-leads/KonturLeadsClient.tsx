@@ -198,7 +198,7 @@ export default function KonturLeadsClient() {
   const topLeads = [...leads].sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-4">
+    <div className="text-white p-4">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
