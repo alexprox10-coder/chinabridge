@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function isAuthorized(req: NextRequest) {
   return !!(req.cookies.get("cb_admin")?.value || req.cookies.get("cb_tenant_session")?.value);
@@ -133,7 +133,7 @@ async function analyzeCompany(
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.FIRECRAWL_API_KEY}` },
         body: JSON.stringify({ url: siteUrl, formats: ["markdown"], onlyMainContent: true }),
-        signal: AbortSignal.timeout(18000),
+        signal: AbortSignal.timeout(10000),
       });
       if (fcRes.ok) {
         const fcData = await fcRes.json();
@@ -184,7 +184,7 @@ ${siteText ? `\nКонтент сайта:\n${siteText}` : "\n(сайт недо
           { role: "user", content: userMsg },
         ],
       }),
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(20000),
     });
 
     if (!aiRes.ok) {
@@ -244,7 +244,7 @@ export async function POST(req: NextRequest) {
 
   await sql`
     UPDATE outreach_contacts
-    SET status     = CASE WHEN status = 'new' THEN 'kp_ready' ELSE status END,
+    SET status     = CASE WHEN status IN ('new', 'analyzing') THEN 'kp_ready' ELSE status END,
         okvad_name = ${JSON.stringify(extra)}
     WHERE id = ${id} AND source = 'kontur_compass'
   `;
@@ -260,11 +260,12 @@ export async function PUT(req: NextRequest) {
   const rows = await sql`
     SELECT id, company_name, okvad_name FROM outreach_contacts
     WHERE source = 'kontur_compass'
-      AND status NOT IN ('rejected', 'deal')
+      AND status NOT IN ('rejected', 'deal', 'kp_ready', 'contacted', 'negotiating')
       AND (
         okvad_name::text NOT LIKE '%"kp_message":"%'
         OR okvad_name::text LIKE '%"kp_message":""%'
         OR okvad_name::text LIKE '%"kp_message":null%'
+        OR okvad_name::text LIKE '%"kp_message":""%'
       )
     ORDER BY lead_score DESC NULLS LAST
     LIMIT 10
@@ -302,7 +303,7 @@ export async function PUT(req: NextRequest) {
     try {
       await sql`
         UPDATE outreach_contacts
-        SET status = CASE WHEN status = 'new' THEN 'kp_ready' ELSE status END,
+        SET status = CASE WHEN status IN ('new', 'analyzing') THEN 'kp_ready' ELSE status END,
             okvad_name = ${JSON.stringify(extra)}
         WHERE id = ${row.id} AND source = 'kontur_compass'
       `;
