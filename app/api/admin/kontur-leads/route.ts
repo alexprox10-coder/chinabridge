@@ -18,6 +18,7 @@ interface AnalysisResult {
   china_fit: string;
   suggested_goods: string;
   kp_message: string;
+  ved_status: string;
   priority: "HIGH" | "MEDIUM" | "LOW";
   priority_reason: string;
 }
@@ -62,6 +63,7 @@ export async function GET(req: NextRequest) {
       china_fit: extra.china_fit as string | null,
       suggested_goods: extra.suggested_goods as string | null,
       kp_message: extra.kp_message as string | null,
+      ved_status: extra.ved_status as string | null,
       ai_priority: extra.ai_priority as string | null,
       priority_reason: extra.priority_reason as string | null,
     };
@@ -121,6 +123,7 @@ async function analyzeCompany(
     china_fit: "",
     suggested_goods: "",
     kp_message: "",
+    ved_status: "",
     priority: "MEDIUM",
     priority_reason: "",
   };
@@ -142,24 +145,68 @@ async function analyzeCompany(
     } catch { /* site unavailable */ }
   }
 
-  const revenue = extra.revenue ? `${Math.round(Number(extra.revenue) / 1_000_000)} млн ₽` : "неизвестна";
+  const revenueNum = extra.revenue ? Number(extra.revenue) : 0;
+  const revenue = revenueNum ? `${Math.round(revenueNum / 1_000_000)} млн ₽` : "неизвестна";
+  const revenueScale = revenueNum > 500_000_000 ? "крупный бизнес (>500 млн)" : revenueNum > 100_000_000 ? "средний бизнес (100-500 млн)" : revenueNum > 20_000_000 ? "малый бизнес (20-100 млн)" : "микробизнес (<20 млн)";
   const employees = extra.employees ? `${extra.employees} чел` : "неизвестно";
   const okvadSecondary = extra.okvad_secondary as string | null;
+  const director = extra.director as string | null;
+  const msp = extra.msp_category as string | null;
+  const directorFirstName = director ? director.split(" ").slice(1).join(" ") || director : null;
 
-  const systemMsg = `Ты аналитик компании ChinaBridge — мы помогаем российским компаниям закупать товары в Китае (1688, Alibaba, Taobao) и доставлять в Россию/Казахстан. Наши цены на 30-50% ниже местных оптовиков. Ты отвечаешь ТОЛЬКО валидным JSON-объектом без markdown-оберток.`;
+  // Detect possible ВЭД / China connection hints
+  const vedHints: string[] = [];
+  if (okvadFull) {
+    if (/импорт|экспорт|внешнеэкон|вэд/i.test(okvadFull)) vedHints.push("ОКВЭД указывает на ВЭД");
+    if (/оптов/i.test(okvadFull)) vedHints.push("оптовая торговля — вероятно закупает товар");
+    if (/розни/i.test(okvadFull)) vedHints.push("розничная торговля — нужен постоянный товар");
+    if (/маркетплейс|интернет.магазин|торговля.*интернет/i.test(okvadFull)) vedHints.push("продаёт онлайн — высокая потребность в товаре");
+    if (/текстил|одежд|обувь|галантер/i.test(okvadFull)) vedHints.push("товары из Китая 60-70% рынка");
+    if (/электрон|бытовая техника|оборудован/i.test(okvadFull)) vedHints.push("электроника — основной импорт из Китая");
+  }
+  if (siteText) {
+    if (/китай|1688|alibaba|алибаба|tao ?bao|таобао/i.test(siteText)) vedHints.push("⚠️ УЖЕ РАБОТАЕТ С КИТАЕМ — упомянуто на сайте");
+    if (/импорт|import/i.test(siteText)) vedHints.push("упоминается импорт на сайте");
+    if (/wildberries|wb|ozon|озон|маркетплейс/i.test(siteText)) vedHints.push("продаёт на маркетплейсах");
+  }
+  if (okvadSecondary) {
+    if (/47\.|46\./i.test(okvadSecondary)) vedHints.push("есть ОКВЭД розничной/оптовой торговли");
+  }
 
-  const userMsg = `Проанализируй компанию-лид:
+  const systemMsg = `Ты опытный B2B-аналитик компании ChinaBridge. Мы помогаем российским бизнесам закупать товары напрямую из Китая (1688.com, Alibaba, Taobao) — наши цены на 30-50% ниже местных оптовиков, доставка 18-25 дней.
+
+ПРАВИЛА (строго):
+1. Отвечай ТОЛЬКО валидным JSON, без markdown, без пояснений вне JSON
+2. НИКАКИХ шаблонных фраз типа "Товары из Китая могут значительно снизить затраты" — пиши КОНКРЕТНО про ЭТУ компанию
+3. Каждое поле должно быть уникальным для данной компании — используй название компании, имя директора, конкретные товары из их ниши
+4. КП-сообщение должно обращаться лично к директору по имени (если известно) и упоминать конкретную специфику их бизнеса`;
+
+  const userMsg = `КОМПАНИЯ ДЛЯ АНАЛИЗА:
 Название: ${companyName}
-ОКВЭД основной: ${okvadFull ?? "не указан"}
-${okvadSecondary ? `ОКВЭД доп: ${okvadSecondary.slice(0, 300)}` : ""}
-Выручка: ${revenue}
-Сотрудников: ${employees}
-Регион: ${extra.region || "неизвестен"}
-${siteUrl ? `Сайт: ${siteUrl}` : "Сайт: не указан"}
-${siteText ? `\nКонтент сайта:\n${siteText}` : "\n(сайт недоступен — анализируй по ОКВЭД и названию)"}
+ИНН: ${extra.inn ?? "н/д"} | Регион: ${extra.region || "не указан"}
+Директор: ${director ?? "неизвестен"} (${extra.position ?? "должность неизвестна"})
+Масштаб: ${revenueScale} | Выручка: ${revenue} | Сотрудников: ${employees}
+Категория МСП: ${msp ?? "нет данных"}
 
-Верни JSON:
-{"product_category":"3-5 слов категория","what_they_sell":"1-2 предложения что продают/производят","who_are_clients":"кто покупатели B2B/B2C","china_fit":"почему нужны товары из Китая","suggested_goods":"3-5 категорий товаров из Китая","kp_message":"готовое первое сообщение директору в WhatsApp (2-3 предложения конкретная польза)","priority":"HIGH или MEDIUM или LOW","priority_reason":"причина приоритета"}`;
+ОКВЭД основной: ${okvadFull ?? "не указан"}
+${okvadSecondary ? `ОКВЭД дополнительные (топ): ${okvadSecondary.slice(0, 500)}` : ""}
+
+${vedHints.length ? `ПРИЗНАКИ ВЭД/КИТАЯ:\n${vedHints.map(h => `• ${h}`).join("\n")}\n` : ""}
+${siteUrl ? `Сайт: ${siteUrl}` : "Сайт: не указан"}
+${siteText ? `\n=== КОНТЕНТ САЙТА ===\n${siteText}\n=== КОНЕЦ ===` : "(сайт не доступен — анализируй по ОКВЭД, названию и масштабу)"}
+
+Верни JSON с этими полями (ВСЁ конкретно про ${companyName}, не шаблонно):
+{
+  "product_category": "3-5 слов — точная ниша этой компании",
+  "what_they_sell": "2-3 конкретных предложения: что именно продаёт/производит ${companyName}, их ассортимент или услуги",
+  "who_are_clients": "конкретно кто их покупатели — B2B/B2C, какие отрасли, оптовики/розница/маркетплейсы",
+  "ved_status": "участвуют ли в ВЭД / работают ли уже с Китаем / только потенциал — на основе данных выше",
+  "china_fit": "КОНКРЕТНАЯ боль этой компании которую решает Китай — не общие слова, а специфика их ниши и размера",
+  "suggested_goods": "5-7 конкретных товаров/категорий из Китая именно для ${companyName} с учётом их ОКВЭД",
+  "kp_message": "WhatsApp-сообщение директору${directorFirstName ? ` ${directorFirstName}` : ""}: обращение по имени (если известно), 2-3 предложения про их конкретный бизнес, конкретная цифра экономии или выгода, призыв к действию. БЕЗ шаблонов.",
+  "priority": "HIGH если выручка >100млн и явная потребность в товаре, LOW если услуги/производство без товарной составляющей, иначе MEDIUM",
+  "priority_reason": "конкретная причина приоритета: цифры выручки, ниша, потенциал объёма закупок"
+}`;
 
   if (!orKey) {
     return { analysis: defaultAnalysis, siteText, aiError: "OPENROUTER_API_KEY not set" };
@@ -237,6 +284,7 @@ export async function POST(req: NextRequest) {
     china_fit: analysis.china_fit,
     suggested_goods: analysis.suggested_goods,
     kp_message: analysis.kp_message,
+    ved_status: analysis.ved_status,
     ai_priority: analysis.priority,
     priority_reason: analysis.priority_reason,
     site_text_snippet: siteText.slice(0, 400),
@@ -295,6 +343,7 @@ export async function PUT(req: NextRequest) {
       china_fit: analysis.china_fit,
       suggested_goods: analysis.suggested_goods,
       kp_message: analysis.kp_message,
+      ved_status: analysis.ved_status,
       ai_priority: analysis.priority,
       priority_reason: analysis.priority_reason,
       site_text_snippet: siteText.slice(0, 400),

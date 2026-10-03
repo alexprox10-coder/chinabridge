@@ -27,6 +27,7 @@ interface KLead {
   china_fit: string | null;
   suggested_goods: string | null;
   kp_message: string | null;
+  ved_status: string | null;
   ai_priority: string | null;
   priority_reason: string | null;
 }
@@ -115,6 +116,12 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
             <div className="space-y-1.5 pt-1 border-t border-slate-700/50">
               <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold">AI Аналитика</p>
 
+              {lead.ved_status && (
+                <div className={`rounded px-2 py-1 ${lead.ved_status.toLowerCase().includes('уже') || lead.ved_status.toLowerCase().includes('работает') ? 'bg-green-950/40 border border-green-800/40' : 'bg-slate-800/40 border border-slate-700/40'}`}>
+                  <p className="text-[9px] text-slate-500 uppercase">🌐 ВЭД / Китай-связь</p>
+                  <p className="text-[10px] text-slate-200">{lead.ved_status}</p>
+                </div>
+              )}
               {lead.who_are_clients && (
                 <div>
                   <p className="text-[9px] text-slate-500 uppercase">Клиенты</p>
@@ -123,7 +130,7 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
               )}
               {lead.china_fit && (
                 <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Зачем им Китай</p>
+                  <p className="text-[9px] text-slate-500 uppercase">Боль / Зачем им Китай</p>
                   <p className="text-[10px] text-slate-300">{lead.china_fit}</p>
                 </div>
               )}
@@ -135,13 +142,13 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
               )}
               {lead.priority_reason && (
                 <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Приоритет</p>
+                  <p className="text-[9px] text-slate-500 uppercase">Почему этот приоритет</p>
                   <p className="text-[10px] text-slate-400">{lead.priority_reason}</p>
                 </div>
               )}
               {lead.kp_message && (
                 <div className="bg-blue-950/40 border border-blue-800/50 rounded p-2">
-                  <p className="text-[9px] text-blue-400 uppercase font-semibold mb-1">📨 Готовое КП (WhatsApp/TG)</p>
+                  <p className="text-[9px] text-blue-400 uppercase font-semibold mb-1">📨 КП — WhatsApp/Telegram</p>
                   <p className="text-[10px] text-blue-200 leading-relaxed">{lead.kp_message}</p>
                 </div>
               )}
@@ -223,6 +230,7 @@ export default function KonturLeadsClient() {
             china_fit: a.china_fit ?? l.china_fit,
             suggested_goods: a.suggested_goods ?? l.suggested_goods,
             kp_message: a.kp_message ?? l.kp_message,
+            ved_status: a.ved_status ?? l.ved_status,
             ai_priority: a.priority ?? l.ai_priority,
             priority_reason: a.priority_reason ?? l.priority_reason,
             status: (l.status === "new" || l.status === "analyzing") ? "kp_ready" : l.status,
