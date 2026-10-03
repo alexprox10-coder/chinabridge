@@ -253,7 +253,8 @@ export default function KonturLeadsClient() {
   const handleAnalyzeAll = async () => {
     setAnalyzeAll(true);
     setMsg("Запускаю AI анализ всех новых лидов...");
-    const newLeads = leads.filter(l => l.status === "new" && !l.product_category && l.site_url);
+    // Analyze: new companies without analysis, OR any company without full analysis (no kp_message)
+    const newLeads = leads.filter(l => !l.kp_message && l.status !== "rejected" && l.status !== "deal");
     for (const lead of newLeads) {
       setMsg(`Анализирую: ${lead.company_name}...`);
       await handleAnalyze(lead.id);

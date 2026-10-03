@@ -147,16 +147,18 @@ export async function POST(req: NextRequest) {
   try {
     const revenue = extra.revenue ? `${Math.round(Number(extra.revenue) / 1_000_000)} млн ₽` : "неизвестна";
     const employees = extra.employees ? `${extra.employees} чел` : "неизвестно";
-    const prompt = `Ты аналитик компании ChinaBridge — мы помогаем российским компаниям закупать товары в Китае (1688, Alibaba, Taobao) и доставлять их в Россию/Казахстан.
+    const okvadSecondary = extra.okvad_secondary as string | null;
+    const prompt = `Ты аналитик компании ChinaBridge — мы помогаем российским компаниям закупать товары в Китае (1688, Alibaba, Taobao) и доставлять их в Россию/Казахстан. Наши цены на 30-50% ниже чем местные оптовики.
 
 Проанализируй компанию-лид:
 Название: ${companyName}
-ОКВЭД: ${okvadFull}
+ОКВЭД основной: ${okvadFull}
+${okvadSecondary ? `ОКВЭД дополнительные: ${okvadSecondary.slice(0, 300)}` : ""}
 Выручка: ${revenue}
 Сотрудников: ${employees}
 Регион: ${extra.region || "неизвестен"}
-Сайт (${siteUrl || "нет"}):
-${siteMarkdown || "(нет данных с сайта)"}
+${siteUrl ? `Сайт: ${siteUrl}` : "Сайт: не указан"}
+${siteMarkdown ? `\nКонтент сайта:\n${siteMarkdown}` : "\n(сайт недоступен или не указан — анализируй по ОКВЭД и названию)"}
 
 Ответь СТРОГО в формате JSON (без markdown, без пояснений вне JSON):
 {
