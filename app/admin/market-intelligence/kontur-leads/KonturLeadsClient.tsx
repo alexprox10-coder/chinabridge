@@ -225,9 +225,12 @@ export default function KonturLeadsClient() {
             kp_message: a.kp_message ?? l.kp_message,
             ai_priority: a.priority ?? l.ai_priority,
             priority_reason: a.priority_reason ?? l.priority_reason,
-            status: l.status === "new" ? "analyzing" : l.status,
+            status: (l.status === "new" || l.status === "analyzing") ? "kp_ready" : l.status,
           } : l
         ));
+        if (d.aiError) setMsg(`⚠️ Анализ ${id}: ${d.aiError}`);
+      } else if (!d.ok) {
+        setMsg(`❌ Ошибка анализа ${id}: ${d.error || "неизвестно"}`);
       }
     } finally { setAnalyzingId(null); }
   };
@@ -252,15 +255,34 @@ export default function KonturLeadsClient() {
 
   const handleAnalyzeAll = async () => {
     setAnalyzeAll(true);
-    setMsg("Запускаю AI анализ всех новых лидов...");
-    // Analyze: new companies without analysis, OR any company without full analysis (no kp_message)
+    setMsg("Запускаю AI анализ всех новых лидов (поочерёдно)...");
     const newLeads = leads.filter(l => !l.kp_message && l.status !== "rejected" && l.status !== "deal");
     for (const lead of newLeads) {
       setMsg(`Анализирую: ${lead.company_name}...`);
       await handleAnalyze(lead.id);
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 300));
     }
     setMsg(`Готово! Проанализировано ${newLeads.length} компаний`);
+    setAnalyzeAll(false);
+  };
+
+  const handleBatchAnalyze = async () => {
+    setAnalyzeAll(true);
+    setMsg("⚡ Пакетный анализ x10 через OpenRouter...");
+    try {
+      const r = await fetch("/api/admin/kontur-leads", { method: "PUT" });
+      const d = await r.json();
+      if (d.ok) {
+        const errors = d.results?.filter((x: {ok: boolean}) => !x.ok) ?? [];
+        const ok = d.results?.filter((x: {ok: boolean}) => x.ok) ?? [];
+        setMsg(`✅ Пакет готов: ${ok.length} проанализировано${errors.length ? `, ${errors.length} ошибок` : ""}`);
+        await load();
+      } else {
+        setMsg(`❌ Ошибка: ${d.error}`);
+      }
+    } catch (e) {
+      setMsg(`❌ Сеть: ${e}`);
+    }
     setAnalyzeAll(false);
   };
 
@@ -284,9 +306,13 @@ export default function KonturLeadsClient() {
             className="text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg px-4 py-2">
             {view === "pipeline" ? "📋 Таблица" : "🗂 Воронка"}
           </button>
+          <button onClick={handleBatchAnalyze} disabled={analyzeAll}
+            className="text-sm bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white rounded-lg px-4 py-2">
+            {analyzeAll ? "⏳ Пакет..." : "⚡ Пакет x10 (OR)"}
+          </button>
           <button onClick={handleAnalyzeAll} disabled={analyzeAll}
             className="text-sm bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg px-4 py-2">
-            {analyzeAll ? "⏳ Анализирую..." : "🤖 AI Анализ всех"}
+            {analyzeAll ? "⏳ Анализирую..." : "🤖 Анализ всех"}
           </button>
           {leads.length === 0 && (
             <button onClick={handleImport} disabled={importing}

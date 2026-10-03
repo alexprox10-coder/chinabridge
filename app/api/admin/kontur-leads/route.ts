@@ -100,24 +100,21 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-// POST — AI analyze a company's website to determine product category
-export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
-  const sql = neon(process.env.DATABASE_URL!);
-  const { id } = await req.json();
+// shared helper — analyzes one company with OpenRouter
+async function analyzeCompany(
+  companyName: string,
+  extra: Record<string, unknown>,
+  siteUrl: string | null,
+  okvadFull: string | null,
+): Promise<{ analysis: AnalysisResult; siteText: string; aiError?: string }> {
+  const orBase = (process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1").replace(/\/$/, "");
+  const orModel = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
+  const orKey = process.env.OPENROUTER_API_KEY ?? "";
 
-  const rows = await sql`SELECT company_name, inn, okvad_name FROM outreach_contacts WHERE id = ${id} AND source = 'kontur_compass'`;
-  if (!rows.length) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
-
-  let extra: Record<string, unknown> = {};
-  try { extra = JSON.parse(rows[0].okvad_name as string ?? "{}"); } catch {}
-
-  const siteUrl = extra.site_url as string | null;
-  const okvadFull = extra.okvad_full as string | null;
-  const companyName = rows[0].company_name as string;
-
-  let analysis: AnalysisResult = {
-    product_category: "неизвестно",
+  const defaultAnalysis: AnalysisResult = {
+    product_category: okvadFull
+      ? okvadFull.replace(/^\d+\.?\d*\s*/, "").split(" ").slice(0, 4).join(" ").toLowerCase()
+      : "неизвестно",
     what_they_sell: "",
     who_are_clients: "",
     geography: extra.region as string || "",
@@ -128,80 +125,111 @@ export async function POST(req: NextRequest) {
     priority_reason: "",
   };
 
-  let siteMarkdown = "";
+  // Scrape site
+  let siteText = "";
   if (siteUrl) {
     try {
       const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.FIRECRAWL_API_KEY}` },
         body: JSON.stringify({ url: siteUrl, formats: ["markdown"], onlyMainContent: true }),
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(18000),
       });
       if (fcRes.ok) {
         const fcData = await fcRes.json();
-        siteMarkdown = (fcData.data?.markdown ?? fcData.markdown ?? "").slice(0, 3000);
+        siteText = (fcData.data?.markdown ?? fcData.markdown ?? "").slice(0, 3000);
       }
-    } catch { /* no site data */ }
+    } catch { /* site unavailable */ }
   }
 
-  try {
-    const revenue = extra.revenue ? `${Math.round(Number(extra.revenue) / 1_000_000)} млн ₽` : "неизвестна";
-    const employees = extra.employees ? `${extra.employees} чел` : "неизвестно";
-    const okvadSecondary = extra.okvad_secondary as string | null;
-    const prompt = `Ты аналитик компании ChinaBridge — мы помогаем российским компаниям закупать товары в Китае (1688, Alibaba, Taobao) и доставлять их в Россию/Казахстан. Наши цены на 30-50% ниже чем местные оптовики.
+  const revenue = extra.revenue ? `${Math.round(Number(extra.revenue) / 1_000_000)} млн ₽` : "неизвестна";
+  const employees = extra.employees ? `${extra.employees} чел` : "неизвестно";
+  const okvadSecondary = extra.okvad_secondary as string | null;
 
-Проанализируй компанию-лид:
+  const systemMsg = `Ты аналитик компании ChinaBridge — мы помогаем российским компаниям закупать товары в Китае (1688, Alibaba, Taobao) и доставлять в Россию/Казахстан. Наши цены на 30-50% ниже местных оптовиков. Ты отвечаешь ТОЛЬКО валидным JSON-объектом без markdown-оберток.`;
+
+  const userMsg = `Проанализируй компанию-лид:
 Название: ${companyName}
-ОКВЭД основной: ${okvadFull}
-${okvadSecondary ? `ОКВЭД дополнительные: ${okvadSecondary.slice(0, 300)}` : ""}
+ОКВЭД основной: ${okvadFull ?? "не указан"}
+${okvadSecondary ? `ОКВЭД доп: ${okvadSecondary.slice(0, 300)}` : ""}
 Выручка: ${revenue}
 Сотрудников: ${employees}
 Регион: ${extra.region || "неизвестен"}
 ${siteUrl ? `Сайт: ${siteUrl}` : "Сайт: не указан"}
-${siteMarkdown ? `\nКонтент сайта:\n${siteMarkdown}` : "\n(сайт недоступен или не указан — анализируй по ОКВЭД и названию)"}
+${siteText ? `\nКонтент сайта:\n${siteText}` : "\n(сайт недоступен — анализируй по ОКВЭД и названию)"}
 
-Ответь СТРОГО в формате JSON (без markdown, без пояснений вне JSON):
-{
-  "product_category": "3-5 слов — категория товаров",
-  "what_they_sell": "1-2 предложения что именно продают/производят",
-  "who_are_clients": "кто их покупатели (B2B/B2C, отрасли, розница/опт)",
-  "china_fit": "почему им нужны товары из Китая — конкретно",
-  "suggested_goods": "3-5 конкретных категорий товаров из Китая которые им подойдут",
-  "kp_message": "готовое первое сообщение директору на WhatsApp/Telegram (2-3 предложения, без воды, конкретная польза)",
-  "priority": "HIGH или MEDIUM или LOW",
-  "priority_reason": "почему такой приоритет (выручка, ниша, очевидная потребность)"
-}`;
+Верни JSON:
+{"product_category":"3-5 слов категория","what_they_sell":"1-2 предложения что продают/производят","who_are_clients":"кто покупатели B2B/B2C","china_fit":"почему нужны товары из Китая","suggested_goods":"3-5 категорий товаров из Китая","kp_message":"готовое первое сообщение директору в WhatsApp (2-3 предложения конкретная польза)","priority":"HIGH или MEDIUM или LOW","priority_reason":"причина приоритета"}`;
 
-    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+  if (!orKey) {
+    return { analysis: defaultAnalysis, siteText, aiError: "OPENROUTER_API_KEY not set" };
+  }
+
+  try {
+    const aiRes = await fetch(`${orBase}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY!,
-        "anthropic-version": "2023-06-01",
+        "Authorization": `Bearer ${orKey}`,
+        "HTTP-Referer": "https://chinabridge.pro",
+        "X-Title": "ChinaBridge Lead Analysis",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
-        messages: [{ role: "user", content: prompt }],
+        model: orModel,
+        max_tokens: 900,
+        temperature: 0.3,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemMsg },
+          { role: "user", content: userMsg },
+        ],
       }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(25000),
     });
 
-    if (aiRes.ok) {
-      const aiData = await aiRes.json();
-      const raw = aiData.content?.[0]?.text?.trim() ?? "{}";
-      const parsed = JSON.parse(raw.replace(/^```json\n?/, "").replace(/\n?```$/, ""));
-      analysis = { ...analysis, ...parsed };
+    if (!aiRes.ok) {
+      const errText = await aiRes.text().catch(() => aiRes.statusText);
+      throw new Error(`OpenRouter ${aiRes.status}: ${errText.slice(0, 200)}`);
     }
-  } catch {
-    // fallback: use ОКВЭД
-    if (okvadFull) {
-      const parts = okvadFull.replace(/^\d+\.?\d*\s*/, "").split(" ").slice(0, 4);
-      analysis.product_category = parts.join(" ").toLowerCase();
-    }
-  }
 
-  // Merge all analysis fields into extra
+    const aiData = await aiRes.json();
+    const raw = aiData.choices?.[0]?.message?.content?.trim() ?? "";
+    if (!raw) throw new Error("Empty AI response");
+
+    // Extract JSON (strip any accidental fences)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error(`No JSON in response: ${raw.slice(0, 100)}`);
+    const parsed = JSON.parse(jsonMatch[0]);
+    return { analysis: { ...defaultAnalysis, ...parsed }, siteText };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { analysis: defaultAnalysis, siteText, aiError: msg };
+  }
+}
+
+// POST — AI analyze single company
+export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
+  const sql = neon(process.env.DATABASE_URL!);
+  const { id } = await req.json();
+
+  const rows = await sql`SELECT company_name, inn, okvad_name FROM outreach_contacts WHERE id = ${id} AND source = 'kontur_compass'`;
+  if (!rows.length) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+
+  const rawOkvad = rows[0].okvad_name;
+  let extra: Record<string, unknown> = {};
+  try {
+    extra = typeof rawOkvad === "object" && rawOkvad !== null
+      ? (rawOkvad as Record<string, unknown>)
+      : JSON.parse(rawOkvad as string ?? "{}");
+  } catch {}
+
+  const siteUrl = extra.site_url as string | null;
+  const okvadFull = extra.okvad_full as string | null;
+  const companyName = rows[0].company_name as string;
+
+  const { analysis, siteText, aiError } = await analyzeCompany(companyName, extra, siteUrl, okvadFull);
+
   Object.assign(extra, {
     product_category: analysis.product_category,
     what_they_sell: analysis.what_they_sell,
@@ -211,15 +239,78 @@ ${siteMarkdown ? `\nКонтент сайта:\n${siteMarkdown}` : "\n(сайт 
     kp_message: analysis.kp_message,
     ai_priority: analysis.priority,
     priority_reason: analysis.priority_reason,
-    site_markdown_snippet: siteMarkdown.slice(0, 500),
+    site_text_snippet: siteText.slice(0, 400),
   });
 
   await sql`
     UPDATE outreach_contacts
-    SET status     = CASE WHEN status = 'new' THEN 'analyzing' ELSE status END,
+    SET status     = CASE WHEN status = 'new' THEN 'kp_ready' ELSE status END,
         okvad_name = ${JSON.stringify(extra)}
     WHERE id = ${id} AND source = 'kontur_compass'
   `;
 
-  return NextResponse.json({ ok: true, analysis });
+  return NextResponse.json({ ok: true, analysis, aiError: aiError ?? null });
+}
+
+// PUT — batch analyze all unanalyzed leads (up to 10 per call)
+export async function PUT(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
+  const sql = neon(process.env.DATABASE_URL!);
+
+  const rows = await sql`
+    SELECT id, company_name, okvad_name FROM outreach_contacts
+    WHERE source = 'kontur_compass'
+      AND status NOT IN ('rejected', 'deal')
+      AND (
+        okvad_name::text NOT LIKE '%"kp_message":"%'
+        OR okvad_name::text LIKE '%"kp_message":""%'
+        OR okvad_name::text LIKE '%"kp_message":null%'
+      )
+    ORDER BY lead_score DESC NULLS LAST
+    LIMIT 10
+  `;
+
+  const results: { id: number; name: string; ok: boolean; error?: string }[] = [];
+
+  for (const row of rows) {
+    const rawOkvad = row.okvad_name;
+    let extra: Record<string, unknown> = {};
+    try {
+      extra = typeof rawOkvad === "object" && rawOkvad !== null
+        ? (rawOkvad as Record<string, unknown>)
+        : JSON.parse(rawOkvad as string ?? "{}");
+    } catch {}
+
+    const siteUrl = extra.site_url as string | null;
+    const okvadFull = extra.okvad_full as string | null;
+    const companyName = row.company_name as string;
+
+    const { analysis, siteText, aiError } = await analyzeCompany(companyName, extra, siteUrl, okvadFull);
+
+    Object.assign(extra, {
+      product_category: analysis.product_category,
+      what_they_sell: analysis.what_they_sell,
+      who_are_clients: analysis.who_are_clients,
+      china_fit: analysis.china_fit,
+      suggested_goods: analysis.suggested_goods,
+      kp_message: analysis.kp_message,
+      ai_priority: analysis.priority,
+      priority_reason: analysis.priority_reason,
+      site_text_snippet: siteText.slice(0, 400),
+    });
+
+    try {
+      await sql`
+        UPDATE outreach_contacts
+        SET status = CASE WHEN status = 'new' THEN 'kp_ready' ELSE status END,
+            okvad_name = ${JSON.stringify(extra)}
+        WHERE id = ${row.id} AND source = 'kontur_compass'
+      `;
+      results.push({ id: Number(row.id), name: companyName, ok: !aiError, error: aiError });
+    } catch (e) {
+      results.push({ id: Number(row.id), name: companyName, ok: false, error: String(e) });
+    }
+  }
+
+  return NextResponse.json({ ok: true, processed: results.length, results });
 }
