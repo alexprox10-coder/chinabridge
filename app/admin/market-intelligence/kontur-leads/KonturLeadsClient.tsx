@@ -355,16 +355,17 @@ export default function KonturLeadsClient() {
     setAnalyzeAll(false);
   };
 
-  const handleBatchAnalyze = async () => {
+  const handleBatchAnalyze = async (force = false) => {
     setAnalyzeAll(true);
-    setMsg("⚡ Пакетный анализ x10 через OpenRouter...");
+    setMsg(force ? "🔄 Переанализ x10 (force)..." : "⚡ Пакетный анализ x10 через OpenRouter...");
     try {
-      const r = await fetch("/api/admin/kontur-leads", { method: "PUT" });
+      const url = force ? "/api/admin/kontur-leads?force=true" : "/api/admin/kontur-leads";
+      const r = await fetch(url, { method: "PUT" });
       const d = await r.json();
       if (d.ok) {
         const errors = d.results?.filter((x: {ok: boolean}) => !x.ok) ?? [];
         const ok = d.results?.filter((x: {ok: boolean}) => x.ok) ?? [];
-        setMsg(`✅ Пакет готов: ${ok.length} проанализировано${errors.length ? `, ${errors.length} ошибок` : ""}`);
+        setMsg(`✅ ${force ? "Переанализ" : "Пакет"} готов: ${ok.length} проанализировано${errors.length ? `, ${errors.length} ошибок` : ""}`);
         await load();
       } else {
         setMsg(`❌ Ошибка: ${d.error}`);
@@ -395,9 +396,13 @@ export default function KonturLeadsClient() {
             className="text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg px-4 py-2">
             {view === "pipeline" ? "📋 Таблица" : "🗂 Воронка"}
           </button>
-          <button onClick={handleBatchAnalyze} disabled={analyzeAll}
+          <button onClick={() => handleBatchAnalyze(false)} disabled={analyzeAll}
             className="text-sm bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white rounded-lg px-4 py-2">
             {analyzeAll ? "⏳ Пакет..." : "⚡ Пакет x10 (OR)"}
+          </button>
+          <button onClick={() => handleBatchAnalyze(true)} disabled={analyzeAll}
+            className="text-sm bg-yellow-700 hover:bg-yellow-600 disabled:opacity-50 text-white rounded-lg px-4 py-2">
+            {analyzeAll ? "⏳..." : "🔄 Переанализ x10"}
           </button>
           <button onClick={handleAnalyzeAll} disabled={analyzeAll}
             className="text-sm bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg px-4 py-2">

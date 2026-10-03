@@ -367,24 +367,34 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, analysis, aiError: null });
 }
 
-// PUT — batch analyze all unanalyzed leads (up to 10 per call)
+// PUT — batch analyze leads (up to 10 per call)
+// ?force=true — reanalyze even leads that already have kp_message (e.g. old gpt-4o-mini results)
 export async function PUT(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
   const sql = neon(process.env.DATABASE_URL!);
+  const force = req.nextUrl.searchParams.get("force") === "true";
 
-  const rows = await sql`
-    SELECT id, company_name, okvad_name FROM outreach_contacts
-    WHERE source = 'kontur_compass'
-      AND status NOT IN ('rejected', 'deal', 'kp_ready', 'contacted', 'negotiating')
-      AND (
-        okvad_name::text NOT LIKE '%"kp_message":"%'
-        OR okvad_name::text LIKE '%"kp_message":""%'
-        OR okvad_name::text LIKE '%"kp_message":null%'
-        OR okvad_name::text LIKE '%"kp_message":""%'
-      )
-    ORDER BY lead_score DESC NULLS LAST
-    LIMIT 10
-  `;
+  const rows = force
+    ? await sql`
+        SELECT id, company_name, okvad_name FROM outreach_contacts
+        WHERE source = 'kontur_compass'
+          AND status NOT IN ('rejected', 'deal', 'contacted', 'negotiating')
+        ORDER BY lead_score DESC NULLS LAST
+        LIMIT 10
+      `
+    : await sql`
+        SELECT id, company_name, okvad_name FROM outreach_contacts
+        WHERE source = 'kontur_compass'
+          AND status NOT IN ('rejected', 'deal', 'kp_ready', 'contacted', 'negotiating')
+          AND (
+            okvad_name::text NOT LIKE '%"kp_message":"%'
+            OR okvad_name::text LIKE '%"kp_message":""%'
+            OR okvad_name::text LIKE '%"kp_message":null%'
+            OR okvad_name::text LIKE '%"kp_message":""%'
+          )
+        ORDER BY lead_score DESC NULLS LAST
+        LIMIT 10
+      `;
 
   const results: { id: number; name: string; ok: boolean; error?: string }[] = [];
 
