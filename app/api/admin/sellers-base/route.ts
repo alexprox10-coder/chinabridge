@@ -13,20 +13,11 @@ export async function GET(req: NextRequest) {
 
   const sql = neon(process.env.DATABASE_URL!);
   const { searchParams } = req.nextUrl;
-  const vertical = searchParams.get("vertical");
-  const status = searchParams.get("status");
+  const vertical = searchParams.get("vertical") ?? "";
+  const statusFilter = searchParams.get("status") ?? "";
   const minScore = parseInt(searchParams.get("minScore") || "0", 10);
 
   try {
-    // Ensure columns exist (idempotent)
-    await sql`
-      ALTER TABLE outreach_contacts
-        ADD COLUMN IF NOT EXISTS product_vertical TEXT,
-        ADD COLUMN IF NOT EXISTS lead_score INTEGER DEFAULT 0,
-        ADD COLUMN IF NOT EXISTS is_internet_seller BOOLEAN DEFAULT false
-    `;
-
-    // Stats
     const [totalRow] = await sql`
       SELECT COUNT(*) AS total FROM outreach_contacts WHERE source = 'msp_registry'
     `;
@@ -80,19 +71,57 @@ export async function GET(req: NextRequest) {
       scoreDistribution: [],
     };
 
-    // Contacts query with filters
-    const contacts = await sql`
-      SELECT id, company_name, inn, okvad, okvad_name, region,
-             email, phone, status, product_vertical, lead_score,
-             is_internet_seller, created_at
-      FROM outreach_contacts
-      WHERE source = 'msp_registry'
-        AND (${vertical ?? null} IS NULL OR product_vertical = ${vertical})
-        AND (${status ?? null} IS NULL OR status = ${status})
-        AND (lead_score >= ${minScore} OR lead_score IS NULL)
-      ORDER BY lead_score DESC NULLS LAST, created_at DESC
-      LIMIT 200
-    `;
+    // Build contacts query dynamically to avoid parameterized null issues
+    let contacts;
+    if (vertical && statusFilter) {
+      contacts = await sql`
+        SELECT id, company_name, inn, okvad, okvad_name, region,
+               email, phone, status, product_vertical, lead_score,
+               is_internet_seller, created_at
+        FROM outreach_contacts
+        WHERE source = 'msp_registry'
+          AND product_vertical = ${vertical}
+          AND status = ${statusFilter}
+          AND (lead_score >= ${minScore} OR lead_score IS NULL)
+        ORDER BY lead_score DESC NULLS LAST, created_at DESC
+        LIMIT 200
+      `;
+    } else if (vertical) {
+      contacts = await sql`
+        SELECT id, company_name, inn, okvad, okvad_name, region,
+               email, phone, status, product_vertical, lead_score,
+               is_internet_seller, created_at
+        FROM outreach_contacts
+        WHERE source = 'msp_registry'
+          AND product_vertical = ${vertical}
+          AND (lead_score >= ${minScore} OR lead_score IS NULL)
+        ORDER BY lead_score DESC NULLS LAST, created_at DESC
+        LIMIT 200
+      `;
+    } else if (statusFilter) {
+      contacts = await sql`
+        SELECT id, company_name, inn, okvad, okvad_name, region,
+               email, phone, status, product_vertical, lead_score,
+               is_internet_seller, created_at
+        FROM outreach_contacts
+        WHERE source = 'msp_registry'
+          AND status = ${statusFilter}
+          AND (lead_score >= ${minScore} OR lead_score IS NULL)
+        ORDER BY lead_score DESC NULLS LAST, created_at DESC
+        LIMIT 200
+      `;
+    } else {
+      contacts = await sql`
+        SELECT id, company_name, inn, okvad, okvad_name, region,
+               email, phone, status, product_vertical, lead_score,
+               is_internet_seller, created_at
+        FROM outreach_contacts
+        WHERE source = 'msp_registry'
+          AND (lead_score >= ${minScore} OR lead_score IS NULL)
+        ORDER BY lead_score DESC NULLS LAST, created_at DESC
+        LIMIT 200
+      `;
+    }
 
     return NextResponse.json({ ok: true, stats, contacts });
   } catch (e: unknown) {
