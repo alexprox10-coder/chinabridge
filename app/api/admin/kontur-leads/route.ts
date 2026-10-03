@@ -10,6 +10,18 @@ function isAuthorized(req: NextRequest) {
 
 const PIPELINE_STATUSES = ["new","analyzing","sourced","kp_ready","contacted","negotiating","deal","rejected"];
 
+interface AnalysisResult {
+  product_category: string;
+  what_they_sell: string;
+  who_are_clients: string;
+  geography: string;
+  china_fit: string;
+  suggested_goods: string;
+  kp_message: string;
+  priority: "HIGH" | "MEDIUM" | "LOW";
+  priority_reason: string;
+}
+
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
   const sql = neon(process.env.DATABASE_URL!);
@@ -103,18 +115,6 @@ export async function POST(req: NextRequest) {
   const siteUrl = extra.site_url as string | null;
   const okvadFull = extra.okvad_full as string | null;
   const companyName = rows[0].company_name as string;
-
-  interface AnalysisResult {
-    product_category: string;
-    what_they_sell: string;
-    who_are_clients: string;
-    geography: string;
-    china_fit: string;
-    suggested_goods: string;
-    kp_message: string;
-    priority: "HIGH" | "MEDIUM" | "LOW";
-    priority_reason: string;
-  }
 
   let analysis: AnalysisResult = {
     product_category: "неизвестно",
