@@ -126,7 +126,7 @@ async function analyzeCompany(
   okvadFull: string | null,
 ): Promise<{ analysis: AnalysisResult; siteText: string; aiError?: string }> {
   const orBase = (process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1").replace(/\/$/, "");
-  const orModel = process.env.OPENROUTER_MODEL ?? "google/gemini-1.5-flash";
+  const orModel = process.env.OPENROUTER_MODEL ?? "anthropic/claude-3.5-haiku";
   const orKey = process.env.OPENROUTER_API_KEY ?? "";
 
   const defaultAnalysis: AnalysisResult = {
