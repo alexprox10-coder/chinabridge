@@ -126,7 +126,7 @@ async function analyzeCompany(
   okvadFull: string | null,
 ): Promise<{ analysis: AnalysisResult; siteText: string; aiError?: string }> {
   const orBase = (process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1").replace(/\/$/, "");
-  const orModel = process.env.OPENROUTER_MODEL ?? "google/gemini-flash-1.5";
+  const orModel = process.env.OPENROUTER_MODEL ?? "google/gemini-1.5-flash";
   const orKey = process.env.OPENROUTER_API_KEY ?? "";
 
   const defaultAnalysis: AnalysisResult = {
@@ -281,7 +281,6 @@ ${siteText ? `\n=== КОНТЕНТ САЙТА ===\n${siteText}\n=== КОНЕЦ =
         model: orModel,
         max_tokens: 1800,
         temperature: 0.3,
-        response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemMsg },
           { role: "user", content: userMsg },
@@ -333,6 +332,10 @@ export async function POST(req: NextRequest) {
 
   const { analysis, siteText, aiError } = await analyzeCompany(companyName, extra, siteUrl, okvadFull);
 
+  if (aiError) {
+    return NextResponse.json({ ok: false, aiError, error: aiError }, { status: 500 });
+  }
+
   Object.assign(extra, {
     product_category: analysis.product_category,
     what_they_sell: analysis.what_they_sell,
@@ -361,7 +364,7 @@ export async function POST(req: NextRequest) {
     WHERE id = ${id} AND source = 'kontur_compass'
   `;
 
-  return NextResponse.json({ ok: true, analysis, aiError: aiError ?? null });
+  return NextResponse.json({ ok: true, analysis, aiError: null });
 }
 
 // PUT — batch analyze all unanalyzed leads (up to 10 per call)
@@ -400,6 +403,11 @@ export async function PUT(req: NextRequest) {
 
     const { analysis, siteText, aiError } = await analyzeCompany(companyName, extra, siteUrl, okvadFull);
 
+    if (aiError) {
+      results.push({ id: Number(row.id), name: companyName, ok: false, error: aiError });
+      continue;
+    }
+
     Object.assign(extra, {
       product_category: analysis.product_category,
       what_they_sell: analysis.what_they_sell,
@@ -428,7 +436,7 @@ export async function PUT(req: NextRequest) {
             okvad_name = ${JSON.stringify(extra)}
         WHERE id = ${row.id} AND source = 'kontur_compass'
       `;
-      results.push({ id: Number(row.id), name: companyName, ok: !aiError, error: aiError });
+      results.push({ id: Number(row.id), name: companyName, ok: true });
     } catch (e) {
       results.push({ id: Number(row.id), name: companyName, ok: false, error: String(e) });
     }
