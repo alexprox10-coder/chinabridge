@@ -23,11 +23,19 @@ interface KLead {
   msp_category: string | null;
   // AI analysis fields
   what_they_sell: string | null;
+  sales_channel: string | null;
   who_are_clients: string | null;
   china_fit: string | null;
-  suggested_goods: string | null;
-  kp_message: string | null;
+  pain_points: string | null;
   ved_status: string | null;
+  ved_details: string | null;
+  suggested_goods: string | null;
+  supplier_search_queries: string | null;
+  estimated_order_volume: string | null;
+  stop_factors: string | null;
+  deal_score: string | null;
+  deal_score_reason: string | null;
+  kp_message: string | null;
   ai_priority: string | null;
   priority_reason: string | null;
 }
@@ -75,8 +83,11 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
         <div className="flex items-start justify-between gap-2 mb-1">
           <p className="text-white text-xs font-semibold leading-tight">{lead.company_name}</p>
           <div className="flex items-center gap-1 flex-shrink-0">
-            {lead.ai_priority === "HIGH" && <span className="text-[9px] text-green-400 bg-green-900/40 rounded px-1">🔥 HIGH</span>}
-            {lead.ai_priority === "LOW" && <span className="text-[9px] text-slate-500 bg-slate-700 rounded px-1">LOW</span>}
+            {lead.deal_score === "A" && <span className="text-[9px] font-bold text-white bg-green-700 rounded px-1.5">A</span>}
+            {lead.deal_score === "B" && <span className="text-[9px] font-bold text-white bg-blue-700 rounded px-1.5">B</span>}
+            {lead.deal_score === "C" && <span className="text-[9px] font-bold text-slate-300 bg-slate-600 rounded px-1.5">C</span>}
+            {lead.deal_score === "D" && <span className="text-[9px] font-bold text-red-400 bg-red-900/40 rounded px-1.5">D</span>}
+            {lead.ai_priority === "HIGH" && !lead.deal_score && <span className="text-[9px] text-green-400 bg-green-900/40 rounded px-1">🔥</span>}
             <ScoreDot score={lead.lead_score} />
           </div>
         </div>
@@ -114,38 +125,100 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
           {/* AI Analysis block */}
           {hasAnalysis && (
             <div className="space-y-1.5 pt-1 border-t border-slate-700/50">
-              <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold">AI Аналитика</p>
+              <div className="flex items-center justify-between">
+                <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold">AI Аналитика</p>
+                {lead.deal_score && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                    lead.deal_score === "A" ? "bg-green-700 text-white" :
+                    lead.deal_score === "B" ? "bg-blue-700 text-white" :
+                    lead.deal_score === "C" ? "bg-slate-600 text-slate-300" :
+                    "bg-red-900/40 text-red-400"
+                  }`}>Лид {lead.deal_score}</span>
+                )}
+              </div>
+
+              {lead.deal_score_reason && (
+                <p className="text-[10px] text-slate-400 italic">{lead.deal_score_reason}</p>
+              )}
 
               {lead.ved_status && (
-                <div className={`rounded px-2 py-1 ${lead.ved_status.toLowerCase().includes('уже') || lead.ved_status.toLowerCase().includes('работает') ? 'bg-green-950/40 border border-green-800/40' : 'bg-slate-800/40 border border-slate-700/40'}`}>
+                <div className={`rounded px-2 py-1 ${
+                  lead.ved_status.toLowerCase().includes('да') || lead.ved_status.toLowerCase().includes('уже') || lead.ved_status.toLowerCase().includes('работает')
+                    ? 'bg-green-950/40 border border-green-800/40'
+                    : lead.ved_status.toLowerCase().includes('вероятно')
+                    ? 'bg-yellow-950/40 border border-yellow-800/40'
+                    : 'bg-slate-800/40 border border-slate-700/40'
+                }`}>
                   <p className="text-[9px] text-slate-500 uppercase">🌐 ВЭД / Китай-связь</p>
                   <p className="text-[10px] text-slate-200">{lead.ved_status}</p>
+                  {lead.ved_details && <p className="text-[10px] text-slate-400 mt-0.5">{lead.ved_details}</p>}
                 </div>
               )}
+
+              {lead.sales_channel && (
+                <div>
+                  <p className="text-[9px] text-slate-500 uppercase">Канал продаж</p>
+                  <p className="text-[10px] text-slate-300">{lead.sales_channel}</p>
+                </div>
+              )}
+
               {lead.who_are_clients && (
                 <div>
                   <p className="text-[9px] text-slate-500 uppercase">Клиенты</p>
                   <p className="text-[10px] text-slate-300">{lead.who_are_clients}</p>
                 </div>
               )}
+
+              {lead.pain_points && (
+                <div className="bg-red-950/30 border border-red-900/40 rounded px-2 py-1">
+                  <p className="text-[9px] text-red-400 uppercase">🔥 Боль компании</p>
+                  <p className="text-[10px] text-slate-200">{lead.pain_points}</p>
+                </div>
+              )}
+
               {lead.china_fit && (
                 <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Боль / Зачем им Китай</p>
+                  <p className="text-[9px] text-slate-500 uppercase">Почему Китай решает</p>
                   <p className="text-[10px] text-slate-300">{lead.china_fit}</p>
                 </div>
               )}
+
               {lead.suggested_goods && (
                 <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Товары из Китая</p>
+                  <p className="text-[9px] text-slate-500 uppercase">Товары для закупки</p>
                   <p className="text-[10px] text-amber-300">{lead.suggested_goods}</p>
                 </div>
               )}
-              {lead.priority_reason && (
-                <div>
-                  <p className="text-[9px] text-slate-500 uppercase">Почему этот приоритет</p>
-                  <p className="text-[10px] text-slate-400">{lead.priority_reason}</p>
+
+              {lead.supplier_search_queries && (
+                <div className="bg-violet-950/30 border border-violet-800/40 rounded px-2 py-1">
+                  <p className="text-[9px] text-violet-400 uppercase">🔍 Запросы для Accio/1688</p>
+                  <p className="text-[10px] text-violet-200 font-mono">{lead.supplier_search_queries}</p>
                 </div>
               )}
+
+              {lead.estimated_order_volume && (
+                <div>
+                  <p className="text-[9px] text-slate-500 uppercase">📦 Объём закупок</p>
+                  <p className="text-[10px] text-green-300">{lead.estimated_order_volume}</p>
+                </div>
+              )}
+
+              {lead.stop_factors && (
+                <div className={`rounded px-2 py-1 ${
+                  lead.stop_factors.toLowerCase().includes('нет стоп') || lead.stop_factors.toLowerCase().includes('нет стоп-факторов')
+                    ? 'bg-green-950/20 border border-green-900/30'
+                    : 'bg-orange-950/30 border border-orange-800/40'
+                }`}>
+                  <p className="text-[9px] text-orange-400 uppercase">⚠️ Стоп-факторы</p>
+                  <p className="text-[10px] text-slate-300">{lead.stop_factors}</p>
+                </div>
+              )}
+
+              {lead.priority_reason && (
+                <p className="text-[10px] text-slate-500">{lead.priority_reason}</p>
+              )}
+
               {lead.kp_message && (
                 <div className="bg-blue-950/40 border border-blue-800/50 rounded p-2">
                   <p className="text-[9px] text-blue-400 uppercase font-semibold mb-1">📨 КП — WhatsApp/Telegram</p>
@@ -226,11 +299,19 @@ export default function KonturLeadsClient() {
             ...l,
             product_category: a.product_category ?? l.product_category,
             what_they_sell: a.what_they_sell ?? l.what_they_sell,
+            sales_channel: a.sales_channel ?? l.sales_channel,
             who_are_clients: a.who_are_clients ?? l.who_are_clients,
             china_fit: a.china_fit ?? l.china_fit,
-            suggested_goods: a.suggested_goods ?? l.suggested_goods,
-            kp_message: a.kp_message ?? l.kp_message,
+            pain_points: a.pain_points ?? l.pain_points,
             ved_status: a.ved_status ?? l.ved_status,
+            ved_details: a.ved_details ?? l.ved_details,
+            suggested_goods: a.suggested_goods ?? l.suggested_goods,
+            supplier_search_queries: a.supplier_search_queries ?? l.supplier_search_queries,
+            estimated_order_volume: a.estimated_order_volume ?? l.estimated_order_volume,
+            stop_factors: a.stop_factors ?? l.stop_factors,
+            deal_score: a.deal_score ?? l.deal_score,
+            deal_score_reason: a.deal_score_reason ?? l.deal_score_reason,
+            kp_message: a.kp_message ?? l.kp_message,
             ai_priority: a.priority ?? l.ai_priority,
             priority_reason: a.priority_reason ?? l.priority_reason,
             status: (l.status === "new" || l.status === "analyzing") ? "kp_ready" : l.status,
@@ -337,12 +418,12 @@ export default function KonturLeadsClient() {
       {msg && <div className="mb-4 bg-blue-900/30 border border-blue-700 rounded-lg px-4 py-2 text-sm text-blue-300">{msg}</div>}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         {[
-          { label: "Новых",         val: byStage["new"]?.length ?? 0,         color: "text-slate-400" },
-          { label: "С анализом",    val: leads.filter(l => l.product_category).length, color: "text-blue-400" },
-          { label: "Контакт / КП",  val: (byStage["kp_ready"]?.length ?? 0) + (byStage["contacted"]?.length ?? 0), color: "text-amber-400" },
-          { label: "Сделки",        val: byStage["deal"]?.length ?? 0,         color: "text-green-400" },
+          { label: "Новых",        val: byStage["new"]?.length ?? 0,         color: "text-slate-400" },
+          { label: "С анализом",   val: leads.filter(l => l.product_category).length, color: "text-blue-400" },
+          { label: "Контакт / КП", val: (byStage["kp_ready"]?.length ?? 0) + (byStage["contacted"]?.length ?? 0), color: "text-amber-400" },
+          { label: "Сделки",       val: byStage["deal"]?.length ?? 0,         color: "text-green-400" },
         ].map(s => (
           <div key={s.label} className="bg-slate-800 border border-slate-700 rounded-lg p-3 text-center">
             <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
@@ -350,6 +431,25 @@ export default function KonturLeadsClient() {
           </div>
         ))}
       </div>
+      {/* A/B/C/D deal score badges */}
+      {leads.some(l => l.deal_score) && (
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {(["A","B","C","D"] as const).map(score => {
+            const count = leads.filter(l => l.deal_score === score).length;
+            if (!count) return null;
+            const styles: Record<string, string> = {
+              A: "bg-green-700 text-white", B: "bg-blue-700 text-white",
+              C: "bg-slate-600 text-slate-300", D: "bg-red-900/40 text-red-400 border border-red-800/40"
+            };
+            return (
+              <span key={score} className={`text-sm font-bold px-3 py-1 rounded-lg ${styles[score]}`}>
+                {score}: {count}
+              </span>
+            );
+          })}
+          <span className="text-xs text-slate-500 self-center ml-1">Deal Score</span>
+        </div>
+      )}
 
       {loading && <p className="text-slate-400 text-center py-12">Загрузка...</p>}
 

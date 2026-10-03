@@ -13,12 +13,20 @@ const PIPELINE_STATUSES = ["new","analyzing","sourced","kp_ready","contacted","n
 interface AnalysisResult {
   product_category: string;
   what_they_sell: string;
+  sales_channel: string;
   who_are_clients: string;
   geography: string;
   china_fit: string;
-  suggested_goods: string;
-  kp_message: string;
+  pain_points: string;
   ved_status: string;
+  ved_details: string;
+  suggested_goods: string;
+  supplier_search_queries: string;
+  estimated_order_volume: string;
+  stop_factors: string;
+  deal_score: "A" | "B" | "C";
+  deal_score_reason: string;
+  kp_message: string;
   priority: "HIGH" | "MEDIUM" | "LOW";
   priority_reason: string;
 }
@@ -59,11 +67,19 @@ export async function GET(req: NextRequest) {
       supplier_found: extra.supplier_found as string | null,
       msp_category: extra.msp_category as string | null,
       what_they_sell: extra.what_they_sell as string | null,
+      sales_channel: extra.sales_channel as string | null,
       who_are_clients: extra.who_are_clients as string | null,
       china_fit: extra.china_fit as string | null,
-      suggested_goods: extra.suggested_goods as string | null,
-      kp_message: extra.kp_message as string | null,
+      pain_points: extra.pain_points as string | null,
       ved_status: extra.ved_status as string | null,
+      ved_details: extra.ved_details as string | null,
+      suggested_goods: extra.suggested_goods as string | null,
+      supplier_search_queries: extra.supplier_search_queries as string | null,
+      estimated_order_volume: extra.estimated_order_volume as string | null,
+      stop_factors: extra.stop_factors as string | null,
+      deal_score: extra.deal_score as string | null,
+      deal_score_reason: extra.deal_score_reason as string | null,
+      kp_message: extra.kp_message as string | null,
       ai_priority: extra.ai_priority as string | null,
       priority_reason: extra.priority_reason as string | null,
     };
@@ -110,7 +126,7 @@ async function analyzeCompany(
   okvadFull: string | null,
 ): Promise<{ analysis: AnalysisResult; siteText: string; aiError?: string }> {
   const orBase = (process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1").replace(/\/$/, "");
-  const orModel = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
+  const orModel = process.env.OPENROUTER_MODEL ?? "google/gemini-flash-1.5";
   const orKey = process.env.OPENROUTER_API_KEY ?? "";
 
   const defaultAnalysis: AnalysisResult = {
@@ -118,12 +134,20 @@ async function analyzeCompany(
       ? okvadFull.replace(/^\d+\.?\d*\s*/, "").split(" ").slice(0, 4).join(" ").toLowerCase()
       : "неизвестно",
     what_they_sell: "",
+    sales_channel: "",
     who_are_clients: "",
     geography: extra.region as string || "",
     china_fit: "",
-    suggested_goods: "",
-    kp_message: "",
+    pain_points: "",
     ved_status: "",
+    ved_details: "",
+    suggested_goods: "",
+    supplier_search_queries: "",
+    estimated_order_volume: "",
+    stop_factors: "",
+    deal_score: "B",
+    deal_score_reason: "",
+    kp_message: "",
     priority: "MEDIUM",
     priority_reason: "",
   };
@@ -173,15 +197,23 @@ async function analyzeCompany(
     if (/47\.|46\./i.test(okvadSecondary)) vedHints.push("есть ОКВЭД розничной/оптовой торговли");
   }
 
-  const systemMsg = `Ты опытный B2B-аналитик компании ChinaBridge. Мы помогаем российским бизнесам закупать товары напрямую из Китая (1688.com, Alibaba, Taobao) — наши цены на 30-50% ниже местных оптовиков, доставка 18-25 дней.
+  const systemMsg = `Ты — B2B квалификатор лидов компании ChinaBridge (импорт товаров из Китая в РФ напрямую с 1688.com, Alibaba, Taobao).
+Цены на 30-50% ниже российских дистрибьюторов, доставка 18-25 дней, работаем с партией от 30 кг.
 
-ПРАВИЛА (строго):
-1. Отвечай ТОЛЬКО валидным JSON, без markdown, без пояснений вне JSON
-2. НИКАКИХ шаблонных фраз типа "Товары из Китая могут значительно снизить затраты" — пиши КОНКРЕТНО про ЭТУ компанию
-3. Каждое поле должно быть уникальным для данной компании — используй название компании, имя директора, конкретные товары из их ниши
-4. КП-сообщение должно обращаться лично к директору по имени (если известно) и упоминать конкретную специфику их бизнеса`;
+КЛЮЧЕВОЙ РЫНОЧНЫЙ КОНТЕКСТ (используй в анализе):
+- После 2022 года из РФ ушли: Liqui Moly, Castrol, Shell, SKF, Bosch, многие европейские бренды
+- Китайские аналоги (Great Wall, Sinopec, ZIC, NTN, FAG China) закрыли 60-80% дефицита, но компании часто покупают через 2-3 посредника
+- Прямой импорт через ChinaBridge = минус 2 наценки дистрибьютора
+- Маркетплейсы (WB/Ozon) требуют постоянный товар → высокий объём закупок
 
-  const userMsg = `КОМПАНИЯ ДЛЯ АНАЛИЗА:
+ПРАВИЛА:
+1. Отвечай ТОЛЬКО валидным JSON без markdown-блоков
+2. Каждое поле — КОНКРЕТНО про эту компанию, никаких шаблонов
+3. Используй рыночный контекст выше для отраслевой точности
+4. Стоп-факторы проверяй честно — лучше D-лид с причиной, чем завышенный A
+5. КП = WhatsApp-сообщение: имя директора обязательно если есть, конкретный товар, конкретная цифра`;
+
+  const userMsg = `ДАННЫЕ КОМПАНИИ:
 Название: ${companyName}
 ИНН: ${extra.inn ?? "н/д"} | Регион: ${extra.region || "не указан"}
 Директор: ${director ?? "неизвестен"} (${extra.position ?? "должность неизвестна"})
@@ -189,23 +221,47 @@ async function analyzeCompany(
 Категория МСП: ${msp ?? "нет данных"}
 
 ОКВЭД основной: ${okvadFull ?? "не указан"}
-${okvadSecondary ? `ОКВЭД дополнительные (топ): ${okvadSecondary.slice(0, 500)}` : ""}
+${okvadSecondary ? `ОКВЭД дополнительные: ${okvadSecondary.slice(0, 600)}` : ""}
 
-${vedHints.length ? `ПРИЗНАКИ ВЭД/КИТАЯ:\n${vedHints.map(h => `• ${h}`).join("\n")}\n` : ""}
+${vedHints.length ? `СИГНАЛЫ ВЭД/КИТАЯ:\n${vedHints.map(h => `• ${h}`).join("\n")}\n` : ""}
 ${siteUrl ? `Сайт: ${siteUrl}` : "Сайт: не указан"}
-${siteText ? `\n=== КОНТЕНТ САЙТА ===\n${siteText}\n=== КОНЕЦ ===` : "(сайт не доступен — анализируй по ОКВЭД, названию и масштабу)"}
+${siteText ? `\n=== КОНТЕНТ САЙТА ===\n${siteText}\n=== КОНЕЦ ===` : "(сайт не доступен — анализируй по ОКВЭД, названию, масштабу и рыночному контексту)"}
 
-Верни JSON с этими полями (ВСЁ конкретно про ${companyName}, не шаблонно):
+Верни JSON строго с этими полями (все — конкретно про ${companyName}):
 {
-  "product_category": "3-5 слов — точная ниша этой компании",
-  "what_they_sell": "2-3 конкретных предложения: что именно продаёт/производит ${companyName}, их ассортимент или услуги",
-  "who_are_clients": "конкретно кто их покупатели — B2B/B2C, какие отрасли, оптовики/розница/маркетплейсы",
-  "ved_status": "участвуют ли в ВЭД / работают ли уже с Китаем / только потенциал — на основе данных выше",
-  "china_fit": "КОНКРЕТНАЯ боль этой компании которую решает Китай — не общие слова, а специфика их ниши и размера",
-  "suggested_goods": "5-7 конкретных товаров/категорий из Китая именно для ${companyName} с учётом их ОКВЭД",
-  "kp_message": "WhatsApp-сообщение директору${directorFirstName ? ` ${directorFirstName}` : ""}: обращение по имени (если известно), 2-3 предложения про их конкретный бизнес, конкретная цифра экономии или выгода, призыв к действию. БЕЗ шаблонов.",
-  "priority": "HIGH если выручка >100млн и явная потребность в товаре, LOW если услуги/производство без товарной составляющей, иначе MEDIUM",
-  "priority_reason": "конкретная причина приоритета: цифры выручки, ниша, потенциал объёма закупок"
+  "product_category": "3-5 слов, точная ниша",
+
+  "what_they_sell": "Что конкретно продаёт/производит ${companyName}: ассортимент, бренды, услуги — 2-3 предложения",
+
+  "sales_channel": "Главный канал: опт / розница / дистрибьюторы / производство / маркетплейсы — один главный + пояснение",
+
+  "who_are_clients": "Кто покупает: сегмент (B2B/B2C), отрасли, география клиентов, средний чек если понятен",
+
+  "ved_status": "Работают ли уже с Китаем: ДА (признаки) / ВЕРОЯТНО (логика) / НЕТ (объяснение)",
+
+  "ved_details": "Детали: что именно берут из Китая сейчас (или логично что берут), через кого (дистрибьютор/прямой импорт), где боль",
+
+  "pain_points": "Главная боль одной фразой + доказательство: факт с сайта / уход западных брендов / дефицит / рост цен — конкретно для этой ниши",
+
+  "china_fit": "Почему Китай решает их боль: конкретный товар → конкретная экономия или закрытие дефицита. НЕ 'цены ниже' — а ПОЧЕМУ именно для них",
+
+  "suggested_goods": "5-7 конкретных позиций для закупки через ChinaBridge: [артикул/категория на 1688] — например 'моторное масло 5W-30 SN/CF Great Wall, базовые масла группы II, присадки ZDDP'",
+
+  "supplier_search_queries": "3-5 поисковых запросов на английском для поиска поставщика на 1688/Accio — чтобы сразу использовать для подбора: например 'motor oil 5W30 SN manufacturer', 'ZDDP additive package bulk'",
+
+  "estimated_order_volume": "Оценка объёма закупок: разовая партия (размер и частота) + годовой потенциал в $ или кг — на основе выручки и ниши",
+
+  "stop_factors": "Стоп-факторы (честно): ГОСТ/сертификация (для каких позиций) / госконтракты (% выручки) / уже прямой импорт / не нужен товар — или 'НЕТ стоп-факторов'",
+
+  "deal_score": "A, B, C или D",
+
+  "deal_score_reason": "Почему этот скор: выручка + категория + контакт ЛПР + стоп-факторы — 2-3 предложения. Скоринг: A=выручка 100М+, категория явно связана с Китаем, контакт ЛПР есть, нет стоп-факторов; B=выручка 30-100М или косвенная связь с Китаем; C=малый бизнес или слабая связь; D=госструктура/ГОСТ-производство/нет смысла",
+
+  "kp_message": "WhatsApp/Telegram директору${directorFirstName ? ` ${directorFirstName}` : ""}. ОБЯЗАТЕЛЬНО: 1) Обращение по имени если известно 2) Конкретный товар из их ниши 3) Конкретная цифра (экономия % или $) 4) Вопрос или призыв. 4-5 предложений. Тон деловой. БЕЗ 'предлагаем сотрудничество'",
+
+  "priority": "HIGH если deal_score A, LOW если D, иначе MEDIUM",
+
+  "priority_reason": "Одна фраза: выручка + ниша + потенциал объёма"
 }`;
 
   if (!orKey) {
@@ -223,7 +279,7 @@ ${siteText ? `\n=== КОНТЕНТ САЙТА ===\n${siteText}\n=== КОНЕЦ =
       },
       body: JSON.stringify({
         model: orModel,
-        max_tokens: 900,
+        max_tokens: 1800,
         temperature: 0.3,
         response_format: { type: "json_object" },
         messages: [
@@ -280,11 +336,19 @@ export async function POST(req: NextRequest) {
   Object.assign(extra, {
     product_category: analysis.product_category,
     what_they_sell: analysis.what_they_sell,
+    sales_channel: analysis.sales_channel,
     who_are_clients: analysis.who_are_clients,
     china_fit: analysis.china_fit,
-    suggested_goods: analysis.suggested_goods,
-    kp_message: analysis.kp_message,
+    pain_points: analysis.pain_points,
     ved_status: analysis.ved_status,
+    ved_details: analysis.ved_details,
+    suggested_goods: analysis.suggested_goods,
+    supplier_search_queries: analysis.supplier_search_queries,
+    estimated_order_volume: analysis.estimated_order_volume,
+    stop_factors: analysis.stop_factors,
+    deal_score: analysis.deal_score,
+    deal_score_reason: analysis.deal_score_reason,
+    kp_message: analysis.kp_message,
     ai_priority: analysis.priority,
     priority_reason: analysis.priority_reason,
     site_text_snippet: siteText.slice(0, 400),
@@ -339,11 +403,19 @@ export async function PUT(req: NextRequest) {
     Object.assign(extra, {
       product_category: analysis.product_category,
       what_they_sell: analysis.what_they_sell,
+      sales_channel: analysis.sales_channel,
       who_are_clients: analysis.who_are_clients,
       china_fit: analysis.china_fit,
-      suggested_goods: analysis.suggested_goods,
-      kp_message: analysis.kp_message,
+      pain_points: analysis.pain_points,
       ved_status: analysis.ved_status,
+      ved_details: analysis.ved_details,
+      suggested_goods: analysis.suggested_goods,
+      supplier_search_queries: analysis.supplier_search_queries,
+      estimated_order_volume: analysis.estimated_order_volume,
+      stop_factors: analysis.stop_factors,
+      deal_score: analysis.deal_score,
+      deal_score_reason: analysis.deal_score_reason,
+      kp_message: analysis.kp_message,
       ai_priority: analysis.priority,
       priority_reason: analysis.priority_reason,
       site_text_snippet: siteText.slice(0, 400),
