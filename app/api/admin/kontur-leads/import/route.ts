@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
-import { readFileSync } from "fs";
-import { join } from "path";
+import companiesData from "@/scripts/kontur_leads.json";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -14,22 +13,7 @@ export async function POST(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
 
   const sql = neon(process.env.DATABASE_URL!);
-
-  // Read JSON from filesystem (only works in dev/local Next.js)
-  let companies: Record<string, string>[];
-  try {
-    const jsonPath = join(process.cwd(), "scripts", "kontur_leads.json");
-    companies = JSON.parse(readFileSync(jsonPath, "utf-8"));
-  } catch {
-    // Try to read from request body as fallback
-    try {
-      const body = await req.json();
-      companies = body.companies;
-      if (!Array.isArray(companies)) throw new Error("companies must be array");
-    } catch {
-      return NextResponse.json({ ok: false, error: "Cannot read JSON file or body" }, { status: 400 });
-    }
-  }
+  const companies = companiesData as Record<string, string>[];
 
   let inserted = 0, updated = 0, skipped = 0;
   const errors: string[] = [];
