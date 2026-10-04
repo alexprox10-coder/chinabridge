@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 
 interface KLead {
   id: number;
@@ -40,6 +41,7 @@ interface KLead {
   kp_message: string | null;
   ai_priority: string | null;
   priority_reason: string | null;
+  dossier?: Record<string, unknown> | null;
 }
 
 const STAGES: { key: string; label: string; color: string; emoji: string }[] = [
@@ -253,6 +255,10 @@ function LeadCard({ lead, onStatusChange, onAnalyze, analyzing }: {
             >
               {analyzing ? "⏳" : hasAnalysis ? "🔄 Переанализ" : "🤖 AI Анализ"}
             </button>
+            <Link href={`/admin/market-intelligence/kontur-leads/${lead.id}`}
+              className="text-[10px] bg-violet-700 hover:bg-violet-600 text-white rounded px-2 py-0.5 inline-block">
+              {lead.dossier ? "📋 Досье ✓" : "📋 Досье"}
+            </Link>
             {STAGES.filter(s => s.key !== lead.status && s.key !== "analyzing").map(s => (
               <button
                 key={s.key}

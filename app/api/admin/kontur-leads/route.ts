@@ -86,6 +86,7 @@ export async function GET(req: NextRequest) {
       kp_message: extra.kp_message as string | null,
       ai_priority: extra.ai_priority as string | null,
       priority_reason: extra.priority_reason as string | null,
+      dossier: extra.dossier ? true : null,
     };
   });
 
